@@ -1,0 +1,11 @@
+name:                dashhs
+version:             0.1.0.0
+author:              Jeremy Huffman
+build-type:          Simple
+cabal-version:       >=1.8
+
+executable dashhs
+  ghc-options:       -Wall -Werror -threaded -with-rtsopts=-N
+  main-is:           main.hs
+  build-depends:     base ==4.5.*, process -any
+  hs-source-dirs:    src
