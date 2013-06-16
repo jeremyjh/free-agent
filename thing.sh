@@ -1,5 +1,5 @@
 #!/bin/bash
 
-echo "Thing gonna wait two seconds..."
-sleep 2
+echo "Thing gonna wait .5 seconds..."
+sleep .5 
 echo "Thing done waiting."
