@@ -1,4 +1,4 @@
-module Dash.DashSpec (Dash.DashSpec.main, spec) where
+module DashSpec (main, spec) where
 
 import           Test.Hspec
 import           Dash

@@ -20,4 +20,3 @@ dashMain =
 
 doThing :: IO String
 doThing = readProcess "./thing.sh" [] []
-    
