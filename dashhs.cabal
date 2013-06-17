@@ -5,15 +5,19 @@ build-type:          Simple
 cabal-version:       >=1.8
 
 library
-  ghc-options:       -Wall -Werror
+  ghc-options:       -Wall
   hs-source-dirs:    src
-  exposed-modules:   Dash, Dash.Runner.NagCmd
-  build-depends:     base == 4.*, process
+  exposed-modules:   Dash, Dash.Runner.NagCmd, Dash.Runner
+  other-modules:
+  build-depends:     base == 4.*
+                    ,process
+                    ,text
+                    ,text-format
 
 executable dashhs
   ghc-options:       -Wall -Werror -threaded -with-rtsopts=-N
   main-is:           Main.hs
-  build-depends:     base ==4.5.*, process -any, dashhs
+  build-depends:     base ==4.5.*, process -any, dashhs 
   hs-source-dirs:    src
 
 test-suite spec
@@ -21,4 +25,8 @@ test-suite spec
   ghc-options:       -Wall -Werror
   hs-source-dirs:    test
   main-is:           Spec.hs
-  build-depends:     base == 4.*, dashhs, hspec >= 1.5
+  build-depends:     base == 4.*
+                    ,dashhs
+                    ,hspec >= 1.5
+                    ,text
+                    ,text-format

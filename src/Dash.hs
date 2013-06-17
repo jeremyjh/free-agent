@@ -13,7 +13,7 @@ dashMain =
     delaySeconds n = threadDelay (n * 1000000)
     saySomething =
       myThreadId >>= threadCapability
-      >>= print 
+      >>= print
       >> putStrLn "I just want to say"
       >> delaySeconds 2
       >> putStrLn "Something"
