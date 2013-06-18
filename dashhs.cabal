@@ -7,7 +7,7 @@ cabal-version:       >=1.8
 library
   ghc-options:       -Wall
   hs-source-dirs:    src
-  exposed-modules:   Dash, Dash.Runner.NagCmd, Dash.Runner
+  exposed-modules:   Dash, Dash.Runner
   other-modules:
   build-depends:     base == 4.*
                     ,process

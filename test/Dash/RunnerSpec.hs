@@ -1,7 +1,6 @@
-module Dash.Runner.NagCmdSpec (main, spec) where
+module Dash.RunnerSpec (main, spec) where
 
 import           Test.Hspec
-import           Dash.Runner.NagCmd
 import           Dash.Runner
 
 main :: IO ()
