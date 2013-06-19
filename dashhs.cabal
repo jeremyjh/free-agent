@@ -13,11 +13,15 @@ library
                     ,process
                     ,text
                     ,text-format
+                    ,basic-prelude
 
 executable dashhs
-  ghc-options:       -Wall -Werror -threaded -with-rtsopts=-N
+  ghc-options:       -Wall -threaded -with-rtsopts=-N
   main-is:           Main.hs
   build-depends:     base ==4.5.*, process -any, dashhs 
+                    ,text
+                    ,text-format
+                    ,basic-prelude
   hs-source-dirs:    src
 
 test-suite spec
@@ -30,3 +34,4 @@ test-suite spec
                     ,hspec >= 1.5
                     ,text
                     ,text-format
+                    ,basic-prelude

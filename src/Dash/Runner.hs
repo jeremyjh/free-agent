@@ -1,15 +1,20 @@
-module Dash.Runner(RunNagCmd(..)
-                  ,RunStatus(..)
-                  ,exec
-                  ) where
+{-#LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
+module Dash.Runner
+    ( NagCmd(..)
+    , RunStatus(..)
+    , exec
+    ) where
 
-import System.Process(readProcess)
+import           BasicPrelude
+import           System.Process(readProcess)
 
-data RunStatus = Running (Maybe String) | Complete (Maybe String) | Failed (Maybe String)
-  deriving (Show, Eq)
+data RunStatus = Running (Maybe String)
+               | Complete (Maybe String)
+               | Failed (Maybe String)
+    deriving (Show, Eq)
 
 class Runnable a where
-  exec :: a -> IO RunStatus
+    exec :: a -> IO RunStatus
 
 {-data RunNagCmd = RunNagCmd {checkName :: String-}
                            {-,checkHost :: String-}
@@ -17,9 +22,9 @@ class Runnable a where
                            {-,interval :: Int -}
                            {-} deriving (Show)-}
 
-data RunNagCmd = RunNagCmd {checkCommand :: String
-                           } deriving (Show)
+data NagCmd = NagCmd {checkCmd :: String
+                     } deriving (Show)
 
-instance Runnable RunNagCmd where
-  exec cmd = readProcess (checkCommand cmd) [] []
-           >> return (Complete $ Just "Awesome")
+instance Runnable NagCmd where
+    exec cmd = readProcess (checkCmd cmd) [] []
+            >> return (Complete $ Just "Awesome")
