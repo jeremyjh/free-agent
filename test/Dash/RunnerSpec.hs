@@ -12,5 +12,10 @@ spec :: Spec
 spec =
     describe "dash runner nagcmd" $
         it "runs a shell script and returns the text" $
-            exec NagCmd {checkCmd="./thing.sh"}
+            exec checkTCP
             >>= shouldBe (Complete $ Just "Awesome")
+
+checkTCP :: NagCmd
+checkTCP = NagCmd { checkCmd = "/usr/lib/nagios/plugins/check_tcp"
+                  , cmdHost = "jeremyhuffman.com"
+                  , cmdPort = 80 }

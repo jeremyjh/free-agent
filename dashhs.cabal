@@ -5,7 +5,7 @@ build-type:          Simple
 cabal-version:       >=1.8
 
 library
-  ghc-options:       -Wall
+  ghc-options:       -Wall -Werror
   hs-source-dirs:    src
   exposed-modules:   Dash, Dash.Runner
   other-modules:
@@ -16,7 +16,7 @@ library
                     ,basic-prelude
 
 executable dashhs
-  ghc-options:       -Wall -threaded -with-rtsopts=-N
+  ghc-options:       -Wall -Werror -threaded -with-rtsopts=-N
   main-is:           Main.hs
   build-depends:     base ==4.5.*, process -any, dashhs 
                     ,text
