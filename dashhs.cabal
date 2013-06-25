@@ -26,7 +26,6 @@ executable dashhs
 
 test-suite spec
   type:              exitcode-stdio-1.0
-  ghc-options:       -Wall -Werror
   hs-source-dirs:    test
   main-is:           Spec.hs
   build-depends:     base == 4.*

@@ -26,4 +26,4 @@ instance Runnable NagCmd where
     exec cmd = readProcess (checkCmd cmd) (makeArgs cmd) []
             >> return (Complete $ Just "Awesome")
       where
-        makeArgs c = ["-H", (cmdHost c), "-p", (P.show $ cmdPort c)]
+        makeArgs c = ["-H", cmdHost c, "-p", P.show $ cmdPort c]
