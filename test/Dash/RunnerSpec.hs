@@ -10,12 +10,15 @@ main = hspec spec
 
 spec :: Spec
 spec =
-    describe "dash runner nagcmd" $
-        it "runs a shell script and returns the text" $
+    describe "dash runner nagcmd" $ do
+        it "does checkTCP" $
             exec checkTCP
             >>= shouldBe (Complete $ Just "Awesome")
+        it "fails to checkUDP (bad args)" $
+            exec checkUDP `shouldThrow` anyIOException
 
-checkTCP :: NagCmd
 checkTCP = NagCmd { checkCmd = "/usr/lib/nagios/plugins/check_tcp"
                   , cmdHost = "jeremyhuffman.com"
                   , cmdPort = 80 }
+
+checkUDP  = checkTCP {checkCmd = "/usr/lib/nagios/plugins/check_udp"}
