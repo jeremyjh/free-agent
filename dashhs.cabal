@@ -1,36 +1,43 @@
 name:                dashhs
 version:             0.1.0.0
 author:              Jeremy Huffman
-build-type:          Simple
+build-type:          Custom 
 cabal-version:       >=1.8
 
-library
-  ghc-options:       -Wall -Werror
-  hs-source-dirs:    src
-  exposed-modules:   Dash, Dash.Runner
-  other-modules:
+-- -fno-warn-unused-imports is temp hack for protobuff-genned code
+library 
+  ghc-options:       -Wall -Werror -fno-warn-unused-imports 
+  hs-source-dirs:    src, dist/build
+  exposed-modules:   Dash, Dash.Runner, Dash.Runnable.NagiosCommand
+  other-modules:     Dash.Runnable 
   build-depends:     base == 4.*
-                    ,process
-                    ,text
-                    ,text-format
-                    ,basic-prelude
+                   , process
+                   , text
+                   , text-format
+                   , basic-prelude
+                   , protocol-buffers
+                   , protocol-buffers-descriptor
 
 executable dashhs
   ghc-options:       -Wall -Werror -threaded -with-rtsopts=-N
   main-is:           Main.hs
-  build-depends:     base ==4.5.*, process -any, dashhs 
-                    ,text
-                    ,text-format
-                    ,basic-prelude
-  hs-source-dirs:    src
+  build-depends:      base ==4.5.*
+                    , process -any
+                    , dashhs 
+                    , text
+                    , text-format
+                    , basic-prelude
+  hs-source-dirs:     src
 
 test-suite spec
   type:              exitcode-stdio-1.0
   hs-source-dirs:    test
   main-is:           Spec.hs
   build-depends:     base == 4.*
-                    ,dashhs
-                    ,hspec >= 1.5
-                    ,text
-                    ,text-format
-                    ,basic-prelude
+                   , dashhs
+                   , hspec >= 1.5
+                   , text
+                   , text-format
+                   , basic-prelude
+                   , protocol-buffers
+                   , bytestring

@@ -1,13 +1,18 @@
 {-#LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-} -- for IsString Utf8
 module Dash.Runner
-    ( NagCmd(..)
-    , RunStatus(..)
+    ( RunStatus(..)
     , exec
     ) where
 
 import           BasicPrelude
 import qualified Prelude as P
 import           System.Process(readProcess)
+
+import           Text.ProtocolBuffers.Basic(uToString,uFromString,Utf8)
+import qualified Dash.Runnable.NagiosCommand as NC
+
+instance IsString Utf8 where fromString = uFromString
 
 data RunStatus = Running (Maybe String)
                | Complete (Maybe String)
@@ -17,13 +22,10 @@ data RunStatus = Running (Maybe String)
 class Runnable a where
     exec :: a -> IO RunStatus
 
-data NagCmd = NagCmd   { checkCmd :: String
-                       , cmdHost :: String
-                       , cmdPort :: Integer
-                       } deriving (Show)
-
-instance Runnable NagCmd where
-    exec cmd = readProcess (checkCmd cmd) (makeArgs cmd) []
+instance Runnable NC.NagiosCommand where
+    exec cmd = readProcess (uToString $ NC.command cmd) (makeArgs cmd) []
             >> return (Complete $ Just "Awesome")
       where
-        makeArgs c = ["-H", cmdHost c, "-p", P.show $ cmdPort c]
+        makeArgs c = ["-H", (uToString $ NC.host c), "-p", port $ NC.port c]
+        port (Just p) = P.show p
+        port Nothing = ""
