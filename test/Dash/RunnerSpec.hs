@@ -1,9 +1,9 @@
-{-#LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 module Dash.RunnerSpec (main, spec) where
 
 import           BasicPrelude
 import           Test.Hspec
-import qualified Dash.Runnable.NagiosCommand as NC
+import qualified Dash.Proto.Runnable.NagiosCommand as NC
 import           Dash.Runner
 
 main :: IO ()

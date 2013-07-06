@@ -7,9 +7,12 @@ cabal-version:       >=1.8
 -- -fno-warn-unused-imports is temp hack for protobuff-genned code
 library 
   ghc-options:       -Wall -Werror -fno-warn-unused-imports 
-  hs-source-dirs:    src, dist/build
-  exposed-modules:   Dash, Dash.Runner, Dash.Runnable.NagiosCommand
-  other-modules:     Dash.Runnable 
+  hs-source-dirs:    proto, src, dist/build
+  other-modules:     Dash.Proto
+  exposed-modules:   Dash
+                   , Dash.Proto.Runnable
+                   , Dash.Runner
+                   , Dash.Proto.Runnable.NagiosCommand
   build-depends:     base == 4.*
                    , process
                    , text
@@ -17,6 +20,8 @@ library
                    , basic-prelude
                    , protocol-buffers
                    , protocol-buffers-descriptor
+                   , utf8-string
+                   , bytestring
 
 executable dashhs
   ghc-options:       -Wall -Werror -threaded -with-rtsopts=-N
@@ -27,6 +32,9 @@ executable dashhs
                     , text
                     , text-format
                     , basic-prelude
+                    , bytestring
+                    , protocol-buffers
+                    , protocol-buffers-descriptor
   hs-source-dirs:     src
 
 test-suite spec
