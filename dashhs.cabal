@@ -8,10 +8,12 @@ cabal-version:       >=1.8
 library 
   ghc-options:       -Wall -Werror -fno-warn-unused-imports 
   hs-source-dirs:    proto, src, dist/build
-  other-modules:     Dash.Proto
+  other-modules:     
   exposed-modules:   Dash
-                   , Dash.Proto.Runnable
                    , Dash.Runner
+                   , Dash.Store
+                   , Dash.Proto
+                   , Dash.Proto.Runnable
                    , Dash.Proto.Runnable.NagiosCommand
   build-depends:     base == 4.*
                    , process
@@ -22,9 +24,13 @@ library
                    , protocol-buffers-descriptor
                    , utf8-string
                    , bytestring
+                   , leveldb-haskell
+                   , data-default
+                   , resourcet
+                   , transformers
 
 executable dashhs
-  ghc-options:       -Wall -Werror -threaded -with-rtsopts=-N
+  ghc-options:       -Wall -Werror -threaded -with-rtsopts=-N -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
   main-is:           Main.hs
   build-depends:      base ==4.5.*
                     , process -any
@@ -38,6 +44,7 @@ executable dashhs
   hs-source-dirs:     src
 
 test-suite spec
+  ghc-options:       -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
   type:              exitcode-stdio-1.0
   hs-source-dirs:    test
   main-is:           Spec.hs
@@ -48,4 +55,3 @@ test-suite spec
                    , text-format
                    , basic-prelude
                    , protocol-buffers
-                   , bytestring
