@@ -17,10 +17,8 @@ import qualified Dash.Proto                        as Proto
 import qualified Dash.Proto.Runnable.NagiosCommand as NC
 
 readCommand :: BS.ByteString -> IO NC.NagiosCommand
-readCommand key = runResourceT $ do
-    db <- openDB
-    value <- get db def key
-    parseCmd value
+readCommand key = runResourceT $
+    openDB >>= (\db -> get db def key) >>= parseCmd
   where
     parseCmd Nothing = error "Didn't find value for key"
     parseCmd (Just input) = case Proto.messageGet $ toLazy input of
