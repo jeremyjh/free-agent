@@ -55,3 +55,4 @@ test-suite spec
                    , text-format
                    , basic-prelude
                    , protocol-buffers
+                   , resourcet

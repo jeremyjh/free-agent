@@ -1,6 +1,6 @@
 package dash.proto.runnable;
 
-option java_package = "Dash.Proto.Runnable";
+option java_package = "dash.proto.runnable";
 option java_outer_classname = "Dash.Proto.Runnable";
 
 message NagiosCommand {
