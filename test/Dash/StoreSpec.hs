@@ -15,11 +15,11 @@ spec :: Spec
 spec =
     describe "Dash.Store" $ do
         it "writes Commands to the DB" $
-             withDB writeCommand checkTCP >>= shouldReturn (return())
+            withDB storeProto checkTCP >>= shouldReturn (return())
         it "reads Commands from the DB" $
-            withDB readCommand "jeremyhuffman.com" >>= shouldBe checkTCP
+            withDB fetchProto "jeremyhuffman.com" >>= shouldBe checkTCP
         it "will fail to read if key is wrong" $
-            withDB readCommand "notgonnamatch" `shouldThrow` errorCall "Didn't find value for key"
+            (withDB fetchProto "notgonnamatch") `shouldThrow` errorCall "Didn't find value for key"
         it "can write an arbitrary bytestring" $
             withDB2 putV "somekey" "somevalue" >>= shouldReturn (return ())
         it "will fail to deserialize if data is not a protobuf" $

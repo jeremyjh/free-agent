@@ -1,5 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
-module Dash.Store(readCommand, writeCommand, getV, putV, openDB) where
+module Dash.Store(fetchProto, readCommand, storeProto, writeCommand, getV, putV, openDB) where
 
 
 import           BasicPrelude
@@ -15,6 +15,41 @@ import           Database.LevelDB
 
 import qualified Dash.Proto                        as Proto
 import qualified Dash.Proto.Runnable.NagiosCommand as NC
+import           Text.ProtocolBuffers.Reflections  (ReflectDescriptor)
+import           Text.ProtocolBuffers.WireMessage  (Wire)
+
+-- | Types that can be serialized and stored by Dash
+--
+-- Dash.Store provides a key-value store for protobuf records; types implementing this class are compatible
+-- One particular feature is that optional key prefixes are availble in order to support
+-- efficient scans of partial keys; this allows for an ad-hoc hierarchy of up to three layers, for example:
+-- ("accounts","domestic", "petroleum") - this would enable you to do efficient queries
+-- to retrieve all accounts, all domestic accounts, all domestric petroleum accounts etc.
+class (ReflectDescriptor a, Wire a) => ProtoStore a where
+    key       :: a -> ByteString
+    keyPrefix :: a -> (ByteString, ByteString, ByteString)
+    serialize     :: a -> ByteString
+    deserialize   :: Maybe ByteString -> a
+
+    keyPrefix _ = ("","","")
+    serialize     ps = toStrict $ Proto.messagePut ps
+    deserialize Nothing = error "Didn't find value for key"
+    deserialize (Just bs) = case Proto.messageGet $ toLazy bs of
+        Right (ps, remain) | LByteS.length remain == 0 ->
+            ps
+        Right (_, _) ->
+            error "Failed to parse ProtoStore fully."
+        Left error_message ->
+            error $ "Failed to parse ProtoStore." ++ error_message
+
+instance ProtoStore NC.NagiosCommand where
+    key cmd = toStrict $ Proto.utf8 $ NC.host cmd
+
+storeProto :: ProtoStore ps => DB -> ps -> ResIO ()
+storeProto db ps = put db def (key ps) (serialize ps)
+
+fetchProto :: ProtoStore ps => DB -> ByteString -> ResIO ps
+fetchProto db key = liftM deserialize $ get db def key
 
 readCommand :: DB -> ByteString -> ResIO NC.NagiosCommand
 readCommand db key =
