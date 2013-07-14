@@ -1,5 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
-module Dash.Store(fetchProto, readCommand, storeProto, writeCommand, getV, putV, openDB) where
+module Dash.Store(fetchProto, storeProto, get, put, openDB, DB) where
 
 
 import           BasicPrelude
@@ -9,14 +9,17 @@ import           Control.Monad.IO.Class            (liftIO)
 import           Control.Monad.Trans.Resource      (release, ResIO)
 
 import qualified Data.ByteString.Lazy              as LByteS
-
 import           Data.Default                      (def)
-import           Database.LevelDB
+import qualified Database.LevelDB                  as LDB
+import           Text.ProtocolBuffers.Reflections  (ReflectDescriptor)
+import           Text.ProtocolBuffers.WireMessage  (Wire)
 
 import qualified Dash.Proto                        as Proto
 import qualified Dash.Proto.Runnable.NagiosCommand as NC
-import           Text.ProtocolBuffers.Reflections  (ReflectDescriptor)
-import           Text.ProtocolBuffers.WireMessage  (Wire)
+
+
+type Key = ByteString
+type DB = LDB.DB
 
 -- | Types that can be serialized and stored by Dash
 --
@@ -26,8 +29,8 @@ import           Text.ProtocolBuffers.WireMessage  (Wire)
 -- ("accounts","domestic", "petroleum") - this would enable you to do efficient queries
 -- to retrieve all accounts, all domestic accounts, all domestric petroleum accounts etc.
 class (ReflectDescriptor a, Wire a) => ProtoStore a where
-    key       :: a -> ByteString
-    keyPrefix :: a -> (ByteString, ByteString, ByteString)
+    key       :: a -> Key
+    keyPrefix :: a -> (Key, Key, Key)
     serialize     :: a -> ByteString
     deserialize   :: Maybe ByteString -> a
 
@@ -46,41 +49,20 @@ instance ProtoStore NC.NagiosCommand where
     key cmd = toStrict $ Proto.utf8 $ NC.host cmd
 
 storeProto :: ProtoStore ps => DB -> ps -> ResIO ()
-storeProto db ps = put db def (key ps) (serialize ps)
+storeProto db ps = put db (key ps) (serialize ps)
 
-fetchProto :: ProtoStore ps => DB -> ByteString -> ResIO ps
-fetchProto db key = liftM deserialize $ get db def key
+fetchProto :: ProtoStore ps => DB -> Key -> ResIO ps
+fetchProto db k = liftM deserialize $ get db k
 
-readCommand :: DB -> ByteString -> ResIO NC.NagiosCommand
-readCommand db key =
-    get db def key >>= parseCmd
-  where
-    parseCmd Nothing = error "Didn't find value for key"
-    parseCmd (Just input) = case Proto.messageGet $ toLazy input of
-        Right (cmd, remain) | LByteS.length remain == 0 ->
-            return cmd
-        Right (_, _) ->
-            error "Failed to parse Command fully."
-        Left error_message ->
-            error $ "Failed to parse Command." ++ error_message
+put :: DB -> Key -> ByteString -> ResIO ()
+put db = LDB.put db def
 
-
-writeCommand :: DB -> NC.NagiosCommand -> ResIO ()
-writeCommand db cmd = do
-    put db def
-        (toStrict $ Proto.utf8 $ NC.host cmd)
-        (toStrict $ Proto.messagePut cmd)
-    return ()
-
-putV :: DB -> ByteString -> ByteString -> ResIO ()
-putV db key value = put db def key value
-
-getV :: DB -> ByteString -> ResIO (Maybe ByteString)
-getV db key = get db def key
+get :: DB -> Key -> ResIO (Maybe ByteString)
+get db = LDB.get db def
 
 openDB :: P.FilePath -> ResIO DB
-openDB path =  open path
-    defaultOptions{createIfMissing = True, cacheSize= 2048}
+openDB path =  LDB.open path
+    LDB.defaultOptions{LDB.createIfMissing = True, LDB.cacheSize= 2048}
 
 toLazy :: ByteString -> LByteString
 toLazy bs = LByteS.fromChunks [bs]

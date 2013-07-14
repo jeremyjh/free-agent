@@ -56,3 +56,4 @@ test-suite spec
                    , basic-prelude
                    , protocol-buffers
                    , resourcet
+                   , leveldb-haskell
