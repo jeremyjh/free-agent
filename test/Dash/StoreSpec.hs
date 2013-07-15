@@ -19,14 +19,21 @@ spec =
             withDB storeProto checkTCP >>= shouldReturn (return())
         it "reads Commands from the DB" $
             withDB fetchProto "jeremyhuffman.com" >>= shouldBe checkTCP
-        it "will fail to read if key is wrong" $ do
-            cmd <- withDB (fetchProto :: (DB -> ByteString -> ResIO NC.NagiosCommand)) "notgonnamatch"
-            exec cmd `shouldThrow` errorCall "Didn't find value for key"
+        it "reads Commands from the DB as RunningStore" $
+            withDB fetchProtoNCRS "jeremyhuffman.com" >>= shouldBe (RunningStore checkTCP)
+        it "will fail to read if key is wrong" $
+            shouldThrow (withDB fetchProtoNC "notgonnamatch" >>= exec) (errorCall "Didn't find value for key")
         it "can write an arbitrary bytestring" $
             withDB2 put "somekey" "somevalue" >>= shouldReturn (return ())
         it "will fail to deserialize if data is not a protobuf" $ do
-            cmd <- withDB (fetchProto :: (DB -> ByteString -> ResIO NC.NagiosCommand)) "somekey"
+            cmd <- withDB fetchProtoNC "somekey"
             exec cmd `shouldThrow` anyException
+
+fetchProtoNCRS :: DB -> ByteString -> ResIO (RunningStore a)
+fetchProtoNCRS db key = liftM RunningStore (fetchProtoNC db key)
+
+fetchProtoNC :: DB -> ByteString -> ResIO NC.NagiosCommand
+fetchProtoNC = fetchProto
 
 withDB2 :: (DB -> a -> b -> ResIO c) -> a -> b -> IO c
 withDB2 f a b = runResourceT $ do

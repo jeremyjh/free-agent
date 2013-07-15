@@ -5,6 +5,7 @@ import           BasicPrelude
 import           Test.Hspec
 import qualified Dash.Proto.Runnable.NagiosCommand as NC
 import           Dash.Runner
+import           Dash.Store(RunningStore(..))
 
 main :: IO ()
 main = hspec spec
@@ -14,7 +15,10 @@ spec =
     describe "dash runner nagcmd" $ do
         it "does checkTCP" $
             exec checkTCP
-            >>= shouldBe (Complete $ Just "Awesome")
+                >>= shouldBe (Complete $ Just "Awesome")
+        it "does checkTCP in a RunningStore" $
+            exec (RunningStore checkTCP)
+                >>= shouldBe (Complete $ Just "Awesome")
         it "fails to checkUDP (bad args)" $
             exec checkUDP `shouldThrow` anyIOException
 

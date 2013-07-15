@@ -1,8 +1,9 @@
-{-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude, OverloadedStrings  #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-} -- for IsString Utf8
 module Dash.Runner
     ( RunStatus(..)
     , exec
+    , Runnable
     ) where
 
 import           BasicPrelude
