@@ -8,6 +8,8 @@ import           Dash.Store
 import           Control.Monad.Trans.Resource      (release, ResIO, runResourceT)
 import qualified Dash.Proto.Runnable.NagiosCommand as NC
 import           Dash.Runner                       (exec)
+import           Dash.Plugins                      ()
+import           Dash.Action(Action(..))
 
 main :: IO ()
 main = hspec spec
@@ -16,11 +18,11 @@ spec :: Spec
 spec =
     describe "Dash.Store" $ do
         it "writes Commands to the DB" $
-            withDB storeProto checkTCP >>= shouldReturn (return())
+            withDB stash checkTCP >>= shouldReturn (return())
         it "reads Commands from the DB" $
-            withDB fetchProto "jeremyhuffman.com" >>= shouldBe checkTCP
-        it "reads Commands from the DB as RunningStore" $
-            withDB fetchProtoNCRS "jeremyhuffman.com" >>= shouldBe (RunningStore checkTCP)
+            withDB fetch "jeremyhuffman.com" >>= shouldBe checkTCP
+        it "reads Commands from the DB as Action" $
+            withDB fetchProtoNCRS "jeremyhuffman.com" >>= shouldBe (Action checkTCP)
         it "will fail to read if key is wrong" $
             shouldThrow (withDB fetchProtoNC "notgonnamatch" >>= exec) (errorCall "Didn't find value for key")
         it "can write an arbitrary bytestring" $
@@ -29,11 +31,11 @@ spec =
             cmd <- withDB fetchProtoNC "somekey"
             exec cmd `shouldThrow` anyException
 
-fetchProtoNCRS :: DB -> ByteString -> ResIO (RunningStore a)
-fetchProtoNCRS db key = liftM RunningStore (fetchProtoNC db key)
+fetchProtoNCRS :: DB -> Key -> ResIO (Action a)
+fetchProtoNCRS db key = liftM Action (fetchProtoNC db key)
 
-fetchProtoNC :: DB -> ByteString -> ResIO NC.NagiosCommand
-fetchProtoNC = fetchProto
+fetchProtoNC :: DB -> Key -> ResIO NC.NagiosCommand
+fetchProtoNC = fetch
 
 withDB2 :: (DB -> a -> b -> ResIO c) -> a -> b -> IO c
 withDB2 f a b = runResourceT $ do
