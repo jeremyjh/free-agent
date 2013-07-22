@@ -1,0 +1,9 @@
+package dash.proto.common;
+
+option java_package = "dash.proto.common";
+option java_outer_classname = "Dash.Proto.Common";
+
+message Wrapper {
+  required string typeName = 1;
+  required bytes  value = 2; 
+}

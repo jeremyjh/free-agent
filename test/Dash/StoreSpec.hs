@@ -32,7 +32,7 @@ spec =
             exec cmd `shouldThrow` anyException
 
 fetchProtoNCRS :: DB -> Key -> ResIO (Action a)
-fetchProtoNCRS db key = liftM Action (fetchProtoNC db key)
+fetchProtoNCRS = fetch
 
 fetchProtoNC :: DB -> Key -> ResIO NC.NagiosCommand
 fetchProtoNC = fetch

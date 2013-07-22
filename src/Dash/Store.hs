@@ -18,7 +18,8 @@ import           Data.Default                      (def)
 
 import qualified Database.LevelDB                  as LDB
 
-import           Dash.Proto                        (ProtoBuf(..))
+import           Dash.Proto                        (ProtoBuf(..), wrap
+                                                   ,toStrict, toLazy, Wrapper(..))
 
 
 -- | Key provided in up to four parts.
@@ -46,13 +47,13 @@ class (ProtoBuf a) => Stashable a where
     key :: a -> Key
 
 stash :: Stashable s => DB -> s -> ResIO ()
-stash db s = put db (key s) (encode s)
+stash db s = put db (key s) (toStrict $ encode s)
 
 fetch :: (Stashable s) => DB -> Key -> ResIO s
 fetch db k = liftM decode_found $ get db k
   where
     decode_found Nothing = error "Didn't find value for key"
-    decode_found (Just bs) = decode bs
+    decode_found (Just bs) = decode $ toLazy bs
 
 put :: DB -> Key -> ByteString -> ResIO ()
 put db k = LDB.put db def $ hashKey k

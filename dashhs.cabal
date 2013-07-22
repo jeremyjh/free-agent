@@ -13,6 +13,8 @@ library
                    , Dash.Runner
                    , Dash.Store
                    , Dash.Proto
+                   , Dash.Proto.Common
+                   , Dash.Proto.Common.Wrapper
                    , Dash.Proto.Runnable
                    , Dash.Proto.Runnable.NagiosCommand
                    , Dash.Action

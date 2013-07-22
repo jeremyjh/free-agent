@@ -4,13 +4,17 @@ module Dash.Action (Action(..)) where
 
 import           BasicPrelude
 import qualified Prelude as P
-import           Text.ProtocolBuffers.WireMessage (messageGet, messagePut, Wire(..))
-import           Text.ProtocolBuffers.Reflections (ReflectDescriptor(..))
+import           Data.Typeable                    (mkTyConApp, mkTyCon3, TypeRep)
 import           Dash.Store                       (Stashable(..), Key(..))
 import           Dash.Runner                      (Runnable(..))
-import           Dash.Proto                       (ProtoBuf(..))
+import           Dash.Proto
+import           Dash.Plugins                     (pluginUnWrapper)
 
-data Action a = forall p. (Stashable p, Runnable p) => Action p
+
+data Action a = forall p. (Stashable p, Runnable p, Typeable p) => Action p
+
+instance Typeable (Action a) where
+    typeOf _ = actionType
 
 instance Eq (Action a) where
     a == b = encode a == encode b
@@ -25,14 +29,21 @@ instance ReflectDescriptor (Action a) where
 instance Wire (Action a) where
     wireSize a (Action s) = wireSize a s
     wirePut a (Action s) = wirePut a s
-    wireGet = undefined -- sort of like decode; the return type selects the method
+    wireGet = error "Cannot wireGet on an Action directly"
 
 instance ProtoBuf (Action a) where
     encode (Action s) = encode s
-    decode = undefined -- we can never decode an Action, only a concrete type
+    decode bs =
+        unWrapFn wrapper
+      where
+        wrapper = decodeRaw bs
+        unWrapFn = pluginUnWrapper (typeName wrapper)
 
 instance Stashable (Action a) where
     key (Action s) = key s
 
 instance Runnable (Action a) where
     exec (Action s) = exec s
+
+actionType :: TypeRep
+actionType  =  mkTyConApp (mkTyCon3 "dash" "Dash.Action" "Action") []
