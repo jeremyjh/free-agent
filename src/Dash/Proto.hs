@@ -46,7 +46,7 @@ class (ReflectDescriptor a, Wire a, Typeable a, Eq a, Show a) => ProtoBuf a wher
 instance ProtoBuf Wrapper
 
 encodeRaw :: (ReflectDescriptor a, Wire a) => a -> LByteString
-encodeRaw s = messagePut s
+encodeRaw = messagePut
 
 decodeRaw :: (ReflectDescriptor a, Wire a) => LByteString -> a
 decodeRaw bs = case messageGet bs of

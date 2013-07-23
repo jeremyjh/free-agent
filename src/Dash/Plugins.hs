@@ -16,13 +16,13 @@ import qualified Dash.Proto.Runnable.NagiosCommand as NC
 
 
 
-pluginUnWrapper :: Utf8 -> (Wrapper -> Action a)
+pluginUnWrapper :: Utf8 -> Wrapper -> Action a
 pluginUnWrapper fiName =
     Action . unWrapFn
   where
     unWrapFn
         | fiName == ".dash.proto.runnable.NagiosCommand" =
-            (\w -> unWrap w ) :: (Wrapper -> NC.NagiosCommand)
+            unWrap :: (Wrapper -> NC.NagiosCommand)
         | otherwise =
             error "FIName not matched! Is your plugin registered?"
 

@@ -14,7 +14,10 @@ import           Control.Monad
 import           Control.Monad.IO.Class            (liftIO)
 import           Control.Monad.Trans.Resource      (release, ResIO)
 import           Data.ByteString.Char8             (pack)
+import qualified Data.ByteString                   as BS (replicate)
 import           Data.Default                      (def)
+
+import qualified Crypto.Hash.SHA1                  as SHA1
 
 import qualified Database.LevelDB                  as LDB
 
@@ -33,11 +36,21 @@ data Key = Key ByteString | KeyPair (ByteString, ByteString)
 
 instance IsString Key where fromString = Key . pack
 
+
+
+-- | Key is up to 4-tuple, padded w/ 0s to become 80 bytes for key scans
+--
 hashKey :: Key -> ByteString
-hashKey (Key k) = k
-hashKey (KeyPair (k1, k2)) = k1 ++ k2
-hashKey (KeyTri (k1, k2, k3)) = k1 ++ k2 ++ k3
-hashKey (KeyQuad (k1, k2, k3, k4)) = k1 ++ k2 ++ k3 ++ k4
+hashKey (Key k) = sha1 k ++ pad 3
+hashKey (KeyPair (k1, k2)) = sha1 k1 ++ sha1 k2 ++ pad 2
+hashKey (KeyTri (k1, k2, k3)) = sha1 k1 ++ sha1 k2 ++ sha1 k3 ++ pad 1
+hashKey (KeyQuad (k1, k2, k3, k4)) = sha1 k1 ++ sha1 k2 ++ sha1 k3 ++ sha1 k4
+
+sha1 :: ByteString -> ByteString
+sha1 = SHA1.hash
+
+pad :: Int -> ByteString
+pad = flip BS.replicate 0 . (*20)
 
 type DB = LDB.DB
 

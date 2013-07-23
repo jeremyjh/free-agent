@@ -19,6 +19,7 @@ library
                    , Dash.Proto.Runnable.NagiosCommand
                    , Dash.Action
                    , Dash.Plugins
+
   build-depends:     base == 4.*
                    , process
                    , text
@@ -32,6 +33,7 @@ library
                    , data-default
                    , resourcet
                    , transformers
+                   , cryptohash
 
 executable dashhs
   ghc-options:       -Wall -Werror -threaded -with-rtsopts=-N -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
