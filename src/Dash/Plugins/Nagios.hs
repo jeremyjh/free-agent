@@ -6,7 +6,7 @@ import           BasicPrelude
 import qualified Prelude                           as P
 import qualified Dash.Plugins.Nagios.Proto.Command as NC
 import           {-# SOURCE #-}
-                 Dash.Action                       (Action(..))
+                 Dash.Action                       (Action(..), unWrapAction)
 import           Dash.Proto
 import           Dash.Store                        (Stashable(..), Key(..))
 import           Dash.Runner                       (Runnable(..), RunStatus(..))
@@ -14,8 +14,9 @@ import           System.Process                    (readProcess)
 
 registerUnWrappers :: [(Utf8, Wrapper -> Action a)]
 registerUnWrappers = [ (".dash.plugins.nagios.proto.Command",
-                         (\w -> Action $ (unWrap :: Wrapper -> NC.Command) w ))
+                          unWrapAction (unWrap :: Wrapper -> NC.Command) )
                      ]
+
 
 instance ProtoBuf NC.Command
 instance Stashable NC.Command where

@@ -1,6 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings, ExistentialQuantification #-}
 
-module Dash.Action (Action(..)) where
+module Dash.Action (Action(..), unWrapAction) where
 
 import           BasicPrelude
 import qualified Prelude as P
@@ -46,3 +46,10 @@ instance Runnable (Action a) where
 
 actionType :: TypeRep
 actionType  =  mkTyConApp (mkTyCon3 "dash" "Dash.Action" "Action") []
+
+-- | Useful for plugins registerUnWrappers to simplify the unwrapper function
+--
+-- e.g. unWrapAction (unWrap :: Wrapper -> NC.Command)
+unWrapAction :: (Stashable a, Runnable a) =>
+                (Wrapper -> a) -> Wrapper -> Action b
+unWrapAction f = Action . f
