@@ -34,10 +34,9 @@ instance Wire (Action a) where
 instance ProtoBuf (Action a) where
     encode (Action s) = encode s
     decode bs =
-        unWrapFn wrapper
+        pluginUnWrapper wrapper
       where
         wrapper = decodeRaw bs
-        unWrapFn = pluginUnWrapper (typeName wrapper)
 
 instance Stashable (Action a) where
     key (Action s) = key s
