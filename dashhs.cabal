@@ -15,6 +15,7 @@ library
                    , Dash.Proto
                    , Dash.Proto.Common
                    , Dash.Proto.Common.Wrapper
+                   , Dash.Plugins.Nagios
                    , Dash.Plugins.Nagios.Proto
                    , Dash.Plugins.Nagios.Proto.Command
                    , Dash.Action
