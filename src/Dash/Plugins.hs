@@ -12,7 +12,7 @@ import           Dash.Runner                       (Runnable(..), RunStatus(..))
 import {-# SOURCE #-}
                  Dash.Action                       (Action(..))
 
-import qualified Dash.Proto.Runnable.NagiosCommand as NC
+import qualified Dash.Plugins.Nagios.Proto.Command as NC
 
 
 
@@ -22,16 +22,16 @@ pluginUnWrapper wrapper =
   where
     fiName = typeName wrapper
     findUnWrap
-        | fiName == ".dash.proto.runnable.NagiosCommand" =
-            unWrap :: Wrapper -> NC.NagiosCommand
+        | fiName == ".dash.plugins.nagios.proto.Command" =
+            unWrap :: Wrapper -> NC.Command
         | otherwise =
             error "FIName not matched! Is your plugin registered?"
 
-instance ProtoBuf NC.NagiosCommand
-instance Stashable NC.NagiosCommand where
+instance ProtoBuf NC.Command
+instance Stashable NC.Command where
     key cmd = Key $ toStrict $ utf8 $ NC.host cmd
 
-instance Runnable NC.NagiosCommand where
+instance Runnable NC.Command where
     exec cmd =
         readProcess (uToString $ NC.command cmd) (makeArgs cmd) []
             >> return (Complete $ Just "Awesome")

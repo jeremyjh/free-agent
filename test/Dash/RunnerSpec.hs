@@ -3,7 +3,7 @@ module Dash.RunnerSpec (main, spec) where
 
 import           BasicPrelude
 import           Test.Hspec
-import qualified Dash.Proto.Runnable.NagiosCommand as NC
+import qualified Dash.Plugins.Nagios.Proto.Command as NC
 import           Dash.Runner
 import           Dash.Action(Action(..))
 
@@ -22,7 +22,7 @@ spec =
         it "fails to checkUDP (bad args)" $
             exec checkUDP `shouldThrow` anyIOException
 
-checkTCP = NC.NagiosCommand { NC.command = "/usr/lib/nagios/plugins/check_tcp"
+checkTCP = NC.Command { NC.command = "/usr/lib/nagios/plugins/check_tcp"
                   , NC.host = "jeremyhuffman.com"
                   , NC.port = Just 80 }
 

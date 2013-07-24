@@ -6,7 +6,7 @@ import           Test.Hspec
 import           Dash.Proto
 import           Dash.Store
 import           Control.Monad.Trans.Resource      (release, ResIO, runResourceT)
-import qualified Dash.Proto.Runnable.NagiosCommand as NC
+import qualified Dash.Plugins.Nagios.Proto.Command as NC
 import           Dash.Runner                       (exec)
 import           Dash.Plugins                      ()
 import           Dash.Action(Action(..))
@@ -34,7 +34,7 @@ spec =
 fetchProtoNCRS :: DB -> Key -> ResIO (Action a)
 fetchProtoNCRS = fetch
 
-fetchProtoNC :: DB -> Key -> ResIO NC.NagiosCommand
+fetchProtoNC :: DB -> Key -> ResIO NC.Command
 fetchProtoNC = fetch
 
 withDB2 :: (DB -> a -> b -> ResIO c) -> a -> b -> IO c
@@ -47,6 +47,6 @@ withDB f a = runResourceT $ do
     db <- openDB "/tmp/leveltest"
     f db a
 
-checkTCP = NC.NagiosCommand { NC.command = "/usr/lib/nagios/plugins/check_tcp"
+checkTCP = NC.Command { NC.command = "/usr/lib/nagios/plugins/check_tcp"
                   , NC.host = "jeremyhuffman.com"
                   , NC.port = Just 80 }
