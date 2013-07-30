@@ -22,7 +22,7 @@ import qualified Crypto.Hash.SHA1                  as SHA1
 import qualified Database.LevelDB                  as LDB
 
 import           Dash.Proto                        (ProtoBuf(..), wrap
-                                                   ,toStrict, toLazy, Wrapper(..))
+                                                   ,toStrict, toLazy, Wrapper(..), ProtoFail(..))
 
 
 -- | Key provided in up to four parts.
@@ -32,7 +32,7 @@ import           Dash.Proto                        (ProtoBuf(..), wrap
 -- to retrieve all accounts, all domestic accounts, all domestric petroleum accounts etc.
 data Key = Key ByteString | KeyPair (ByteString, ByteString)
          | KeyTri (ByteString, ByteString, ByteString)
-         | KeyQuad (ByteString,ByteString,ByteString, ByteString)
+         | KeyQuad (ByteString,ByteString,ByteString, ByteString) deriving(Show, Eq)
 
 instance IsString Key where fromString = Key . pack
 
@@ -62,10 +62,10 @@ class (ProtoBuf a) => Stashable a where
 stash :: Stashable s => DB -> s -> ResIO ()
 stash db s = put db (key s) (toStrict $ encode s)
 
-fetch :: (Stashable s) => DB -> Key -> ResIO (Either String s)
+fetch :: (Stashable s) => DB -> Key -> ResIO (Either ProtoFail s)
 fetch db k = liftM decode_found $ get db k
   where
-    decode_found Nothing = Left "Didn't find value for key"
+    decode_found Nothing = Left $ NotFound (P.show k)
     decode_found (Just bs) = decode $ toLazy bs
 
 put :: DB -> Key -> ByteString -> ResIO ()

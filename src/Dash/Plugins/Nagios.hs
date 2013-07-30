@@ -1,4 +1,4 @@
-{-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude, OverloadedStrings, FlexibleContexts #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Dash.Plugins.Nagios(NC.Command(..), registerUnWrappers) where
 
@@ -12,9 +12,9 @@ import           Dash.Store                        (Stashable(..), Key(..))
 import           Dash.Runner                       (Runnable(..), RunStatus(..))
 import           System.Process                    (readProcess)
 
-registerUnWrappers :: [(Utf8, Wrapper -> Either String (Action a))]
+registerUnWrappers :: [(Utf8, Wrapper -> Either ProtoFail (Action a))]
 registerUnWrappers = [ (".dash.plugins.nagios.proto.Command",
-                          unWrapAction (unWrap :: Wrapper -> Either String NC.Command) )
+                          unWrapAction (unWrap :: Wrapper -> Either ProtoFail NC.Command) )
                      ]
 
 

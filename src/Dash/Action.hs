@@ -51,5 +51,5 @@ actionType  =  mkTyConApp (mkTyCon3 "dash" "Dash.Action" "Action") []
 --
 -- e.g. unWrapAction (unWrap :: Wrapper -> NC.Command)
 unWrapAction :: (Stashable a, Runnable a) =>
-                (Wrapper -> Either String a) -> Wrapper -> Either String (Action b)
-unWrapAction f wrapper = Action <$> f wrapper
+                (Wrapper ->  Either ProtoFail a) -> Wrapper -> Either ProtoFail (Action b)
+unWrapAction f wrapper = fmap Action (f wrapper)

@@ -14,10 +14,10 @@ import qualified Dash.Plugins.Nagios               as NS
 
 -- | Each plugin should expose a registerUnWrappers with the same signature
 --
-registerUnWrappers :: [(Utf8, Wrapper -> Either String (Action a))]
+registerUnWrappers :: [(Utf8, Wrapper -> Either ProtoFail (Action a))]
 registerUnWrappers = NS.registerUnWrappers -- ++ ..
 
-pluginUnWrapper :: Wrapper -> Either String (Action a)
+pluginUnWrapper :: Wrapper -> Either ProtoFail (Action a)
 pluginUnWrapper wrapper =
     found findUnWrap $ wrapper
   where
