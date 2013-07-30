@@ -1,4 +1,4 @@
-{-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude, OverloadedStrings, Rank2Types #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-} -- for IsString Utf8
 
 module Dash.Proto
@@ -20,6 +20,7 @@ module Dash.Proto
     , unWrap
     , decodeRaw
     , encodeRaw
+    , ProtoFail(..)
     ) where
 
 import           BasicPrelude
@@ -38,31 +39,32 @@ instance IsString Utf8 where fromString = uFromString
 --
 class (ReflectDescriptor a, Wire a, Typeable a, Eq a, Show a) => ProtoBuf a where
     encode :: a -> LByteString
-    decode :: LByteString -> a
+    decode :: LByteString -> Either ProtoFail a
 
     encode = encodeRaw . wrap
-    decode = unWrap . decodeRaw
+    decode = unWrap <=< decodeRaw
+
+data ProtoFail = BytesLeftover | ParseFail String | NotFound String deriving (Show, Eq)
 
 instance ProtoBuf Wrapper
 
 encodeRaw :: (ReflectDescriptor a, Wire a) => a -> LByteString
 encodeRaw = messagePut
 
-decodeRaw :: (ReflectDescriptor a, Wire a) => LByteString -> a
+decodeRaw :: (ReflectDescriptor a, Wire a) => LByteString -> Either ProtoFail a
 decodeRaw bs = case messageGet bs of
     Right (ps, remain) | LByteS.length remain == 0 ->
-        ps
-    Right (_, _) ->
-        error "Failed to parse ProtoBuf fully."
+        return ps
+    Right (_, _) -> Left BytesLeftover
     Left error_message ->
-        error $ "Failed to parse ProtoBuf." ++ error_message
+        Left $ ParseFail error_message
 
 wrap :: (ProtoBuf a) => a -> Wrapper
 wrap pb = Wrapper {typeName = typeNameOf pb, value = encodeRaw pb}
   where
     typeNameOf = fiName . protobufName . descName . reflectDescriptorInfo
 
-unWrap :: (ProtoBuf a) => Wrapper -> a
+unWrap :: (ProtoBuf a) => Wrapper -> Either ProtoFail a
 unWrap = decodeRaw . value
 
 toLazy :: ByteString -> LByteString
@@ -72,4 +74,4 @@ toStrict :: LByteString -> ByteString
 toStrict = concat . LByteS.toChunks
 
 uToText :: Utf8 -> Text
-uToText u = decodeUtf8 $ toStrict $ utf8 u
+uToText = decodeUtf8 . toStrict . utf8

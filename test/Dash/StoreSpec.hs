@@ -7,9 +7,9 @@ import           Dash.Proto
 import           Dash.Store
 import           Control.Monad.Trans.Resource      (release, ResIO, runResourceT)
 import qualified Dash.Plugins.Nagios.Proto.Command as NC
-import           Dash.Runner                       (exec)
+import           Dash.Runner
 import           Dash.Plugins                      ()
-import           Dash.Action(Action(..))
+import           Dash.Action
 
 main :: IO ()
 main = hspec spec
@@ -20,21 +20,21 @@ spec =
         it "writes Commands to the DB" $
             withDB stash checkTCP >>= shouldReturn (return())
         it "reads Commands from the DB" $
-            withDB fetch "jeremyhuffman.com" >>= shouldBe checkTCP
+            withDB fetch "jeremyhuffman.com" >>= shouldBe (Right checkTCP)
         it "reads Commands from the DB as Action" $
-            withDB fetchProtoNCRS "jeremyhuffman.com" >>= shouldBe (Action checkTCP)
+            withDB fetchAction "jeremyhuffman.com" >>= shouldBe (Right $ Action checkTCP)
+        it "can read an Action from the DB and execute it" $ do
+            (Right action) <- withDB fetchAction "jeremyhuffman.com"
+            exec action >>= shouldBe (Complete $ Just "Awesome")
         it "will fail to read if key is wrong" $
-            shouldThrow (withDB fetchProtoNC "notgonnamatch" >>= exec) (errorCall "Didn't find value for key")
+            withDB fetchProtoNC "notgonnamatch" >>= shouldBe (Left (NotFound "Key \"notgonnamatch\""))
         it "can write an arbitrary bytestring" $
             withDB2 put "somekey" "somevalue" >>= shouldReturn (return ())
         it "will fail to deserialize if data is not a protobuf" $ do
-            cmd <- withDB fetchProtoNC "somekey"
-            exec cmd `shouldThrow` anyException
+            (Left (ParseFail msg)) <- withDB fetchProtoNC "somekey"
+            take 25 msg `shouldBe` "Failed at 1 : Text.Protoc"
 
-fetchProtoNCRS :: DB -> Key -> ResIO (Action a)
-fetchProtoNCRS = fetch
-
-fetchProtoNC :: DB -> Key -> ResIO NC.Command
+fetchProtoNC :: DB -> Key -> ResIO (Either ProtoFail NC.Command)
 fetchProtoNC = fetch
 
 withDB2 :: (DB -> a -> b -> ResIO c) -> a -> b -> IO c

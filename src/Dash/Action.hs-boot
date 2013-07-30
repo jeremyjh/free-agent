@@ -2,7 +2,8 @@
 
 module Dash.Action(Action(..), unWrapAction) where
 
-import           Dash.Proto                       (Wrapper(..))
+import           BasicPrelude
+import           Dash.Proto                       (Wrapper(..), ProtoFail)
 import           Dash.Store                       (Stashable(..), Key(..))
 import           Dash.Runner                      (Runnable(..))
 import           Data.Typeable                    (Typeable(..))
@@ -10,4 +11,4 @@ import           Data.Typeable                    (Typeable(..))
 data Action a  = forall p. (Stashable p, Runnable p, Typeable p) => Action p
 
 unWrapAction :: (Stashable a, Runnable a) =>
-                (Wrapper -> a) -> Wrapper -> Action b
+                (Wrapper -> Either ProtoFail a) -> Wrapper -> Either ProtoFail (Action b)

@@ -16,7 +16,7 @@ spec =
         it "does checkTCP" $
             exec checkTCP
                 >>= shouldBe (Complete $ Just "Awesome")
-        it "does checkTCP in a RunningStore" $
+        it "does checkTCP in an Action" $
             exec (Action checkTCP)
                 >>= shouldBe (Complete $ Just "Awesome")
         it "fails to checkUDP (bad args)" $

@@ -3,7 +3,7 @@ module Dash.Store
     ( fetch
     , stash
     , get, put
-    , openDB, DB
+    , openDB, DB, ResIO
     , Key(..)
     , Stashable(..)
     ) where
@@ -22,7 +22,7 @@ import qualified Crypto.Hash.SHA1                  as SHA1
 import qualified Database.LevelDB                  as LDB
 
 import           Dash.Proto                        (ProtoBuf(..), wrap
-                                                   ,toStrict, toLazy, Wrapper(..))
+                                                   ,toStrict, toLazy, Wrapper(..), ProtoFail(..))
 
 
 -- | Key provided in up to four parts.
@@ -32,7 +32,7 @@ import           Dash.Proto                        (ProtoBuf(..), wrap
 -- to retrieve all accounts, all domestic accounts, all domestric petroleum accounts etc.
 data Key = Key ByteString | KeyPair (ByteString, ByteString)
          | KeyTri (ByteString, ByteString, ByteString)
-         | KeyQuad (ByteString,ByteString,ByteString, ByteString)
+         | KeyQuad (ByteString,ByteString,ByteString, ByteString) deriving(Show, Eq)
 
 instance IsString Key where fromString = Key . pack
 
@@ -55,17 +55,21 @@ pad = flip BS.replicate 0 . (*20)
 type DB = LDB.DB
 
 -- | Types that can be serialized, stored and retrieved by Dash
---
+-- A ProtoBuf with a key
 class (ProtoBuf a) => Stashable a where
     key :: a -> Key
 
+-- | Store the ProtoBuf in the database
+--
 stash :: Stashable s => DB -> s -> ResIO ()
 stash db s = put db (key s) (toStrict $ encode s)
 
-fetch :: (Stashable s) => DB -> Key -> ResIO s
+-- | Fetch the ProtoBuf from the database
+--
+fetch :: (Stashable s) => DB -> Key -> ResIO (Either ProtoFail s)
 fetch db k = liftM decode_found $ get db k
   where
-    decode_found Nothing = error "Didn't find value for key"
+    decode_found Nothing = Left $ NotFound (P.show k)
     decode_found (Just bs) = decode $ toLazy bs
 
 put :: DB -> Key -> ByteString -> ResIO ()
