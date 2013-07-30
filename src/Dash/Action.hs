@@ -34,7 +34,7 @@ instance Wire (Action a) where
 instance ProtoBuf (Action a) where
     encode (Action s) = encode s
     decode bs =
-        pluginUnWrapper wrapper
+         wrapper >>= pluginUnWrapper
       where
         wrapper = decodeRaw bs
 
@@ -51,5 +51,5 @@ actionType  =  mkTyConApp (mkTyCon3 "dash" "Dash.Action" "Action") []
 --
 -- e.g. unWrapAction (unWrap :: Wrapper -> NC.Command)
 unWrapAction :: (Stashable a, Runnable a) =>
-                (Wrapper -> a) -> Wrapper -> Action b
-unWrapAction f = Action . f
+                (Wrapper -> Either String a) -> Wrapper -> Either String (Action b)
+unWrapAction f wrapper = Action <$> f wrapper

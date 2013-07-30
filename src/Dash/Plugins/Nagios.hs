@@ -12,9 +12,9 @@ import           Dash.Store                        (Stashable(..), Key(..))
 import           Dash.Runner                       (Runnable(..), RunStatus(..))
 import           System.Process                    (readProcess)
 
-registerUnWrappers :: [(Utf8, Wrapper -> Action a)]
+registerUnWrappers :: [(Utf8, Wrapper -> Either String (Action a))]
 registerUnWrappers = [ (".dash.plugins.nagios.proto.Command",
-                          unWrapAction (unWrap :: Wrapper -> NC.Command) )
+                          unWrapAction (unWrap :: Wrapper -> Either String NC.Command) )
                      ]
 
 

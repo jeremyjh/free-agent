@@ -38,31 +38,31 @@ instance IsString Utf8 where fromString = uFromString
 --
 class (ReflectDescriptor a, Wire a, Typeable a, Eq a, Show a) => ProtoBuf a where
     encode :: a -> LByteString
-    decode :: LByteString -> a
+    decode :: LByteString -> Either String a
 
     encode = encodeRaw . wrap
-    decode = unWrap . decodeRaw
+    decode = unWrap <=< decodeRaw
 
 instance ProtoBuf Wrapper
 
 encodeRaw :: (ReflectDescriptor a, Wire a) => a -> LByteString
 encodeRaw = messagePut
 
-decodeRaw :: (ReflectDescriptor a, Wire a) => LByteString -> a
+decodeRaw :: (ReflectDescriptor a, Wire a) => LByteString -> Either String a
 decodeRaw bs = case messageGet bs of
     Right (ps, remain) | LByteS.length remain == 0 ->
-        ps
+        return ps
     Right (_, _) ->
-        error "Failed to parse ProtoBuf fully."
+        Left "Failed to parse ProtoBuf fully."
     Left error_message ->
-        error $ "Failed to parse ProtoBuf." ++ error_message
+        Left $ "Failed to parse ProtoBuf." ++ error_message
 
 wrap :: (ProtoBuf a) => a -> Wrapper
 wrap pb = Wrapper {typeName = typeNameOf pb, value = encodeRaw pb}
   where
     typeNameOf = fiName . protobufName . descName . reflectDescriptorInfo
 
-unWrap :: (ProtoBuf a) => Wrapper -> a
+unWrap :: (ProtoBuf a) => Wrapper -> Either String a
 unWrap = decodeRaw . value
 
 toLazy :: ByteString -> LByteString

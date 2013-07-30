@@ -62,10 +62,10 @@ class (ProtoBuf a) => Stashable a where
 stash :: Stashable s => DB -> s -> ResIO ()
 stash db s = put db (key s) (toStrict $ encode s)
 
-fetch :: (Stashable s) => DB -> Key -> ResIO s
+fetch :: (Stashable s) => DB -> Key -> ResIO (Either String s)
 fetch db k = liftM decode_found $ get db k
   where
-    decode_found Nothing = error "Didn't find value for key"
+    decode_found Nothing = Left "Didn't find value for key"
     decode_found (Just bs) = decode $ toLazy bs
 
 put :: DB -> Key -> ByteString -> ResIO ()

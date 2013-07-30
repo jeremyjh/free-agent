@@ -14,10 +14,10 @@ import qualified Dash.Plugins.Nagios               as NS
 
 -- | Each plugin should expose a registerUnWrappers with the same signature
 --
-registerUnWrappers :: [(Utf8, Wrapper -> Action a)]
+registerUnWrappers :: [(Utf8, Wrapper -> Either String (Action a))]
 registerUnWrappers = NS.registerUnWrappers -- ++ ..
 
-pluginUnWrapper :: Wrapper -> Action a
+pluginUnWrapper :: Wrapper -> Either String (Action a)
 pluginUnWrapper wrapper =
     found findUnWrap $ wrapper
   where
@@ -27,9 +27,3 @@ pluginUnWrapper wrapper =
     found Nothing =
         error "FIName not matched! Is your plugin registered?"
     fiName = typeName wrapper
-    {-findUnWrap-}
-        {-| fiName == ".dash.plugins.nagios.proto.Command" =-}
-            {-unWrap :: Wrapper -> NS.Command-}
-        {-| otherwise =-}
-            {-error "FIName not matched! Is your plugin registered?"-}
-
