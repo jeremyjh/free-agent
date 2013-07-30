@@ -1,11 +1,11 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings, ExistentialQuantification #-}
 
-module Dash.Action (Action(..), unWrapAction) where
+module Dash.Action (Action(..), unWrapAction, fetchAction) where
 
 import           BasicPrelude
 import qualified Prelude as P
 import           Data.Typeable                    (mkTyConApp, mkTyCon3, TypeRep)
-import           Dash.Store                       (Stashable(..), Key(..))
+import           Dash.Store                       (Stashable(..), Key(..), DB, fetch, ResIO)
 import           Dash.Runner                      (Runnable(..))
 import           Dash.Proto
 import           Dash.Plugins                     (pluginUnWrapper)
@@ -33,10 +33,7 @@ instance Wire (Action a) where
 
 instance ProtoBuf (Action a) where
     encode (Action s) = encode s
-    decode bs =
-         wrapper >>= pluginUnWrapper
-      where
-        wrapper = decodeRaw bs
+    decode bs = decodeRaw bs >>= pluginUnWrapper
 
 instance Stashable (Action a) where
     key (Action s) = key s
@@ -53,3 +50,8 @@ actionType  =  mkTyConApp (mkTyCon3 "dash" "Dash.Action" "Action") []
 unWrapAction :: (Stashable a, Runnable a) =>
                 (Wrapper ->  Either ProtoFail a) -> Wrapper -> Either ProtoFail (Action b)
 unWrapAction f wrapper = fmap Action (f wrapper)
+
+-- | Convenience function to fix type to Action a
+--
+fetchAction :: DB -> Key -> ResIO (Either ProtoFail (Action a))
+fetchAction = fetch

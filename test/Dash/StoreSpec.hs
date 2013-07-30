@@ -7,7 +7,7 @@ import           Dash.Proto
 import           Dash.Store
 import           Control.Monad.Trans.Resource      (release, ResIO, runResourceT)
 import qualified Dash.Plugins.Nagios.Proto.Command as NC
-import           Dash.Runner                       (exec)
+import           Dash.Runner
 import           Dash.Plugins                      ()
 import           Dash.Action
 
@@ -22,7 +22,10 @@ spec =
         it "reads Commands from the DB" $
             withDB fetch "jeremyhuffman.com" >>= shouldBe (Right checkTCP)
         it "reads Commands from the DB as Action" $
-            withDB fetchProtoNCRS "jeremyhuffman.com" >>= shouldBe (Right $ Action checkTCP)
+            withDB fetchAction "jeremyhuffman.com" >>= shouldBe (Right $ Action checkTCP)
+        it "can read an Action from the DB and execute it" $ do
+            (Right action) <- withDB fetchAction "jeremyhuffman.com"
+            exec action >>= shouldBe (Complete $ Just "Awesome")
         it "will fail to read if key is wrong" $
             withDB fetchProtoNC "notgonnamatch" >>= shouldBe (Left (NotFound "Key \"notgonnamatch\""))
         it "can write an arbitrary bytestring" $
@@ -30,9 +33,6 @@ spec =
         it "will fail to deserialize if data is not a protobuf" $ do
             (Left (ParseFail msg)) <- withDB fetchProtoNC "somekey"
             take 25 msg `shouldBe` "Failed at 1 : Text.Protoc"
-
-fetchProtoNCRS :: DB -> Key -> ResIO (Either ProtoFail (Action a))
-fetchProtoNCRS = fetch
 
 fetchProtoNC :: DB -> Key -> ResIO (Either ProtoFail NC.Command)
 fetchProtoNC = fetch

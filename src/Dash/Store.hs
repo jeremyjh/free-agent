@@ -3,7 +3,7 @@ module Dash.Store
     ( fetch
     , stash
     , get, put
-    , openDB, DB
+    , openDB, DB, ResIO
     , Key(..)
     , Stashable(..)
     ) where
@@ -55,13 +55,17 @@ pad = flip BS.replicate 0 . (*20)
 type DB = LDB.DB
 
 -- | Types that can be serialized, stored and retrieved by Dash
---
+-- A ProtoBuf with a key
 class (ProtoBuf a) => Stashable a where
     key :: a -> Key
 
+-- | Store the ProtoBuf in the database
+--
 stash :: Stashable s => DB -> s -> ResIO ()
 stash db s = put db (key s) (toStrict $ encode s)
 
+-- | Fetch the ProtoBuf from the database
+--
 fetch :: (Stashable s) => DB -> Key -> ResIO (Either ProtoFail s)
 fetch db k = liftM decode_found $ get db k
   where
