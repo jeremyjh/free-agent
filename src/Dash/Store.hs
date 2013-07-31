@@ -38,22 +38,21 @@ data Key = Key ByteString | KeyPair ByteString ByteString
 
 instance IsString Key where fromString = Key . pack
 
-
 -- | Key is up to 4-tuple, padded w/ 0s to become 80 bytes for key scans
 -- A KeySpace ByteString will be pre-pended to the key and is not hashed
 packKey :: Key -> ByteString
 packKey pKey =
     case pKey of
-        KeySpace _ _ -> hashKey pKey
-        _            -> hashKey $ KeySpace (pad 1) pKey
+        KeySpace bs k -> padSpace bs ++ hashKey k
+        k             -> pad 1 ++ hashKey k
   where
     hashKey (Key k) = sha1 k ++ pad 3
     hashKey (KeyPair k1 k2) = sha1 k1 ++ sha1 k2 ++ pad 2
     hashKey (KeyTri k1 k2 k3) = sha1 k1 ++ sha1 k2 ++ sha1 k3 ++ pad 1
     hashKey (KeyQuad k1 k2 k3 k4) = sha1 k1 ++ sha1 k2 ++ sha1 k3 ++ sha1 k4
-    hashKey (KeySpace bs k) = padSpace bs ++ hashKey k
-    padSpace = BS.take 20 . (++ pad 1)
+    hashKey (KeySpace _ _) = error "nested KeySpace is not supported"
     sha1 = SHA1.hash
+    padSpace = BS.take 20 . (++ pad 1)
     pad = flip BS.replicate 0 . (*20)
 
 type DB = LDB.DB
