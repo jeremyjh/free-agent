@@ -2,13 +2,13 @@
 
 module Dash.Action (Action(..), unWrapAction, fetchAction) where
 
-import           BasicPrelude
+import           Dash.Prelude
 import qualified Prelude as P
-import           Data.Typeable                    (mkTyConApp, mkTyCon3, TypeRep)
-import           Dash.Store                       (Stashable(..), Key(..), DB, fetch, ResIO)
-import           Dash.Runner                      (Runnable(..))
+import           Data.Typeable  (mkTyConApp, mkTyCon3, TypeRep)
+import           Dash.Store     (Stashable(..), Key(..), DB, fetch, ResIO)
+import           Dash.Runner    (Runnable(..))
 import           Dash.Proto
-import           Dash.Plugins                     (pluginUnWrapper)
+import           Dash.Plugins   (pluginUnWrapper)
 
 
 data Action a = forall p. (Stashable p, Runnable p, Typeable p) => Action p
@@ -19,7 +19,7 @@ instance Typeable (Action a) where
 instance Eq (Action a) where
     a == b = encode a == encode b
 
-instance Show (Action a) where
+instance P.Show (Action a) where
     show (Action a) = "Action (" ++ P.show a ++ ")"
 
 instance ReflectDescriptor (Action a) where

@@ -2,8 +2,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Dash.Plugins.Nagios(NC.Command(..), registerUnWrappers) where
 
-import           BasicPrelude
-import qualified Prelude                           as P
+import           Dash.Prelude
 import qualified Dash.Plugins.Nagios.Proto.Command as NC
 import           {-# SOURCE #-}
                  Dash.Action                       (Action(..), unWrapAction)
@@ -28,5 +27,5 @@ instance Runnable NC.Command where
             >> return (Complete $ Just "Awesome")
       where
         makeArgs c = ["-H", uToString $ NC.host c, "-p", port $ NC.port c]
-        port (Just p) = P.show p
+        port (Just p) = showStr p
         port Nothing = ""

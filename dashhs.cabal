@@ -8,7 +8,7 @@ cabal-version:       >=1.8
 library 
   ghc-options:       -Wall -Werror -fno-warn-unused-imports 
   hs-source-dirs:    proto, src, dist/build
-  other-modules:     
+  other-modules:     Dash.Prelude
   exposed-modules:   Dash
                    , Dash.Runner
                    , Dash.Store

@@ -6,9 +6,6 @@ module Dash.Proto
     , uFromString
     , Utf8
     , utf8
-    , uToText
-    , toStrict
-    , toLazy
     , defaultValue
     , ProtoBuf(..)
     , messageGet
@@ -23,7 +20,7 @@ module Dash.Proto
     , ProtoFail(..)
     ) where
 
-import           BasicPrelude
+import           Dash.Prelude
 import qualified Data.ByteString.Lazy              as LByteS
 import           Data.Text.Encoding               (decodeUtf8, encodeUtf8)
 import           Text.ProtocolBuffers.Basic(uToString,uFromString,Utf8,utf8, defaultValue)
@@ -66,12 +63,3 @@ wrap pb = Wrapper {typeName = typeNameOf pb, value = encodeRaw pb}
 
 unWrap :: (ProtoBuf a) => Wrapper -> Either ProtoFail a
 unWrap = decodeRaw . value
-
-toLazy :: ByteString -> LByteString
-toLazy bs = LByteS.fromChunks [bs]
-
-toStrict :: LByteString -> ByteString
-toStrict = concat . LByteS.toChunks
-
-uToText :: Utf8 -> Text
-uToText = decodeUtf8 . toStrict . utf8

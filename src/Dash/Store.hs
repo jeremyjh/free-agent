@@ -8,8 +8,7 @@ module Dash.Store
     , Stashable(..)
     ) where
 
-import           BasicPrelude
-import qualified Prelude as P
+import           Dash.Prelude
 import           Control.Monad
 import           Control.Monad.IO.Class            (liftIO)
 import           Control.Monad.Trans.Resource      (release, ResIO)
@@ -22,7 +21,7 @@ import qualified Crypto.Hash.SHA1                  as SHA1
 import qualified Database.LevelDB                  as LDB
 
 import           Dash.Proto                        (ProtoBuf(..), wrap
-                                                   ,toStrict, toLazy, Wrapper(..), ProtoFail(..))
+                                                   ,Wrapper(..), ProtoFail(..))
 
 
 -- | Key provided in up to four parts.
@@ -72,7 +71,7 @@ stash db s = put db (key s) (toStrict $ encode s)
 fetch :: (Stashable s) => DB -> Key -> ResIO (Either ProtoFail s)
 fetch db k = liftM decode_found $ get db k
   where
-    decode_found Nothing = Left $ NotFound (P.show k)
+    decode_found Nothing = Left $ NotFound (showStr k)
     decode_found (Just bs) = decode $ toLazy bs
 
 put :: DB -> Key -> ByteString -> ResIO ()
@@ -81,6 +80,6 @@ put db k = LDB.put db def $ packKey k
 get :: DB -> Key -> ResIO (Maybe ByteString)
 get db k = LDB.get db def $ packKey k
 
-openDB :: P.FilePath -> ResIO DB
+openDB :: FilePathS -> ResIO DB
 openDB path =  LDB.open path
     LDB.defaultOptions{LDB.createIfMissing = True, LDB.cacheSize= 2048}
