@@ -35,6 +35,7 @@ library
                    , resourcet
                    , transformers
                    , cryptohash
+                   , MissingH
 
 executable dashhs
   ghc-options:       -Wall -Werror -threaded -with-rtsopts=-N -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags

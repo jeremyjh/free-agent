@@ -18,7 +18,7 @@ registerUnWrappers = NS.registerUnWrappers -- ++ ..
 
 pluginUnWrapper :: Wrapper -> Either ProtoFail (Action a)
 pluginUnWrapper wrapper =
-    found findUnWrap $ wrapper
+    found findUnWrap wrapper
   where
     findUnWrap =
         find (\(n, _) -> fiName == n) registerUnWrappers

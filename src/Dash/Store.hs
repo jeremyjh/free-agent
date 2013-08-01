@@ -29,30 +29,50 @@ import           Dash.Proto                        (ProtoBuf(..), wrap
 -- A simple, efficient scheme to allow scans of partial keys; structure data up to three layers, for example:
 -- ("accounts","domestic", "petroleum", "CustID-3387020-2") - this would enable you to do efficient queries
 -- to retrieve all accounts, all domestic accounts, all domestric petroleum accounts etc.
-data Key = Key ByteString | KeyPair ByteString ByteString
-         | KeyTri ByteString ByteString ByteString
-         | KeyQuad ByteString ByteString ByteString ByteString
+data Key = Key ByteString
+         | Key2 ByteString ByteString
+         | Key3 ByteString ByteString ByteString
+         | Key4 ByteString ByteString ByteString ByteString
          | KeySpace ByteString Key
          deriving(Show, Eq)
 
-instance IsString Key where fromString = Key . pack
+-- | A Key literal can be expressed in the form:
+--
+-- "keyspace#keypart1:keypart2:keypart3:keypart4"
+instance IsString Key where
+    fromString keyS =
+        case split "#" keyS of
+            [ks, rest] -> KeySpace (pack ks) (splitKey rest)
+            [rest] -> splitKey rest
+            _ -> error "A Key literal can have only one KeySpace #"
+      where
+        splitKey ks =
+            case map pack (split ":" ks) of
+                [k] -> Key k
+                [k1, k2] -> Key2 k1 k2
+                [k1, k2, k3] -> Key3 k1 k2 k3
+                [k1, k2, k3, k4] -> Key4 k1 k2 k3 k4
+                _ -> error "A key literal can have only 4 Keyparts :"
+
 
 -- | Key is up to 4-tuple, padded w/ 0s to become 80 bytes for key scans
 -- A KeySpace ByteString will be pre-pended to the key and is not hashed
 packKey :: Key -> ByteString
 packKey pKey =
     case pKey of
-        KeySpace bs k -> padSpace bs ++ hashKey k
-        k             -> pad 1 ++ hashKey k
+        KeySpace bs k -> padSpace bs ++ hashPad k
+        k             -> pad 1 ++ hashPad k
   where
-    hashKey (Key k) = sha1 k ++ pad 3
-    hashKey (KeyPair k1 k2) = sha1 k1 ++ sha1 k2 ++ pad 2
-    hashKey (KeyTri k1 k2 k3) = sha1 k1 ++ sha1 k2 ++ sha1 k3 ++ pad 1
-    hashKey (KeyQuad k1 k2 k3 k4) = sha1 k1 ++ sha1 k2 ++ sha1 k3 ++ sha1 k4
-    hashKey (KeySpace _ _) = error "nested KeySpace is not supported"
+    hashPad (Key k) = sha1 k ++ pad 3
+    hashPad (Key2 k1 k2) = sha1 k1 ++ sha1 k2 ++ pad 2
+    hashPad (Key3 k1 k2 k3) = sha1 k1 ++ sha1 k2 ++ sha1 k3 ++ pad 1
+    hashPad (Key4 k1 k2 k3 k4) = sha1 k1 ++ sha1 k2 ++ sha1 k3 ++ sha1 k4
+    hashPad (KeySpace _ _) = error "nested KeySpace is not supported"
+
     sha1 = SHA1.hash
-    padSpace = BS.take 20 . (++ pad 1)
-    pad = flip BS.replicate 0 . (*20)
+    padSize = 20
+    pad = flip BS.replicate 0 . (*padSize)
+    padSpace = BS.take padSize . (++ pad 1)
 
 type DB = LDB.DB
 
