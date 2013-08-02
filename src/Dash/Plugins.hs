@@ -2,8 +2,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Dash.Plugins(pluginUnWrapper) where
 
-import           BasicPrelude
-import qualified Prelude                           as P
+import           Dash.Prelude
 import           System.Process                    (readProcess)
 
 import           Dash.Proto
@@ -19,7 +18,7 @@ registerUnWrappers = NS.registerUnWrappers -- ++ ..
 
 pluginUnWrapper :: Wrapper -> Either ProtoFail (Action a)
 pluginUnWrapper wrapper =
-    found findUnWrap $ wrapper
+    found findUnWrap wrapper
   where
     findUnWrap =
         find (\(n, _) -> fiName == n) registerUnWrappers
