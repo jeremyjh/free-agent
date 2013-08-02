@@ -1,9 +1,9 @@
-{-# LANGUAGE NoImplicitPrelude, OverloadedStrings, Rank2Types #-}
+{-# LANGUAGE NoImplicitPrelude, OverloadedStrings, FlexibleInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-} -- for IsString Utf8
 
 module Dash.Proto
-    ( uToString, uFromString
-    , Utf8, utf8, utf8S
+    (
+      Utf8, ConvUtf8(..)
     , defaultValue
     , ProtoBuf(..)
     , messageGet, messagePut
@@ -60,5 +60,16 @@ wrap pb = Wrapper {typeName = typeNameOf pb, value = encodeRaw pb}
 unWrap :: (ProtoBuf a) => Wrapper -> Either ProtoFail a
 unWrap = decodeRaw . value
 
-utf8S :: Utf8 -> ByteString
-utf8S = toStrict . utf8
+-- | Make dealing with the ProtoBuf package's Utf8 type less terrible
+--
+class ConvUtf8 a where
+    toU :: a -> Utf8
+    fromU :: Utf8 -> a
+
+instance ConvUtf8 String where
+    toU = uFromString
+    fromU = uToString
+
+instance ConvUtf8 ByteString where
+    toU = undefined
+    fromU = toStrict . utf8

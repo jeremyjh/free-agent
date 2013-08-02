@@ -19,13 +19,13 @@ registerUnWrappers = [ (".dash.plugins.nagios.proto.Command",
 
 instance ProtoBuf Command
 instance Stashable Command where
-    key cmd = Key $ utf8S $ host cmd
+    key = Key . fromU . host
 
 instance Runnable Command where
     exec cmd =
-        readProcess (uToString $ command cmd) (makeArgs cmd) []
+        readProcess (fromU $ command cmd) (makeArgs cmd) []
             >> return (Complete $ Just "Awesome")
       where
-        makeArgs c = ["-H", uToString $ host c, "-p", portS $ port c]
+        makeArgs c = ["-H", fromU $ host c, "-p", portS $ port c]
         portS (Just p) = showStr p
         portS Nothing = ""
