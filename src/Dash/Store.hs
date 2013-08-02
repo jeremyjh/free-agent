@@ -1,7 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 module Dash.Store
     ( fetch
-    , stash
+    , stash, stashWrapped
     , get, put
     , openDB, DB, ResIO
     , Key(..)
@@ -21,7 +21,8 @@ import qualified Crypto.Hash.SHA1                  as SHA1
 import qualified Database.LevelDB                  as LDB
 
 import           Dash.Proto                        (ProtoBuf(..), wrap
-                                                   ,Wrapper(..), ProtoFail(..))
+                                                   ,Wrapper(..), ProtoFail(..)
+                                                   ,encodeRaw)
 
 
 -- | Key provided in up to four parts.
@@ -86,9 +87,14 @@ class (ProtoBuf a) => Stashable a where
 stash :: Stashable s => DB -> s -> ResIO ()
 stash db s = put db (key s) (toStrict $ encode s)
 
+-- | Wrap and store the ProtoBuf in the database
+--
+stashWrapped :: Stashable s => DB -> s -> ResIO ()
+stashWrapped db s = put db (key s) (toStrict $ encodeRaw $ wrap s)
+
 -- | Fetch the ProtoBuf from the database
 --
-fetch :: (Stashable s) => DB -> Key -> ResIO (Either ProtoFail s)
+fetch :: (ProtoBuf a) => DB -> Key -> ResIO (Either ProtoFail a)
 fetch db k = liftM decode_found $ get db k
   where
     decode_found Nothing = Left $ NotFound (showStr k)

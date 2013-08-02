@@ -2,16 +2,12 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-} -- for IsString Utf8
 
 module Dash.Proto
-    ( uToString
-    , uFromString
-    , Utf8
-    , utf8
+    ( uToString, uFromString
+    , Utf8, utf8, utf8S
     , defaultValue
     , ProtoBuf(..)
-    , messageGet
-    , messagePut
-    , ReflectDescriptor(..)
-    , Wire(..)
+    , messageGet, messagePut
+    , ReflectDescriptor(..), Wire(..)
     , Wrapper(..)
     , wrap
     , unWrap
@@ -38,8 +34,8 @@ class (ReflectDescriptor a, Wire a, Typeable a, Eq a, Show a) => ProtoBuf a wher
     encode :: a -> LByteString
     decode :: LByteString -> Either ProtoFail a
 
-    encode = encodeRaw . wrap
-    decode = unWrap <=< decodeRaw
+    encode = encodeRaw
+    decode = decodeRaw
 
 data ProtoFail = BytesLeftover | ParseFail String | NotFound String deriving (Show, Eq)
 
@@ -63,3 +59,6 @@ wrap pb = Wrapper {typeName = typeNameOf pb, value = encodeRaw pb}
 
 unWrap :: (ProtoBuf a) => Wrapper -> Either ProtoFail a
 unWrap = decodeRaw . value
+
+utf8S :: Utf8 -> ByteString
+utf8S = toStrict . utf8

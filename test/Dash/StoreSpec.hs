@@ -21,6 +21,8 @@ spec =
             withDB stash checkTCP >>= shouldReturn (return())
         it "reads Commands from the DB" $
             withDB fetch "jeremyhuffman.com" >>= shouldBe (Right checkTCP)
+        it "writes wrapped Commands to the DB" $
+            withDB stashWrapped checkTCP >>= shouldReturn (return())
         it "reads Commands from the DB as Action" $
             withDB fetchAction "jeremyhuffman.com" >>= shouldBe (Right $ Action checkTCP)
         it "can read an Action from the DB and execute it" $ do

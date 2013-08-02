@@ -32,7 +32,7 @@ instance Wire (Action a) where
     wireGet = error "Cannot wireGet on an Action directly"
 
 instance ProtoBuf (Action a) where
-    encode (Action s) = encode s
+    encode = encodeRaw . wrap
     decode bs = decodeRaw bs >>= pluginUnWrapper
 
 instance Stashable (Action a) where

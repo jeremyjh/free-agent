@@ -1,9 +1,9 @@
-{-# LANGUAGE NoImplicitPrelude, OverloadedStrings, FlexibleContexts #-}
+{-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-module Dash.Plugins.Nagios(NC.Command(..), registerUnWrappers) where
+module Dash.Plugins.Nagios(Command(..), registerUnWrappers) where
 
 import           Dash.Prelude
-import qualified Dash.Plugins.Nagios.Proto.Command as NC
+import           Dash.Plugins.Nagios.Proto.Command
 import           {-# SOURCE #-}
                  Dash.Action                       (Action(..), unWrapAction)
 import           Dash.Proto
@@ -13,19 +13,19 @@ import           System.Process                    (readProcess)
 
 registerUnWrappers :: [(Utf8, Wrapper -> Either ProtoFail (Action a))]
 registerUnWrappers = [ (".dash.plugins.nagios.proto.Command",
-                          unWrapAction (unWrap :: Wrapper -> Either ProtoFail NC.Command) )
+                          unWrapAction (unWrap :: Wrapper -> Either ProtoFail Command) )
                      ]
 
 
-instance ProtoBuf NC.Command
-instance Stashable NC.Command where
-    key cmd = Key $ toStrict $ utf8 $ NC.host cmd
+instance ProtoBuf Command
+instance Stashable Command where
+    key cmd = Key $ utf8S $ host cmd
 
-instance Runnable NC.Command where
+instance Runnable Command where
     exec cmd =
-        readProcess (uToString $ NC.command cmd) (makeArgs cmd) []
+        readProcess (uToString $ command cmd) (makeArgs cmd) []
             >> return (Complete $ Just "Awesome")
       where
-        makeArgs c = ["-H", uToString $ NC.host c, "-p", port $ NC.port c]
-        port (Just p) = showStr p
-        port Nothing = ""
+        makeArgs c = ["-H", uToString $ host c, "-p", portS $ port c]
+        portS (Just p) = showStr p
+        portS Nothing = ""
