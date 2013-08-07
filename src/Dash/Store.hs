@@ -3,6 +3,8 @@ module Dash.Store
     ( fetch
     , stash, stashWrapped
     , get, put
+    , runDB, DBContext(..), putR, getR
+    , fetchR, stashR, stashWrappedR
     , openDB, DB, ResIO
     , Key(..)
     , Stashable(..)
@@ -11,7 +13,9 @@ module Dash.Store
 import           Dash.Prelude
 import           Control.Monad
 import           Control.Monad.IO.Class            (liftIO)
-import           Control.Monad.Trans.Resource      (release, ResIO)
+import           Control.Monad.Trans.Resource      (release, ResourceT, ResIO, liftResourceT, runResourceT)
+import           Control.Monad.Trans.Reader
+
 import           Data.ByteString.Char8             (pack)
 import qualified Data.ByteString                   as BS
 import           Data.Default                      (def)
@@ -55,6 +59,7 @@ instance IsString Key where
                 [k1, k2, k3, k4] -> Key4 k1 k2 k3 k4
                 _ -> error "A key literal can have only 4 Keyparts :"
 
+type Value = ByteString
 
 -- | Key is up to 4-tuple, padded w/ 0s to become 80 bytes for key scans
 -- A KeySpace ByteString will be pre-pended to the key and is not hashed
@@ -100,12 +105,56 @@ fetch db k = liftM decode_found $ get db k
     decode_found Nothing = Left $ NotFound (showStr k)
     decode_found (Just bs) = decode $ toLazy bs
 
-put :: DB -> Key -> ByteString -> ResIO ()
+put :: DB -> Key -> Value -> ResIO ()
 put db k = LDB.put db def $ packKey k
 
-get :: DB -> Key -> ResIO (Maybe ByteString)
+get :: DB -> Key -> ResIO (Maybe Value)
 get db k = LDB.get db def $ packKey k
 
 openDB :: FilePathS -> ResIO DB
 openDB path =  LDB.open path
     LDB.defaultOptions{LDB.createIfMissing = True, LDB.cacheSize= 2048}
+
+-- | Reader-based data context API
+data DBContext = DBContext { dbConn :: DB, keySpace :: ByteString }
+type DBContextIO a = ReaderT DBContext (ResourceT IO) a
+
+runDB :: FilePathS -> ByteString -> DBContextIO a -> IO a
+runDB dbPath ks ioa = runResourceT $ do
+    db <- openDB dbPath
+    runReaderT ioa DBContext {dbConn = db, keySpace = ks}
+
+putR :: Key -> Value -> DBContextIO ()
+putR k v = do
+    (db, kSP) <- getDB
+    liftResourceT $ put db (KeySpace kSP k) v
+
+stashR :: (Stashable s) => s -> DBContextIO ()
+stashR s = do
+    (db, kSP) <- getDB
+    liftResourceT $
+        put db (KeySpace kSP (key s))
+               (toStrict $ encode s)
+
+stashWrappedR :: (Stashable s) => s -> DBContextIO ()
+stashWrappedR s = do
+    (db, kSP) <- getDB
+    liftResourceT $
+        put db (KeySpace kSP (key s))
+               (toStrict $ encodeRaw $ wrap s)
+
+getR :: Key -> DBContextIO (Maybe Value)
+getR k = do
+    (db, kSP) <- getDB
+    liftResourceT $ get db (KeySpace kSP k)
+
+fetchR :: (ProtoBuf a) => Key -> DBContextIO (Either ProtoFail a)
+fetchR k = do
+    (db, kSP) <- getDB
+    liftResourceT $ fetch db (KeySpace kSP k)
+
+getDB :: DBContextIO (DB, ByteString)
+getDB = do
+    db <- map dbConn ask
+    kSP <- map keySpace ask
+    return (db, kSP)

@@ -1,25 +1,34 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
-module Dash(dashMain,doThing) where
+module Dash(dashMain) where
 
-import           BasicPrelude
-import           Control.Concurrent
-    (forkIO, threadDelay, threadCapability, myThreadId)
-import           System.Process(readProcess)
-import           Data.Text(pack)
+import qualified Data.ByteString.Char8             as BS
+import           Control.Monad.Trans.Resource      (release, ResIO, runResourceT)
+
+import           Dash.Prelude
+import           Dash.Proto
+import           Dash.Store
+import           Dash.Plugins.Nagios
+
+import           Data.Default
+import           Database.LevelDB hiding (get, put)
+
+import           Control.Monad.Reader
 
 dashMain :: IO ()
-dashMain = do
-    void $ forkIO (doThing >>= putStrLn)
-    void $ forkIO saySomething
-    delaySeconds 1
-    saySomething
-  where
-    delaySeconds n = threadDelay (n * 1000000)
-    saySomething = do
-        myThreadId >>= threadCapability >>= print
-        putStrLn "I just want to say"
-        delaySeconds 2
-        putStrLn "Something"
+dashMain =  do
+    runDB "/tmp/leveltest10" "hello" $ do
+        putR "first" "firstvalue"
+        putR "second" "secondvalue"
 
-doThing :: IO Text
-doThing = pack <$> readProcess "./thing.sh" [] []
+    {-(Just val) <- get db "hello#first"-}
+    {-liftIO $ BS.putStrLn val-}
+    {-put db def "hello" "something"-}
+
+    {-(Right wrapper) <- fetch db "jeremyhuffman.com"-}
+    {-let (Right cmd) = unWrap wrapper-}
+    {-liftIO $ BS.putStrLn $ fromU $ host cmd-}
+    return ()
+  where
+    printIt iter = do
+        (Just v) <- iterValue iter
+        liftIO $ BS.putStrLn v

@@ -18,6 +18,7 @@ library
                    , Dash.Plugins.Nagios
                    , Dash.Plugins.Nagios.Proto
                    , Dash.Plugins.Nagios.Proto.Command
+                   , Dash.Plugins.Nagios.Proto.Host
                    , Dash.Action
                    , Dash.Plugins
 
@@ -36,20 +37,29 @@ library
                    , transformers
                    , cryptohash
                    , MissingH
+                   , mtl
 
 executable dashhs
-  ghc-options:       -Wall -Werror -threaded -with-rtsopts=-N -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
+  ghc-options:       -Wall -Werror -fno-warn-unused-imports -threaded -with-rtsopts=-N -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
   main-is:           Main.hs
-  build-depends:      base ==4.5.*
-                    , process -any
-                    , dashhs 
-                    , text
-                    , text-format
-                    , basic-prelude
-                    , bytestring
-                    , protocol-buffers
-                    , protocol-buffers-descriptor
   hs-source-dirs:     src
+  build-depends:     dashhs
+                   , base == 4.*
+                   , process
+                   , text
+                   , text-format
+                   , basic-prelude
+                   , protocol-buffers
+                   , protocol-buffers-descriptor
+                   , utf8-string
+                   , bytestring
+                   , leveldb-haskell
+                   , data-default
+                   , resourcet
+                   , transformers
+                   , cryptohash
+                   , MissingH
+                   , mtl
 
 test-suite spec
   ghc-options:       -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
