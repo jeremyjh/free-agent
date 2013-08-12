@@ -3,7 +3,8 @@ module Dash.Store
     ( fetch
     , stash, stashWrapped
     , get, put
-    , runDB, DBContext(..), putR, getR
+    , withDBContext, withKeySpace
+    , putR, getR
     , fetchR, stashR, stashWrappedR
     , openDB, DB, ResIO
     , Key(..)
@@ -112,45 +113,51 @@ openDB path =  LDB.open path
     LDB.defaultOptions{LDB.createIfMissing = True, LDB.cacheSize= 2048}
 
 -- | Reader-based data context API
-data DBContext = DBContext { dbConn :: DB, keySpace :: ByteString }
+--
+-- Context contains database handle and KeySpace
+data DBContext = DBC DB ByteString
 type DBContextIO a = ReaderT DBContext (ResourceT IO) a
 
-runDB :: FilePathS -> ByteString -> DBContextIO a -> IO a
-runDB dbPath ks ioa = runResourceT $ do
+setKeySpace :: ByteString -> DBContext -> DBContext
+setKeySpace ks (DBC db _) = DBC db ks
+
+-- | Specify a filepath to use for the database (will create if not there)
+-- Also specify a keyspace in which keys will be guaranteed unique
+withDBContext :: FilePathS -> ByteString -> DBContextIO a -> IO a
+withDBContext dbPath ks ctx = runResourceT $ do
     db <- openDB dbPath
-    runReaderT ioa DBContext {dbConn = db, keySpace = ks}
+    runReaderT ctx $ DBC db ks
+
+-- | Override keyspace with a local keyspace for an (block) action(s)
+--
+withKeySpace :: ByteString -> DBContextIO a -> DBContextIO a
+withKeySpace ks = do local (setKeySpace ks)
 
 putR :: Key -> ByteString -> DBContextIO ()
 putR k v = do
-    (db, kSP) <- getDB
-    liftResourceT $ put db (KeySpace kSP k) v
+    DBC db ks <- ask
+    liftResourceT $ put db (KeySpace ks k) v
 
 stashR :: (Stashable s) => s -> DBContextIO ()
 stashR s = do
-    (db, kSP) <- getDB
+    DBC db ks <- ask
     liftResourceT $
-        put db (KeySpace kSP (key s))
+        put db (KeySpace ks (key s))
                (toStrict $ encode s)
 
 stashWrappedR :: (Stashable s) => s -> DBContextIO ()
 stashWrappedR s = do
-    (db, kSP) <- getDB
+    DBC db ks <- ask
     liftResourceT $
-        put db (KeySpace kSP (key s))
+        put db (KeySpace ks (key s))
                (toStrict $ encodeRaw $ wrap s)
 
 getR :: Key -> DBContextIO (Maybe ByteString)
 getR k = do
-    (db, kSP) <- getDB
-    liftResourceT $ get db (KeySpace kSP k)
+    DBC db ks <- ask
+    liftResourceT $ get db (KeySpace ks k)
 
 fetchR :: (ProtoBuf a) => Key -> DBContextIO (Either ProtoFail a)
 fetchR k = do
-    (db, kSP) <- getDB
-    liftResourceT $ fetch db (KeySpace kSP k)
-
-getDB :: DBContextIO (DB, ByteString)
-getDB = do
-    db <- map dbConn ask
-    kSP <- map keySpace ask
-    return (db, kSP)
+    DBC db ks <- ask
+    liftResourceT $ fetch db (KeySpace ks k)

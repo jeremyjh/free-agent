@@ -40,14 +40,18 @@ spec =
         describe "has a reader context API that" $
             it "is awesome" $ do
                 (Just simple, Right proto)
-                    <- runDB "/tmp/leveltest" "awesome" $ do
+                    <- withDBContext testDB "awesome" $ do
                         putR "thekey" "thevalue"
+                        withKeySpace "otherspace" $ do
+                            putR "thekey" "othervalue"
                         simple <- getR "thekey"
                         stashWrappedR checkTCP
                         proto <- fetchR "jeremyhuffman.com"
                         return (simple, join $ map unWrap proto)
                 simple `shouldBe` "thevalue"
                 proto `shouldBe` checkTCP
+
+testDB = "/tmp/leveltest"
 
 fetchProtoNC :: DB -> Key -> ResIO (Either ProtoFail NC.Command)
 fetchProtoNC = fetch
