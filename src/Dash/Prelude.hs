@@ -3,11 +3,12 @@
 module Dash.Prelude
     (
       module BasicPrelude
-    , tee
     , showStr
     , toLazy, toStrict
     , split
     , FilePathS
+    , debug
+    , dbg
     ) where
 
 import           BasicPrelude
@@ -17,11 +18,9 @@ import qualified Prelude              as P
 import           Debug.Trace          (traceShow)
 
 import           Data.String.Utils    (split)
+import           Debug.FileLocation
 
 
-
-tee :: (Show a) => a -> a
-tee = join traceShow
 
 showStr :: (Show a) => a -> String
 showStr = P.show

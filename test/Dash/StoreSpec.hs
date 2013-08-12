@@ -37,16 +37,17 @@ spec =
             it "will fail to deserialize if data is not a protobuf" $ do
                 (Left (ParseFail msg)) <- withDB fetchProtoNC "somekey"
                 take 25 msg `shouldBe` "Failed at 1 : Text.Protoc"
-        describe "has a reader context API that" $ do
+        describe "has a reader context API that" $
             it "is awesome" $ do
-               (Just simple, Right proto) <- runDB "/tmp/leveltest" "awesome" $ do
-                    putR "thekey" "thevalue"
-                    simple <- getR "thekey"
-                    stashWrappedR checkTCP
-                    proto <- fetchR "jeremyhuffman.com"
-                    return (simple, join $ map unWrap proto)
-               simple `shouldBe` "thevalue"
-               proto `shouldBe` checkTCP
+                (Just simple, Right proto)
+                    <- runDB "/tmp/leveltest" "awesome" $ do
+                        putR "thekey" "thevalue"
+                        simple <- getR "thekey"
+                        stashWrappedR checkTCP
+                        proto <- fetchR "jeremyhuffman.com"
+                        return (simple, join $ map unWrap proto)
+                simple `shouldBe` "thevalue"
+                proto `shouldBe` checkTCP
 
 fetchProtoNC :: DB -> Key -> ResIO (Either ProtoFail NC.Command)
 fetchProtoNC = fetch

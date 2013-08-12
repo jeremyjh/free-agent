@@ -38,6 +38,7 @@ library
                    , cryptohash
                    , MissingH
                    , mtl
+                   , file-location
 
 executable dashhs
   ghc-options:       -Wall -Werror -fno-warn-unused-imports -threaded -with-rtsopts=-N -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
@@ -60,6 +61,7 @@ executable dashhs
                    , cryptohash
                    , MissingH
                    , mtl
+                   , file-location
 
 test-suite spec
   ghc-options:       -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags

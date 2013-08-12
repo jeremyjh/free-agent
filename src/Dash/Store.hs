@@ -27,8 +27,6 @@ import qualified Database.LevelDB                  as LDB
 import           Dash.Proto                        (ProtoBuf(..), wrap
                                                    ,Wrapper(..), ProtoFail(..)
                                                    ,encodeRaw)
-
-
 -- | Key provided in up to four parts.
 --
 -- A simple, efficient scheme to allow scans of partial keys; structure data up to three layers, for example:
@@ -58,8 +56,6 @@ instance IsString Key where
                 [k1, k2, k3] -> Key3 k1 k2 k3
                 [k1, k2, k3, k4] -> Key4 k1 k2 k3 k4
                 _ -> error "A key literal can have only 4 Keyparts :"
-
-type Value = ByteString
 
 -- | Key is up to 4-tuple, padded w/ 0s to become 80 bytes for key scans
 -- A KeySpace ByteString will be pre-pended to the key and is not hashed
@@ -105,10 +101,10 @@ fetch db k = liftM decode_found $ get db k
     decode_found Nothing = Left $ NotFound (showStr k)
     decode_found (Just bs) = decode $ toLazy bs
 
-put :: DB -> Key -> Value -> ResIO ()
+put :: DB -> Key -> ByteString -> ResIO ()
 put db k = LDB.put db def $ packKey k
 
-get :: DB -> Key -> ResIO (Maybe Value)
+get :: DB -> Key -> ResIO (Maybe ByteString)
 get db k = LDB.get db def $ packKey k
 
 openDB :: FilePathS -> ResIO DB
@@ -124,7 +120,7 @@ runDB dbPath ks ioa = runResourceT $ do
     db <- openDB dbPath
     runReaderT ioa DBContext {dbConn = db, keySpace = ks}
 
-putR :: Key -> Value -> DBContextIO ()
+putR :: Key -> ByteString -> DBContextIO ()
 putR k v = do
     (db, kSP) <- getDB
     liftResourceT $ put db (KeySpace kSP k) v
@@ -143,7 +139,7 @@ stashWrappedR s = do
         put db (KeySpace kSP (key s))
                (toStrict $ encodeRaw $ wrap s)
 
-getR :: Key -> DBContextIO (Maybe Value)
+getR :: Key -> DBContextIO (Maybe ByteString)
 getR k = do
     (db, kSP) <- getDB
     liftResourceT $ get db (KeySpace kSP k)
