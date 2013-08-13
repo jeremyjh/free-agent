@@ -5,7 +5,7 @@ module Dash.Action (Action(..), unWrapAction, fetchAction) where
 import           Dash.Prelude
 import qualified Prelude as P
 import           Data.Typeable  (mkTyConApp, mkTyCon3, TypeRep)
-import           Dash.Store     (Stashable(..), Key(..), DB, fetch, ResIO)
+import           Dash.Store     (Stashable(..), Key(..), fetchR, DBContextIO)
 import           Dash.Runner    (Runnable(..))
 import           Dash.Proto
 import           Dash.Plugins   (pluginUnWrapper)
@@ -53,5 +53,5 @@ unWrapAction f wrapper = fmap Action (f wrapper)
 
 -- | Convenience function to fix type to Action a
 --
-fetchAction :: DB -> Key -> ResIO (Either ProtoFail (Action a))
-fetchAction = fetch
+fetchAction :: Key -> DBContextIO (Either ProtoFail (Action a))
+fetchAction = fetchR

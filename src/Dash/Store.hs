@@ -3,7 +3,7 @@ module Dash.Store
     ( fetch
     , stash, stashWrapped
     , get, put
-    , withDBContext, withKeySpace
+    , DBContextIO, withDBContext, withKeySpace
     , putR, getR
     , fetchR, stashR, stashWrappedR
     , openDB, DB, ResIO

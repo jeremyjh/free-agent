@@ -20,22 +20,24 @@ spec =
     describe "Dash.Store" $ do
         describe "has a simple API that" $ do
             it "writes Commands to the DB" $
-                withDB stash checkTCP >>= shouldReturn (return())
+                withDBT (stashR checkTCP) >>= shouldReturn (return())
             it "reads Commands from the DB" $
-                withDB fetch "jeremyhuffman.com" >>= shouldBe (Right checkTCP)
+                withDBT (fetchR "jeremyhuffman.com") >>= shouldBe (Right checkTCP)
             it "writes wrapped Commands to the DB" $
-                withDB stashWrapped checkTCP >>= shouldReturn (return())
-            it "reads Commands from the DB as Action" $
-                withDB fetchAction "jeremyhuffman.com" >>= shouldBe (Right $ Action checkTCP)
+                withDBT (stashWrappedR checkTCP) >>= shouldReturn (return())
+            it "reads Commands from the DB as Action" $ do
+                action <- withDBT (fetchAction "jeremyhuffman.com")
+                action `shouldBe` (Right $ Action checkTCP)
             it "can read an Action from the DB and execute it" $ do
-                (Right action) <- withDB fetchAction "jeremyhuffman.com"
+                (Right action) <- withDBT (fetchAction "jeremyhuffman.com")
                 exec action >>= shouldBe (Complete $ Just "Awesome")
-            it "will fail to read if key is wrong" $
-                withDB fetchProtoNC "notgonnamatch" >>= shouldBe (Left (NotFound "Key \"notgonnamatch\""))
+            it "will fail to read if key is wrong" $ do
+                (Left (NotFound _)) <- withDBT (fetchProtoNC "notgonnamatch")
+                True `shouldBe` True -- NOT exception
             it "can write an arbitrary bytestring" $
-                withDB2 put "somekey" "somevalue" >>= shouldReturn (return ())
+                withDBT (putR "somekey" "somevalue") >>= shouldReturn (return ())
             it "will fail to deserialize if data is not a protobuf" $ do
-                (Left (ParseFail msg)) <- withDB fetchProtoNC "somekey"
+                (Left (ParseFail msg)) <- withDBT (fetchProtoNC "somekey")
                 take 25 msg `shouldBe` "Failed at 1 : Text.Protoc"
         describe "has a reader context API that" $
             it "is awesome" $ do
@@ -53,18 +55,11 @@ spec =
 
 testDB = "/tmp/leveltest"
 
-fetchProtoNC :: DB -> Key -> ResIO (Either ProtoFail NC.Command)
-fetchProtoNC = fetch
+withDBT :: DBContextIO a -> IO a
+withDBT = withDBContext testDB "Dash.StoreSpec"
 
-withDB2 :: (DB -> a -> b -> ResIO c) -> a -> b -> IO c
-withDB2 f a b = runResourceT $ do
-    db <- openDB "/tmp/leveltest"
-    f db a b
-
-withDB :: (DB -> a -> ResIO b) -> a -> IO b
-withDB f a = runResourceT $ do
-    db <- openDB "/tmp/leveltest"
-    f db a
+fetchProtoNC :: Key -> DBContextIO (Either ProtoFail NC.Command)
+fetchProtoNC = fetchR
 
 checkTCP = NC.Command { NC.command = "/usr/lib/nagios/plugins/check_tcp"
                   , NC.host = "jeremyhuffman.com"
