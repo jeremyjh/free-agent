@@ -4,7 +4,7 @@ module Dash.Store
     , stash, stashWrapped
     , get, put
     , DBContextIO, withDBContext, withKeySpace
-    , openDB, DB, ResIO
+    , openDB
     , Key(..)
     , Stashable(..)
     ) where
@@ -105,7 +105,7 @@ withDBContext dbPath ks ctx = runResourceT $ do
 -- | Override keyspace with a local keyspace for an (block) action(s)
 --
 withKeySpace :: ByteString -> DBContextIO a -> DBContextIO a
-withKeySpace ks = do local (setKeySpace ks)
+withKeySpace ks = local (setKeySpace ks)
 
 put :: Key -> ByteString -> DBContextIO ()
 put k v = do
@@ -120,13 +120,13 @@ get k = do
 -- | Store the ProtoBuf in the database
 --
 stash :: (Stashable s) => s -> DBContextIO ()
-stash s = do
+stash s =
     put (key s) (toStrict $ encode s)
 
 -- | Fetch the ProtoBuf from the database
 --
 fetch :: (ProtoBuf a) => Key -> DBContextIO (Either ProtoFail a)
-fetch k = do
+fetch k =
     map decode_found $ get k
   where
     decode_found Nothing = Left $ NotFound (showStr k)
@@ -135,7 +135,7 @@ fetch k = do
 -- | Wrap and store the ProtoBuf in the database
 --
 stashWrapped :: (Stashable s) => s -> DBContextIO ()
-stashWrapped s = do
+stashWrapped s =
     put (key s) (toStrict $ encodeRaw $ wrap s)
 
 put' :: DB -> Key -> ByteString -> ResIO ()
