@@ -4,8 +4,6 @@ module Dash.Store
     , stash, stashWrapped
     , get, put
     , DBContextIO, withDBContext, withKeySpace
-    , putR, getR
-    , fetchR, stashR, stashWrappedR
     , openDB, DB, ResIO
     , Key(..)
     , Stashable(..)
@@ -84,30 +82,6 @@ type DB = LDB.DB
 class (ProtoBuf a) => Stashable a where
     key :: a -> Key
 
--- | Store the ProtoBuf in the database
---
-stash :: Stashable s => DB -> s -> ResIO ()
-stash db s = put db (key s) (toStrict $ encode s)
-
--- | Wrap and store the ProtoBuf in the database
---
-stashWrapped :: Stashable s => DB -> s -> ResIO ()
-stashWrapped db s = put db (key s) (toStrict $ encodeRaw $ wrap s)
-
--- | Fetch the ProtoBuf from the database
---
-fetch :: (ProtoBuf a) => DB -> Key -> ResIO (Either ProtoFail a)
-fetch db k = liftM decode_found $ get db k
-  where
-    decode_found Nothing = Left $ NotFound (showStr k)
-    decode_found (Just bs) = decode $ toLazy bs
-
-put :: DB -> Key -> ByteString -> ResIO ()
-put db k = LDB.put db def $ packKey k
-
-get :: DB -> Key -> ResIO (Maybe ByteString)
-get db k = LDB.get db def $ packKey k
-
 openDB :: FilePathS -> ResIO DB
 openDB path =  LDB.open path
     LDB.defaultOptions{LDB.createIfMissing = True, LDB.cacheSize= 2048}
@@ -133,31 +107,39 @@ withDBContext dbPath ks ctx = runResourceT $ do
 withKeySpace :: ByteString -> DBContextIO a -> DBContextIO a
 withKeySpace ks = do local (setKeySpace ks)
 
-putR :: Key -> ByteString -> DBContextIO ()
-putR k v = do
+put :: Key -> ByteString -> DBContextIO ()
+put k v = do
     DBC db ks <- ask
-    liftResourceT $ put db (KeySpace ks k) v
+    liftResourceT $ put' db (KeySpace ks k) v
 
-stashR :: (Stashable s) => s -> DBContextIO ()
-stashR s = do
+get :: Key -> DBContextIO (Maybe ByteString)
+get k = do
     DBC db ks <- ask
-    liftResourceT $
-        put db (KeySpace ks (key s))
-               (toStrict $ encode s)
+    liftResourceT $ get' db (KeySpace ks k)
 
-stashWrappedR :: (Stashable s) => s -> DBContextIO ()
-stashWrappedR s = do
-    DBC db ks <- ask
-    liftResourceT $
-        put db (KeySpace ks (key s))
-               (toStrict $ encodeRaw $ wrap s)
+-- | Store the ProtoBuf in the database
+--
+stash :: (Stashable s) => s -> DBContextIO ()
+stash s = do
+    put (key s) (toStrict $ encode s)
 
-getR :: Key -> DBContextIO (Maybe ByteString)
-getR k = do
-    DBC db ks <- ask
-    liftResourceT $ get db (KeySpace ks k)
+-- | Fetch the ProtoBuf from the database
+--
+fetch :: (ProtoBuf a) => Key -> DBContextIO (Either ProtoFail a)
+fetch k = do
+    map decode_found $ get k
+  where
+    decode_found Nothing = Left $ NotFound (showStr k)
+    decode_found (Just bs) = decode $ toLazy bs
 
-fetchR :: (ProtoBuf a) => Key -> DBContextIO (Either ProtoFail a)
-fetchR k = do
-    DBC db ks <- ask
-    liftResourceT $ fetch db (KeySpace ks k)
+-- | Wrap and store the ProtoBuf in the database
+--
+stashWrapped :: (Stashable s) => s -> DBContextIO ()
+stashWrapped s = do
+    put (key s) (toStrict $ encodeRaw $ wrap s)
+
+put' :: DB -> Key -> ByteString -> ResIO ()
+put' db k = LDB.put db def $ packKey k
+
+get' :: DB -> Key -> ResIO (Maybe ByteString)
+get' db k = LDB.get db def $ packKey k

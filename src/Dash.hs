@@ -17,8 +17,8 @@ import           Control.Monad.Reader
 dashMain :: IO ()
 dashMain =  do
     withDBContext "/tmp/leveltest10" "hello" $ do
-        putR "first" "firstvalue"
-        putR "second" "secondvalue"
+        put "first" "firstvalue"
+        put "second" "secondvalue"
 
     return ()
   where
