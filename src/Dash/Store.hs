@@ -4,8 +4,7 @@ module Dash.Store
     , stash, stashWrapped
     , get, put
     , DBContextIO, withDBContext, withKeySpace
-    , openDB
-    , Key(..)
+    , Key, KeySpace
     , Stashable(..)
     ) where
 
@@ -28,52 +27,12 @@ import           Dash.Proto                        (ProtoBuf(..), wrap
                                                    ,encodeRaw)
 -- | Key provided in up to four parts.
 --
--- A simple, efficient scheme to allow scans of partial keys; structure data up to three layers, for example:
--- ("accounts","domestic", "petroleum", "CustID-3387020-2") - this would enable you to do efficient queries
--- to retrieve all accounts, all domestic accounts, all domestric petroleum accounts etc.
-data Key = Key ByteString
-         | Key2 ByteString ByteString
-         | Key3 ByteString ByteString ByteString
-         | Key4 ByteString ByteString ByteString ByteString
-         | KeySpace ByteString Key
-         deriving(Show, Eq)
+type Key = ByteString
+type KeySpace = ByteString
 
--- | A Key literal can be expressed in the form:
---
--- "keyspace#keypart1:keypart2:keypart3:keypart4"
-instance IsString Key where
-    fromString keyS =
-        case split "#" keyS of
-            [ks, rest] -> KeySpace (pack ks) (splitKey rest)
-            [rest] -> splitKey rest
-            _ -> error "A Key literal can have only one KeySpace #"
-      where
-        splitKey ks =
-            case map pack (split ":" ks) of
-                [k] -> Key k
-                [k1, k2] -> Key2 k1 k2
-                [k1, k2, k3] -> Key3 k1 k2 k3
-                [k1, k2, k3, k4] -> Key4 k1 k2 k3 k4
-                _ -> error "A key literal can have only 4 Keyparts :"
-
--- | Key is up to 4-tuple, padded w/ 0s to become 80 bytes for key scans
--- A KeySpace ByteString will be pre-pended to the key and is not hashed
-packKey :: Key -> ByteString
-packKey pKey =
-    case pKey of
-        KeySpace bs k -> padSpace bs ++ hashPad k
-        k             -> pad 1 ++ hashPad k
-  where
-    hashPad (Key k) = sha1 k ++ pad 3
-    hashPad (Key2 k1 k2) = sha1 k1 ++ sha1 k2 ++ pad 2
-    hashPad (Key3 k1 k2 k3) = sha1 k1 ++ sha1 k2 ++ sha1 k3 ++ pad 1
-    hashPad (Key4 k1 k2 k3 k4) = sha1 k1 ++ sha1 k2 ++ sha1 k3 ++ sha1 k4
-    hashPad (KeySpace _ _) = error "nested KeySpace is not supported"
-
-    sha1 = SHA1.hash
-    padSize = 20
-    pad = flip BS.replicate 0 . (*padSize)
-    padSpace = BS.take padSize . (++ pad 1)
+-- | Lookup the KeySpace ID and pre-pend it to the Key
+packKey :: Key -> KeySpace -> ByteString
+packKey k ks = BS.take 4 ks ++ k
 
 type DB = LDB.DB
 
@@ -85,7 +44,7 @@ class (ProtoBuf a) => Stashable a where
 openDB :: FilePathS -> ResIO DB
 openDB path =
     LDB.open path
-    LDB.defaultOptions{LDB.createIfMissing = True, LDB.cacheSize= 2048}
+        LDB.defaultOptions{LDB.createIfMissing = True, LDB.cacheSize= 2048}
 
 -- | Reader-based data context API
 --
@@ -111,13 +70,13 @@ withKeySpace ks = local (setKeySpace ks)
 put :: Key -> ByteString -> DBContextIO ()
 put k v = do
     DBC db ks <- ask
-    let pk = packKey (KeySpace ks k)
+    let pk = packKey k ks
     liftResourceT $ LDB.put db def pk v
 
 get :: Key -> DBContextIO (Maybe ByteString)
 get k = do
     DBC db ks <- ask
-    let pk = packKey (KeySpace ks k)
+    let pk = packKey k ks
     liftResourceT $ LDB.get db def pk
 
 -- | Store the ProtoBuf in the database

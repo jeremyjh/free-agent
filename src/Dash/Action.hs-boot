@@ -4,7 +4,7 @@ module Dash.Action(Action(..), unWrapAction) where
 
 import           BasicPrelude
 import           Dash.Proto                       (Wrapper(..), ProtoFail)
-import           Dash.Store                       (Stashable(..), Key(..))
+import           Dash.Store                       (Stashable(..))
 import           Dash.Runner                      (Runnable(..))
 import           Data.Typeable                    (Typeable(..))
 

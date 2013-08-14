@@ -5,7 +5,7 @@ module Dash.Action (Action(..), unWrapAction, fetchAction) where
 import           Dash.Prelude
 import qualified Prelude as P
 import           Data.Typeable  (mkTyConApp, mkTyCon3, TypeRep)
-import           Dash.Store     (Stashable(..), Key(..), fetch, DBContextIO)
+import           Dash.Store     (Stashable(..), Key, fetch, DBContextIO)
 import           Dash.Runner    (Runnable(..))
 import           Dash.Proto
 import           Dash.Plugins   (pluginUnWrapper)
