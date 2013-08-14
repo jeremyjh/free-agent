@@ -83,7 +83,8 @@ class (ProtoBuf a) => Stashable a where
     key :: a -> Key
 
 openDB :: FilePathS -> ResIO DB
-openDB path =  LDB.open path
+openDB path =
+    LDB.open path
     LDB.defaultOptions{LDB.createIfMissing = True, LDB.cacheSize= 2048}
 
 -- | Reader-based data context API
@@ -110,24 +111,24 @@ withKeySpace ks = local (setKeySpace ks)
 put :: Key -> ByteString -> DBContextIO ()
 put k v = do
     DBC db ks <- ask
-    liftResourceT $ put' db (KeySpace ks k) v
+    let pk = packKey (KeySpace ks k)
+    liftResourceT $ LDB.put db def pk v
 
 get :: Key -> DBContextIO (Maybe ByteString)
 get k = do
     DBC db ks <- ask
-    liftResourceT $ get' db (KeySpace ks k)
+    let pk = packKey (KeySpace ks k)
+    liftResourceT $ LDB.get db def pk
 
 -- | Store the ProtoBuf in the database
 --
 stash :: (Stashable s) => s -> DBContextIO ()
-stash s =
-    put (key s) (toStrict $ encode s)
+stash s = put (key s) (toStrict $ encode s)
 
 -- | Fetch the ProtoBuf from the database
 --
 fetch :: (ProtoBuf a) => Key -> DBContextIO (Either ProtoFail a)
-fetch k =
-    map decode_found $ get k
+fetch k = map decode_found $ get k
   where
     decode_found Nothing = Left $ NotFound (showStr k)
     decode_found (Just bs) = decode $ toLazy bs
@@ -137,9 +138,3 @@ fetch k =
 stashWrapped :: (Stashable s) => s -> DBContextIO ()
 stashWrapped s =
     put (key s) (toStrict $ encodeRaw $ wrap s)
-
-put' :: DB -> Key -> ByteString -> ResIO ()
-put' db k = LDB.put db def $ packKey k
-
-get' :: DB -> Key -> ResIO (Maybe ByteString)
-get' db k = LDB.get db def $ packKey k
