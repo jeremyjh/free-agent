@@ -3,7 +3,6 @@
 module Dash.Plugins(pluginUnWrapper) where
 
 import           Dash.Prelude
-import           System.Process                    (readProcess)
 
 import           Dash.Proto
 import {-# SOURCE #-}

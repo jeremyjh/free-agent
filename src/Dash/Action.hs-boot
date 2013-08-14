@@ -6,7 +6,6 @@ import           BasicPrelude
 import           Dash.Proto                       (Wrapper(..), ProtoFail)
 import           Dash.Store                       (Stashable(..))
 import           Dash.Runner                      (Runnable(..))
-import           Data.Typeable                    (Typeable(..))
 
 data Action a  = forall p. (Stashable p, Runnable p, Typeable p) => Action p
 

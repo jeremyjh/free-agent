@@ -6,7 +6,7 @@ cabal-version:       >=1.8
 
 -- -fno-warn-unused-imports is temp hack for protobuff-genned code
 library 
-  ghc-options:       -Wall -Werror -fno-warn-unused-imports 
+  ghc-options:       -Wall -Werror -fno-warn-unused-imports
   hs-source-dirs:    proto, src, dist/build
   other-modules:     Dash.Prelude
   exposed-modules:   Dash
@@ -18,7 +18,6 @@ library
                    , Dash.Plugins.Nagios
                    , Dash.Plugins.Nagios.Proto
                    , Dash.Plugins.Nagios.Proto.Command
-                   , Dash.Plugins.Nagios.Proto.Host
                    , Dash.Action
                    , Dash.Plugins
 

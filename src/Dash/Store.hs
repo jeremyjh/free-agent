@@ -9,21 +9,16 @@ module Dash.Store
     ) where
 
 import           Dash.Prelude
-import           Control.Monad
-import           Control.Monad.IO.Class            (liftIO)
-import           Control.Monad.Trans.Resource      (release, ResourceT, ResIO, liftResourceT, runResourceT)
+import           Control.Monad.Trans.Resource      (ResourceT, ResIO, liftResourceT, runResourceT)
 import           Control.Monad.Trans.Reader
 
-import           Data.ByteString.Char8             (pack)
 import qualified Data.ByteString                   as BS
 import           Data.Default                      (def)
-
-import qualified Crypto.Hash.SHA1                  as SHA1
 
 import qualified Database.LevelDB                  as LDB
 
 import           Dash.Proto                        (ProtoBuf(..), wrap
-                                                   ,Wrapper(..), ProtoFail(..)
+                                                   ,ProtoFail(..)
                                                    ,encodeRaw)
 -- | Key provided in up to four parts.
 --
