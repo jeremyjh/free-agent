@@ -12,7 +12,9 @@ import           Dash.Prelude
 import           Control.Monad.Trans.Resource      (ResourceT, ResIO, liftResourceT, runResourceT)
 import           Control.Monad.Trans.Reader
 
-import qualified Data.ByteString                   as BS
+import qualified Data.ByteString.Char8             as BS
+import qualified Data.ByteString                   as BS hiding (pack)
+import qualified Data.Binary                       as Binary
 import           Data.Default                      (def)
 
 import qualified Database.LevelDB                  as LDB
@@ -24,10 +26,48 @@ import           Dash.Proto                        (ProtoBuf(..), wrap
 --
 type Key = ByteString
 type KeySpace = ByteString
+type KeySpaceId = ByteString
+
+defaultKeySpaceId :: ByteString
+defaultKeySpaceId = "\0\0\0\0"
+
+systemKeySpaceId :: ByteString
+systemKeySpaceId = "\0\0\0\1"
+
+getKeySpaceId :: KeySpace -> DBContextIO KeySpaceId
+getKeySpaceId ks
+    | ks == ""  = return defaultKeySpaceId
+    | ks == "system" = return systemKeySpaceId
+    | otherwise = do
+        findKS <- get $ "keyspace:" ++ ks
+        case findKS of
+            (Just foundId) -> return foundId
+            Nothing -> do -- define new KS
+                nextId <- incr "keyspaceid"
+                put ("keyspace:" ++ ks) nextId
+                return nextId
+
+-- | Initialize or Increment and return a 32-bit counter value found at Key
+-- TODO: Implement transaction or locking for thread safety
+incr :: Key -> DBContextIO KeySpaceId
+incr k = do
+    findMaxId <- get k
+    case findMaxId of
+        (Just found) -> do
+            let nextId = toBS (toInt32 found + 1)
+            put k nextId
+            return nextId
+        Nothing -> do --initialize
+            put k systemKeySpaceId
+            return "\0\0\0\1"
+  where
+    toInt32 bs = (Binary.decode $ toLazy bs) :: Int32
+    toBS = toStrict . Binary.encode
+
 
 -- | Lookup the KeySpace ID and pre-pend it to the Key
 packKey :: Key -> KeySpace -> ByteString
-packKey k ks = BS.take 4 ks ++ k
+packKey k ksId = ksId ++ k
 
 type DB = LDB.DB
 
@@ -47,20 +87,27 @@ openDB path =
 data DBContext = DBC DB ByteString
 type DBContextIO a = ReaderT DBContext (ResourceT IO) a
 
-setKeySpace :: ByteString -> DBContext -> DBContext
-setKeySpace ks (DBC db _) = DBC db ks
 
 -- | Specify a filepath to use for the database (will create if not there)
 -- Also specify a keyspace in which keys will be guaranteed unique
-withDBContext :: FilePathS -> ByteString -> DBContextIO a -> IO a
+withDBContext :: FilePathS -> KeySpace -> DBContextIO a -> IO a
 withDBContext dbPath ks ctx = runResourceT $ do
     db <- openDB dbPath
-    runReaderT ctx $ DBC db ks
+    ksId <- withSystemContext db $ getKeySpaceId ks
+    runReaderT ctx $ DBC db ksId
+
+withSystemContext :: DB -> DBContextIO a -> ResIO a
+withSystemContext db ctx = runReaderT ctx (DBC db systemKeySpaceId)
 
 -- | Override keyspace with a local keyspace for an (block) action(s)
 --
-withKeySpace :: ByteString -> DBContextIO a -> DBContextIO a
-withKeySpace ks = local (setKeySpace ks)
+withKeySpace :: KeySpace -> DBContextIO a -> DBContextIO a
+withKeySpace ks a = do
+    ksId <- getKeySpaceId ks
+    local (setKeySpace ksId) a
+
+setKeySpace :: KeySpaceId -> DBContext -> DBContext
+setKeySpace ksId (DBC db _)= DBC db ksId
 
 put :: Key -> ByteString -> DBContextIO ()
 put k v = do
