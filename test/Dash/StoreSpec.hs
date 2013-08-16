@@ -3,6 +3,7 @@ module Dash.StoreSpec (main, spec) where
 
 import           BasicPrelude
 import           Test.Hspec
+import           System.Process(system)
 
 import           Dash.Proto
 import           Dash.Store
@@ -15,9 +16,13 @@ import           Dash.Action
 main :: IO ()
 main = hspec spec
 
+setup :: IO ()
+setup = system ("rm -rf " ++ testDB) >> return ()
+
 spec :: Spec
-spec =
+spec = do
     describe "Dash.Store" $ do
+        it "setup" $ setup >>= shouldReturn (return())
         describe "has a simple API that" $ do
             it "writes Commands to the DB" $
                 withDBT (stash checkTCP) >>= shouldReturn (return())

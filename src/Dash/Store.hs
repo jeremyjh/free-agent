@@ -46,21 +46,18 @@ getKeySpaceId ks
                 nextId <- incr "keyspaceid"
                 put ("keyspace:" ++ ks) nextId
                 return nextId
-
--- | Initialize or Increment and return a 32-bit counter value found at Key
--- TODO: Implement transaction or locking for thread safety
-incr :: Key -> DBContextIO KeySpaceId
-incr k = do
-    findMaxId <- get k
-    case findMaxId of
-        (Just found) -> do
-            let nextId = toBS (toInt32 found + 1)
-            put k nextId
-            return nextId
-        Nothing -> do --initialize
-            put k systemKeySpaceId
-            return "\0\0\0\1"
   where
+    -- TODO: Implement transaction or locking for thread safety
+    incr k = do
+        findMaxId <- get k
+        case findMaxId of
+            (Just found) -> do
+                let nextId = toBS (toInt32 found + 1)
+                put k nextId
+                return nextId
+            Nothing -> do --initialize
+                put k systemKeySpaceId
+                return "\0\0\0\1"
     toInt32 bs = (Binary.decode $ toLazy bs) :: Int32
     toBS = toStrict . Binary.encode
 
