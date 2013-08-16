@@ -7,7 +7,7 @@ import           Dash.Plugins.Nagios.Proto.Command
 import           {-# SOURCE #-}
                  Dash.Action                       (Action(..), unWrapAction)
 import           Dash.Proto
-import           Dash.Store                        (Stashable(..), Key(..))
+import           Dash.Store                        (Stashable(..))
 import           Dash.Runner                       (Runnable(..), RunStatus(..))
 import           System.Process                    (readProcess)
 
@@ -19,7 +19,7 @@ registerUnWrappers = [ (".dash.plugins.nagios.proto.Command",
 
 instance ProtoBuf Command
 instance Stashable Command where
-    key = Key . fromU . host
+    key = fromU . host
 
 instance Runnable Command where
     exec cmd =

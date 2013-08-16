@@ -3,6 +3,7 @@ module Dash.StoreSpec (main, spec) where
 
 import           BasicPrelude
 import           Test.Hspec
+import           System.Process(system)
 
 import           Dash.Proto
 import           Dash.Store
@@ -15,52 +16,55 @@ import           Dash.Action
 main :: IO ()
 main = hspec spec
 
+setup :: IO ()
+setup = system ("rm -rf " ++ testDB) >> return ()
+
 spec :: Spec
-spec =
+spec = do
     describe "Dash.Store" $ do
+        it "setup" $ setup >>= shouldReturn (return())
         describe "has a simple API that" $ do
             it "writes Commands to the DB" $
-                withDB stash checkTCP >>= shouldReturn (return())
+                withDBT (stash checkTCP) >>= shouldReturn (return())
             it "reads Commands from the DB" $
-                withDB fetch "jeremyhuffman.com" >>= shouldBe (Right checkTCP)
+                withDBT (fetch "jeremyhuffman.com") >>= shouldBe (Right checkTCP)
             it "writes wrapped Commands to the DB" $
-                withDB stashWrapped checkTCP >>= shouldReturn (return())
-            it "reads Commands from the DB as Action" $
-                withDB fetchAction "jeremyhuffman.com" >>= shouldBe (Right $ Action checkTCP)
+                withDBT (stashWrapped checkTCP) >>= shouldReturn (return())
+            it "reads Commands from the DB as Action" $ do
+                action <- withDBT (fetchAction "jeremyhuffman.com")
+                action `shouldBe` (Right $ Action checkTCP)
             it "can read an Action from the DB and execute it" $ do
-                (Right action) <- withDB fetchAction "jeremyhuffman.com"
+                (Right action) <- withDBT (fetchAction "jeremyhuffman.com")
                 exec action >>= shouldBe (Complete $ Just "Awesome")
-            it "will fail to read if key is wrong" $
-                withDB fetchProtoNC "notgonnamatch" >>= shouldBe (Left (NotFound "Key \"notgonnamatch\""))
+            it "will fail to read if key is wrong" $ do
+                (Left (NotFound _)) <- withDBT (fetchProtoNC "notgonnamatch")
+                True `shouldBe` True -- NOT exception
             it "can write an arbitrary bytestring" $
-                withDB2 put "somekey" "somevalue" >>= shouldReturn (return ())
+                withDBT (put "somekey" "somevalue") >>= shouldReturn (return ())
             it "will fail to deserialize if data is not a protobuf" $ do
-                (Left (ParseFail msg)) <- withDB fetchProtoNC "somekey"
+                (Left (ParseFail msg)) <- withDBT (fetchProtoNC "somekey")
                 take 25 msg `shouldBe` "Failed at 1 : Text.Protoc"
         describe "has a reader context API that" $
             it "is awesome" $ do
                 (Just simple, Right proto)
-                    <- runDB "/tmp/leveltest" "awesome" $ do
-                        putR "thekey" "thevalue"
-                        simple <- getR "thekey"
-                        stashWrappedR checkTCP
-                        proto <- fetchR "jeremyhuffman.com"
+                    <- withDBContext testDB "awesome" $ do
+                        put "thekey" "thevalue"
+                        withKeySpace "otherspace" $ do
+                            put "thekey" "othervalue"
+                        simple <- get "thekey"
+                        stashWrapped checkTCP
+                        proto <- fetch "jeremyhuffman.com"
                         return (simple, join $ map unWrap proto)
                 simple `shouldBe` "thevalue"
                 proto `shouldBe` checkTCP
 
-fetchProtoNC :: DB -> Key -> ResIO (Either ProtoFail NC.Command)
+testDB = "/tmp/leveltest"
+
+withDBT :: DBContextIO a -> IO a
+withDBT = withDBContext testDB "Dash.StoreSpec"
+
+fetchProtoNC :: Key -> DBContextIO (Either ProtoFail NC.Command)
 fetchProtoNC = fetch
-
-withDB2 :: (DB -> a -> b -> ResIO c) -> a -> b -> IO c
-withDB2 f a b = runResourceT $ do
-    db <- openDB "/tmp/leveltest"
-    f db a b
-
-withDB :: (DB -> a -> ResIO b) -> a -> IO b
-withDB f a = runResourceT $ do
-    db <- openDB "/tmp/leveltest"
-    f db a
 
 checkTCP = NC.Command { NC.command = "/usr/lib/nagios/plugins/check_tcp"
                   , NC.host = "jeremyhuffman.com"

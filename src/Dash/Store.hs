@@ -3,78 +3,68 @@ module Dash.Store
     ( fetch
     , stash, stashWrapped
     , get, put
-    , runDB, DBContext(..), putR, getR
-    , fetchR, stashR, stashWrappedR
-    , openDB, DB, ResIO
-    , Key(..)
+    , DBContextIO, withDBContext, withKeySpace
+    , Key, KeySpace
     , Stashable(..)
     ) where
 
 import           Dash.Prelude
-import           Control.Monad
-import           Control.Monad.IO.Class            (liftIO)
-import           Control.Monad.Trans.Resource      (release, ResourceT, ResIO, liftResourceT, runResourceT)
+import           Control.Monad.Trans.Resource      (ResourceT, ResIO, liftResourceT, runResourceT)
 import           Control.Monad.Trans.Reader
 
-import           Data.ByteString.Char8             (pack)
-import qualified Data.ByteString                   as BS
+import qualified Data.ByteString.Char8             as BS
+import qualified Data.ByteString                   as BS hiding (pack)
+import qualified Data.Binary                       as Binary
 import           Data.Default                      (def)
-
-import qualified Crypto.Hash.SHA1                  as SHA1
 
 import qualified Database.LevelDB                  as LDB
 
 import           Dash.Proto                        (ProtoBuf(..), wrap
-                                                   ,Wrapper(..), ProtoFail(..)
+                                                   ,ProtoFail(..)
                                                    ,encodeRaw)
 -- | Key provided in up to four parts.
 --
--- A simple, efficient scheme to allow scans of partial keys; structure data up to three layers, for example:
--- ("accounts","domestic", "petroleum", "CustID-3387020-2") - this would enable you to do efficient queries
--- to retrieve all accounts, all domestic accounts, all domestric petroleum accounts etc.
-data Key = Key ByteString
-         | Key2 ByteString ByteString
-         | Key3 ByteString ByteString ByteString
-         | Key4 ByteString ByteString ByteString ByteString
-         | KeySpace ByteString Key
-         deriving(Show, Eq)
+type Key = ByteString
+type KeySpace = ByteString
+type KeySpaceId = ByteString
 
--- | A Key literal can be expressed in the form:
---
--- "keyspace#keypart1:keypart2:keypart3:keypart4"
-instance IsString Key where
-    fromString keyS =
-        case split "#" keyS of
-            [ks, rest] -> KeySpace (pack ks) (splitKey rest)
-            [rest] -> splitKey rest
-            _ -> error "A Key literal can have only one KeySpace #"
-      where
-        splitKey ks =
-            case map pack (split ":" ks) of
-                [k] -> Key k
-                [k1, k2] -> Key2 k1 k2
-                [k1, k2, k3] -> Key3 k1 k2 k3
-                [k1, k2, k3, k4] -> Key4 k1 k2 k3 k4
-                _ -> error "A key literal can have only 4 Keyparts :"
+defaultKeySpaceId :: ByteString
+defaultKeySpaceId = "\0\0\0\0"
 
--- | Key is up to 4-tuple, padded w/ 0s to become 80 bytes for key scans
--- A KeySpace ByteString will be pre-pended to the key and is not hashed
-packKey :: Key -> ByteString
-packKey pKey =
-    case pKey of
-        KeySpace bs k -> padSpace bs ++ hashPad k
-        k             -> pad 1 ++ hashPad k
+systemKeySpaceId :: ByteString
+systemKeySpaceId = "\0\0\0\1"
+
+getKeySpaceId :: KeySpace -> DBContextIO KeySpaceId
+getKeySpaceId ks
+    | ks == ""  = return defaultKeySpaceId
+    | ks == "system" = return systemKeySpaceId
+    | otherwise = do
+        findKS <- get $ "keyspace:" ++ ks
+        case findKS of
+            (Just foundId) -> return foundId
+            Nothing -> do -- define new KS
+                nextId <- incr "keyspaceid"
+                put ("keyspace:" ++ ks) nextId
+                return nextId
   where
-    hashPad (Key k) = sha1 k ++ pad 3
-    hashPad (Key2 k1 k2) = sha1 k1 ++ sha1 k2 ++ pad 2
-    hashPad (Key3 k1 k2 k3) = sha1 k1 ++ sha1 k2 ++ sha1 k3 ++ pad 1
-    hashPad (Key4 k1 k2 k3 k4) = sha1 k1 ++ sha1 k2 ++ sha1 k3 ++ sha1 k4
-    hashPad (KeySpace _ _) = error "nested KeySpace is not supported"
+    -- TODO: Implement transaction or locking for thread safety
+    incr k = do
+        findMaxId <- get k
+        case findMaxId of
+            (Just found) -> do
+                let nextId = toBS (toInt32 found + 1)
+                put k nextId
+                return nextId
+            Nothing -> do --initialize
+                put k systemKeySpaceId
+                return "\0\0\0\1"
+    toInt32 bs = (Binary.decode $ toLazy bs) :: Int32
+    toBS = toStrict . Binary.encode
 
-    sha1 = SHA1.hash
-    padSize = 20
-    pad = flip BS.replicate 0 . (*padSize)
-    padSpace = BS.take padSize . (++ pad 1)
+
+-- | Lookup the KeySpace ID and pre-pend it to the Key
+packKey :: Key -> KeySpace -> ByteString
+packKey k ksId = ksId ++ k
 
 type DB = LDB.DB
 
@@ -83,74 +73,66 @@ type DB = LDB.DB
 class (ProtoBuf a) => Stashable a where
     key :: a -> Key
 
+openDB :: FilePathS -> ResIO DB
+openDB path =
+    LDB.open path
+        LDB.defaultOptions{LDB.createIfMissing = True, LDB.cacheSize= 2048}
+
+-- | Reader-based data context API
+--
+-- Context contains database handle and KeySpace
+data DBContext = DBC DB ByteString
+type DBContextIO a = ReaderT DBContext (ResourceT IO) a
+
+
+-- | Specify a filepath to use for the database (will create if not there)
+-- Also specify a keyspace in which keys will be guaranteed unique
+withDBContext :: FilePathS -> KeySpace -> DBContextIO a -> IO a
+withDBContext dbPath ks ctx = runResourceT $ do
+    db <- openDB dbPath
+    ksId <- withSystemContext db $ getKeySpaceId ks
+    runReaderT ctx $ DBC db ksId
+
+withSystemContext :: DB -> DBContextIO a -> ResIO a
+withSystemContext db ctx = runReaderT ctx (DBC db systemKeySpaceId)
+
+-- | Override keyspace with a local keyspace for an (block) action(s)
+--
+withKeySpace :: KeySpace -> DBContextIO a -> DBContextIO a
+withKeySpace ks a = do
+    ksId <- getKeySpaceId ks
+    local (setKeySpace ksId) a
+
+setKeySpace :: KeySpaceId -> DBContext -> DBContext
+setKeySpace ksId (DBC db _)= DBC db ksId
+
+put :: Key -> ByteString -> DBContextIO ()
+put k v = do
+    DBC db ks <- ask
+    let pk = packKey k ks
+    liftResourceT $ LDB.put db def pk v
+
+get :: Key -> DBContextIO (Maybe ByteString)
+get k = do
+    DBC db ks <- ask
+    let pk = packKey k ks
+    liftResourceT $ LDB.get db def pk
+
 -- | Store the ProtoBuf in the database
 --
-stash :: Stashable s => DB -> s -> ResIO ()
-stash db s = put db (key s) (toStrict $ encode s)
-
--- | Wrap and store the ProtoBuf in the database
---
-stashWrapped :: Stashable s => DB -> s -> ResIO ()
-stashWrapped db s = put db (key s) (toStrict $ encodeRaw $ wrap s)
+stash :: (Stashable s) => s -> DBContextIO ()
+stash s = put (key s) (toStrict $ encode s)
 
 -- | Fetch the ProtoBuf from the database
 --
-fetch :: (ProtoBuf a) => DB -> Key -> ResIO (Either ProtoFail a)
-fetch db k = liftM decode_found $ get db k
+fetch :: (ProtoBuf a) => Key -> DBContextIO (Either ProtoFail a)
+fetch k = map decode_found $ get k
   where
     decode_found Nothing = Left $ NotFound (showStr k)
     decode_found (Just bs) = decode $ toLazy bs
 
-put :: DB -> Key -> ByteString -> ResIO ()
-put db k = LDB.put db def $ packKey k
-
-get :: DB -> Key -> ResIO (Maybe ByteString)
-get db k = LDB.get db def $ packKey k
-
-openDB :: FilePathS -> ResIO DB
-openDB path =  LDB.open path
-    LDB.defaultOptions{LDB.createIfMissing = True, LDB.cacheSize= 2048}
-
--- | Reader-based data context API
-data DBContext = DBContext { dbConn :: DB, keySpace :: ByteString }
-type DBContextIO a = ReaderT DBContext (ResourceT IO) a
-
-runDB :: FilePathS -> ByteString -> DBContextIO a -> IO a
-runDB dbPath ks ioa = runResourceT $ do
-    db <- openDB dbPath
-    runReaderT ioa DBContext {dbConn = db, keySpace = ks}
-
-putR :: Key -> ByteString -> DBContextIO ()
-putR k v = do
-    (db, kSP) <- getDB
-    liftResourceT $ put db (KeySpace kSP k) v
-
-stashR :: (Stashable s) => s -> DBContextIO ()
-stashR s = do
-    (db, kSP) <- getDB
-    liftResourceT $
-        put db (KeySpace kSP (key s))
-               (toStrict $ encode s)
-
-stashWrappedR :: (Stashable s) => s -> DBContextIO ()
-stashWrappedR s = do
-    (db, kSP) <- getDB
-    liftResourceT $
-        put db (KeySpace kSP (key s))
-               (toStrict $ encodeRaw $ wrap s)
-
-getR :: Key -> DBContextIO (Maybe ByteString)
-getR k = do
-    (db, kSP) <- getDB
-    liftResourceT $ get db (KeySpace kSP k)
-
-fetchR :: (ProtoBuf a) => Key -> DBContextIO (Either ProtoFail a)
-fetchR k = do
-    (db, kSP) <- getDB
-    liftResourceT $ fetch db (KeySpace kSP k)
-
-getDB :: DBContextIO (DB, ByteString)
-getDB = do
-    db <- map dbConn ask
-    kSP <- map keySpace ask
-    return (db, kSP)
+-- | Wrap and store the ProtoBuf in the database
+--
+stashWrapped :: (Stashable s) => s -> DBContextIO ()
+stashWrapped s =
+    put (key s) (toStrict $ encodeRaw $ wrap s)
