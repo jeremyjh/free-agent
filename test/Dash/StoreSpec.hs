@@ -47,7 +47,7 @@ spec = do
         describe "has a reader context API that" $
             it "is awesome" $ do
                 (Just simple, Right proto)
-                    <- withDBContext testDB "awesome" $ do
+                    <- runDBContext testDB "awesome" $ do
                         put "thekey" "thevalue"
                         withKeySpace "otherspace" $ do
                             put "thekey" "othervalue"
@@ -61,7 +61,7 @@ spec = do
 testDB = "/tmp/leveltest"
 
 withDBT :: DBContextIO a -> IO a
-withDBT = withDBContext testDB "Dash.StoreSpec"
+withDBT = runDBContext testDB "Dash.StoreSpec"
 
 fetchProtoNC :: Key -> DBContextIO (Either ProtoFail NC.Command)
 fetchProtoNC = fetch

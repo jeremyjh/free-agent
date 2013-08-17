@@ -39,6 +39,7 @@ library
                    , mtl
                    , file-location
                    , binary
+                   , lifted-base
 
 executable dashhs
   ghc-options:       -Wall -Werror -fno-warn-unused-imports -threaded -with-rtsopts=-N -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
@@ -63,6 +64,7 @@ executable dashhs
                    , mtl
                    , file-location
                    , binary
+                   , lifted-base
 
 test-suite spec
   ghc-options:       -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
