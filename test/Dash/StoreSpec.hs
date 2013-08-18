@@ -47,7 +47,7 @@ spec = do
         describe "has a reader context API that" $
             it "is awesome" $ do
                 (Just simple, Right proto)
-                    <- runDBContext testDB "awesome" $ do
+                    <- runDashDB testDB "awesome" $ do
                         put "thekey" "thevalue"
                         withKeySpace "otherspace" $ do
                             put "thekey" "othervalue"
@@ -60,10 +60,10 @@ spec = do
 
 testDB = "/tmp/leveltest"
 
-withDBT :: DBContextIO a -> IO a
-withDBT = runDBContext testDB "Dash.StoreSpec"
+withDBT :: DashDB a -> IO a
+withDBT = runDashDB testDB "Dash.StoreSpec"
 
-fetchProtoNC :: Key -> DBContextIO (Either ProtoFail NC.Command)
+fetchProtoNC :: Key -> DashDB (Either ProtoFail NC.Command)
 fetchProtoNC = fetch
 
 checkTCP = NC.Command { NC.command = "/usr/lib/nagios/plugins/check_tcp"

@@ -1,20 +1,23 @@
-{-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude, OverloadedStrings, GeneralizedNewtypeDeriving #-}
 module Dash.Store
     ( fetch
     , stash, stashWrapped
     , get, put
-    , DBContextIO, runDBContext, withKeySpace
+    , DashDB, runDashDB, withKeySpace
     , Key, KeySpace
     , Stashable(..)
     ) where
 
 import           Dash.Prelude
 import           Control.Monad.Trans.Resource
-        (ResourceT, ResIO, liftResourceT, runResourceT)
+        (ResourceT, ResIO, liftResourceT, runResourceT
+        ,MonadResource, MonadUnsafeIO, MonadThrow)
 
-import           Control.Monad.Trans.Reader
-        (ReaderT, runReaderT, local, ask)
+import           Control.Monad.Reader
+        (ReaderT, runReaderT, local, ask, MonadReader)
 
+
+import           Control.Monad.Base               (MonadBase)
 import           Control.Concurrent.Lifted        (fork)
 import           Control.Concurrent.MVar.Lifted
         (MVar, newMVar, takeMVar, putMVar)
@@ -47,31 +50,37 @@ mkDBC db ksId mv = DBC {dbcDb = db
                        ,dbcSyncMV = mv
                        }
 
-type DBContextIO a = ReaderT DBContext (ResourceT IO) a
+-- | DashDB Monad provides a context for database operations provided in this module
+--
+-- Use runDashDB
+newtype DashDB a = DBCIO {unDBCIO :: ReaderT DBContext (ResourceT IO) a }
+    deriving ( Functor, Applicative, Monad
+             , MonadIO, MonadBase IO, MonadReader DBContext
+             , MonadResource, MonadUnsafeIO, MonadThrow )
 
 -- | Specify a filepath to use for the database (will create if not there)
--- Also specify a keyspace in which keys will be guaranteed unique
-runDBContext :: FilePathS -> KeySpace -> DBContextIO a -> IO a
-runDBContext dbPath ks ctx = runResourceT $ do
+-- Also specify an applicatin-defined keyspace in which keys will be guaranteed unique
+runDashDB :: FilePathS -> KeySpace -> DashDB a -> IO a
+runDashDB dbPath ks ctx = runResourceT $ do
     db <- openDB dbPath
     mv <- (newMVar 0)
     ksId <- withSystemContext db mv $ getKeySpaceId ks
-    runReaderT ctx $ mkDBC db ksId mv
+    runReaderT (unDBCIO ctx) (mkDBC db ksId mv)
 
 -- | Override keyspace with a local keyspace for an (block) action(s)
 --
-withKeySpace :: KeySpace -> DBContextIO a -> DBContextIO a
+withKeySpace :: KeySpace -> DashDB a -> DashDB a
 withKeySpace ks a = do
     ksId <- getKeySpaceId ks
     local (\dbc -> dbc { dbcKsId = ksId}) a
 
-put :: Key -> ByteString -> DBContextIO ()
+put :: Key -> ByteString -> DashDB ()
 put k v = do
     (db, ks) <- getDBKS
     let pk = packKey k ks
     liftResourceT $ LDB.put db def pk v
 
-get :: Key -> DBContextIO (Maybe ByteString)
+get :: Key -> DashDB (Maybe ByteString)
 get k = do
     (db, ks) <- getDBKS
     let pk = packKey k ks
@@ -84,12 +93,12 @@ class (ProtoBuf a) => Stashable a where
 
 -- | Store the ProtoBuf in the database
 --
-stash :: (Stashable s) => s -> DBContextIO ()
+stash :: (Stashable s) => s -> DashDB ()
 stash s = put (key s) (toStrict $ encode s)
 
 -- | Fetch the ProtoBuf from the database
 --
-fetch :: (ProtoBuf a) => Key -> DBContextIO (Either ProtoFail a)
+fetch :: (ProtoBuf a) => Key -> DashDB (Either ProtoFail a)
 fetch k = map decode_found $ get k
   where
     decode_found Nothing = Left $ NotFound (showStr k)
@@ -97,7 +106,7 @@ fetch k = map decode_found $ get k
 
 -- | Wrap and store the ProtoBuf in the database
 --
-stashWrapped :: (Stashable s) => s -> DBContextIO ()
+stashWrapped :: (Stashable s) => s -> DashDB ()
 stashWrapped s = put (key s) (toStrict $ encodeRaw $ wrap s)
 
 defaultKeySpaceId :: ByteString
@@ -106,11 +115,11 @@ defaultKeySpaceId = "\0\0\0\0"
 systemKeySpaceId :: ByteString
 systemKeySpaceId = "\0\0\0\1"
 
-withSystemContext :: DB -> MVar Int32 -> DBContextIO a -> ResIO a
-withSystemContext db mv ctx = runReaderT ctx $
+withSystemContext :: DB -> MVar Int32 -> DashDB a -> ResIO a
+withSystemContext db mv ctx = runReaderT (unDBCIO ctx) $
     mkDBC db systemKeySpaceId mv
 
-getKeySpaceId :: KeySpace -> DBContextIO KeySpaceId
+getKeySpaceId :: KeySpace -> DashDB KeySpaceId
 getKeySpaceId ks
     | ks == ""  = return defaultKeySpaceId
     | ks == "system" = return systemKeySpaceId
@@ -163,7 +172,7 @@ openDB path =
         LDB.defaultOptions{LDB.createIfMissing = True, LDB.cacheSize= 2048}
 
 
-getDBKS :: DBContextIO (DB, KeySpaceId)
+getDBKS :: DashDB (DB, KeySpaceId)
 getDBKS = do
     dbc <- ask
     let db = dbcDb dbc

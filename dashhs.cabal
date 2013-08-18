@@ -40,6 +40,7 @@ library
                    , file-location
                    , binary
                    , lifted-base
+                   , transformers-base
 
 executable dashhs
   ghc-options:       -Wall -Werror -fno-warn-unused-imports -threaded -with-rtsopts=-N -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
@@ -65,6 +66,7 @@ executable dashhs
                    , file-location
                    , binary
                    , lifted-base
+                   , transformers-base
 
 test-suite spec
   ghc-options:       -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
