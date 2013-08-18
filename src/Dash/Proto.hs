@@ -3,7 +3,7 @@
 
 module Dash.Proto
     (
-      Utf8, ConvUtf8(..)
+      Utf8, ConvertUtf8(..)
     , defaultValue
     , ProtoBuf(..)
     , messageGet, messagePut
@@ -62,14 +62,14 @@ unWrap = decodeRaw . value
 
 -- | Make dealing with the ProtoBuf package's Utf8 type less terrible
 --
-class ConvUtf8 a where
+class ConvertUtf8 a where
     toU :: a -> Utf8
     fromU :: Utf8 -> a
 
-instance ConvUtf8 String where
+instance ConvertUtf8 String where
     toU = uFromString
     fromU = uToString
 
-instance ConvUtf8 ByteString where
+instance ConvertUtf8 ByteString where
     toU = undefined
     fromU = toStrict . utf8

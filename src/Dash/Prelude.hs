@@ -1,4 +1,4 @@
-{-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude, OverloadedStrings, FlexibleInstances #-}
 
 module Dash.Prelude
     (
@@ -9,6 +9,7 @@ module Dash.Prelude
     , FilePathS
     , debug
     , dbg
+    , ConvertText(..)
     ) where
 
 import           BasicPrelude
@@ -19,6 +20,8 @@ import           Debug.Trace          (traceShow)
 
 import           Data.String.Utils    (split)
 import           Debug.FileLocation
+import           Data.Text.Encoding   (decodeUtf8, encodeUtf8)
+import           Data.Text            (pack, unpack)
 
 
 
@@ -32,3 +35,15 @@ toStrict :: LByteString -> ByteString
 toStrict = concat . LByteS.toChunks
 
 type FilePathS = P.FilePath
+
+class ConvertText a where
+    toT :: a -> Text
+    fromT :: Text -> a
+
+instance ConvertText ByteString where
+    toT = decodeUtf8
+    fromT = encodeUtf8
+
+instance ConvertText String where
+    toT = pack
+    fromT = unpack

@@ -9,6 +9,7 @@ module Dash.Store
     ) where
 
 import           Dash.Prelude
+import qualified Prelude as P
 import           Control.Monad.Trans.Resource
         (ResourceT, ResIO, liftResourceT, runResourceT
         ,MonadResource, MonadUnsafeIO, MonadThrow)
@@ -33,6 +34,7 @@ import           Dash.Proto
         (ProtoBuf(..), wrap, ProtoFail(..),encodeRaw)
 
 type Key = ByteString
+type Value = ByteString
 type KeySpace = ByteString
 type KeySpaceId = ByteString
 type DB = LDB.DB
@@ -44,6 +46,9 @@ data DBContext = DBC { dbcDb :: DB
                      , dbcKsId :: KeySpaceId
                      , dbcSyncMV :: MVar Int32
                      }
+instance Show (DBContext) where
+    show = (++) "KeySpaceID: " . P.show . dbcKsId
+
 mkDBC :: DB -> KeySpaceId -> MVar Int32 -> DBContext
 mkDBC db ksId mv = DBC {dbcDb = db
                        ,dbcKsId = ksId
@@ -58,14 +63,23 @@ newtype DashDB a = DBCIO {unDBCIO :: ReaderT DBContext (ResourceT IO) a }
              , MonadIO, MonadBase IO, MonadReader DBContext
              , MonadResource, MonadUnsafeIO, MonadThrow )
 
+instance Show (DashDB a) where
+    show = asks P.show
+
 -- | Specify a filepath to use for the database (will create if not there)
--- Also specify an applicatin-defined keyspace in which keys will be guaranteed unique
+-- Also specify an application-defined keyspace in which keys will be guaranteed unique
 runDashDB :: FilePathS -> KeySpace -> DashDB a -> IO a
 runDashDB dbPath ks ctx = runResourceT $ do
     db <- openDB dbPath
-    mv <- (newMVar 0)
+    mv <- newMVar 0
     ksId <- withSystemContext db mv $ getKeySpaceId ks
     runReaderT (unDBCIO ctx) (mkDBC db ksId mv)
+  where
+    openDB path =
+        LDB.open path
+            LDB.defaultOptions{LDB.createIfMissing = True, LDB.cacheSize= 2048}
+    withSystemContext db mv sctx =
+        runReaderT (unDBCIO sctx) $ mkDBC db systemKeySpaceId mv
 
 -- | Override keyspace with a local keyspace for an (block) action(s)
 --
@@ -74,17 +88,17 @@ withKeySpace ks a = do
     ksId <- getKeySpaceId ks
     local (\dbc -> dbc { dbcKsId = ksId}) a
 
-put :: Key -> ByteString -> DashDB ()
+put :: Key -> Value -> DashDB ()
 put k v = do
-    (db, ks) <- getDBKS
-    let pk = packKey k ks
-    liftResourceT $ LDB.put db def pk v
+    (db, ksId) <- asks $ dbcDb &&& dbcKsId
+    let packed = ksId ++ k
+    liftResourceT $ LDB.put db def packed v
 
-get :: Key -> DashDB (Maybe ByteString)
+get :: Key -> DashDB (Maybe Value)
 get k = do
-    (db, ks) <- getDBKS
-    let pk = packKey k ks
-    liftResourceT $ LDB.get db def pk
+    (db, ksId) <- asks $ dbcDb &&& dbcKsId
+    let packed = ksId ++ k
+    liftResourceT $ LDB.get db def packed
 
 -- | Types that can be serialized, stored and retrieved by Dash
 -- A ProtoBuf with a key
@@ -109,16 +123,11 @@ fetch k = map decode_found $ get k
 stashWrapped :: (Stashable s) => s -> DashDB ()
 stashWrapped s = put (key s) (toStrict $ encodeRaw $ wrap s)
 
-defaultKeySpaceId :: ByteString
+defaultKeySpaceId :: KeySpaceId
 defaultKeySpaceId = "\0\0\0\0"
 
-systemKeySpaceId :: ByteString
+systemKeySpaceId ::  KeySpaceId
 systemKeySpaceId = "\0\0\0\1"
-
-withSystemContext :: DB -> MVar Int32 -> DashDB a -> ResIO a
-withSystemContext db mv ctx =
-    runReaderT (unDBCIO ctx) $
-               mkDBC db systemKeySpaceId mv
 
 getKeySpaceId :: KeySpace -> DashDB KeySpaceId
 getKeySpaceId ks
@@ -136,34 +145,18 @@ getKeySpaceId ks
     incr k = do
         mv <- takeMVarDBC
         curId <- case mv of
-            0 -> initKeySpaceIdM k >> takeMVarDBC
+            0 -> initKeySpaceIdMV k >> takeMVarDBC
             n -> return n
         let nextId = curId + 1
         put k (toBS nextId)
         putMVarDBC nextId
         return $ toBS curId
-
-    initKeySpaceIdM k = do
+    initKeySpaceIdMV k = do
         findMaxId <- get k
         case findMaxId of
-            (Just found) -> do
-                putMVarDBC $ toInt32 found
-            Nothing -> do --initialize
-                putMVarDBC 2 -- first user keyspace
-
-    putMVarDBC v = (asks dbcSyncMV) >>= flip putMVar v
-    takeMVarDBC = (asks dbcSyncMV) >>= takeMVar
+            (Just found) -> putMVarDBC $ toInt32 found
+            Nothing      -> putMVarDBC 2 -- first user keyspace
+    putMVarDBC v = asks dbcSyncMV >>= flip putMVar v
+    takeMVarDBC = asks dbcSyncMV >>= takeMVar
     toInt32 bs = (Binary.decode $ toLazy bs) :: Int32
     toBS = toStrict . Binary.encode
-
--- | Lookup the KeySpace ID and pre-pend it to the Key
-packKey :: Key -> KeySpace -> ByteString
-packKey k ksId = ksId ++ k
-
-openDB :: FilePathS -> ResIO DB
-openDB path =
-    LDB.open path
-        LDB.defaultOptions{LDB.createIfMissing = True, LDB.cacheSize= 2048}
-
-getDBKS :: DashDB (DB, KeySpaceId)
-getDBKS = asks (\d -> (dbcDb d, dbcKsId d))
