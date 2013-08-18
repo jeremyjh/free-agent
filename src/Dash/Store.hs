@@ -14,7 +14,7 @@ import           Control.Monad.Trans.Resource
         ,MonadResource, MonadUnsafeIO, MonadThrow)
 
 import           Control.Monad.Reader
-        (ReaderT, runReaderT, local, ask, MonadReader)
+        (ReaderT, runReaderT, local, asks, MonadReader)
 
 
 import           Control.Monad.Base               (MonadBase)
@@ -116,8 +116,9 @@ systemKeySpaceId :: ByteString
 systemKeySpaceId = "\0\0\0\1"
 
 withSystemContext :: DB -> MVar Int32 -> DashDB a -> ResIO a
-withSystemContext db mv ctx = runReaderT (unDBCIO ctx) $
-    mkDBC db systemKeySpaceId mv
+withSystemContext db mv ctx =
+    runReaderT (unDBCIO ctx) $
+               mkDBC db systemKeySpaceId mv
 
 getKeySpaceId :: KeySpace -> DashDB KeySpaceId
 getKeySpaceId ks
@@ -150,14 +151,8 @@ getKeySpaceId ks
             Nothing -> do --initialize
                 putMVarDBC 2 -- first user keyspace
 
-    putMVarDBC v = do
-        dbc <- ask
-        putMVar (dbcSyncMV dbc) v
-
-    takeMVarDBC = do
-        dbc <- ask
-        takeMVar (dbcSyncMV dbc)
-
+    putMVarDBC v = (asks dbcSyncMV) >>= flip putMVar v
+    takeMVarDBC = (asks dbcSyncMV) >>= takeMVar
     toInt32 bs = (Binary.decode $ toLazy bs) :: Int32
     toBS = toStrict . Binary.encode
 
@@ -165,16 +160,10 @@ getKeySpaceId ks
 packKey :: Key -> KeySpace -> ByteString
 packKey k ksId = ksId ++ k
 
-
 openDB :: FilePathS -> ResIO DB
 openDB path =
     LDB.open path
         LDB.defaultOptions{LDB.createIfMissing = True, LDB.cacheSize= 2048}
 
-
 getDBKS :: DashDB (DB, KeySpaceId)
-getDBKS = do
-    dbc <- ask
-    let db = dbcDb dbc
-    let ksId = dbcKsId dbc
-    return (db,ksId)
+getDBKS = asks (\d -> (dbcDb d, dbcKsId d))
