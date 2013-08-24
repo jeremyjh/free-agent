@@ -44,7 +44,7 @@ spec = do
             it "will fail to deserialize if data is not a protobuf" $ do
                 (Left (ParseFail msg)) <- withDBT (fetchProtoNC "somekey")
                 take 25 msg `shouldBe` "Failed at 1 : Text.Protoc"
-        describe "has a reader context API that" $
+        describe "has a reader context API that" $ do
             it "is awesome" $ do
                 (Just simple, Right proto)
                     <- runDashDB testDB "awesome" $ do
@@ -57,6 +57,13 @@ spec = do
                         return (simple, join $ map unWrap proto)
                 simple `shouldBe` "thevalue"
                 proto `shouldBe` checkTCP
+            it "can scan partial matches" $ do
+                value <- runDashDB testDB "scan" $ do
+                    put "employee:1" "Jill"
+                    put "employee:2" "Jack"
+                    put "cheeseburgers:1" "do not want"
+                    scan "employee:"
+                value `shouldBe` [("employee:1", "Jill"), ("employee:2", "Jack")]
 
 testDB = "/tmp/leveltest"
 

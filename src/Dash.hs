@@ -5,8 +5,6 @@ module Dash(dashMain) where
 import           Dash.Prelude
 import qualified Prelude as P
 import           Dash.Store
-import           Control.Monad.Reader
-import           Control.Concurrent.Chan.Lifted
 
 
 dashMain :: IO ()

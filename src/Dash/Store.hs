@@ -2,7 +2,7 @@
 module Dash.Store
     ( fetch
     , stash, stashWrapped
-    , get, put
+    , get, put, scan
     , DashDB, runDashDB, withKeySpace
     , Key, KeySpace
     , Stashable(..)
@@ -23,12 +23,14 @@ import           Control.Concurrent.Lifted        (fork)
 import           Control.Concurrent.MVar.Lifted
         (MVar, newMVar, takeMVar, putMVar)
 
-import qualified Data.ByteString.Char8             as BS
 import qualified Data.ByteString                   as BS hiding (pack)
 import qualified Data.Binary                       as Binary
 import           Data.Default                      (def)
 
 import qualified Database.LevelDB                  as LDB
+import           Database.LevelDB                  hiding (put, get)
+
+import           Data.Maybe.Utils                  (forceMaybe)
 
 import           Dash.Proto
         (ProtoBuf(..), wrap, ProtoFail(..),encodeRaw)
@@ -37,7 +39,7 @@ type Key = ByteString
 type Value = ByteString
 type KeySpace = ByteString
 type KeySpaceId = ByteString
-type DB = LDB.DB
+type Item = (Key, Value)
 
 -- | Reader-based data context API
 --
@@ -99,6 +101,33 @@ get k = do
     (db, ksId) <- asks $ dbcDb &&& dbcKsId
     let packed = ksId ++ k
     liftResourceT $ LDB.get db def packed
+
+-- | find and return sorted List of items where the key begins with the supplied parameter
+scan :: Key -> DashDB [Item]
+scan k = do
+    (db, ksId) <- asks $ dbcDb &&& dbcKsId
+    liftResourceT $ withIterator db def $ doScan (ksId ++ k)
+  where
+    doScan :: Key -> Iterator -> ResIO [Item]
+    doScan prefix iter = do
+        iterSeek iter prefix
+        filterBegins []
+      where
+        filterBegins :: [Item] -> ResIO [Item]
+        filterBegins acc = do
+            mk <- iterKey iter
+            mv <- iterValue iter
+            case (mk, mv) of
+                (Just nk, Just nv) ->
+                    if (beginsPrefix nk) then do
+                        iterNext iter
+                        items <- filterBegins acc
+                        return $ (BS.drop 4 nk, nv) : items
+                    else return acc
+                _ -> return acc
+        beginsPrefix nk = nk > prefix && nk < addOne(prefix)
+        addOne bs = BS.snoc (BS.take (BS.length bs - 1) bs) $ BS.last bs + 1
+
 
 -- | Types that can be serialized, stored and retrieved by Dash
 -- A ProtoBuf with a key

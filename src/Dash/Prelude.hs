@@ -10,6 +10,7 @@ module Dash.Prelude
     , debug
     , dbg
     , ConvertText(..)
+    , ask, asks
     ) where
 
 import           BasicPrelude
@@ -22,6 +23,7 @@ import           Data.String.Utils    (split)
 import           Debug.FileLocation
 import           Data.Text.Encoding   (decodeUtf8, encodeUtf8)
 import           Data.Text            (pack, unpack)
+import           Control.Monad.Reader (ask, asks)
 
 
 
