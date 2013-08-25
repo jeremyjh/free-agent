@@ -1,8 +1,11 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 module Dash.Store
     ( fetch
     , stash, stashWrapped
-    , get, put, scan, scanBegins, scanBeginsMap, scanBeginsMapFilter
+    , get, put
+    , scan, ScanFuns(..), defItem, def, withMap,Item
     , DashDB, runDashDB, withKeySpace
     , Key, KeySpace
     , Stashable(..)
@@ -25,12 +28,10 @@ import           Control.Concurrent.MVar.Lifted
 
 import qualified Data.ByteString                   as BS hiding (pack)
 import qualified Data.Binary                       as Binary
-import           Data.Default                      (def)
+import           Data.Default                      (Default(..))
 
 import qualified Database.LevelDB                  as LDB
 import           Database.LevelDB                  hiding (put, get)
-
-import           Data.Maybe.Utils                  (forceMaybe)
 
 import           Dash.Proto
         (ProtoBuf(..), wrap, ProtoFail(..),encodeRaw)
@@ -51,12 +52,6 @@ data DBContext = DBC { dbcDb :: DB
 instance Show (DBContext) where
     show = (++) "KeySpaceID: " . P.show . dbcKsId
 
-mkDBC :: DB -> KeySpaceId -> MVar Int32 -> DBContext
-mkDBC db ksId mv = DBC {dbcDb = db
-                       ,dbcKsId = ksId
-                       ,dbcSyncMV = mv
-                       }
-
 -- | DashDB Monad provides a context for database operations provided in this module
 --
 -- Use runDashDB
@@ -75,13 +70,13 @@ runDashDB dbPath ks ctx = runResourceT $ do
     db <- openDB dbPath
     mv <- newMVar 0
     ksId <- withSystemContext db mv $ getKeySpaceId ks
-    runReaderT (unDBCIO ctx) (mkDBC db ksId mv)
+    runReaderT (unDBCIO ctx) (DBC db ksId mv)
   where
     openDB path =
         LDB.open path
             LDB.defaultOptions{LDB.createIfMissing = True, LDB.cacheSize= 2048}
     withSystemContext db mv sctx =
-        runReaderT (unDBCIO sctx) $ mkDBC db systemKeySpaceId mv
+        runReaderT (unDBCIO sctx) $ DBC db systemKeySpaceId mv
 
 -- | Override keyspace with a local keyspace for an (block) action(s)
 --
@@ -102,46 +97,62 @@ get k = do
     let packed = ksId ++ k
     liftResourceT $ LDB.get db def packed
 
--- | Find and return sorted List of items where the key begins with the supplied parameter
-scanBegins :: Key -> DashDB [Item]
-scanBegins k = scanBeginsMapFilter k id (\_ -> True)
+data ScanFuns a b = ScanFuns { -- starting value
+                             scanInit :: b
 
--- | Find and return sorted List of items where the key begins with the supplied parameter
---
--- Use provided functiont to map or transform the Item before pre-pending it to result
-scanBeginsMap :: Key
-              -> (Item -> Item)  -- ^ map or transform an item
-              -> DashDB [Item]
-scanBeginsMap k mapFn = scanBeginsMapFilter k mapFn (\_ -> True)
+                             -- | scan will continue until this returns false
+                           , scanWhile :: (Key -> Item -> b -> Bool)
 
--- | Find and return sorted List of items where the key begins with the supplied parameter
-scanBeginsMapFilter :: Key
-              -> (Item -> Item)  -- ^ map or transform an item
-              -> (Item -> Bool) -- ^ filter function - 'False' to leave this 'Item' out of the list
-              -> DashDB [Item]
-scanBeginsMapFilter prefix mapFn filterFn = scan prefix beginsPrefix mapFn filterFn
-  where
-    beginsPrefix (nk, _) _ = nk >= prefix && nk < addOne(prefix)
-    addOne bs = BS.snoc (BS.take (BS.length bs - 1) bs) $ BS.last bs + 1
+                             -- | map or transform an item before its prepended to the accumulator
+                           --, scanMap ::  (Item -> Item)
+                           , scanMap ::  (Item -> a)
+
+                             -- | filter function - 'False' to leave this 'Item' out of the list
+                           , scanFilter :: (Item -> Bool)
+
+                           --, scanAccum :: (Item -> [Item] -> [Item])
+                           , scanReduce :: (a -> b -> b)
+                           }
+
+
+instance Default (ScanFuns a b) where
+    def = ScanFuns { scanWhile = (\ prefix (nk, _) _ ->
+                                      BS.length nk >= BS.length prefix
+                                      && BS.take (BS.length nk -1) nk == prefix
+                                 )
+                   , scanInit = error "No scanInit provided."
+                   , scanMap = error "No scanMap provided."
+                   , scanFilter = const True
+                   , scanReduce = error "No scanAccum provided."
+                   }
+
+defItem :: ScanFuns Item [Item]
+defItem = def { scanInit = []
+              , scanMap = id
+              , scanReduce = (:)
+              }
+
+withMap :: (Item -> a) -> ScanFuns a [a]
+withMap mapFn = def { scanInit = []
+                   , scanMap = mapFn
+                   , scanFilter = const True
+                   , scanReduce = (:)
+                   }
 
 -- | Scan the keyspace, applying functions and returning results
 --
 -- Look at the 'scanBegins' functions first to see if those will do what you need
 scan :: Key  -- ^ Key at which to start the scan
-     -> (Item -> [Item] -> Bool) -- ^ scan will continue until this returns false
-     -> (Item -> Item)  -- ^ map or transform an item before its prepended to the accumulator
-     -> (Item -> Bool) -- ^ filter function - 'False' to leave this 'Item' out of the list
-     -> DashDB [Item]
-scan k contFn mapFn filterFn = do
+     -> ScanFuns a b
+     -> DashDB b
+scan k scanFns = do
     (db, ksId) <- asks $ dbcDb &&& dbcKsId
     liftResourceT $ withIterator db def $ doScan (ksId ++ k)
   where
-    doScan :: Key -> Iterator -> ResIO [Item]
     doScan prefix iter = do
         iterSeek iter prefix
-        applyIterate []
+        applyIterate init
       where
-        applyIterate :: [Item] -> ResIO [Item]
         applyIterate acc = do
             mk <- iterKey iter
             mv <- iterValue iter
@@ -151,11 +162,16 @@ scan k contFn mapFn filterFn = do
                     if (contFn (unSpaced, nv) acc) then do
                         iterNext iter
                         items <- applyIterate acc
-                        if filterFn (nk, nv) then
-                            return $ mapFn (unSpaced, nv) : items
-                        else return items
-                    else return acc
+                        if filterFn (nk, nv) then do
+                            return $ reduceFn (mapFn (unSpaced, nv)) items
+                            else return items
+                        else return acc
                 _ -> return acc
+    init = scanInit scanFns
+    contFn = scanWhile scanFns $ k
+    mapFn = scanMap scanFns
+    filterFn = scanFilter scanFns
+    reduceFn = scanReduce scanFns
 
 
 -- | Types that can be serialized, stored and retrieved by Dash

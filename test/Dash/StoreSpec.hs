@@ -2,9 +2,9 @@
 module Dash.StoreSpec (main, spec) where
 
 import           BasicPrelude
+import qualified Data.ByteString                  as BS
 import           Test.Hspec
 import           System.Process(system)
-
 import           Dash.Proto
 import           Dash.Store
 import           Control.Monad.Trans.Resource      (release, ResIO, runResourceT, liftResourceT)
@@ -62,15 +62,21 @@ spec = do
                     put "employee:1" "Jill"
                     put "employee:2" "Jack"
                     put "cheeseburgers:1" "do not want"
-                    first <- scanBegins "employee:"
-                    second <- scanBeginsMap "employee:"
-                                            (\(k, v) -> (k, v ++ " Smith") )
-                    third <- scanBeginsMapFilter "employee:" id
-                                                 (\(_, v) -> v > "Jack")
-                    return (first, second, third)
+                    first <-  scan "employee:" defItem
+                    second <- scan "employee:" $
+                                   withMap (\(k, v) -> v ++ " Smith")
+                    third  <-  scan "employee:"
+                                   defItem { scanFilter = (\(_, v) -> v > "Jack") }
+                    fourth <- scan "employee:" $
+                                   def { scanInit = 0
+                                       , scanMap = (\(_, v) -> BS.head v)
+                                       , scanReduce = (+)
+                                       }
+                    return (first, second, third, fourth)
                 results `shouldBe` ( [("employee:1", "Jill"), ("employee:2", "Jack")]
-                                   , [("employee:1", "Jill Smith"), ("employee:2", "Jack Smith")]
-                                   , [("employee:1", "Jill")])
+                                   , [ "Jill Smith", "Jack Smith"]
+                                   , [("employee:1", "Jill")]
+                                   , 148)
 
 testDB = "/tmp/leveltest"
 
