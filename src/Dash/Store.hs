@@ -2,7 +2,7 @@
 module Dash.Store
     ( fetch
     , stash, stashWrapped
-    , get, put, scan
+    , get, put, scan, scanBegins, scanBeginsMap, scanBeginsMapFilter
     , DashDB, runDashDB, withKeySpace
     , Key, KeySpace
     , Stashable(..)
@@ -102,31 +102,60 @@ get k = do
     let packed = ksId ++ k
     liftResourceT $ LDB.get db def packed
 
--- | find and return sorted List of items where the key begins with the supplied parameter
-scan :: Key -> DashDB [Item]
-scan k = do
+-- | Find and return sorted List of items where the key begins with the supplied parameter
+scanBegins :: Key -> DashDB [Item]
+scanBegins k = scanBeginsMapFilter k id (\_ -> True)
+
+-- | Find and return sorted List of items where the key begins with the supplied parameter
+--
+-- Use provided functiont to map or transform the Item before pre-pending it to result
+scanBeginsMap :: Key
+              -> (Item -> Item)  -- ^ map or transform an item
+              -> DashDB [Item]
+scanBeginsMap k mapFn = scanBeginsMapFilter k mapFn (\_ -> True)
+
+-- | Find and return sorted List of items where the key begins with the supplied parameter
+scanBeginsMapFilter :: Key
+              -> (Item -> Item)  -- ^ map or transform an item
+              -> (Item -> Bool) -- ^ filter function - 'False' to leave this 'Item' out of the list
+              -> DashDB [Item]
+scanBeginsMapFilter prefix mapFn filterFn = scan prefix beginsPrefix mapFn filterFn
+  where
+    beginsPrefix (nk, _) _ = nk >= prefix && nk < addOne(prefix)
+    addOne bs = BS.snoc (BS.take (BS.length bs - 1) bs) $ BS.last bs + 1
+
+-- | Scan the keyspace, applying functions and returning results
+--
+-- Look at the 'scanBegins' functions first to see if those will do what you need
+scan :: Key  -- ^ Key at which to start the scan
+     -> (Item -> [Item] -> Bool) -- ^ scan will continue until this returns false
+     -> (Item -> Item)  -- ^ map or transform an item before its prepended to the accumulator
+     -> (Item -> Bool) -- ^ filter function - 'False' to leave this 'Item' out of the list
+     -> DashDB [Item]
+scan k contFn mapFn filterFn = do
     (db, ksId) <- asks $ dbcDb &&& dbcKsId
     liftResourceT $ withIterator db def $ doScan (ksId ++ k)
   where
     doScan :: Key -> Iterator -> ResIO [Item]
     doScan prefix iter = do
         iterSeek iter prefix
-        filterBegins []
+        applyIterate []
       where
-        filterBegins :: [Item] -> ResIO [Item]
-        filterBegins acc = do
+        applyIterate :: [Item] -> ResIO [Item]
+        applyIterate acc = do
             mk <- iterKey iter
             mv <- iterValue iter
             case (mk, mv) of
                 (Just nk, Just nv) ->
-                    if (beginsPrefix nk) then do
+                    let unSpaced = BS.drop 4 nk in
+                    if (contFn (unSpaced, nv) acc) then do
                         iterNext iter
-                        items <- filterBegins acc
-                        return $ (BS.drop 4 nk, nv) : items
+                        items <- applyIterate acc
+                        if filterFn (nk, nv) then
+                            return $ mapFn (unSpaced, nv) : items
+                        else return items
                     else return acc
                 _ -> return acc
-        beginsPrefix nk = nk > prefix && nk < addOne(prefix)
-        addOne bs = BS.snoc (BS.take (BS.length bs - 1) bs) $ BS.last bs + 1
 
 
 -- | Types that can be serialized, stored and retrieved by Dash

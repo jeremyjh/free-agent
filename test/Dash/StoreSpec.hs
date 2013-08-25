@@ -58,12 +58,19 @@ spec = do
                 simple `shouldBe` "thevalue"
                 proto `shouldBe` checkTCP
             it "can scan partial matches" $ do
-                value <- runDashDB testDB "scan" $ do
+                results <- runDashDB testDB "scan" $ do
                     put "employee:1" "Jill"
                     put "employee:2" "Jack"
                     put "cheeseburgers:1" "do not want"
-                    scan "employee:"
-                value `shouldBe` [("employee:1", "Jill"), ("employee:2", "Jack")]
+                    first <- scanBegins "employee:"
+                    second <- scanBeginsMap "employee:"
+                                            (\(k, v) -> (k, v ++ " Smith") )
+                    third <- scanBeginsMapFilter "employee:" id
+                                                 (\(_, v) -> v > "Jack")
+                    return (first, second, third)
+                results `shouldBe` ( [("employee:1", "Jill"), ("employee:2", "Jack")]
+                                   , [("employee:1", "Jill Smith"), ("employee:2", "Jack Smith")]
+                                   , [("employee:1", "Jill")])
 
 testDB = "/tmp/leveltest"
 
