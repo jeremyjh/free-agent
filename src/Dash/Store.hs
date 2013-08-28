@@ -1,11 +1,10 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings, GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE FlexibleInstances #-}
 
 module Dash.Store
     ( fetch
     , stash, stashWrapped
     , get, put
-    , scan, ScanFuns(..), defItem, def, withMap,Item
+    , scan, ScanQuery(..), queryItems, queryList, queryBegins
     , DashDB, runDashDB, withKeySpace
     , Key, KeySpace
     , Stashable(..)
@@ -13,16 +12,11 @@ module Dash.Store
 
 import           Dash.Prelude
 import qualified Prelude as P
-import           Control.Monad.Trans.Resource
-        (ResourceT, ResIO, liftResourceT, runResourceT
-        ,MonadResource, MonadUnsafeIO, MonadThrow)
 
 import           Control.Monad.Reader
-        (ReaderT, runReaderT, local, asks, MonadReader)
-
+        (ReaderT, runReaderT, local, MonadReader)
 
 import           Control.Monad.Base               (MonadBase)
-import           Control.Concurrent.Lifted        (fork)
 import           Control.Concurrent.MVar.Lifted
         (MVar, newMVar, takeMVar, putMVar)
 
@@ -32,6 +26,8 @@ import           Data.Default                      (Default(..))
 
 import qualified Database.LevelDB                  as LDB
 import           Database.LevelDB                  hiding (put, get)
+import           Control.Monad.Trans.Resource
+        (ResourceT, MonadUnsafeIO, MonadThrow)
 
 import           Dash.Proto
         (ProtoBuf(..), wrap, ProtoFail(..),encodeRaw)
@@ -97,61 +93,71 @@ get k = do
     let packed = ksId ++ k
     liftResourceT $ LDB.get db def packed
 
-data ScanFuns a b = ScanFuns { -- starting value
+-- | Structure containing functions used within the 'scan' function
+data ScanQuery a b = ScanQuery { -- starting value
                              scanInit :: b
 
                              -- | scan will continue until this returns false
                            , scanWhile :: (Key -> Item -> b -> Bool)
 
-                             -- | map or transform an item before its prepended to the accumulator
-                           --, scanMap ::  (Item -> Item)
+                             -- | map or transform an item before it is reduced/accumulated
                            , scanMap ::  (Item -> a)
 
-                             -- | filter function - 'False' to leave this 'Item' out of the list
+                             -- | filter function - 'False' to leave
+                             -- this 'Item' out of the result
                            , scanFilter :: (Item -> Bool)
 
-                           --, scanAccum :: (Item -> [Item] -> [Item])
+                             -- | accumulator/fold
                            , scanReduce :: (a -> b -> b)
                            }
 
-
-instance Default (ScanFuns a b) where
-    def = ScanFuns { scanWhile = (\ prefix (nk, _) _ ->
+-- | a basic ScanQuery helper that defaults scanWhile to continue while
+-- the key argument supplied to scan matches the beginning of the key returned
+-- by the iterator
+--
+-- requires an 'scanInit', a 'scanMap' and a 'scanReduce' function
+queryBegins :: ScanQuery a b
+queryBegins = ScanQuery { scanWhile = (\ prefix (nk, _) _ ->
                                       BS.length nk >= BS.length prefix
                                       && BS.take (BS.length nk -1) nk == prefix
                                  )
                    , scanInit = error "No scanInit provided."
                    , scanMap = error "No scanMap provided."
                    , scanFilter = const True
-                   , scanReduce = error "No scanAccum provided."
+                   , scanReduce = error "No scanReduce provided."
                    }
 
-defItem :: ScanFuns Item [Item]
-defItem = def { scanInit = []
-              , scanMap = id
-              , scanReduce = (:)
-              }
+-- | a ScanQuery helper that will produce the list of items as-is
+--
+-- while the key matches as withBegins
+-- does not require any functions though they could be substituted
+queryItems :: ScanQuery Item [Item]
+queryItems = queryBegins { scanInit = []
+                       , scanMap = id
+                       , scanReduce = (:)
+                       }
 
-withMap :: (Item -> a) -> ScanFuns a [a]
-withMap mapFn = def { scanInit = []
-                   , scanMap = mapFn
-                   , scanFilter = const True
-                   , scanReduce = (:)
-                   }
+-- | a ScanQuery helper with defaults for a list result; requires a map function
+--
+-- while the key matches as withBegins
+queryList :: ScanQuery a [a]
+queryList  = queryBegins { scanInit = []
+                       , scanFilter = const True
+                       , scanReduce = (:)
+                       }
 
 -- | Scan the keyspace, applying functions and returning results
 --
--- Look at the 'scanBegins' functions first to see if those will do what you need
 scan :: Key  -- ^ Key at which to start the scan
-     -> ScanFuns a b
+     -> ScanQuery a b
      -> DashDB b
-scan k scanFns = do
+scan k scanQuery = do
     (db, ksId) <- asks $ dbcDb &&& dbcKsId
     liftResourceT $ withIterator db def $ doScan (ksId ++ k)
   where
     doScan prefix iter = do
         iterSeek iter prefix
-        applyIterate init
+        applyIterate initV
       where
         applyIterate acc = do
             mk <- iterKey iter
@@ -159,7 +165,7 @@ scan k scanFns = do
             case (mk, mv) of
                 (Just nk, Just nv) ->
                     let unSpaced = BS.drop 4 nk in
-                    if (contFn (unSpaced, nv) acc) then do
+                    if (whileFn (unSpaced, nv) acc) then do
                         iterNext iter
                         items <- applyIterate acc
                         if filterFn (nk, nv) then do
@@ -167,11 +173,11 @@ scan k scanFns = do
                             else return items
                         else return acc
                 _ -> return acc
-    init = scanInit scanFns
-    contFn = scanWhile scanFns $ k
-    mapFn = scanMap scanFns
-    filterFn = scanFilter scanFns
-    reduceFn = scanReduce scanFns
+    initV = scanInit scanQuery
+    whileFn = scanWhile scanQuery $ k
+    mapFn = scanMap scanQuery
+    filterFn = scanFilter scanQuery
+    reduceFn = scanReduce scanQuery
 
 
 -- | Types that can be serialized, stored and retrieved by Dash

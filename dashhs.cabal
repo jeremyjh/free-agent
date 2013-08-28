@@ -83,3 +83,4 @@ test-suite spec
                    , resourcet
                    , leveldb-haskell
                    , process
+                   , bytestring

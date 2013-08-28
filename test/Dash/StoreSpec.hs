@@ -62,16 +62,16 @@ spec = do
                     put "employee:1" "Jill"
                     put "employee:2" "Jack"
                     put "cheeseburgers:1" "do not want"
-                    first <-  scan "employee:" defItem
+                    first <-  scan "employee:" queryItems
                     second <- scan "employee:" $
-                                   withMap (\(k, v) -> v ++ " Smith")
+                                   queryList {scanMap = (\(k, v) -> v ++ " Smith")}
                     third  <-  scan "employee:"
-                                   defItem { scanFilter = (\(_, v) -> v > "Jack") }
+                                   queryItems { scanFilter = (\(_, v) -> v > "Jack") }
                     fourth <- scan "employee:" $
-                                   def { scanInit = 0
-                                       , scanMap = (\(_, v) -> BS.head v)
-                                       , scanReduce = (+)
-                                       }
+                                   queryBegins { scanInit = 0
+                                              , scanMap = (\(_, v) -> BS.head v)
+                                              , scanReduce = (+)
+                                              }
                     return (first, second, third, fourth)
                 results `shouldBe` ( [("employee:1", "Jill"), ("employee:2", "Jack")]
                                    , [ "Jill Smith", "Jack Smith"]
