@@ -159,17 +159,19 @@ scan k scanQuery = do
         iterSeek iter prefix
         applyIterate initV
       where
+        readItem = do
+            nk <- iterKey iter
+            nv <- iterValue iter
+            return (map (BS.drop 4) nk, nv) --unkeyspace
         applyIterate acc = do
-            mk <- iterKey iter
-            mv <- iterValue iter
-            case (mk, mv) of
+            item <- readItem
+            case item of
                 (Just nk, Just nv) ->
-                    let unSpaced = BS.drop 4 nk in
-                    if (whileFn (unSpaced, nv) acc) then do
+                    if (whileFn (nk, nv) acc) then do
                         iterNext iter
                         items <- applyIterate acc
                         if filterFn (nk, nv) then do
-                            return $ reduceFn (mapFn (unSpaced, nv)) items
+                            return $ reduceFn (mapFn (nk, nv)) items
                             else return items
                         else return acc
                 _ -> return acc
