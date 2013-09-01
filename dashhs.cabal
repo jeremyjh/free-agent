@@ -31,6 +31,7 @@ library
                    , utf8-string
                    , bytestring
                    , leveldb-haskell
+                   , higher-leveldb
                    , data-default
                    , resourcet
                    , transformers
@@ -56,6 +57,7 @@ executable dashhs
                    , protocol-buffers-descriptor
                    , utf8-string
                    , bytestring
+                   , higher-leveldb
                    , leveldb-haskell
                    , data-default
                    , resourcet
@@ -76,11 +78,10 @@ test-suite spec
   build-depends:     base == 4.*
                    , dashhs
                    , hspec >= 1.5
-                   , text
-                   , text-format
                    , basic-prelude
                    , protocol-buffers
                    , resourcet
                    , leveldb-haskell
+                   , higher-leveldb
                    , process
                    , bytestring

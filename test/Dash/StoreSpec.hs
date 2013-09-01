@@ -47,7 +47,7 @@ spec = do
         describe "has a reader context API that" $ do
             it "is awesome" $ do
                 (Just simple, Right proto)
-                    <- runDashDB testDB "awesome" $ do
+                    <- runLevelDB testDB "awesome" $ do
                         put "thekey" "thevalue"
                         withKeySpace "otherspace" $ do
                             put "thekey" "othervalue"
@@ -58,7 +58,7 @@ spec = do
                 simple `shouldBe` "thevalue"
                 proto `shouldBe` checkTCP
             it "can scan partial matches" $ do
-                results <- runDashDB testDB "scan" $ do
+                results <- runLevelDB testDB "scan" $ do
                     put "employee:1" "Jill"
                     put "employee:2" "Jack"
                     put "cheeseburgers:1" "do not want"
@@ -80,10 +80,10 @@ spec = do
 
 testDB = "/tmp/leveltest"
 
-withDBT :: DashDB a -> IO a
-withDBT = runDashDB testDB "Dash.StoreSpec"
+withDBT :: LevelDB a -> IO a
+withDBT = runLevelDB testDB "Dash.StoreSpec"
 
-fetchProtoNC :: Key -> DashDB (Either ProtoFail NC.Command)
+fetchProtoNC :: Key -> LevelDB (Either ProtoFail NC.Command)
 fetchProtoNC = fetch
 
 checkTCP = NC.Command { NC.command = "/usr/lib/nagios/plugins/check_tcp"
