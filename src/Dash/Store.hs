@@ -1,4 +1,4 @@
-{-# LANGUAGE NoImplicitPrelude, OverloadedStrings, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 
 module Dash.Store
     ( fetch

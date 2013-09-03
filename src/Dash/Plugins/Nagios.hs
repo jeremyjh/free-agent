@@ -1,5 +1,7 @@
-{-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude, OverloadedStrings  #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Dash.Plugins.Nagios(Command(..), registerUnWrappers) where
 
 import           Dash.Prelude
@@ -16,7 +18,7 @@ registerUnWrappers = [ (".dash.plugins.nagios.proto.Command",
                           unWrapAction (unWrap :: Wrapper -> Either ProtoFail Command) )
                      ]
 
-
+deriving instance Read Command
 instance ProtoBuf Command
 instance Stashable Command where
     key = fromU . host
