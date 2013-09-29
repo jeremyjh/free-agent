@@ -9,10 +9,9 @@ import           Dash.Store
 
 dashMain :: IO ()
 dashMain =  do
-    runLevelDB "/tmp/leveltest10" "hello" $ do
+    runCreateLevelDB "/tmp/leveltest10" "hello" $ do
         put "first" "firstvalue"
         put "second" "secondvalue"
-        ask >>= putStrLn . show
 
     return ()
 

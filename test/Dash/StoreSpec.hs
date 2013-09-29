@@ -47,7 +47,7 @@ spec = do
         describe "has a reader context API that" $ do
             it "is awesome" $ do
                 (Just simple, Right proto)
-                    <- runLevelDB testDB "awesome" $ do
+                    <- runCreateLevelDB testDB "awesome" $ do
                         put "thekey" "thevalue"
                         withKeySpace "otherspace" $ do
                             put "thekey" "othervalue"
@@ -57,31 +57,46 @@ spec = do
                         return (simple, join $ map unWrap proto)
                 simple `shouldBe` "thevalue"
                 proto `shouldBe` checkTCP
-            it "can scan partial matches" $ do
-                results <- runLevelDB testDB "scan" $ do
+            it "can scan and transform" $ do
+                runCreateLevelDB testDB "scan" $ do
                     put "employee:1" "Jill"
                     put "employee:2" "Jack"
                     put "cheeseburgers:1" "do not want"
-                    first <-  scan "employee:" queryItems
-                    second <- scan "employee:" $
-                                   queryList {scanMap = (\(k, v) -> v ++ " Smith")}
-                    third  <-  scan "employee:"
-                                   queryItems { scanFilter = (\(_, v) -> v > "Jack") }
-                    fourth <- scan "employee:" $
-                                   queryBegins { scanInit = 0
-                                              , scanMap = (\(_, v) -> BS.head v)
-                                              , scanReduce = (+)
-                                              }
-                    return (first, second, third, fourth)
-                results `shouldBe` ( [("employee:1", "Jill"), ("employee:2", "Jack")]
-                                   , [ "Jill Smith", "Jack Smith"]
-                                   , [("employee:1", "Jill")]
-                                   , 148)
+                    r1 <- scan "employee" queryItems
+                    r2 <- scan "employee:" $
+                                   queryList {scanMap = \ (k, v) -> v <> " Smith"}
+                    r3 <- scan "employee:"
+                                   queryItems { scanFilter = \ (_, v) -> v > "Jack" }
+                    r4 <- scan "employee:" $
+                                queryBegins   { scanInit = 0
+                                              , scanMap = \ (_, v) -> BS.head v
+                                              , scanFold = (+) }
+                    return (r1, r2, r3, r4)
+                `shouldReturn` ( [("employee:1", "Jill"), ("employee:2", "Jack")]
+                               , [ "Jill Smith", "Jack Smith"]
+                               , [("employee:1", "Jill")]
+                               , 148)
+        describe "supports batch operations such that" $ do
+            it "can stash in a batch" $ do
+                runCreateLevelDB testDB "stashbatch" $ do
+                    runBatch $ do
+                        stashB checkTCP
+                        stashB checkTCP{NC.host="awesome.com"}
+                    fetch $ key checkTCP
+                `shouldReturn` (Right checkTCP)
+            it "can fetch a set" $ do
+                runCreateLevelDB testDB "stashbatch" $ do
+                    xs <- scanFetch ""
+                    return xs
+                `shouldReturn` ([Right checkTCP{NC.host="awesome.com"}, Right checkTCP])
+
+
+
 
 testDB = "/tmp/leveltest"
 
 withDBT :: LevelDB a -> IO a
-withDBT = runLevelDB testDB "Dash.StoreSpec"
+withDBT = runCreateLevelDB testDB "Dash.StoreSpec"
 
 fetchProtoNC :: Key -> LevelDB (Either ProtoFail NC.Command)
 fetchProtoNC = fetch
