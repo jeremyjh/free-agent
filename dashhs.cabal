@@ -31,7 +31,7 @@ library
                    , utf8-string
                    , bytestring
                    , leveldb-haskell
-                   , higher-leveldb
+                   , higher-leveldb == 0.1.0.42
                    , data-default
                    , resourcet
                    , transformers
@@ -42,6 +42,7 @@ library
                    , binary
                    , lifted-base
                    , transformers-base
+                   , lens
 
 executable dashhs
   ghc-options:       -Wall -Werror -fno-warn-unused-imports -threaded -with-rtsopts=-N -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
@@ -57,7 +58,7 @@ executable dashhs
                    , protocol-buffers-descriptor
                    , utf8-string
                    , bytestring
-                   , higher-leveldb
+                   , higher-leveldb == 0.1.0.42
                    , leveldb-haskell
                    , data-default
                    , resourcet
@@ -69,6 +70,7 @@ executable dashhs
                    , binary
                    , lifted-base
                    , transformers-base
+                   , lens
 
 test-suite spec
   ghc-options:       -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
@@ -81,7 +83,8 @@ test-suite spec
                    , basic-prelude
                    , protocol-buffers
                    , resourcet
-                   , leveldb-haskell
+                   , higher-leveldb == 0.1.0.42
                    , higher-leveldb
                    , process
                    , bytestring
+                   , lens

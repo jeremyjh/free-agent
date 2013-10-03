@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings  #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Dash.Plugins.Nagios(Command(..), registerUnWrappers) where
@@ -12,6 +13,7 @@ import           Dash.Proto
 import           Dash.Store                        (Stashable(..))
 import           Dash.Runner                       (Runnable(..), RunStatus(..))
 import           System.Process                    (readProcess)
+
 
 registerUnWrappers :: [(Utf8, Wrapper -> Either ProtoFail (Action a))]
 registerUnWrappers = [ (".dash.plugins.nagios.proto.Command",

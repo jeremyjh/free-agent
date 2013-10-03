@@ -3,6 +3,7 @@
 module Dash.Prelude
     (
       module BasicPrelude
+    , module Control.Lens
     , showStr
     , toLazy, toStrict
     , split
@@ -24,6 +25,8 @@ import           Debug.FileLocation
 import           Data.Text.Encoding   (decodeUtf8, encodeUtf8)
 import           Data.Text            (pack, unpack)
 import           Control.Monad.Reader (ask, asks)
+
+import           Control.Lens         (makeFields, (.~), (^.), (&))
 
 
 

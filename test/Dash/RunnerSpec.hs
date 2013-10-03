@@ -23,7 +23,7 @@ spec =
             exec checkUDP `shouldThrow` anyIOException
 
 checkTCP = NC.Command { NC.command = "/usr/lib/nagios/plugins/check_tcp"
-                  , NC.host = "jeremyhuffman.com"
-                  , NC.port = Just 80 }
+                  , NC.host = "localhost"
+                  , NC.port = Just 17500 }
 
 checkUDP  = checkTCP {NC.command = "/usr/lib/nagios/plugins/check_udp"}

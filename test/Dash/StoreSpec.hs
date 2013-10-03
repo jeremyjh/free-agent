@@ -8,7 +8,7 @@ import           System.Process(system)
 import           Dash.Proto
 import           Dash.Store
 import           Control.Monad.Trans.Resource      (release, ResIO, runResourceT, liftResourceT)
-import qualified Dash.Plugins.Nagios.Proto.Command as NC
+import           Dash.Plugins.Nagios.Proto.Command
 import           Dash.Runner
 import           Dash.Plugins                      ()
 import           Dash.Action
@@ -27,22 +27,22 @@ spec = do
             it "writes Commands to the DB" $
                 withDBT (stash checkTCP) >>= shouldReturn (return())
             it "reads Commands from the DB" $
-                withDBT (fetch "jeremyhuffman.com") >>= shouldBe (Right checkTCP)
+                withDBT (fetch "localhost") >>= shouldBe (Right checkTCP)
             it "writes wrapped Commands to the DB" $
                 withDBT (stashWrapped checkTCP) >>= shouldReturn (return())
             it "reads Commands from the DB as Action" $ do
-                action <- withDBT (fetchAction "jeremyhuffman.com")
+                action <- withDBT (fetchAction "localhost")
                 action `shouldBe` (Right $ Action checkTCP)
             it "can read an Action from the DB and execute it" $ do
-                (Right action) <- withDBT (fetchAction "jeremyhuffman.com")
+                (Right action) <- withDBT (fetchAction "localhost")
                 exec action >>= shouldBe (Complete $ Just "Awesome")
             it "will fail to read if key is wrong" $ do
-                (Left (NotFound _)) <- withDBT (fetchProtoNC "notgonnamatch")
+                (Left (NotFound _)) <- withDBT (fetchProto"notgonnamatch")
                 True `shouldBe` True -- NOT exception
             it "can write an arbitrary bytestring" $
                 withDBT (put "somekey" "somevalue") >>= shouldReturn (return ())
             it "will fail to deserialize if data is not a protobuf" $ do
-                (Left (ParseFail msg)) <- withDBT (fetchProtoNC "somekey")
+                (Left (ParseFail msg)) <- withDBT (fetchProto"somekey")
                 take 25 msg `shouldBe` "Failed at 1 : Text.Protoc"
         describe "has a reader context API that" $ do
             it "is awesome" $ do
@@ -53,7 +53,7 @@ spec = do
                             put "thekey" "othervalue"
                         simple <- get "thekey"
                         stashWrapped checkTCP
-                        proto <- fetch "jeremyhuffman.com"
+                        proto <- fetch "localhost"
                         return (simple, join $ map unWrap proto)
                 simple `shouldBe` "thevalue"
                 proto `shouldBe` checkTCP
@@ -81,26 +81,23 @@ spec = do
                 runCreateLevelDB testDB "stashbatch" $ do
                     runBatch $ do
                         stashB checkTCP
-                        stashB checkTCP{NC.host="awesome.com"}
+                        stashB checkTCP{host="awesome.com"}
                     fetch $ key checkTCP
                 `shouldReturn` (Right checkTCP)
             it "can fetch a set" $ do
                 runCreateLevelDB testDB "stashbatch" $ do
                     xs <- scanFetch ""
                     return xs
-                `shouldReturn` ([Right checkTCP{NC.host="awesome.com"}, Right checkTCP])
-
-
-
+                `shouldReturn` ([Right checkTCP{host="awesome.com"}, Right checkTCP])
 
 testDB = "/tmp/leveltest"
 
 withDBT :: LevelDB a -> IO a
 withDBT = runCreateLevelDB testDB "Dash.StoreSpec"
 
-fetchProtoNC :: Key -> LevelDB (Either ProtoFail NC.Command)
-fetchProtoNC = fetch
+fetchProto:: Key -> LevelDB (Either ProtoFail Command)
+fetchProto= fetch
 
-checkTCP = NC.Command { NC.command = "/usr/lib/nagios/plugins/check_tcp"
-                  , NC.host = "jeremyhuffman.com"
-                  , NC.port = Just 80 }
+checkTCP = Command { command = "/usr/lib/nagios/plugins/check_tcp"
+                  , host = "localhost"
+                  , port = Just 17500 }
