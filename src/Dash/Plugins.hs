@@ -1,11 +1,11 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
-module Dash.Plugins(pluginUnWrapper) where
+{-# LANGUAGE ConstraintKinds #-}
+module Dash.Plugins where
 
 import           Dash.Prelude
-import           Dash.Store                        (Wrapper(..), StashFail)
-import {-# SOURCE #-}
-                 Dash.Action                       (Action(..))
+import           Dash.Store
+import           Dash.Types
+import           Data.Serialize                    (encode)
 import qualified Dash.Plugins.Nagios               as NS
 
 import qualified Data.ByteString.Char8             as BS
@@ -13,10 +13,10 @@ import qualified Data.ByteString.Char8             as BS
 
 -- | Each plugin should expose a registerUnWrappers with the same signature
 --
-registerUnWrappers :: [(ByteString, Wrapper -> Either StashFail (Action a))]
+registerUnWrappers :: [(ByteString, Wrapper -> Either FetchFail (Action a))]
 registerUnWrappers = NS.registerUnWrappers -- ++ ..
 
-pluginUnWrapper :: Wrapper -> Either StashFail (Action a)
+pluginUnWrapper :: Wrapper -> Either FetchFail (Action a)
 pluginUnWrapper wrapper =
     found findUnWrap wrapper
   where

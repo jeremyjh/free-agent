@@ -6,10 +6,12 @@ import qualified Data.ByteString                  as BS
 import           Test.Hspec
 import           System.Process(system)
 import           Dash.Store
+import           Dash.Types
 import           Control.Monad.Trans.Resource      (release, ResIO, runResourceT, liftResourceT)
 import           Dash.Plugins.Nagios
+import           Dash.Plugins.Common
 import           Dash.Runner
-import           Dash.Plugins                      ()
+import           Dash.Plugins
 import           Dash.Action
 
 main :: IO ()
@@ -94,7 +96,7 @@ testDB = "/tmp/leveltest"
 withDBT :: LevelDB a -> IO a
 withDBT = runCreateLevelDB testDB "Dash.StoreSpec"
 
-fetchProto:: Key -> LevelDB (Either StashFail Command)
+fetchProto:: Key -> LevelDB (Either FetchFail Command)
 fetchProto= fetch
 
 checkTCP = Command { command = "/usr/lib/nagios/plugins/check_tcp"

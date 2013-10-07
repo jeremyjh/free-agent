@@ -10,11 +10,13 @@ library
   hs-source-dirs:    proto, src, dist/build
   other-modules:     Dash.Prelude
   exposed-modules:   Dash
+                   , Dash.Types
                    , Dash.Runner
                    , Dash.Store
+                   , Dash.Plugins
+                   , Dash.Plugins.Common
                    , Dash.Plugins.Nagios
                    , Dash.Action
-                   , Dash.Plugins
 
   build-depends:     base == 4.*
                    , process

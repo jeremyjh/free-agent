@@ -6,10 +6,9 @@
 module Dash.Plugins.Nagios(Command(..), registerUnWrappers) where
 
 import           Dash.Prelude
-import           {-# SOURCE #-}
-                 Dash.Action                       (Action(..), unWrapAction)
+import           Dash.Types
 import           Dash.Store
-import           Dash.Runner                       (Runnable(..), RunStatus(..))
+import           Dash.Plugins.Common
 import           System.Process                    (readProcess)
 import           Data.Serialize                    as Cereal
 import           Data.SafeCopy
@@ -36,7 +35,7 @@ instance Runnable Command where
         portS (Just p) = showStr p
         portS Nothing = ""
 
-registerUnWrappers :: [(ByteString, Wrapper -> Either StashFail (Action a))]
+registerUnWrappers :: [(ByteString, Wrapper -> Either FetchFail (Action a))]
 registerUnWrappers = [ ("Dash.Plugins.Nagios.Command",
-                          unWrapAction (unWrap :: Wrapper -> Either StashFail Command) )
+                          unWrapAction (unWrap :: Wrapper -> Either FetchFail Command) )
                      ]

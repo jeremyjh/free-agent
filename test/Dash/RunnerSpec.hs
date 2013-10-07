@@ -4,8 +4,8 @@ module Dash.RunnerSpec (main, spec) where
 import           BasicPrelude
 import           Test.Hspec
 import           Dash.Runner
+import           Dash.Types
 import           Dash.Plugins.Nagios
-import           Dash.Action(Action(..))
 
 main :: IO ()
 main = hspec spec
