@@ -21,21 +21,10 @@ import Debug.Trace
 
 -- Hook .proto module extension to be processed with hprotoc
 main = let hooks = simpleUserHooks {confHook = localConfHook}
-           protoc  = ("proto", protoC)
-        in defaultMainWithHooks hooks { hookedPreProcessors = protoc:knownSuffixHandlers  }
-
-protoC :: BuildInfo -> LocalBuildInfo -> PreProcessor
-protoC build local = PreProcessor {
-  platformIndependent = True,
-  runPreProcessor = \(inPath, inFile) (outPath, outFile) verbosity -> do
-    notice verbosity (inPath </> inFile ++ " is being preprocessed to " ++
-                      outPath </> outFile ++ " and a few more maybe")
-    rawSystem "hprotoc" ["--haskell_out=" ++ outPath, inPath </> inFile]
-    return ()
-  }
+        in defaultMainWithHooks hooks
 
 localConfHook a b = do
-    lbi <- (confHook simpleUserHooks) a b
+    lbi <- confHook simpleUserHooks a b
     haveLock <- doesFileExist ".cabal/lock"
     if haveLock
         then loadDependencies lbi
@@ -51,18 +40,16 @@ saveDependencies lbi = do
     deps <- foldM (resolveDependencies lbi) [] externalDeps
 
     -- Turn [InstalledPackageId] into [PackageId]
-    let packageIds = map sourcePackageId $ catMaybes $ map (lookupInstalledPackageId (installedPkgs lbi)) (nub deps)
+    let packageIds = map sourcePackageId $ mapMaybe (lookupInstalledPackageId (installedPkgs lbi)) (nub deps)
     let deps = sort packageIds
     createDirectoryIfMissing True ".cabal"
     writeFile ".cabal/lock" $ Data.List.intercalate "\n" $ map show deps
 
-    forM deps $ \spid -> do
+    forM_ deps $ \spid -> do
         let (PackageName name) = pkgName spid
         let version = showVersion $ pkgVersion spid
         let a = read (show $ pkgVersion spid) :: Version
-        if any (name==) baseLibraries
-            then return ()
-            else putStrLn $ show spid
+        unless  (name `elem` baseLibraries) $ print spid
 
     return lbi
 
@@ -71,7 +58,7 @@ loadDependencies :: LocalBuildInfo -> IO LocalBuildInfo
 loadDependencies lbi = do
     fileContents <- readFile ".cabal/lock"
     let deps = map (read :: String -> PackageIdentifier) $ lines fileContents
-    putStrLn $ show deps
+    print deps
     return lbi
 
 
@@ -95,7 +82,7 @@ resolveDependencies lbi a b = do
             let spid = sourcePackageId ipi
             let (PackageName name) = pkgName spid
             let version = showVersion $ pkgVersion spid
-            if any (name==) baseLibraries
+            if name `elem` baseLibraries
                 then return $ b : a
                 else do
                     let deps = depends ipi

@@ -5,10 +5,9 @@ import           BasicPrelude
 import qualified Data.ByteString                  as BS
 import           Test.Hspec
 import           System.Process(system)
-import           Dash.Proto
 import           Dash.Store
 import           Control.Monad.Trans.Resource      (release, ResIO, runResourceT, liftResourceT)
-import           Dash.Plugins.Nagios.Proto.Command
+import           Dash.Plugins.Nagios
 import           Dash.Runner
 import           Dash.Plugins                      ()
 import           Dash.Action
@@ -43,7 +42,7 @@ spec = do
                 withDBT (put "somekey" "somevalue") >>= shouldReturn (return ())
             it "will fail to deserialize if data is not a protobuf" $ do
                 (Left (ParseFail msg)) <- withDBT (fetchProto"somekey")
-                take 25 msg `shouldBe` "Failed at 1 : Text.Protoc"
+                take 25 msg `shouldBe` "Failed reading: safecopy:"
         describe "has a reader context API that" $ do
             it "is awesome" $ do
                 (Just simple, Right proto)
@@ -95,7 +94,7 @@ testDB = "/tmp/leveltest"
 withDBT :: LevelDB a -> IO a
 withDBT = runCreateLevelDB testDB "Dash.StoreSpec"
 
-fetchProto:: Key -> LevelDB (Either ProtoFail Command)
+fetchProto:: Key -> LevelDB (Either StashFail Command)
 fetchProto= fetch
 
 checkTCP = Command { command = "/usr/lib/nagios/plugins/check_tcp"

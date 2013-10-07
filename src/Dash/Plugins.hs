@@ -3,19 +3,20 @@
 module Dash.Plugins(pluginUnWrapper) where
 
 import           Dash.Prelude
-
-import           Dash.Proto
+import           Dash.Store                        (Wrapper(..), StashFail)
 import {-# SOURCE #-}
                  Dash.Action                       (Action(..))
-
 import qualified Dash.Plugins.Nagios               as NS
+
+import qualified Data.ByteString.Char8             as BS
+
 
 -- | Each plugin should expose a registerUnWrappers with the same signature
 --
-registerUnWrappers :: [(Utf8, Wrapper -> Either ProtoFail (Action a))]
+registerUnWrappers :: [(ByteString, Wrapper -> Either StashFail (Action a))]
 registerUnWrappers = NS.registerUnWrappers -- ++ ..
 
-pluginUnWrapper :: Wrapper -> Either ProtoFail (Action a)
+pluginUnWrapper :: Wrapper -> Either StashFail (Action a)
 pluginUnWrapper wrapper =
     found findUnWrap wrapper
   where
@@ -23,5 +24,5 @@ pluginUnWrapper wrapper =
         find (\(n, _) -> fiName == n) registerUnWrappers
     found (Just uwf) = snd uwf
     found Nothing =
-        error "FIName not matched! Is your plugin registered?"
-    fiName = typeName wrapper
+        error $ "Type Name: " ++ BS.unpack fiName ++ " not matched! Is your plugin registered?"
+    fiName = wType wrapper

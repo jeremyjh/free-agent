@@ -12,12 +12,7 @@ library
   exposed-modules:   Dash
                    , Dash.Runner
                    , Dash.Store
-                   , Dash.Proto
-                   , Dash.Proto.Common
-                   , Dash.Proto.Common.Wrapper
                    , Dash.Plugins.Nagios
-                   , Dash.Plugins.Nagios.Proto
-                   , Dash.Plugins.Nagios.Proto.Command
                    , Dash.Action
                    , Dash.Plugins
 
@@ -26,8 +21,6 @@ library
                    , text
                    , text-format
                    , basic-prelude
-                   , protocol-buffers
-                   , protocol-buffers-descriptor
                    , utf8-string
                    , bytestring
                    , leveldb-haskell
@@ -43,6 +36,8 @@ library
                    , lifted-base
                    , transformers-base
                    , lens
+                   , cereal
+                   , safecopy
 
 executable dashhs
   ghc-options:       -Wall -Werror -fno-warn-unused-imports -threaded -with-rtsopts=-N -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
@@ -54,8 +49,6 @@ executable dashhs
                    , text
                    , text-format
                    , basic-prelude
-                   , protocol-buffers
-                   , protocol-buffers-descriptor
                    , utf8-string
                    , bytestring
                    , higher-leveldb == 0.1.0.42
@@ -71,6 +64,8 @@ executable dashhs
                    , lifted-base
                    , transformers-base
                    , lens
+                   , cereal
+                   , safecopy
 
 test-suite spec
   ghc-options:       -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
@@ -88,3 +83,5 @@ test-suite spec
                    , process
                    , bytestring
                    , lens
+                   , cereal
+                   , safecopy

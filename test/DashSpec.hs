@@ -4,8 +4,6 @@ module DashSpec (main, spec) where
 import           BasicPrelude
 import           Test.Hspec
 import           Dash
-import           Dash.Proto
-import qualified Dash.Plugins.Nagios.Proto.Command as NC
 
 main :: IO ()
 main = hspec spec

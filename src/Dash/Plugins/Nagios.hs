@@ -1,35 +1,42 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings  #-}
-{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Dash.Plugins.Nagios(Command(..), registerUnWrappers) where
 
 import           Dash.Prelude
-import           Dash.Plugins.Nagios.Proto.Command
 import           {-# SOURCE #-}
                  Dash.Action                       (Action(..), unWrapAction)
-import           Dash.Proto
-import           Dash.Store                        (Stashable(..))
+import           Dash.Store
 import           Dash.Runner                       (Runnable(..), RunStatus(..))
 import           System.Process                    (readProcess)
+import           Data.Serialize                    as Cereal
+import           Data.SafeCopy
 
+data Command = Command { host :: Text
+               , port :: Maybe Int32
+               , command :: Text } deriving (Show, Eq, Typeable)
 
-registerUnWrappers :: [(Utf8, Wrapper -> Either ProtoFail (Action a))]
-registerUnWrappers = [ (".dash.plugins.nagios.proto.Command",
-                          unWrapAction (unWrap :: Wrapper -> Either ProtoFail Command) )
-                     ]
+deriveSafeCopy 1 'base ''Command
 
-deriving instance Read Command
-instance ProtoBuf Command
+instance Serialize Command where
+    put = safePut
+    get = safeGet
+
 instance Stashable Command where
-    key = fromU . host
+    key = fromT . host
 
 instance Runnable Command where
     exec cmd =
-        readProcess (fromU $ command cmd) (makeArgs cmd) []
+        readProcess (fromT $ command cmd) (makeArgs cmd) []
             >> return (Complete $ Just "Awesome")
       where
-        makeArgs c = ["-H", fromU $ host c, "-p", portS $ port c]
+        makeArgs c = ["-H", fromT $ host c, "-p", portS $ port c]
         portS (Just p) = showStr p
         portS Nothing = ""
+
+registerUnWrappers :: [(ByteString, Wrapper -> Either StashFail (Action a))]
+registerUnWrappers = [ ("Dash.Plugins.Nagios.Command",
+                          unWrapAction (unWrap :: Wrapper -> Either StashFail Command) )
+                     ]

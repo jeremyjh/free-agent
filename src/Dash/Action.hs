@@ -1,13 +1,15 @@
-{-# LANGUAGE NoImplicitPrelude, OverloadedStrings, ExistentialQuantification #-}
+{-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
+{-# LANGUAGE ExistentialQuantification #-}
 
 module Dash.Action (Action(..), unWrapAction, fetchAction) where
 
 import           Dash.Prelude
 import qualified Prelude as P
 import           Data.Typeable  (mkTyConApp, mkTyCon3, TypeRep)
-import           Dash.Store     (Stashable(..), Key, fetch, LevelDB)
+import           Dash.Store     hiding (get, put)
+import qualified Dash.Store     as DB
+import           Data.Serialize
 import           Dash.Runner    (Runnable(..))
-import           Dash.Proto
 import           Dash.Plugins   (pluginUnWrapper)
 
 
@@ -22,18 +24,9 @@ instance Eq (Action a) where
 instance P.Show (Action a) where
     show (Action a) = "Action (" ++ P.show a ++ ")"
 
-instance ReflectDescriptor (Action a) where
-    getMessageInfo (Action a) = getMessageInfo a
-    reflectDescriptorInfo (Action a) = reflectDescriptorInfo a
-
-instance Wire (Action a) where
-    wireSize a (Action s) = wireSize a s
-    wirePut a (Action s) = wirePut a s
-    wireGet = error "Cannot wireGet on an Action directly"
-
-instance ProtoBuf (Action a) where
-    encode = encodeRaw . wrap
-    decode bs = decodeRaw bs >>= pluginUnWrapper
+instance Serialize (Action a) where
+    put (Action a) = put a
+    get = error "decode/get directly on Action can't happen; use decodeAction"
 
 instance Stashable (Action a) where
     key (Action s) = key s
@@ -44,14 +37,23 @@ instance Runnable (Action a) where
 actionType :: TypeRep
 actionType  =  mkTyConApp (mkTyCon3 "dash" "Dash.Action" "Action") []
 
+decodeAction :: ByteString -> Either StashFail (Action a)
+decodeAction bs = cerResult (decode bs) >>= pluginUnWrapper
+  where
+    cerResult (Left s) = Left $ ParseFail s
+    cerResult (Right w) = Right w
+
 -- | Useful for plugins registerUnWrappers to simplify the unwrapper function
 --
 -- e.g. unWrapAction (unWrap :: Wrapper -> NC.Command)
 unWrapAction :: (Stashable a, Runnable a) =>
-                (Wrapper ->  Either ProtoFail a) -> Wrapper -> Either ProtoFail (Action b)
+                (Wrapper ->  Either StashFail a) -> Wrapper -> Either StashFail (Action b)
 unWrapAction f wrapper = fmap Action (f wrapper)
 
--- | Convenience function to fix type to Action a
+-- | Like Store.Fetch for an action using 'decodeAction' to deserialize
 --
-fetchAction :: Key -> LevelDB (Either ProtoFail (Action a))
-fetchAction = fetch
+fetchAction :: Key -> LevelDB (Either StashFail (Action a))
+fetchAction k = map decode_found $ DB.get k
+  where
+    decode_found Nothing = Left $ NotFound (showStr k)
+    decode_found (Just bs) = decodeAction bs
