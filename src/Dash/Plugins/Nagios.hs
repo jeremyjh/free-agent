@@ -14,7 +14,7 @@ import           Data.Serialize                    as Cereal
 import           Data.SafeCopy
 
 data Command = Command { host :: Text
-               , port :: Maybe Int32
+               , port :: Maybe Int
                , command :: Text } deriving (Show, Eq, Typeable)
 
 deriveSafeCopy 1 'base ''Command
@@ -35,7 +35,21 @@ instance Runnable Command where
         portS (Just p) = showStr p
         portS Nothing = ""
 
-registerUnWrappers :: [(ByteString, Wrapper -> Either FetchFail (Action a))]
-registerUnWrappers = [ ("Dash.Plugins.Nagios.Command",
-                          unWrapAction (unWrap :: Wrapper -> Either FetchFail Command) )
+registerUnWrappers :: [PluginUnWrapper (Action a)]
+registerUnWrappers = [ register "Dash.Plugins.Nagios.Command" (unWrap :: UnWrapper Command)
+                     , register "Dash.Plugins.Nagios.CommandX" (unWrap :: UnWrapper CommandX)
                      ]
+
+data CommandX = SeeItsExistentialBro Int deriving (Show, Eq, Typeable)
+
+deriveSafeCopy 1 'base ''CommandX
+
+instance Serialize CommandX where
+    put = safePut
+    get = safeGet
+
+instance Stashable CommandX where
+    key _ = undefined
+
+instance Runnable CommandX where
+    exec _ = undefined

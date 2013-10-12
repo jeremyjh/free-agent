@@ -11,7 +11,7 @@ import           Data.Typeable  (mkTyConApp, mkTyCon3)
 import           Data.SafeCopy
 import           Data.Serialize
 
-import           Dash.Store (Stashable(..))
+import           Dash.Store (Stashable(..), FetchFail)
 
 
 data RunStatus = Running (Maybe String)
@@ -22,19 +22,26 @@ data RunStatus = Running (Maybe String)
 class Runnable a where
     exec :: a -> IO RunStatus
 
+type UnWrapper a = (Wrapped -> Either FetchFail a)
+type PluginUnWrapper a = (ByteString, (UnWrapper a))
+
+data AgentConfig a = AgentConfig { configPlugins :: Map ByteString (UnWrapper a ) }
+
 -- | Wrapper lets us store an Action and recover it using
 -- the type name in 'registerUnWrappers'
-data Wrapper = Wrapper { wType :: ByteString
+data Wrapped = Wrapped { wType :: ByteString
                        , value :: ByteString }
                 deriving (Show, Typeable)
 
-deriveSafeCopy 1 'base ''Wrapper
+deriveSafeCopy 1 'base ''Wrapped
 
-instance Serialize Wrapper where
+instance Serialize Wrapped where
     get = safeGet
     put = safePut
 
 data Action a = forall p. (Stashable p, Runnable p, Typeable p) => Action p
+
+type FetchAction a = Either FetchFail (Action a)
 
 instance Typeable (Action a) where
     typeOf _ = mkTyConApp (mkTyCon3 "dash" "Dash.Action" "Action") []
@@ -57,3 +64,4 @@ instance Runnable (Action a) where
 
 instance SafeCopy (Action a) where
     putCopy (Action a) = putCopy a
+
