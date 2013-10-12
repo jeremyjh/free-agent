@@ -9,9 +9,7 @@ import           Dash.Store
 import           Dash.Types
 import           Dash.Plugins.Nagios
 import           Dash.Plugins.Common
-import           Dash.Runner
 import           Dash.Plugins
-import           Dash.Action
 
 main :: IO ()
 main = hspec spec
