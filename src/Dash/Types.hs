@@ -6,13 +6,12 @@
 module Dash.Types where
 
 import           BasicPrelude
-import           Database.LevelDB.Higher hiding (get, put)
 import qualified Prelude        as P
-import           Data.Typeable  (mkTyConApp, mkTyCon3, TypeRep)
+import           Data.Typeable  (mkTyConApp, mkTyCon3)
 import           Data.SafeCopy
 import           Data.Serialize
 
-import           Dash.Store (Stashable(..), FetchFail(..), decodeStore)
+import           Dash.Store (Stashable(..))
 
 
 data RunStatus = Running (Maybe String)
@@ -55,3 +54,6 @@ instance Stashable (Action a) where
 
 instance Runnable (Action a) where
     exec (Action s) = exec s
+
+instance SafeCopy (Action a) where
+    putCopy (Action a) = putCopy a

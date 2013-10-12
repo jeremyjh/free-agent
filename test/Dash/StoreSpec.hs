@@ -7,7 +7,6 @@ import           Test.Hspec
 import           System.Process(system)
 import           Dash.Store
 import           Dash.Types
-import           Control.Monad.Trans.Resource      (release, ResIO, runResourceT, liftResourceT)
 import           Dash.Plugins.Nagios
 import           Dash.Plugins.Common
 import           Dash.Runner
@@ -45,38 +44,6 @@ spec = do
             it "will fail to deserialize if data is not a protobuf" $ do
                 (Left (ParseFail msg)) <- withDBT (fetchProto"somekey")
                 take 25 msg `shouldBe` "Failed reading: safecopy:"
-        describe "has a reader context API that" $ do
-            it "is awesome" $ do
-                (Just simple, Right proto)
-                    <- runCreateLevelDB testDB "awesome" $ do
-                        put "thekey" "thevalue"
-                        withKeySpace "otherspace" $ do
-                            put "thekey" "othervalue"
-                        simple <- get "thekey"
-                        stashWrapped checkTCP
-                        proto <- fetch "localhost"
-                        return (simple, join $ map unWrap proto)
-                simple `shouldBe` "thevalue"
-                proto `shouldBe` checkTCP
-            it "can scan and transform" $ do
-                runCreateLevelDB testDB "scan" $ do
-                    put "employee:1" "Jill"
-                    put "employee:2" "Jack"
-                    put "cheeseburgers:1" "do not want"
-                    r1 <- scan "employee" queryItems
-                    r2 <- scan "employee:" $
-                                   queryList {scanMap = \ (k, v) -> v <> " Smith"}
-                    r3 <- scan "employee:"
-                                   queryItems { scanFilter = \ (_, v) -> v > "Jack" }
-                    r4 <- scan "employee:" $
-                                queryBegins   { scanInit = 0
-                                              , scanMap = \ (_, v) -> BS.head v
-                                              , scanFold = (+) }
-                    return (r1, r2, r3, r4)
-                `shouldReturn` ( [("employee:1", "Jill"), ("employee:2", "Jack")]
-                               , [ "Jill Smith", "Jack Smith"]
-                               , [("employee:1", "Jill")]
-                               , 148)
         describe "supports batch operations such that" $ do
             it "can stash in a batch" $ do
                 runCreateLevelDB testDB "stashbatch" $ do

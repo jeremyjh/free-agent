@@ -18,11 +18,10 @@ import           BasicPrelude
 
 import qualified Data.ByteString.Lazy as LByteS
 import qualified Prelude              as P
-import           Debug.Trace          (traceShow)
 
 import           Data.String.Utils    (split)
 import           Debug.FileLocation
-import           Data.Text.Encoding   (decodeUtf8, encodeUtf8)
+import qualified Data.Text.Encoding   as Text (decodeUtf8, encodeUtf8)
 import           Data.Text            (pack, unpack)
 import           Control.Monad.Reader (ask, asks)
 
@@ -46,8 +45,8 @@ class ConvertText a where
     fromT :: Text -> a
 
 instance ConvertText ByteString where
-    toT = decodeUtf8
-    fromT = encodeUtf8
+    toT = Text.decodeUtf8
+    fromT = Text.encodeUtf8
 
 instance ConvertText String where
     toT = pack

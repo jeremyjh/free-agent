@@ -6,8 +6,8 @@ cabal-version:       >=1.8
 
 -- -fno-warn-unused-imports is temp hack for protobuff-genned code
 library 
-  ghc-options:       -Wall -Werror -fno-warn-unused-imports
-  hs-source-dirs:    proto, src, dist/build
+  ghc-options:       -Wall -Werror
+  hs-source-dirs:    src
   other-modules:     Dash.Prelude
   exposed-modules:   Dash
                    , Dash.Types
@@ -21,50 +21,32 @@ library
   build-depends:     base == 4.*
                    , process
                    , text
-                   , text-format
                    , basic-prelude
-                   , utf8-string
                    , bytestring
-                   , leveldb-haskell
-                   , higher-leveldb == 0.1.0.42
-                   , data-default
-                   , resourcet
-                   , transformers
-                   , cryptohash
+                   , higher-leveldb == 0.2.0
                    , MissingH
                    , mtl
                    , file-location
-                   , binary
                    , lifted-base
-                   , transformers-base
                    , lens
                    , cereal
                    , safecopy
 
 executable dashhs
-  ghc-options:       -Wall -Werror -fno-warn-unused-imports -threaded -with-rtsopts=-N -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
+  ghc-options:       -Wall -Werror -threaded -with-rtsopts=-N -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
   main-is:           Main.hs
   hs-source-dirs:     src
   build-depends:     dashhs
                    , base == 4.*
                    , process
                    , text
-                   , text-format
                    , basic-prelude
-                   , utf8-string
                    , bytestring
-                   , higher-leveldb == 0.1.0.42
-                   , leveldb-haskell
-                   , data-default
-                   , resourcet
-                   , transformers
-                   , cryptohash
+                   , higher-leveldb == 0.2.0
                    , MissingH
                    , mtl
                    , file-location
-                   , binary
                    , lifted-base
-                   , transformers-base
                    , lens
                    , cereal
                    , safecopy
@@ -78,10 +60,7 @@ test-suite spec
                    , dashhs
                    , hspec >= 1.5
                    , basic-prelude
-                   , protocol-buffers
-                   , resourcet
-                   , higher-leveldb == 0.1.0.42
-                   , higher-leveldb
+                   , higher-leveldb == 0.2.0
                    , process
                    , bytestring
                    , lens

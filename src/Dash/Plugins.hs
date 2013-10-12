@@ -5,7 +5,6 @@ module Dash.Plugins where
 import           Dash.Prelude
 import           Dash.Store
 import           Dash.Types
-import           Data.Serialize                    (encode)
 import qualified Dash.Plugins.Nagios               as NS
 
 import qualified Data.ByteString.Char8             as BS

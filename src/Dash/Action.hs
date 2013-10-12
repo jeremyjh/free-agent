@@ -11,10 +11,10 @@ import           Data.Serialize (decode)
 -- | Deserializes and unWraps the underlying type using
 -- the 'registerUnWrappers' defined for it
 decodeAction :: ByteString -> Either FetchFail (Action a)
-decodeAction bs = cerResult (decode bs) >>= pluginUnWrapper
+decodeAction bs = tryDecode (decode bs) >>= pluginUnWrapper
   where
-    cerResult (Left s) = Left $ ParseFail s
-    cerResult (Right w) = Right w
+    tryDecode (Left s) = Left $ ParseFail s
+    tryDecode (Right w) = Right w
 
 -- | Like Store.Fetch for an action using 'decodeAction' to deserialize
 --
