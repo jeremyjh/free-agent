@@ -35,7 +35,7 @@ instance Runnable Command where
         portS (Just p) = showStr p
         portS Nothing = ""
 
-registerUnWrappers :: [PluginUnWrapper (Action a)]
+registerUnWrappers :: [PluginUnWrapper Action]
 registerUnWrappers = [ register "Dash.Plugins.Nagios.Command" (unWrap :: UnWrapper Command)
                      , register "Dash.Plugins.Nagios.CommandX" (unWrap :: UnWrapper CommandX)
                      ]

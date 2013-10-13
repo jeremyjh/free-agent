@@ -12,7 +12,7 @@ import           Data.Typeable
 
 
 register :: (Stashable a, Runnable a)
-         => ByteString -> UnWrapper a -> PluginUnWrapper (Action b)
+         => ByteString -> UnWrapper a -> PluginUnWrapper Action
 register bs uw = (bs, unWrapAction uw)
 
 -- | Wrap and store the 'Stashable' in the database
@@ -27,7 +27,7 @@ wrap st = Wrapped (fqName st) (encode st)
 --
 -- e.g. unWrapAction (unWrap :: Wrapper -> NC.Command)
 unWrapAction :: (Stashable a, Runnable a) =>
-                (UnWrapper a) -> Wrapped -> FetchAction b
+                UnWrapper a -> Wrapped -> FetchAction
 unWrapAction f wrapped = fmap Action (f wrapped)
 
 unWrap :: (Stashable a) => Wrapped -> Either FetchFail a

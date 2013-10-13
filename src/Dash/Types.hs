@@ -22,12 +22,8 @@ data RunStatus = Running (Maybe String)
 class Runnable a where
     exec :: a -> IO RunStatus
 
-type UnWrapper a = (Wrapped -> Either FetchFail a)
-type PluginUnWrapper a = (ByteString, (UnWrapper a))
 
-data AgentConfig a = AgentConfig { configPlugins :: Map ByteString (UnWrapper a ) }
-
--- | Wrapper lets us store an Action and recover it using
+-- | Wrapper lets us store an Actionnd recover it using
 -- the type name in 'registerUnWrappers'
 data Wrapped = Wrapped { wType :: ByteString
                        , value :: ByteString }
@@ -39,29 +35,32 @@ instance Serialize Wrapped where
     get = safeGet
     put = safePut
 
-data Action a = forall p. (Stashable p, Runnable p, Typeable p) => Action p
+data Action = forall p. (Stashable p, Runnable p, Typeable p) => Action p
 
-type FetchAction a = Either FetchFail (Action a)
-
-instance Typeable (Action a) where
+instance Typeable Action where
     typeOf _ = mkTyConApp (mkTyCon3 "dash" "Dash.Action" "Action") []
 
-instance Eq (Action a) where
+instance Eq Action where
     a == b = encode a == encode b
 
-instance P.Show (Action a) where
+instance P.Show Action where
     show (Action a) = "Action (" ++ P.show a ++ ")"
 
-instance Serialize (Action a) where
+instance Serialize Action where
     put (Action a) = put a
     get = error "decode/get directly on Action can't happen; use decodeAction"
 
-instance Stashable (Action a) where
-    key (Action s) = key s
+instance Stashable Action where
+    key (Action a) = key a
 
-instance Runnable (Action a) where
-    exec (Action s) = exec s
+instance Runnable Action where
+    exec (Action a) = exec a
 
-instance SafeCopy (Action a) where
+instance SafeCopy Action where
     putCopy (Action a) = putCopy a
 
+type FetchAction = Either FetchFail Action
+type UnWrapper a = (Wrapped -> Either FetchFail a)
+type PluginUnWrapper a = (ByteString, UnWrapper a)
+
+data AgentConfig = AgentConfig { configPlugins :: Map ByteString (UnWrapper Action) }
