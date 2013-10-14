@@ -8,7 +8,7 @@ module Dash.Plugins.Nagios(Command(..), registerUnWrappers) where
 import           Dash.Prelude
 import           Dash.Types
 import           Dash.Store
-import           Dash.Plugins.Common
+import           Dash.Plugins
 import           System.Process                    (readProcess)
 import           Data.Serialize                    as Cereal
 import           Data.SafeCopy

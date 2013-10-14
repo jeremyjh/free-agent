@@ -6,12 +6,13 @@
 module Dash.Types where
 
 import           BasicPrelude
-import qualified Prelude        as P
-import           Data.Typeable  (mkTyConApp, mkTyCon3)
+import qualified Prelude              as P
+import           Control.Monad.Reader (ReaderT)
+import           Data.Typeable        (mkTyConApp, mkTyCon3)
 import           Data.SafeCopy
 import           Data.Serialize
 
-import           Dash.Store (Stashable(..), FetchFail)
+import           Dash.Store           (Stashable(..), FetchFail)
 
 
 data RunStatus = Running (Maybe String)
@@ -63,4 +64,6 @@ type FetchAction = Either FetchFail Action
 type UnWrapper a = (Wrapped -> Either FetchFail a)
 type PluginUnWrapper a = (ByteString, UnWrapper a)
 
-data AgentConfig = AgentConfig { configPlugins :: Map ByteString (UnWrapper Action) }
+type PluginMap = Map ByteString (UnWrapper Action)
+data AgentConfig = AgentConfig { configPlugins :: PluginMap }
+type Config m a = ReaderT AgentConfig m a

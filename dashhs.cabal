@@ -13,7 +13,6 @@ library
                    , Dash.Types
                    , Dash.Store
                    , Dash.Plugins
-                   , Dash.Plugins.Common
                    , Dash.Plugins.Nagios
 
   build-depends:     base == 4.*
@@ -29,6 +28,7 @@ library
                    , lens
                    , cereal
                    , safecopy
+                   , containers
 
 executable dashhs
   ghc-options:       -Wall -Werror -threaded -with-rtsopts=-N -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
@@ -48,6 +48,7 @@ executable dashhs
                    , lens
                    , cereal
                    , safecopy
+                   , containers
 
 test-suite spec
   ghc-options:       -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
@@ -64,3 +65,5 @@ test-suite spec
                    , lens
                    , cereal
                    , safecopy
+                   , containers
+                   , mtl

@@ -3,12 +3,15 @@ module Dash.StoreSpec (main, spec) where
 
 import           BasicPrelude
 import qualified Data.ByteString                  as BS
-import           Test.Hspec
+import           Data.Map
+import           Control.Monad.Reader
 import           System.Process(system)
+
+import           Test.Hspec
+
 import           Dash.Store
 import           Dash.Types
-import           Dash.Plugins.Nagios
-import           Dash.Plugins.Common
+import           Dash.Plugins.Nagios as Nagios
 import           Dash.Plugins
 
 main :: IO ()
@@ -29,10 +32,10 @@ spec = do
             it "writes wrapped Commands to the DB" $
                 withDBT (stashWrapped checkTCP) >>= shouldReturn (return())
             it "reads Commands from the DB as Action" $ do
-                action <- withDBT (fetchAction "localhost")
+                action <- withDBT (runConfig $ fetchAction "localhost")
                 action `shouldBe` (Right $ Action checkTCP)
             it "can read an Action from the DB and execute it" $ do
-                (Right action) <- withDBT (fetchAction "localhost")
+                (Right action) <- withDBT (runConfig $ fetchAction "localhost")
                 exec action >>= shouldBe (Complete $ Just "Awesome")
             it "will fail to read if key is wrong" $ do
                 (Left (NotFound _)) <- withDBT (fetchProto"notgonnamatch")
@@ -57,6 +60,10 @@ spec = do
                 `shouldReturn` ([Right checkTCP{host="awesome.com"}, Right checkTCP])
 
 testDB = "/tmp/leveltest"
+
+myAppConfig = AgentConfig {configPlugins = fromList Nagios.registerUnWrappers}
+
+runConfig ma = runReaderT ma myAppConfig
 
 withDBT :: LevelDB a -> IO a
 withDBT = runCreateLevelDB testDB "Dash.StoreSpec"
