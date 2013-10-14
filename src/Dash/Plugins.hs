@@ -24,7 +24,7 @@ import qualified Data.ByteString.Char8   as BS
 
 -- | Like Store.Fetch for an action using 'decodeAction' to deserialize
 --
-fetchAction :: (MonadLevelDB m, AgentConfigM m) => Key -> m FetchAction
+fetchAction :: (MonadLevelDB m, ConfigReader m) => Key -> m FetchAction
 fetchAction k = do
     pm <- viewConfig plugins
     wrapped <- get k
@@ -46,7 +46,8 @@ decodeAction pluginMap bs =
         case Map.lookup typeName pluginMap of
             Just f -> f wrapper
             Nothing ->
-                error $ "Type Name: " ++ BS.unpack typeName ++ " not matched! Is your plugin registered?"
+                error $ "Type Name: " ++ BS.unpack typeName
+                        ++ " not matched! Is your plugin registered?"
 
 register :: (Stashable a, Runnable a)
          => ByteString -> UnWrapper a -> PluginUnWrapper Action

@@ -74,13 +74,13 @@ type PluginMap = Map ByteString (UnWrapper Action)
 data AgentConfig = AgentConfig { _configPlugins :: PluginMap }
 makeFields ''AgentConfig
 
-class (Monad m) => AgentConfigM m where
-    getConfig :: m AgentConfig
+class (Monad m) => ConfigReader m where
+    askConfig :: m AgentConfig
 
-instance (Monad m) => AgentConfigM (ReaderT AgentConfig m) where
-    getConfig = ask
+instance (Monad m) => ConfigReader (ReaderT AgentConfig m) where
+    askConfig = ask
 
-viewConfig :: (AgentConfigM m) => Getting a AgentConfig a -> m a
+viewConfig :: (ConfigReader m) => Getting a AgentConfig a -> m a
 viewConfig lens = do
-    conf <- getConfig
+    conf <- askConfig
     return $ view lens conf
