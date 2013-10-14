@@ -32,13 +32,13 @@ spec = do
             it "writes wrapped Commands to the DB" $
                 withDBT (stashWrapped checkTCP) >>= shouldReturn (return())
             it "reads Commands from the DB as Action" $ do
-                action <- withDBT (runConfig $ fetchAction "localhost")
+                action <- withAgent $ fetchAction "localhost"
                 action `shouldBe` (Right $ Action checkTCP)
             it "can read an Action from the DB and execute it" $ do
-                (Right action) <- withDBT (runConfig $ fetchAction "localhost")
+                (Right action) <- withAgent $ fetchAction "localhost"
                 exec action >>= shouldBe (Complete $ Just "Awesome")
             it "will fail to read if key is wrong" $ do
-                (Left (NotFound _)) <- withDBT (fetchProto"notgonnamatch")
+                (Left (NotFound _)) <- withDBT (fetchProto "notgonnamatch")
                 True `shouldBe` True -- NOT exception
             it "can write an arbitrary bytestring" $
                 withDBT (put "somekey" "somevalue") >>= shouldReturn (return ())
@@ -63,10 +63,12 @@ testDB = "/tmp/leveltest"
 
 myAppConfig = AgentConfig {configPlugins = fromList Nagios.registerUnWrappers}
 
+
 runConfig ma = runReaderT ma myAppConfig
 
-withDBT :: LevelDB a -> IO a
 withDBT = runCreateLevelDB testDB "Dash.StoreSpec"
+
+withAgent = withDBT . runConfig
 
 fetchProto:: Key -> LevelDB (Either FetchFail Command)
 fetchProto= fetch

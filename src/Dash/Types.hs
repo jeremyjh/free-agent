@@ -2,12 +2,14 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 
 module Dash.Types where
 
 import           BasicPrelude
 import qualified Prelude              as P
-import           Control.Monad.Reader (ReaderT)
+import           Control.Monad.Reader (ReaderT, ask)
 import           Data.Typeable        (mkTyConApp, mkTyCon3)
 import           Data.SafeCopy
 import           Data.Serialize
@@ -61,9 +63,15 @@ instance SafeCopy Action where
     putCopy (Action a) = putCopy a
 
 type FetchAction = Either FetchFail Action
+
 type UnWrapper a = (Wrapped -> Either FetchFail a)
 type PluginUnWrapper a = (ByteString, UnWrapper a)
-
 type PluginMap = Map ByteString (UnWrapper Action)
+
 data AgentConfig = AgentConfig { configPlugins :: PluginMap }
-type Config m a = ReaderT AgentConfig m a
+
+class (Monad m) => AgentConfigM m where
+    getConfig :: m AgentConfig
+
+instance (Monad m) => AgentConfigM (ReaderT AgentConfig m) where
+    getConfig = ask

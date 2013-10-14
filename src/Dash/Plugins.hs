@@ -19,9 +19,9 @@ import qualified Data.ByteString.Char8   as BS
 
 -- | Like Store.Fetch for an action using 'decodeAction' to deserialize
 --
-fetchAction :: (MonadLevelDB m) => Key -> Config m FetchAction
+fetchAction :: (MonadLevelDB m, AgentConfigM m) => Key -> m FetchAction
 fetchAction k = do
-    pm <- asks configPlugins
+    pm <- configPlugins <$> getConfig
     wrapped <- DB.get k
     return $ case wrapped of
         Nothing -> Left $ NotFound (showStr k)
