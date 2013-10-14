@@ -61,7 +61,7 @@ spec = do
 
 testDB = "/tmp/leveltest"
 
-myAppConfig = AgentConfig {configPlugins = fromList Nagios.registerUnWrappers}
+myAppConfig = AgentConfig {_configPlugins = fromList Nagios.registerUnWrappers}
 
 
 runConfig ma = runReaderT ma myAppConfig

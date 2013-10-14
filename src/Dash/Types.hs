@@ -2,14 +2,17 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE FlexibleInstances #-}
 
 
 module Dash.Types where
 
-import           BasicPrelude
+import           Dash.Prelude
 import qualified Prelude              as P
-import           Control.Monad.Reader (ReaderT, ask)
+import           Control.Monad.Reader (ReaderT)
+
 import           Data.Typeable        (mkTyConApp, mkTyCon3)
 import           Data.SafeCopy
 import           Data.Serialize
@@ -68,10 +71,16 @@ type UnWrapper a = (Wrapped -> Either FetchFail a)
 type PluginUnWrapper a = (ByteString, UnWrapper a)
 type PluginMap = Map ByteString (UnWrapper Action)
 
-data AgentConfig = AgentConfig { configPlugins :: PluginMap }
+data AgentConfig = AgentConfig { _configPlugins :: PluginMap }
+makeFields ''AgentConfig
 
 class (Monad m) => AgentConfigM m where
     getConfig :: m AgentConfig
 
 instance (Monad m) => AgentConfigM (ReaderT AgentConfig m) where
     getConfig = ask
+
+viewConfig :: (AgentConfigM m) => Getting a AgentConfig a -> m a
+viewConfig lens = do
+    conf <- getConfig
+    return $ view lens conf

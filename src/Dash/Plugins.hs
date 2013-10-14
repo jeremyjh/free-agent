@@ -1,5 +1,10 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 module Dash.Plugins
     ( fetchAction, decodeAction
     , register, unWrap
@@ -9,7 +14,7 @@ where
 
 import           Dash.Prelude
 import qualified Prelude                 as P
-import           Dash.Store              as DB
+import           Dash.Store
 import           Dash.Types
 import           Data.Serialize          (encode, decode)
 
@@ -21,8 +26,8 @@ import qualified Data.ByteString.Char8   as BS
 --
 fetchAction :: (MonadLevelDB m, AgentConfigM m) => Key -> m FetchAction
 fetchAction k = do
-    pm <- configPlugins <$> getConfig
-    wrapped <- DB.get k
+    pm <- viewConfig plugins
+    wrapped <- get k
     return $ case wrapped of
         Nothing -> Left $ NotFound (showStr k)
         Just bs -> decodeAction pm bs

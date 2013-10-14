@@ -25,7 +25,8 @@ import qualified Data.Text.Encoding   as Text (decodeUtf8, encodeUtf8)
 import           Data.Text            (pack, unpack)
 import           Control.Monad.Reader (ask, asks)
 
-import           Control.Lens         (makeFields, (.~), (^.), (&))
+import           Control.Lens
+    (makeFields, (.~), (^.), (&), view, Getting)
 
 
 
