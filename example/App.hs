@@ -1,8 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 module Main where
 
-import Dash.Prelude
-import Dash.Types
 import Dash
 
 -- import all your plugins here
@@ -20,7 +18,6 @@ registerAll :: PluginMap
 registerAll = fromList $
     Nagios.registerUnWrappers
     -- ++ Another.registerUnWrappers
-
 
 
 main :: IO ()

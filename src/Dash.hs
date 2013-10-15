@@ -1,9 +1,12 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
-module Dash(dashMain) where
+module Dash
+    ( module Dash.Prelude
+    , module Dash.Types
+    , dashMain
+    ) where
 
 
 import           Dash.Prelude
-import qualified Prelude as P
 import           Dash.Store
 import           Dash.Types
 

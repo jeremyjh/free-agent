@@ -28,7 +28,7 @@ library
                    , lens
                    , cereal
                    , safecopy
-                   , containers
+                   , containers == 0.4.2.*
                    , data-default
 
 executable example 
