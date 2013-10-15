@@ -11,8 +11,10 @@ import           Test.Hspec
 
 import           Dash.Store
 import           Dash.Types
-import           Dash.Plugins.Nagios as Nagios
 import           Dash.Plugins
+import           Dash.Plugins.Nagios as Nagios
+import           AppConfig(appConfig)
+
 
 main :: IO ()
 main = hspec spec
@@ -61,10 +63,9 @@ spec = do
 
 testDB = "/tmp/leveltest"
 
-myAppConfig = AgentConfig {_configPlugins = fromList Nagios.registerUnWrappers}
 
 
-runConfig ma = runReaderT ma myAppConfig
+runConfig ma = runReaderT ma appConfig
 
 withDBT = runCreateLevelDB testDB "Dash.StoreSpec"
 

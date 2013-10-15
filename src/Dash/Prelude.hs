@@ -12,6 +12,8 @@ module Dash.Prelude
     , dbg
     , ConvertText(..)
     , ask, asks
+    , def
+    , fromList
     ) where
 
 import           BasicPrelude
@@ -24,6 +26,9 @@ import           Debug.FileLocation
 import qualified Data.Text.Encoding   as Text (decodeUtf8, encodeUtf8)
 import           Data.Text            (pack, unpack)
 import           Control.Monad.Reader (ask, asks)
+
+import           Data.Default         (def)
+import           Data.Map             (fromList)
 
 import           Control.Lens
     (makeFields, (.~), (^.), (&), view, Getting)

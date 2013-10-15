@@ -8,12 +8,12 @@ cabal-version:       >=1.8
 library 
   ghc-options:       -Wall -Werror
   hs-source-dirs:    src
-  other-modules:     Dash.Prelude
   exposed-modules:   Dash
                    , Dash.Types
                    , Dash.Store
                    , Dash.Plugins
                    , Dash.Plugins.Nagios
+                   , Dash.Prelude
 
   build-depends:     base == 4.*
                    , process
@@ -29,32 +29,21 @@ library
                    , cereal
                    , safecopy
                    , containers
+                   , data-default
 
-executable dashhs
+executable example 
   ghc-options:       -Wall -Werror -threaded -with-rtsopts=-N -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
-  main-is:           Main.hs
-  hs-source-dirs:     src
+  main-is:           App.hs
+  hs-source-dirs:  example 
   build-depends:     dashhs
                    , base == 4.*
-                   , process
-                   , text
-                   , basic-prelude
-                   , bytestring
-                   , higher-leveldb == 0.2.0
-                   , MissingH
-                   , mtl
-                   , file-location
-                   , lifted-base
-                   , lens
-                   , cereal
-                   , safecopy
-                   , containers
 
 test-suite spec
   ghc-options:       -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
   type:              exitcode-stdio-1.0
   hs-source-dirs:    test
   main-is:           Spec.hs
+  other-modules:     AppConfig
   build-depends:     base == 4.*
                    , dashhs
                    , hspec >= 1.5

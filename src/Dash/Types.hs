@@ -16,6 +16,7 @@ import           Control.Monad.Reader (ReaderT)
 import           Data.Typeable        (mkTyConApp, mkTyCon3)
 import           Data.SafeCopy
 import           Data.Serialize
+import           Data.Default
 
 import           Dash.Store           (Stashable(..), FetchFail)
 
@@ -72,6 +73,10 @@ type PluginUnWrapper a = (ByteString, UnWrapper a)
 type PluginMap = Map ByteString (UnWrapper Action)
 
 data AgentConfig = AgentConfig { _configPlugins :: PluginMap }
+
+instance Default AgentConfig where
+    def = AgentConfig empty
+
 makeFields ''AgentConfig
 
 class (Monad m) => ConfigReader m where
