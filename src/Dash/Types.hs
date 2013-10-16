@@ -19,6 +19,7 @@ import           Data.Serialize
 import           Data.Default
 
 import           Dash.Store           (Stashable(..), FetchFail)
+import           Control.Monad.Writer (Writer)
 
 
 data RunStatus = Running (Maybe String)
@@ -71,6 +72,7 @@ type FetchAction = Either FetchFail Action
 type UnWrapper a = (Wrapped -> Either FetchFail a)
 type PluginUnWrapper a = (ByteString, UnWrapper a)
 type PluginMap = Map ByteString (UnWrapper Action)
+type PluginWriter = Writer [PluginUnWrapper Action] ()
 
 data AgentConfig = AgentConfig { _configPlugins :: PluginMap }
 

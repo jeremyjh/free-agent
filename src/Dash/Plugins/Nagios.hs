@@ -3,12 +3,13 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Dash.Plugins.Nagios(Command(..), registerUnWrappers) where
+module Dash.Plugins.Nagios(Command(..), registerActions) where
 
 import           Dash.Prelude
 import           Dash.Types
 import           Dash.Store
 import           Dash.Plugins
+
 import           System.Process                    (readProcess)
 import           Data.Serialize                    as Cereal
 import           Data.SafeCopy
@@ -35,10 +36,10 @@ instance Runnable Command where
         portS (Just p) = showStr p
         portS Nothing = ""
 
-registerUnWrappers :: [PluginUnWrapper Action]
-registerUnWrappers = [ register "Dash.Plugins.Nagios.Command" (unWrap :: UnWrapper Command)
-                     , register "Dash.Plugins.Nagios.CommandX" (unWrap :: UnWrapper CommandX)
-                     ]
+registerActions :: PluginWriter
+registerActions = do
+    register (actionType :: Command)
+    register (actionType :: CommandX)
 
 data CommandX = SeeItsExistentialBro Int deriving (Show, Eq, Typeable)
 

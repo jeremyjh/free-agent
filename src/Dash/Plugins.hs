@@ -7,8 +7,10 @@
 
 module Dash.Plugins
     ( fetchAction, decodeAction
-    , register, unWrap
+    , register, actionType, unWrap
     , stashWrapped
+    , fqName
+    , registerAll
     )
 where
 
@@ -21,6 +23,8 @@ import           Data.Serialize          (encode, decode)
 import           Data.Typeable
 import qualified Data.Map                as Map
 import qualified Data.ByteString.Char8   as BS
+
+import           Control.Monad.Writer    (runWriter, tell)
 
 -- | Like Store.Fetch for an action using 'decodeAction' to deserialize
 --
@@ -49,9 +53,24 @@ decodeAction pluginMap bs =
                 error $ "Type Name: " ++ BS.unpack typeName
                         ++ " not matched! Is your plugin registered?"
 
+-- | Use to register your Action types so they can be
+-- deserialized dynamically at runtime; invoke as:
+--
+-- > register (actiontype :: MyType)
 register :: (Stashable a, Runnable a)
-         => ByteString -> UnWrapper a -> PluginUnWrapper Action
-register bs uw = (bs, unWrapAction uw)
+         => a -> PluginWriter
+register act = tell [(fqName act, unWrapAction (anUnWrap act))]
+  where
+      anUnWrap :: (Stashable a, Runnable a) => a -> UnWrapper a
+      anUnWrap _ = unWrap
+
+-- | Combine the results of multiple PluginWriters from different plugins
+registerAll :: PluginWriter -> PluginMap
+registerAll = fromList . snd . runWriter
+
+actionType :: (Stashable a, Runnable a) => a
+actionType = error "actionType should never be evaluated! Only pass it \
+                   \ to register which takes the TypeRep but does not evaluate it."
 
 -- | Wrap and store the 'Stashable' in the database
 --
@@ -61,13 +80,13 @@ stashWrapped s = put (key s) (encode $ wrap s)
 wrap :: (Storeable a) => a -> Wrapped
 wrap st = Wrapped (fqName st) (encode st)
 
--- | Useful for plugins registerUnWrappers to simplify the unwrapper function
+-- | Unwrap a concrete type into an Action
 --
--- e.g. unWrapAction (unWrap :: Wrapper -> NC.Command)
 unWrapAction :: (Stashable a, Runnable a) =>
                 UnWrapper a -> Wrapped -> FetchAction
 unWrapAction f wrapped = fmap Action (f wrapped)
 
+-- | Unwrap a 'Wrapper' into a (known) concrete type
 unWrap :: (Stashable a) => Wrapped -> Either FetchFail a
 unWrap = decodeStore . value
 

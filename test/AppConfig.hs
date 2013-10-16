@@ -1,18 +1,14 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 module AppConfig (appConfig) where
 
-import Dash.Prelude
-import Dash.Types
+import Dash
+import Dash.Plugins
 
 -- import all your plugins here
 import Dash.Plugins.Nagios as Nagios
 
 appConfig :: AgentConfig
-appConfig = def { _configPlugins = registerAll
-             -- , _nextSettingHere = value
+appConfig = def { _configPlugins = registerAll $ do
+                      Nagios.registerActions
+                      Nagios.registerActions -- different plugin goes here!
                 }
-
-registerAll :: PluginMap
-registerAll = fromList $
-    Nagios.registerUnWrappers
-    -- ++ nextUnWrapper
