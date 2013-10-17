@@ -70,9 +70,8 @@ instance SafeCopy Action where
 type FetchAction = Either FetchFail Action
 
 type UnWrapper a = (Wrapped -> Either FetchFail a)
-type PluginUnWrapper a = (ByteString, UnWrapper a)
 type PluginMap = Map ByteString (UnWrapper Action)
-type PluginWriter = Writer [PluginUnWrapper Action] ()
+type PluginWriter = Writer [(ByteString, UnWrapper Action)] ()
 
 data AgentConfig = AgentConfig { _configPlugins :: PluginMap }
 

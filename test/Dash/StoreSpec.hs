@@ -44,8 +44,8 @@ spec = do
                 True `shouldBe` True -- NOT exception
             it "can write an arbitrary bytestring" $
                 withDBT (put "somekey" "somevalue") >>= shouldReturn (return ())
-            it "will fail to deserialize if data is not a protobuf" $ do
-                (Left (ParseFail msg)) <- withDBT (fetchProto"somekey")
+            it "will fail to deserialize if data is not a valid Serialized" $ do
+                (Left (ParseFail msg)) <- withAgent $ fetchAction "somekey"
                 take 25 msg `shouldBe` "Failed reading: safecopy:"
         describe "supports batch operations such that" $ do
             it "can stash in a batch" $ do

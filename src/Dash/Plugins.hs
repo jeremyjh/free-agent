@@ -9,7 +9,6 @@ module Dash.Plugins
     ( fetchAction, decodeAction
     , register, actionType, unWrap
     , stashWrapped
-    , fqName
     , registerAll
     )
 where
@@ -27,8 +26,9 @@ import qualified Data.ByteString.Char8   as BS
 import           Control.Monad.Writer    (runWriter, tell)
 
 -- | Like Store.Fetch for an action using 'decodeAction' to deserialize
---
-fetchAction :: (MonadLevelDB m, ConfigReader m) => Key -> m FetchAction
+-- 'Wrapper' types using the 'register' 'actionType'
+fetchAction :: (MonadLevelDB m, ConfigReader m)
+            => Key -> m FetchAction
 fetchAction k = do
     pm <- viewConfig plugins
     wrapped <- get k
@@ -37,7 +37,7 @@ fetchAction k = do
         Just bs -> decodeAction pm bs
 
 -- | Deserializes and unWraps the underlying type using
--- the 'registerUnWrappers' defined for it
+-- the registered 'actionType'for it
 decodeAction :: PluginMap -> ByteString -> FetchAction
 decodeAction pluginMap bs =
     case decode bs of
@@ -45,6 +45,7 @@ decodeAction pluginMap bs =
         Left s -> Left $ ParseFail s
     >>= pluginUnWrapper
   where
+    -- find and apply a registered Action unwrapper
     pluginUnWrapper wrapper =
         let typeName = wType wrapper in
         case Map.lookup typeName pluginMap of
@@ -61,6 +62,9 @@ register :: (Stashable a, Runnable a)
          => a -> PluginWriter
 register act = tell [(fqName act, unWrapAction (anUnWrap act))]
   where
+      -- This fixes the type for unWrap to be that of the top-level param
+      -- This way we get the concrete decode method we need to deserialize
+      -- And yet, we bury it in the Existential Action
       anUnWrap :: (Stashable a, Runnable a) => a -> UnWrapper a
       anUnWrap _ = unWrap
 
@@ -68,6 +72,8 @@ register act = tell [(fqName act, unWrapAction (anUnWrap act))]
 registerAll :: PluginWriter -> PluginMap
 registerAll = fromList . snd . runWriter
 
+-- | Used only to fix the type passed to 'register' - this should not
+-- ever be evaluated and will throw an error if it is
 actionType :: (Stashable a, Runnable a) => a
 actionType = error "actionType should never be evaluated! Only pass it \
                    \ to register which takes the TypeRep but does not evaluate it."

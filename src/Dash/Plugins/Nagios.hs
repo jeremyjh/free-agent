@@ -15,8 +15,9 @@ import           Data.Serialize                    as Cereal
 import           Data.SafeCopy
 
 data Command = Command { host :: Text
-               , port :: Maybe Int
-               , command :: Text } deriving (Show, Eq, Typeable)
+                       , port :: Maybe Int
+                       , command :: Text
+                       } deriving (Show, Eq, Typeable)
 
 deriveSafeCopy 1 'base ''Command
 
