@@ -11,7 +11,7 @@ module Dash.Types where
 
 import           Dash.Prelude
 import qualified Prelude              as P
-import           Control.Monad.Reader (ReaderT)
+import           Control.Monad.Reader (ReaderT, ask)
 
 import           Data.Typeable        (mkTyConApp, mkTyCon3)
 import           Data.SafeCopy
@@ -48,24 +48,11 @@ data Action = forall p. (Stashable p, Runnable p, Typeable p) => Action p
 instance Typeable Action where
     typeOf _ = mkTyConApp (mkTyCon3 "dash" "Dash.Action" "Action") []
 
-instance Eq Action where
-    a == b = encode a == encode b
-
 instance P.Show Action where
     show (Action a) = "Action (" ++ P.show a ++ ")"
 
-instance Serialize Action where
-    put (Action a) = put a
-    get = error "decode/get directly on Action can't happen; use decodeAction"
-
-instance Stashable Action where
-    key (Action a) = key a
-
 instance Runnable Action where
     exec (Action a) = exec a
-
-instance SafeCopy Action where
-    putCopy (Action a) = putCopy a
 
 type FetchAction = Either FetchFail Action
 

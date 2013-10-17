@@ -4,11 +4,11 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Dash.Plugins
     ( fetchAction, decodeAction
-    , register, actionType, unWrap
-    , stashWrapped
+    , register, actionType
     , registerAll
     )
 where
@@ -17,13 +17,32 @@ import           Dash.Prelude
 import qualified Prelude                 as P
 import           Dash.Store
 import           Dash.Types
-import           Data.Serialize          (encode, decode)
+import           Data.Serialize          ( encode, decode)
+import qualified Data.Serialize          as Cereal
+import           Data.SafeCopy
 
 import           Data.Typeable
 import qualified Data.Map                as Map
 import qualified Data.ByteString.Char8   as BS
 
 import           Control.Monad.Writer    (runWriter, tell)
+
+-- we need these Orphan instances here because the instance
+-- for Serialize of Action has to use wrap function
+-- if we left these in Types, wrap would have to be exported
+-- and Types would have to import Plugins & then we cycle & boot file
+instance Cereal.Serialize Action where
+    put (Action a) = Cereal.put $ wrap a
+    get = error "decode/get directly on Action can't happen; use decodeAction"
+
+instance SafeCopy Action where
+    putCopy (Action a) = putCopy a
+
+instance Eq Action where
+    a == b = encode a == encode b
+
+instance Stashable Action where
+    key (Action a) = key a
 
 -- | Like Store.Fetch for an action using 'decodeAction' to deserialize
 -- 'Wrapper' types using the 'register' 'actionType'
@@ -70,18 +89,13 @@ register act = tell [(fqName act, unWrapAction (anUnWrap act))]
 
 -- | Combine the results of multiple PluginWriters from different plugins
 registerAll :: PluginWriter -> PluginMap
-registerAll = fromList . snd . runWriter
+registerAll = Map.fromList . snd . runWriter
 
 -- | Used only to fix the type passed to 'register' - this should not
 -- ever be evaluated and will throw an error if it is
 actionType :: (Stashable a, Runnable a) => a
 actionType = error "actionType should never be evaluated! Only pass it \
                    \ to register which takes the TypeRep but does not evaluate it."
-
--- | Wrap and store the 'Stashable' in the database
---
-stashWrapped :: (Stashable a, MonadLevelDB m) => a -> m ()
-stashWrapped s = put (key s) (encode $ wrap s)
 
 wrap :: (Storeable a) => a -> Wrapped
 wrap st = Wrapped (fqName st) (encode st)

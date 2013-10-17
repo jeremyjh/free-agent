@@ -31,12 +31,14 @@ spec = do
                 withDBT (stash checkTCP) >>= shouldReturn (return())
             it "reads Commands from the DB" $
                 withDBT (fetch "localhost") >>= shouldBe (Right checkTCP)
-            it "writes wrapped Commands to the DB" $
-                withDBT (stashWrapped checkTCP) >>= shouldReturn (return())
-            it "reads Commands from the DB as Action" $ do
+            it "writes Actions to the DB as wrapped for fetchAction" $ do
+                let act = Action checkTCP
+                withDBT (stash act) >>= shouldReturn (return())
+            it "reads wrapped Actions from the DB" $ do
+                -- would fail if previous spec did not wrap
                 action <- withAgent $ fetchAction "localhost"
                 action `shouldBe` (Right $ Action checkTCP)
-            it "can read an Action from the DB and execute it" $ do
+            it "can read a wrapped Action from the DB and execute it" $ do
                 (Right action) <- withAgent $ fetchAction "localhost"
                 exec action >>= shouldBe (Complete $ Just "Awesome")
             it "will fail to read if key is wrong" $ do

@@ -1,34 +1,28 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings, FlexibleInstances #-}
 
+-- | Extensions to BasicPrelude that are useful to most modules & plugins in Dash
+-- This module should NOT import from any Dash modules and anything
+-- exported here should be used in at least two Dash modules
 module Dash.Prelude
     (
       module BasicPrelude
     , module Control.Lens
     , showStr
-    , toLazy, toStrict
-    , split
     , FilePathS
-    , debug
-    , dbg
+    , debug, dbg
     , ConvertText(..)
-    , ask, asks
     , def
-    , fromList
     ) where
 
 import           BasicPrelude
 
-import qualified Data.ByteString.Lazy as LByteS
 import qualified Prelude              as P
 
-import           Data.String.Utils    (split)
-import           Debug.FileLocation
+import           Debug.FileLocation   (debug, dbg)
 import qualified Data.Text.Encoding   as Text (decodeUtf8, encodeUtf8)
 import           Data.Text            (pack, unpack)
-import           Control.Monad.Reader (ask, asks)
 
 import           Data.Default         (def)
-import           Data.Map             (fromList)
 
 import           Control.Lens
     (makeFields, (.~), (^.), (&), view, Getting)
@@ -37,12 +31,6 @@ import           Control.Lens
 
 showStr :: (Show a) => a -> String
 showStr = P.show
-
-toLazy :: ByteString -> LByteString
-toLazy bs = LByteS.fromChunks [bs]
-
-toStrict :: LByteString -> ByteString
-toStrict = concat . LByteS.toChunks
 
 type FilePathS = P.FilePath
 

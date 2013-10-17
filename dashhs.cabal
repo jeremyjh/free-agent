@@ -4,7 +4,6 @@ author:              Jeremy Huffman
 build-type:          Custom 
 cabal-version:       >=1.8
 
--- -fno-warn-unused-imports is temp hack for protobuff-genned code
 library 
   ghc-options:       -Wall -Werror
   hs-source-dirs:    src
