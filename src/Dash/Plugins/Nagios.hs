@@ -51,7 +51,7 @@ instance Serialize CommandX where
     get = safeGet
 
 instance Stashable CommandX where
-    key _ = undefined
+    key _ = error "classy deprecates undefined"
 
 instance Runnable CommandX where
-    exec _ = undefined
+    exec _ = error "classy deprecates undefined"

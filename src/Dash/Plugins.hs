@@ -17,6 +17,7 @@ import           Dash.Prelude
 import qualified Prelude                 as P
 import           Dash.Store
 import           Dash.Types
+import           Dash.Core
 import           Data.Serialize          ( encode, decode)
 import qualified Data.Serialize          as Cereal
 import           Data.SafeCopy
@@ -58,20 +59,14 @@ fetchAction k = do
 -- | Deserializes and unWraps the underlying type using
 -- the registered 'actionType'for it
 decodeAction :: PluginMap -> ByteString -> FetchAction
-decodeAction pluginMap bs =
-    case decode bs of
-        Right w -> Right w
-        Left s -> Left $ ParseFail s
-    >>= pluginUnWrapper
-  where
-    -- find and apply a registered Action unwrapper
-    pluginUnWrapper wrapper =
-        let typeName = wType wrapper in
-        case Map.lookup typeName pluginMap of
-            Just f -> f wrapper
-            Nothing ->
-                error $ "Type Name: " ++ BS.unpack typeName
-                        ++ " not matched! Is your plugin registered?"
+decodeAction pluginMap bs = do
+    wrapper <- case decode bs of
+                   Right w -> Right w
+                   Left s -> Left $ ParseFail s
+    case Map.lookup (typeName wrapper) pluginMap of
+        Just f -> f wrapper
+        Nothing -> error $ "Type Name: " ++ BS.unpack (typeName wrapper)
+                    ++ " not matched! Is your plugin registered?"
 
 -- | Use to register your Action types so they can be
 -- deserialized dynamically at runtime; invoke as:
@@ -111,7 +106,7 @@ unWrap :: (Stashable a) => Wrapped -> Either FetchFail a
 unWrap = decodeStore . value
 
 fqName :: (Typeable a) => a -> ByteString
-fqName typee =  modName ++ "." ++ typeName
+fqName typee =  modName ++ "." ++ name
   where
-    typeName = BS.pack $ P.show $ typeOf typee
+    name = BS.pack $ P.show $ typeOf typee
     modName = BS.pack $ tyConModule $ typeRepTyCon $ typeOf typee

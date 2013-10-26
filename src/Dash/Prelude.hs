@@ -5,7 +5,7 @@
 -- exported here should be used in at least two Dash modules
 module Dash.Prelude
     (
-      module BasicPrelude
+      module ClassyPrelude
     , module Control.Lens
     , showStr
     , FilePathS
@@ -14,20 +14,19 @@ module Dash.Prelude
     , def
     ) where
 
-import           BasicPrelude
+{-import           BasicPrelude         hiding (print)-}
+import           ClassyPrelude
 
 import qualified Prelude              as P
 
 import           Debug.FileLocation   (debug, dbg)
 import qualified Data.Text.Encoding   as Text (decodeUtf8, encodeUtf8)
-import           Data.Text            (pack, unpack)
+import           Data.Text            as Text
 
 import           Data.Default         (def)
 
 import           Control.Lens
     (makeFields, (.~), (^.), (&), view, Getting)
-
-
 
 showStr :: (Show a) => a -> String
 showStr = P.show
@@ -43,5 +42,5 @@ instance ConvertText ByteString where
     fromT = Text.encodeUtf8
 
 instance ConvertText String where
-    toT = pack
-    fromT = unpack
+    toT = Text.pack
+    fromT = Text.unpack

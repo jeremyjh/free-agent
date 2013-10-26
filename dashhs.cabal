@@ -9,15 +9,17 @@ library
   hs-source-dirs:    src
   exposed-modules:   Dash
                    , Dash.Types
+                   , Dash.Core
                    , Dash.Store
                    , Dash.Plugins
                    , Dash.Plugins.Nagios
                    , Dash.Prelude
+                   , Control.Distributed.Process.Lifted
 
   build-depends:     base == 4.*
                    , process
                    , text
-                   , basic-prelude
+                   , classy-prelude == 0.6.*
                    , bytestring
                    , higher-leveldb == 0.2.0
                    , MissingH
@@ -29,6 +31,13 @@ library
                    , safecopy
                    , containers == 0.4.2.*
                    , data-default
+                   , distributed-process
+                   , network-transport-tcp
+                   , network-transport
+                   , resourcet
+                   , transformers-base
+                   , monad-control
+                   , network-transport
 
 executable example 
   ghc-options:       -Wall -Werror -threaded -with-rtsopts=-N -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
@@ -46,7 +55,6 @@ test-suite spec
   build-depends:     base == 4.*
                    , dashhs
                    , hspec >= 1.5
-                   , basic-prelude
                    , higher-leveldb == 0.2.0
                    , process
                    , bytestring
@@ -55,3 +63,8 @@ test-suite spec
                    , safecopy
                    , containers
                    , mtl
+                   , distributed-process
+                   , network-transport
+                   , network-transport-tcp
+                   , lifted-base
+                   , text

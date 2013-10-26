@@ -1,26 +1,32 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 module Dash.StoreSpec (main, spec) where
 
-import           BasicPrelude
+import           Dash.Prelude
 import qualified Data.ByteString                  as BS
 import           Data.Map
 import           Control.Monad.Reader
+
+
 import           System.Process(system)
 
 import           Test.Hspec
 
 import           Dash.Store
 import           Dash.Types
+import           Dash.Core
 import           Dash.Plugins
 import           Dash.Plugins.Nagios as Nagios
 import           AppConfig(appConfig)
 
 
+--debug
+import           Debug.Trace
+debug :: (Show a) => a -> a
+debug a = traceShow a a
+--debug
+
 main :: IO ()
 main = hspec spec
-
-setup :: IO ()
-setup = system ("rm -rf " ++ testDB) >> return ()
 
 spec :: Spec
 spec = do
@@ -36,10 +42,10 @@ spec = do
                 withDBT (stash act) >>= shouldReturn (return())
             it "reads wrapped Actions from the DB" $ do
                 -- would fail if previous spec did not wrap
-                action <- withAgent $ fetchAction "localhost"
+                action <- withConfig $ fetchAction "localhost"
                 action `shouldBe` (Right $ Action checkTCP)
             it "can read a wrapped Action from the DB and execute it" $ do
-                (Right action) <- withAgent $ fetchAction "localhost"
+                (Right action) <- withConfig $ fetchAction "localhost"
                 exec action >>= shouldBe (Complete $ Just "Awesome")
             it "will fail to read if key is wrong" $ do
                 (Left (NotFound _)) <- withDBT (fetchProto "notgonnamatch")
@@ -47,7 +53,7 @@ spec = do
             it "can write an arbitrary bytestring" $
                 withDBT (put "somekey" "somevalue") >>= shouldReturn (return ())
             it "will fail to deserialize if data is not a valid Serialized" $ do
-                (Left (ParseFail msg)) <- withAgent $ fetchAction "somekey"
+                (Left (ParseFail msg)) <- withConfig $ fetchAction "somekey"
                 take 25 msg `shouldBe` "Failed reading: safecopy:"
         describe "supports batch operations such that" $ do
             it "can stash in a batch" $ do
@@ -63,15 +69,13 @@ spec = do
                     return xs
                 `shouldReturn` ([Right checkTCP{host="awesome.com"}, Right checkTCP])
 
-testDB = "/tmp/leveltest"
+testDB = appConfig^.dbPath
 
+withConfig ma = withDBT $ runReaderT ma appConfig
 
-
-runConfig ma = runReaderT ma appConfig
-
+withDBT :: LevelDB a -> IO a
 withDBT = runCreateLevelDB testDB "Dash.StoreSpec"
 
-withAgent = withDBT . runConfig
 
 fetchProto:: Key -> LevelDB (Either FetchFail Command)
 fetchProto= fetch
@@ -79,3 +83,6 @@ fetchProto= fetch
 checkTCP = Command { command = "/usr/lib/nagios/plugins/check_tcp"
                   , host = "localhost"
                   , port = Just 17500 }
+
+setup :: IO ()
+setup = void $ system ("rm -rf " ++ appConfig^.dbPath)
