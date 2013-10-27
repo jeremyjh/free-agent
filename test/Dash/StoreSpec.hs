@@ -12,7 +12,7 @@ import           System.Process(system)
 import           Test.Hspec
 
 import           Dash.Store
-import           Dash.Types
+import           Dash.Lenses
 import           Dash.Core
 import           Dash.Plugins
 import           Dash.Plugins.Nagios as Nagios

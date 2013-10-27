@@ -2,8 +2,6 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
@@ -41,8 +39,8 @@ class Runnable a where
 
 -- | Wrapper lets us store an Actionnd recover it using
 -- the type name in 'registerUnWrappers'
-data Wrapped = Wrapped { typeName :: ByteString
-                       , value :: ByteString }
+data Wrapped = Wrapped { _wrappedTypeName :: ByteString
+                       , _wrappedValue :: ByteString }
                 deriving (Show, Typeable)
 
 deriveSafeCopy 1 'base ''Wrapped
@@ -76,8 +74,6 @@ data AgentConfig = AgentConfig { _configPlugins :: PluginMap
 
 instance Default AgentConfig where
     def = AgentConfig mempty "./db" "127.0.0.1" "3546"
-
-makeFields ''AgentConfig
 
 class (Monad m) => ConfigReader m where
     askConfig :: m AgentConfig

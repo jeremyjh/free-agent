@@ -16,7 +16,7 @@ where
 import           Dash.Prelude
 import qualified Prelude                 as P
 import           Dash.Store
-import           Dash.Types
+import           Dash.Lenses
 import           Dash.Core
 import           Data.Serialize          ( encode, decode)
 import qualified Data.Serialize          as Cereal
@@ -63,9 +63,9 @@ decodeAction pluginMap bs = do
     wrapper <- case decode bs of
                    Right w -> Right w
                    Left s -> Left $ ParseFail s
-    case Map.lookup (typeName wrapper) pluginMap of
+    case Map.lookup (wrapper^.typeName) pluginMap of
         Just f -> f wrapper
-        Nothing -> error $ "Type Name: " ++ BS.unpack (typeName wrapper)
+        Nothing -> error $ "Type Name: " ++ BS.unpack (wrapper^.typeName)
                     ++ " not matched! Is your plugin registered?"
 
 -- | Use to register your Action types so they can be
@@ -103,7 +103,7 @@ unWrapAction f wrapped = fmap Action (f wrapped)
 
 -- | Unwrap a 'Wrapper' into a (known) concrete type
 unWrap :: (Stashable a) => Wrapped -> Either FetchFail a
-unWrap = decodeStore . value
+unWrap = decodeStore . _wrappedValue
 
 fqName :: (Typeable a) => a -> ByteString
 fqName typee =  modName ++ "." ++ name

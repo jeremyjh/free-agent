@@ -7,7 +7,7 @@ import           Dash.Prelude
 import           System.Process(system)
 import           Test.Hspec
 
-import           Dash.Types
+import           Dash.Lenses
 import           Dash.Core
 import           AppConfig(appConfig)
 

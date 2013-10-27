@@ -9,6 +9,7 @@ library
   hs-source-dirs:    src
   exposed-modules:   Dash
                    , Dash.Types
+                   , Dash.Lenses
                    , Dash.Core
                    , Dash.Store
                    , Dash.Plugins

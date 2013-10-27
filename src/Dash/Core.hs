@@ -8,7 +8,7 @@ module Dash.Core
     ) where
 
 import          Dash.Prelude
-import          Dash.Types
+import          Dash.Lenses
 import          Control.Monad.Reader
 import          Control.Exception
 import          Database.LevelDB.Higher
