@@ -7,8 +7,7 @@ module Dash.Plugins.Nagios(Command(..), registerActions) where
 
 import           Dash.Prelude
 import           Dash.Types
-import           Dash.Store
-import           Dash.Plugins
+import           Dash.Action
 
 import           System.Process                    (readProcess)
 import           Data.Serialize                    as Cereal

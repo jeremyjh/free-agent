@@ -11,8 +11,7 @@ library
                    , Dash.Types
                    , Dash.Lenses
                    , Dash.Core
-                   , Dash.Store
-                   , Dash.Plugins
+                   , Dash.Action
                    , Dash.Plugins.Nagios
                    , Dash.Prelude
                    , Control.Distributed.Process.Lifted

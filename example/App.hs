@@ -2,7 +2,7 @@
 module Main where
 
 import Dash
-import Dash.Plugins
+import Dash.Action
 
 -- import all your plugins here
 import Dash.Plugins.Nagios as Nagios

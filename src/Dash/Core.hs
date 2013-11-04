@@ -9,7 +9,7 @@ module Dash.Core
 
 import          Dash.Prelude
 import          Dash.Lenses
-import          Dash.Store
+import          Database.LevelDB.Higher (mapLevelDBT, runCreateLevelDB)
 import          Control.Monad.Reader
 import          Control.Exception
 import          Control.Distributed.Process

@@ -3,10 +3,17 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 
-module Dash.Types where
+module Dash.Types
+ ( module Dash.Types
+ , Storeable, MonadLevelDB, Key, Value
+ , MonadProcess
+ )
+
+where
 
 import           Dash.Prelude
 import qualified Prelude              as P
@@ -17,10 +24,11 @@ import           Data.SafeCopy        (deriveSafeCopy, base, safeGet, safePut)
 import           Data.Serialize       (Serialize(..))
 import           Data.Default         (Default(..))
 
-import           Dash.Store           (Stashable(..), FetchFail)
 import           Control.Monad.Writer (Writer)
 
-import          Database.LevelDB.Higher (LevelDBT, MonadLevelDB)
+import          Database.LevelDB.Higher
+    (LevelDBT, MonadLevelDB,Storeable, Key, Value, FetchFail)
+
 import          Control.Distributed.Process (Process)
 import          Control.Distributed.Process.Lifted (MonadProcess(..))
 import          Control.Monad.Base (MonadBase)
@@ -48,6 +56,11 @@ deriveSafeCopy 1 'base ''Wrapped
 instance Serialize Wrapped where
     get = safeGet
     put = safePut
+
+-- | Types that can be serialized, stored and retrieved
+--
+class (Storeable a) => Stashable a where
+    key :: a -> Key
 
 data Action = forall p. (Stashable p, Runnable p, Typeable p) => Action p
 

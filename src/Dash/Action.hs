@@ -6,8 +6,8 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Dash.Plugins
-    ( fetchAction, scanActions, decodeAction
+module Dash.Action
+    ( fetchAction, scanActions, decodeAction, stash
     , register, actionType
     , registerAll
     )
@@ -15,12 +15,13 @@ where
 
 import           Dash.Prelude
 import qualified Prelude                 as P
-import           Dash.Store
 import           Dash.Lenses
 import           Dash.Core
 import           Data.Serialize          ( encode, decode)
 import qualified Data.Serialize          as Cereal
 import           Data.SafeCopy
+
+import           Database.LevelDB.Higher
 
 import qualified Data.ByteString.Char8   as BS
 import           Data.Typeable
@@ -28,10 +29,10 @@ import qualified Data.Map                as Map
 
 import           Control.Monad.Writer    (runWriter, tell)
 
+
+
 -- we need these Orphan instances here because the instance
 -- for Serialize of Action has to use wrap function
--- if we left these in Types, wrap would have to be exported
--- and Types would have to import Plugins & then we cycle & boot file
 instance Cereal.Serialize Action where
     put (Action a) = Cereal.put $ wrap a
     get = error "decode/get directly on Action can't happen; use decodeAction"
@@ -45,7 +46,7 @@ instance Eq Action where
 instance Stashable Action where
     key (Action a) = key a
 
--- | Like Store.Fetch for an action using 'decodeAction' to deserialize
+-- | Like Higher.Store.fetch for an action using 'decodeAction' to deserialize
 -- 'Wrapper' types using the 'register' 'actionType'
 fetchAction :: (MonadLevelDB m, ConfigReader m)
             => Key -> m FetchAction
@@ -63,6 +64,13 @@ scanActions prefix = do
     pm <- viewConfig plugins
     let decoder = decodeAction pm
     scan prefix queryList { scanMap = decoder . snd }
+
+-- | Save a serializable type with an instance for Stash
+-- which provides the key.
+--
+stash :: (MonadLevelDB m, Stashable s)
+      => s -> m ()
+stash s = store (key s) s
 
 -- | Deserializes and unWraps the underlying type using
 -- the registered 'actionType'for it

@@ -7,8 +7,8 @@ module Dash
 
 
 import           Dash.Prelude
-import           Dash.Store
 import           Dash.Types
+import           Database.LevelDB.Higher
 
 
 dashMain :: AgentConfig -> IO ()
