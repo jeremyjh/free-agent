@@ -9,9 +9,9 @@ module Dash.Core
 
 import          Dash.Prelude
 import          Dash.Lenses
+import          Dash.Store
 import          Control.Monad.Reader
 import          Control.Exception
-import          Database.LevelDB.Higher
 import          Control.Distributed.Process
 import          Control.Distributed.Process.Node
 import          Network.Transport.TCP

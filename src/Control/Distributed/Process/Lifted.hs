@@ -5,18 +5,25 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Control.Distributed.Process.Lifted where
+module Control.Distributed.Process.Lifted
+    ( module Control.Distributed.Process
+    , module Control.Distributed.Process.Lifted
+    )
+where
 
 import           Control.Monad.Trans.Control
 import           Control.Monad.Reader
 import           Control.Monad.Base
 import           Control.Monad.Trans.Resource
 import qualified Control.Distributed.Process as Base
+import           Control.Distributed.Process
+    hiding (getSelfPid, send, expect, expectTimeout)
+
 import           Control.Distributed.Process.Serializable
 import           Control.Distributed.Process.Internal.Types
 
 
--- instances required to ResourceT Process
+-- instances required under ResourceT
 deriving instance MonadThrow Process
 deriving instance MonadUnsafeIO Process
 deriving instance MonadBase IO Process

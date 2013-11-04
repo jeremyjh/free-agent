@@ -59,8 +59,8 @@ spec = do
             it "can stash in a batch" $ do
                 runCreateLevelDB testDB "stashbatch" $ do
                     runBatch $ do
-                        stashB checkTCP
-                        stashB checkTCP{host="awesome.com"}
+                        stash checkTCP
+                        stash checkTCP{host="awesome.com"}
                     fetch $ key checkTCP
                 `shouldReturn` (Right checkTCP)
             it "can fetch a set" $ do
@@ -68,6 +68,15 @@ spec = do
                     xs <- scanFetch ""
                     return xs
                 `shouldReturn` ([Right checkTCP{host="awesome.com"}, Right checkTCP])
+            it "can scan a set of actions" $ do
+                withConfig $ withKeySpace "scanActions" $ do
+                    stash $ Action checkTCP
+                    stash $ Action checkTCP {host = "check2"}
+                    stash $ Action checkTCP {host = "check3"}
+                    scanActions "check"
+                `shouldReturn` [ (Right $ Action checkTCP{host="check2"})
+                               , (Right $ Action checkTCP{host="check3"})]
+
 
 testDB = appConfig^.dbPath
 

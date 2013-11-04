@@ -5,10 +5,9 @@ module Dash.Store
     ( module Database.LevelDB.Higher
     , module Database.LevelDB.Higher.Store
     , Stashable(..)
-    , stash,  stashB)
-     where
+    , stash
+    ) where
 
-import           Control.Monad.Writer (WriterT(..))
 import           Database.LevelDB.Higher
 import           Database.LevelDB.Higher.Store
 
@@ -23,9 +22,3 @@ class (Storeable a) => Stashable a where
 stash :: (MonadLevelDB m, Stashable s)
       => s -> m ()
 stash s = store (key s) s
-
--- | Store the 'Stashable' in the database - batch mode with 'runBatch'
---
-stashB :: (MonadLevelDB m, Stashable s)
-       => s -> WriterT WriteBatch m ()
-stashB s = storeB (key s) s

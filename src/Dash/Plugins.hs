@@ -7,7 +7,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Dash.Plugins
-    ( fetchAction, decodeAction
+    ( fetchAction, scanActions, decodeAction
     , register, actionType
     , registerAll
     )
@@ -22,9 +22,9 @@ import           Data.Serialize          ( encode, decode)
 import qualified Data.Serialize          as Cereal
 import           Data.SafeCopy
 
+import qualified Data.ByteString.Char8   as BS
 import           Data.Typeable
 import qualified Data.Map                as Map
-import qualified Data.ByteString.Char8   as BS
 
 import           Control.Monad.Writer    (runWriter, tell)
 
@@ -55,6 +55,14 @@ fetchAction k = do
     return $ case wrapped of
         Nothing -> Left $ NotFound (showStr k)
         Just bs -> decodeAction pm bs
+
+-- | All keys from this keyspace are actions
+scanActions :: (MonadLevelDB m, ConfigReader m)
+             => Key -> m [FetchAction]
+scanActions prefix = do
+    pm <- viewConfig plugins
+    let decoder = decodeAction pm
+    scan prefix queryList { scanMap = decoder . snd }
 
 -- | Deserializes and unWraps the underlying type using
 -- the registered 'actionType'for it
