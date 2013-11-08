@@ -41,13 +41,13 @@ instance MonadProcess Process where
     liftProcess = id
 
 getSelfPid :: (MonadProcess m) => m ProcessId
-getSelfPid = liftProcess $ Base.getSelfPid
+getSelfPid = liftProcess Base.getSelfPid
 
 send :: (MonadProcess m, Serializable a) => ProcessId -> a -> m ()
 send pid = liftProcess . Base.send pid
 
 expect :: (MonadProcess m) => forall a. Serializable a => m a
-expect = liftProcess $ Base.expect
+expect = liftProcess Base.expect
 
 expectTimeout :: (MonadProcess m) => forall a. Serializable a => Int -> m (Maybe a)
 expectTimeout = liftProcess . Base.expectTimeout

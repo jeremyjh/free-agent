@@ -9,6 +9,9 @@ import           Test.Hspec
 
 import           Dash.Lenses
 import           Dash.Core
+import           Dash.Action
+import           Dash.Plugins.Nagios
+
 import           AppConfig(appConfig)
 
 import           Control.Concurrent.Lifted
@@ -45,6 +48,15 @@ spec = do
                     said <- expect :: Agent ByteString
                     result said
                 `shouldReturn` "I said: foo"
+            it "can read a wrapped Action from the DB and execute it" $ do
+                testAgent $ \result -> do
+                    catchAny $ do
+                        stash $ Action checkTCP
+                        (Right action) <- fetchAction "localhost:17500"
+                        (Complete (Just status)) <- exec action
+                        result $ take 6 status
+                    $ \exception -> print exception
+                `shouldReturn` "TCP OK"
 
 
 -- helper for running agent and getting results out of
@@ -58,3 +70,5 @@ testAgent ma = do
 
 setup :: IO ()
 setup = void $ system ("rm -rf " ++ appConfig^.dbPath)
+
+checkTCP = CheckTCP  "localhost" 17500

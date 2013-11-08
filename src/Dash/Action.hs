@@ -1,8 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -74,7 +72,7 @@ stash s = store (key s) s
 
 -- | Deserializes and unWraps the underlying type using
 -- the registered 'actionType'for it
-decodeAction :: PluginMap -> ByteString -> FetchAction
+decodeAction :: Plugins -> ByteString -> FetchAction
 decodeAction pluginMap bs = do
     wrapper <- case decode bs of
                    Right w -> Right w
@@ -99,7 +97,7 @@ register act = tell [(fqName act, unWrapAction (anUnWrap act))]
       anUnWrap _ = unWrap
 
 -- | Combine the results of multiple PluginWriters from different plugins
-registerAll :: PluginWriter -> PluginMap
+registerAll :: PluginWriter -> Plugins
 registerAll = Map.fromList . snd . runWriter
 
 -- | Used only to fix the type passed to 'register' - this should not

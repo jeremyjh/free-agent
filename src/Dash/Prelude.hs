@@ -12,10 +12,11 @@ module Dash.Prelude
     , debug, dbg
     , ConvertText(..)
     , def
+    , P.undefined --classy undefined is obnoxious
     ) where
 
 {-import           BasicPrelude         hiding (print)-}
-import           ClassyPrelude
+import           ClassyPrelude hiding (undefined)
 
 import qualified Prelude              as P
 
@@ -44,3 +45,7 @@ instance ConvertText ByteString where
 instance ConvertText String where
     toT = Text.pack
     fromT = Text.unpack
+
+instance ConvertText FilePath where
+    toT = fpToText
+    fromT = fpFromText

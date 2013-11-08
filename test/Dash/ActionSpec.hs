@@ -46,9 +46,6 @@ spec = do
                     -- would fail if previous spec did not wrap
                     action <- withConfig $ fetchAction "localhost"
                     action `shouldBe` (Right $ Action checkTCP)
-                it "can read a wrapped Action from the DB and execute it" $ do
-                    (Right action) <- withConfig $ fetchAction "localhost"
-                    exec action >>= shouldBe (Complete $ Just "Awesome")
                 it "will fail to read if key is wrong" $ do
                     (Left (NotFound _)) <- withDBT (fetchProto "notgonnamatch")
                     True `shouldBe` True -- NOT exception
@@ -62,22 +59,22 @@ spec = do
                     runCreateLevelDB testDB "stashbatch" $ do
                         runBatch $ do
                             stash checkTCP
-                            stash checkTCP{host="awesome.com"}
+                            stash checkTCP{_commandHost="awesome.com"}
                         fetch $ key checkTCP
                     `shouldReturn` (Right checkTCP)
                 it "can fetch a set" $ do
                     runCreateLevelDB testDB "stashbatch" $ do
                         xs <- scanFetch ""
                         return xs
-                    `shouldReturn` ([Right checkTCP{host="awesome.com"}, Right checkTCP])
+                    `shouldReturn` ([Right checkTCP{_commandHost="awesome.com"}, Right checkTCP])
                 it "can scan a set of actions" $ do
                     withConfig $ withKeySpace "scanActions" $ do
                         stash $ Action checkTCP
-                        stash $ Action checkTCP {host = "check2"}
-                        stash $ Action checkTCP {host = "check3"}
+                        stash $ Action checkTCP {_commandHost = "check2"}
+                        stash $ Action checkTCP {_commandHost = "check3"}
                         scanActions "check"
-                    `shouldReturn` [ (Right $ Action checkTCP{host="check2"})
-                                   , (Right $ Action checkTCP{host="check3"})]
+                    `shouldReturn` [ (Right $ Action checkTCP{_commandHost="check2"})
+                                   , (Right $ Action checkTCP{_commandHost="check3"})]
 
 
 testDB = appConfig^.dbPath
@@ -91,9 +88,7 @@ withDBT = runCreateLevelDB testDB "Dash.StoreSpec"
 fetchProto:: Key -> LevelDB (Either FetchFail Command)
 fetchProto= fetch
 
-checkTCP = Command { command = "/usr/lib/nagios/plugins/check_tcp"
-                  , host = "localhost"
-                  , port = Just 17500 }
+checkTCP = Command  "localhost" (Just 17500) "check_tcp"
 
 setup :: IO ()
 setup = void $ system ("rm -rf " ++ appConfig^.dbPath)

@@ -5,6 +5,9 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE RankNTypes #-}
 
 
 module Dash.Types
@@ -23,26 +26,20 @@ import           Data.Typeable        (mkTyConApp, mkTyCon3)
 import           Data.SafeCopy        (deriveSafeCopy, base, safeGet, safePut)
 import           Data.Serialize       (Serialize(..))
 import           Data.Default         (Default(..))
+import           Data.Dynamic         (Dynamic)
 
 import           Control.Monad.Writer (Writer)
 
 import          Database.LevelDB.Higher
     (LevelDBT, MonadLevelDB,Storeable, Key, Value, FetchFail)
 
-import          Control.Distributed.Process (Process)
-import          Control.Distributed.Process.Lifted (MonadProcess(..))
+import          Control.Distributed.Process.Lifted
 import          Control.Monad.Base (MonadBase)
 import          Control.Monad.Trans.Resource (MonadThrow, MonadUnsafeIO, MonadResource)
+import          Control.Monad.Trans.Control
 
 
 
-data RunStatus = Running (Maybe String)
-               | Complete (Maybe String)
-               | Failed (Maybe String)
-    deriving (Show, Eq)
-
-class Runnable a where
-    exec :: a -> IO RunStatus
 
 
 -- | Wrapper lets us store an Actionnd recover it using
@@ -76,17 +73,19 @@ instance Runnable Action where
 type FetchAction = Either FetchFail Action
 
 type UnWrapper a = (Wrapped -> Either FetchFail a)
-type PluginMap = Map ByteString (UnWrapper Action)
+type Plugins = Map ByteString (UnWrapper Action)
+type PluginConfigs = Map Text Dynamic
 type PluginWriter = Writer [(ByteString, UnWrapper Action)] ()
 
-data AgentConfig = AgentConfig { _configPlugins :: PluginMap
+data AgentConfig = AgentConfig { _configPlugins :: Plugins
+                               , _configPluginConfigs :: PluginConfigs
                                , _configDbPath :: FilePathS
                                , _configNodeHost :: String
                                , _configNodePort :: String
                                }
 
 instance Default AgentConfig where
-    def = AgentConfig mempty "./db" "127.0.0.1" "3546"
+    def = AgentConfig mempty mempty "./db" "127.0.0.1" "3546"
 
 class (Monad m) => ConfigReader m where
     askConfig :: m AgentConfig
@@ -94,11 +93,25 @@ class (Monad m) => ConfigReader m where
 instance (Monad m) => ConfigReader (ReaderT AgentConfig m) where
     askConfig = ask
 
+type MonadAgent m = (ConfigReader m, MonadProcess m, MonadLevelDB m)
 
 newtype Agent a = Agent { unAgent :: ReaderT AgentConfig (LevelDBT Process) a}
             deriving ( Functor, Applicative, Monad, MonadBase IO
                      , ConfigReader, MonadIO, MonadThrow, MonadUnsafeIO
                      , MonadResource, MonadLevelDB
                      )
+instance MonadBaseControl IO Agent where
+  newtype StM Agent a = StAgent {unSTAgent :: StM (ReaderT AgentConfig (LevelDBT Process)) a}
+  restoreM (StAgent m) = Agent $ restoreM m
+  liftBaseWith f = Agent $ liftBaseWith $ \ rib -> f (fmap StAgent . rib . unAgent)
+
 instance MonadProcess Agent where
     liftProcess ma = Agent $ lift $ lift ma
+
+data RunStatus = Running ProcessId
+               | Complete (Maybe String)
+               | Failed String
+    deriving (Show, Eq)
+
+class Runnable a where
+    exec :: a -> Agent RunStatus

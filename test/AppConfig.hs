@@ -11,5 +11,6 @@ appConfig :: AgentConfig
 appConfig = def { _configPlugins = registerAll $ do
                       Nagios.registerActions
                       Nagios.registerActions -- different plugin goes here!
+                , _configPluginConfigs = Nagios.registerConfig
                 , _configDbPath = "/tmp/leveltest"
                 }
