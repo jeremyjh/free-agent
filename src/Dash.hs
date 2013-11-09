@@ -2,12 +2,16 @@
 module Dash
     ( module Dash.Prelude
     , module Dash.Types
+    , module Dash.Action
+    , module Dash.Core
     , dashMain
     ) where
 
 
 import           Dash.Prelude
 import           Dash.Types
+import           Dash.Action
+import           Dash.Core
 import           Database.LevelDB.Higher
 
 

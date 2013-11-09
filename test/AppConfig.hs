@@ -2,15 +2,16 @@
 module AppConfig (appConfig) where
 
 import Dash
-import Dash.Action
 
 -- import all your plugins here
 import Dash.Plugins.Nagios as Nagios
 
 appConfig :: AgentConfig
-appConfig = def { _configPlugins = registerAll $ do
-                      Nagios.registerActions
-                      Nagios.registerActions -- different plugin goes here!
-                , _configPluginConfigs = Nagios.registerConfig
-                , _configDbPath = "/tmp/leveltest"
-                }
+appConfig = def {
+      _configPlugins = registerAll $ do
+          -- register all your plugin actions here
+          Nagios.registerActions
+          Nagios.registerActions -- different plugin goes here!
+    , _configPluginConfigs = Nagios.registerConfig
+    , _configDbPath = "/tmp/leveltest"
+}

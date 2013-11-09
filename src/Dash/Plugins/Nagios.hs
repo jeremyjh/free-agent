@@ -12,6 +12,7 @@
 module Dash.Plugins.Nagios
     ( Command(..)
     , CheckTCP(..)
+    , NagiosResult(..)
     , registerConfig, registerActions
     ) where
 
@@ -20,7 +21,9 @@ import           Dash.Lenses
 import           Dash.Action
 import           Dash.Core
 
-import           System.Process                    (readProcess)
+import           System.Process     (readProcessWithExitCode)
+import           System.Exit (ExitCode(..))
+
 import           Data.Serialize                    as Cereal
 import           Data.SafeCopy
 
@@ -76,19 +79,28 @@ instance Serialize Command where
 instance Stashable Command where
     key cmd = fromT $ cmd^.host
 
+data NagiosResult = OK Text | Warning Text | Critical Text | Unknown Text
+    deriving (Show, Eq, Typeable)
+
 instance Runnable Command where
     exec cmd =
         catchAny (
              do cmdPath <- commandPath
-                result <- liftIO $ readProcess cmdPath makeArgs []
-                return (Complete $ Just result) )
+                (rc, result, _) <- liftIO $ readProcessWithExitCode cmdPath makeArgs []
+                return $ case rc of
+                    ExitSuccess -> completeAs OK result
+                    ExitFailure 1 -> completeAs Warning result
+                    ExitFailure 2 -> completeAs Critical result
+                    ExitFailure i -> Failed $ tshow i ++ ": " ++ toT result )
              (\ exception -> do
                 putStrLn $ "Command exec threw exception: " ++ tshow exception
-                return $ Failed $ show exception )
+                return $ Failed $ tshow exception )
       where
         makeArgs = ["-H", fromT $ cmd^.host, "-p", portS $ cmd^.port]
         portS (Just p) = showStr p
         portS Nothing = ""
+        completeAs :: (Text -> NagiosResult) -> String -> RunStatus Dynamic
+        completeAs f result = Complete $ toDyn $ f $ toT result
         commandPath = do
             nagconf <- extractConfig'
             let cmdPath = (nagconf^.pluginsPath) </> fromT (cmd^.shellCommand)

@@ -108,10 +108,10 @@ instance MonadBaseControl IO Agent where
 instance MonadProcess Agent where
     liftProcess ma = Agent $ lift $ lift ma
 
-data RunStatus = Running ProcessId
-               | Complete (Maybe String)
-               | Failed String
+data RunStatus a = Running ProcessId
+                   | Complete a
+                   | Failed Text
     deriving (Show, Eq)
 
 class Runnable a where
-    exec :: a -> Agent RunStatus
+    exec :: a -> Agent (RunStatus Dynamic)

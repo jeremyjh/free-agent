@@ -20,6 +20,8 @@ import           Control.Distributed.Process.Lifted
 import          Control.Distributed.Process.Node
 import          Network.Transport.TCP
 
+import          Data.Dynamic
+
 import          Control.Monad.Reader
 import          Database.LevelDB.Higher
 import          Control.Exception
@@ -38,6 +40,7 @@ spec = do
                     pid <- getSelfPid
                     result $ take 3 $ tshow pid
                 `shouldReturn` "pid"
+
             it "can do basic Process messaging" $ do
                 testAgent $ \ result -> do
                     parent <- getSelfPid
@@ -48,13 +51,15 @@ spec = do
                     said <- expect :: Agent ByteString
                     result said
                 `shouldReturn` "I said: foo"
+
             it "can read a wrapped Action from the DB and execute it" $ do
                 testAgent $ \result -> do
                     catchAny $ do
                         stash $ Action checkTCP
                         (Right action) <- fetchAction "localhost:17500"
-                        (Complete (Just status)) <- exec action
-                        result $ take 6 status
+                        (Complete nr) <- exec action
+                        let (Just (OK rs)) = fromDynamic nr
+                        result $ take 6 rs
                     $ \exception -> print exception
                 `shouldReturn` "TCP OK"
 
