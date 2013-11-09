@@ -1,7 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
-module Dash.ActionSpec (main, spec) where
+module FreeAgent.ActionSpec (main, spec) where
 
-import           Dash.Prelude
+import           FreeAgent.Prelude
 import qualified Data.ByteString                  as BS
 import           Data.Map
 import           Control.Monad.Reader
@@ -13,10 +13,10 @@ import           Test.Hspec
 
 import           Database.LevelDB.Higher
 
-import           Dash.Lenses
-import           Dash.Core
-import           Dash.Action
-import           Dash.Plugins.Nagios as Nagios
+import           FreeAgent.Lenses
+import           FreeAgent.Core
+import           FreeAgent.Action
+import           FreeAgent.Plugins.Nagios as Nagios
 import           AppConfig(appConfig)
 
 
@@ -31,7 +31,7 @@ main = hspec spec
 
 spec :: Spec
 spec = do
-    describe "Dash.Action" $ do
+    describe "FreeAgent.Action" $ do
         it "setup" $ setup >>= shouldReturn (return())
         describe "uses basic storage functionality from higher-leveldb" $ do
             it "writes Commands to the DB" $
@@ -82,7 +82,7 @@ testDB = appConfig^.dbPath
 withConfig ma = withDBT $ runReaderT ma appConfig
 
 withDBT :: LevelDB a -> IO a
-withDBT = runCreateLevelDB testDB "Dash.StoreSpec"
+withDBT = runCreateLevelDB testDB "FreeAgent.StoreSpec"
 
 
 fetchProto:: Key -> LevelDB (Either FetchFail Command)

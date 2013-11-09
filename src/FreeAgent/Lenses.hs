@@ -7,14 +7,14 @@
 
 -- Tuck away all the lens classes and instances - also export
 -- types for convenience - modules that needs lenses should only import lenses
-module Dash.Lenses
-( module Dash.Types
-, module Dash.Lenses
+module FreeAgent.Lenses
+( module FreeAgent.Types
+, module FreeAgent.Lenses
 )
 where
 
-import Dash.Prelude
-import Dash.Types
+import FreeAgent.Prelude
+import FreeAgent.Types
 
 makeFields ''AgentConfig
 makeFields ''Wrapped

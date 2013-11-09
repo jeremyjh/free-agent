@@ -1,6 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 
-module Dash.Core
+module FreeAgent.Core
     ( runAgent
     , spawnAgent
     , mapAgent
@@ -8,8 +8,8 @@ module Dash.Core
     , extractConfig
     ) where
 
-import           Dash.Prelude
-import           Dash.Lenses
+import           FreeAgent.Prelude
+import           FreeAgent.Lenses
 import           Database.LevelDB.Higher (mapLevelDBT, runCreateLevelDB)
 import           Control.Monad.Reader
 import           Control.Exception

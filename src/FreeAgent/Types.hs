@@ -10,15 +10,15 @@
 {-# LANGUAGE RankNTypes #-}
 
 
-module Dash.Types
- ( module Dash.Types
+module FreeAgent.Types
+ ( module FreeAgent.Types
  , Storeable, MonadLevelDB, Key, Value
  , MonadProcess
  )
 
 where
 
-import           Dash.Prelude
+import           FreeAgent.Prelude
 import qualified Prelude              as P
 import           Control.Monad.Reader (ReaderT, ask)
 
@@ -62,7 +62,7 @@ class (Storeable a) => Stashable a where
 data Action = forall p. (Stashable p, Runnable p, Typeable p) => Action p
 
 instance Typeable Action where
-    typeOf _ = mkTyConApp (mkTyCon3 "dash" "Dash.Action" "Action") []
+    typeOf _ = mkTyConApp (mkTyCon3 "dash" "FreeAgent.Action" "Action") []
 
 instance P.Show Action where
     show (Action a) = "Action (" ++ P.show a ++ ")"

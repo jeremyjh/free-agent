@@ -4,17 +4,17 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Dash.Action
+module FreeAgent.Action
     ( fetchAction, scanActions, decodeAction, stash
     , register, actionType
     , registerAll
     )
 where
 
-import           Dash.Prelude
+import           FreeAgent.Prelude
 import qualified Prelude                 as P
-import           Dash.Lenses
-import           Dash.Core
+import           FreeAgent.Lenses
+import           FreeAgent.Core
 import           Data.Serialize          ( encode, decode)
 import qualified Data.Serialize          as Cereal
 import           Data.SafeCopy

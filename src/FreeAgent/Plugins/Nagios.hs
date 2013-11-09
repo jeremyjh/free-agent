@@ -9,17 +9,17 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Dash.Plugins.Nagios
+module FreeAgent.Plugins.Nagios
     ( Command(..)
     , CheckTCP(..)
     , NagiosResult(..)
     , registerConfig, registerActions
     ) where
 
-import           Dash.Prelude
-import           Dash.Lenses
-import           Dash.Action
-import           Dash.Core
+import           FreeAgent.Prelude
+import           FreeAgent.Lenses
+import           FreeAgent.Action
+import           FreeAgent.Core
 
 import           System.Process     (readProcessWithExitCode)
 import           System.Exit (ExitCode(..))

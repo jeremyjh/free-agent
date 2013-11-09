@@ -1,15 +1,15 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
-module DashSpec (main, spec) where
+module FreeAgentSpec (main, spec) where
 
-import           Dash.Prelude
+import           FreeAgent.Prelude
 import           Test.Hspec
-import           Dash
+import           FreeAgent
 
 main :: IO ()
 main = hspec spec
 
 spec :: Spec
 spec =
-    describe "Dash" $ do
+    describe "FreeAgent" $ do
         it "goes out in the world and does a thing" $
             True `shouldBe` True

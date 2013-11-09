@@ -1,16 +1,16 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Dash.CoreSpec (main, spec) where
+module FreeAgent.CoreSpec (main, spec) where
 
-import           Dash.Prelude
+import           FreeAgent.Prelude
 import           System.Process(system)
 import           Test.Hspec
 
-import           Dash.Lenses
-import           Dash.Core
-import           Dash.Action
-import           Dash.Plugins.Nagios
+import           FreeAgent.Lenses
+import           FreeAgent.Core
+import           FreeAgent.Action
+import           FreeAgent.Plugins.Nagios
 
 import           AppConfig(appConfig)
 
@@ -31,7 +31,7 @@ main = hspec spec
 
 spec :: Spec
 spec = do
-    describe "Dash.Core" $ do
+    describe "FreeAgent.Core" $ do
         it "setup" $ do setup >>= shouldReturn(return())
 
         describe "works with Agent" $ do

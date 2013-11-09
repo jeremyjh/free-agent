@@ -1,10 +1,10 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 module AppConfig (appConfig) where
 
-import Dash
+import FreeAgent
 
 -- import all your plugins here
-import Dash.Plugins.Nagios as Nagios
+import FreeAgent.Plugins.Nagios as Nagios
 
 appConfig :: AgentConfig
 appConfig = def {
