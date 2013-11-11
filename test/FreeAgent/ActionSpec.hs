@@ -40,12 +40,12 @@ spec = do
                 withDBT (fetch "localhost") >>= shouldBe (Right checkTCP)
             describe "has special storage of Actions" $ do
                 it "writes Actions to the DB as wrapped for fetchAction" $ do
-                    let act = Action checkTCP
+                    let act = toAction checkTCP
                     withDBT (stash act) >>= shouldReturn (return())
                 it "reads wrapped Actions from the DB" $ do
                     -- would fail if previous spec did not wrap
                     action <- withConfig $ fetchAction "localhost"
-                    action `shouldBe` (Right $ Action checkTCP)
+                    action `shouldBe` (Right $ toAction checkTCP)
                 it "will fail to read if key is wrong" $ do
                     (Left (NotFound _)) <- withDBT (fetchProto "notgonnamatch")
                     True `shouldBe` True -- NOT exception
@@ -69,12 +69,12 @@ spec = do
                     `shouldReturn` ([Right checkTCP{_commandHost="awesome.com"}, Right checkTCP])
                 it "can scan a set of actions" $ do
                     withConfig $ withKeySpace "scanActions" $ do
-                        stash $ Action checkTCP
-                        stash $ Action checkTCP {_commandHost = "check2"}
-                        stash $ Action checkTCP {_commandHost = "check3"}
+                        stash $ wrap checkTCP
+                        stash $ wrap checkTCP {_commandHost = "check2"}
+                        stash $ wrap checkTCP {_commandHost = "check3"}
                         scanActions "check"
-                    `shouldReturn` [ (Right $ Action checkTCP{_commandHost="check2"})
-                                   , (Right $ Action checkTCP{_commandHost="check3"})]
+                    `shouldReturn` [ (Right $ toAction checkTCP{_commandHost="check2"} )
+                                   , (Right $ toAction checkTCP{_commandHost="check3"}) ]
 
 
 testDB = appConfig^.dbPath

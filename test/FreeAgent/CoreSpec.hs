@@ -55,13 +55,30 @@ spec = do
             it "can read a wrapped Action from the DB and execute it" $ do
                 testAgent $ \result -> do
                     catchAny $ do
-                        stash $ Action checkTCP
+                        stash $ toAction checkTCP
                         (Right action) <- fetchAction "localhost:17500"
                         (Complete nr) <- exec action
-                        let (Just (OK rs)) = fromDynamic nr
+                        let (OK rs) = extractResult nr
                         result $ take 6 rs
                     $ \exception -> print exception
                 `shouldReturn` "TCP OK"
+
+            it "can send a result action to a listener as a concrete type" $ do
+                testAgent $ \result -> do
+                    catchAny $ do
+                        -- could just get a concrete from exec
+                        (Complete (OK _)) <- exec checkTCP
+                         -- but ... need to test existential deliver for this spec
+                        (Complete nr) <- exec $ toAction checkTCP
+                        parent <- getSelfPid
+                        child <-  spawnAgent $ do
+                            (OK _) <- expect :: Agent NagiosResult
+                            send parent ("Got OK" :: ByteString)
+                        deliver nr child
+                        confirm <- expect :: Agent ByteString
+                        result confirm
+                    $ \exception -> print exception
+                `shouldReturn` "Got OK"
 
 
 -- helper for running agent and getting results out of
