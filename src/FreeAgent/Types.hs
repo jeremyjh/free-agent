@@ -100,8 +100,12 @@ instance P.Show Action where
 
 instance Runnable Action ActionResult where
     exec (Action a _) = do
-        (Complete result) <- exec a
-        return $ Complete (ActionResult result (toDyn result))
+        execR <- exec a
+        case execR of
+            (Complete result) ->
+                return $ Complete (ActionResult result (toDyn result))
+            (Failed msg) -> return $ Failed msg
+            (Running pid) -> return (Running pid)
 
 type FetchAction = Either FetchFail Action
 

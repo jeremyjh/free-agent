@@ -60,7 +60,8 @@ spec = do
                         (Complete nr) <- exec action
                         let (OK rs) = extractResult nr
                         result $ take 6 rs
-                    $ \exception -> print exception
+                    $ \exception ->
+                        result $ "Exception: " ++ tshow exception
                 `shouldReturn` "TCP OK"
 
             it "can send a result action to a listener as a concrete type" $ do
@@ -73,11 +74,12 @@ spec = do
                         parent <- getSelfPid
                         child <-  spawnAgent $ do
                             (OK _) <- expect :: Agent NagiosResult
-                            send parent ("Got OK" :: ByteString)
+                            send parent ("Got OK" :: Text)
                         deliver nr child
-                        confirm <- expect :: Agent ByteString
+                        confirm <- expect :: Agent Text
                         result confirm
-                    $ \exception -> print exception
+                    $ \exception ->
+                        result $ "Exception: " ++ tshow exception
                 `shouldReturn` "Got OK"
 
 

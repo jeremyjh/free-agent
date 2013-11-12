@@ -13,6 +13,7 @@ module FreeAgent.Plugins.Nagios
     ( Command(..)
     , CheckTCP(..)
     , NagiosResult(..)
+    , NagiosConfig(..)
     , pluginDef
     ) where
 
@@ -31,19 +32,24 @@ import           Data.Default
 import           Data.Binary
 
 -- | Plugin-specific configuration
-data NagiosConfig = NagiosConfig {_nagiosconfigPluginsPath :: FilePath}
+data NagiosConfig = NagiosConfig {_nagiosPluginsPath :: FilePath}
                         deriving (Show, Eq, Typeable)
+
+instance Default NagiosConfig where
+    def = NagiosConfig "/usr/lib/nagios/plugins/"
 
 makeFields ''NagiosConfig
 
 extractConfig' :: (ConfigReader m) => m NagiosConfig
-extractConfig' = extractConfig "Nagios"
+extractConfig' = extractConfig $ (pluginDef def)^.name
 
-defaultConfig :: NagiosConfig
-defaultConfig = NagiosConfig "/usr/lib/nagios/plugins/"
-
-pluginDef :: PluginDef
-pluginDef = definePlugin "Nagios" defaultConfig $ do
+-- | Provides the PluginDef for the Nagios plugin. Provide this to
+-- 'addPlugin' in the 'registerPlugins' block in your app config/main.
+-- Provide a NagiosConfig record - use 'def' for default values
+--
+-- > addPlugin $ Nagios.pluginDef def { _nagiosPluginPath = ... }
+pluginDef :: NagiosConfig -> PluginDef
+pluginDef conf = definePlugin "Nagios" conf $ do
     register (actionType :: Command)
     register (actionType :: CheckTCP)
     register (actionType :: CommandX)
@@ -60,8 +66,6 @@ data CheckTCP = CheckTCP { _checktcpHost :: Text
 
 data CommandX = SeeItsExistentialBro Int deriving (Show, Eq, Typeable)
 
-instance Default NagiosConfig where
-    def = defaultConfig
 
 makeFields ''Command
 deriveSafeCopy 1 'base ''Command

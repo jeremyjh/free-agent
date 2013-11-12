@@ -11,9 +11,12 @@ import FreeAgent.Plugins.Nagios as Nagios
 appConfig :: AgentContext
 appConfig = (
     registerPlugins $ do
-        addPlugin Nagios.pluginDef
+        addPlugin $ Nagios.pluginDef def {
+            -- override default plugin-specific config
+            _nagiosPluginsPath = "/usr/lib/nagios/plugins/"
+        }
     -- add more plugins here!
-    ) { -- override config values here!
+    ) { -- override Agent config values here!
         _configDbPath = "/tmp/leveltest"
     }
 

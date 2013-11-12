@@ -18,3 +18,4 @@ import FreeAgent.Types
 
 makeFields ''AgentContext
 makeFields ''Wrapped
+makeFields ''PluginDef
