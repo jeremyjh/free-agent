@@ -16,16 +16,14 @@ import           FreeAgent.Prelude
 import qualified Prelude                 as P
 import           FreeAgent.Lenses
 import           FreeAgent.Core
-import           Data.Serialize          ( encode, decode)
-import qualified Data.Serialize          as Cereal
-import           Data.SafeCopy
 
-import           Data.Dynamic (toDyn, fromDynamic, dynTypeRep)
+import           Data.Serialize          (decode)
+import           Data.Dynamic
+    (toDyn, fromDynamic, dynTypeRep)
 
 import           Database.LevelDB.Higher
 
 import qualified Data.ByteString.Char8   as BS
-import           Data.Typeable
 import qualified Data.Map                as Map
 
 import           Control.Monad.Writer    (runWriter, tell)
@@ -38,7 +36,7 @@ import           Control.Monad.Writer    (runWriter, tell)
 fetchAction :: (MonadLevelDB m, ConfigReader m)
             => Key -> m FetchAction
 fetchAction k = do
-    pm <- viewConfig plugins
+    pm <- viewConfig actionMap
     wrapped <- get k
     return $ case wrapped of
         Nothing -> Left $ NotFound (showStr k)
@@ -48,7 +46,7 @@ fetchAction k = do
 scanActions :: (MonadLevelDB m, ConfigReader m)
              => Key -> m [FetchAction]
 scanActions prefix = do
-    pm <- viewConfig plugins
+    pm <- viewConfig actionMap
     let decoder = decodeAction pm
     scan prefix queryList { scanMap = decoder . snd }
 
@@ -61,7 +59,7 @@ stash s = store (key s) s
 
 -- | Deserializes and unWraps the underlying type using
 -- the registered 'actionType'for it
-decodeAction :: Plugins -> ByteString -> FetchAction
+decodeAction :: ActionMap -> ByteString -> FetchAction
 decodeAction pluginMap bs = do
     wrapped <- case decode bs of
                    Right w -> Right w
@@ -76,7 +74,7 @@ decodeAction pluginMap bs = do
 --
 -- > register (actiontype :: MyType)
 register :: (Actionable a b)
-         => a -> PluginWriter
+         => a -> ActionsWriter
 register act = tell [(fqName act, unWrapAction (anUnWrap act))]
   where
       -- This fixes the type for unWrap to be that of the top-level param
@@ -85,8 +83,8 @@ register act = tell [(fqName act, unWrapAction (anUnWrap act))]
       anUnWrap :: (Stashable a, Runnable a b) => a -> UnWrapper a
       anUnWrap _ = unWrap
 
--- | Combine the results of multiple PluginWriters from different plugins
-registerAll :: PluginWriter -> Plugins
+-- | Combine the results of multiple ActionsWriters from different plugins
+registerAll :: ActionsWriter -> ActionMap
 registerAll = Map.fromList . snd . runWriter
 
 -- | Used only to fix the type passed to 'register' - this should not

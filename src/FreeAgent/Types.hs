@@ -48,8 +48,6 @@ import           Control.Monad.Trans.Control
 
 
 
-
-
 -- | Types that can be serialized, stored and retrieved
 --
 class (Storeable a) => Stashable a where
@@ -57,10 +55,12 @@ class (Storeable a) => Stashable a where
 
 -- | Wrapper lets us store an Action and recover it using
 -- the type name in 'registerUnWrappers'
-data Wrapped = Wrapped { _wrappedWrappedKey :: ByteString
-                       , _wrappedTypeName :: ByteString
-                       , _wrappedValue :: ByteString }
-                deriving (Show, Typeable)
+data Wrapped
+  = Wrapped { _wrappedWrappedKey :: ByteString
+            , _wrappedTypeName :: ByteString
+            , _wrappedValue :: ByteString
+            }
+    deriving (Show, Typeable)
 
 -- Wrap a concrete type for stash or send where it
 -- will be decoded to an Action
@@ -106,35 +106,44 @@ instance Runnable Action ActionResult where
 type FetchAction = Either FetchFail Action
 
 type UnWrapper a = (Wrapped -> Either FetchFail a)
-type Plugins = Map ByteString (UnWrapper Action)
-type PluginConfigs = Map Text Dynamic
-type PluginWriter = Writer [(ByteString, UnWrapper Action)] ()
+type ActionMap = Map ByteString (UnWrapper Action)
+type PluginContexts = Map ByteString Dynamic
+type PluginActions = (ByteString, UnWrapper Action)
+type PluginWriter = Writer [PluginDef] ()
+type ActionsWriter = Writer [PluginActions] ()
 
-data AgentConfig = AgentConfig { _configPlugins :: Plugins
-                               , _configPluginConfigs :: PluginConfigs
-                               , _configDbPath :: FilePathS
-                               , _configNodeHost :: String
-                               , _configNodePort :: String
-                               }
+data PluginDef
+  = PluginDef { _plugindefName :: ByteString
+              , _plugindefContext :: Dynamic
+              , _plugindefActions :: [PluginActions]
+              }
 
-instance Default AgentConfig where
-    def = AgentConfig mempty mempty "./db" "127.0.0.1" "3546"
+data AgentContext
+  = AgentContext { _configActionMap :: ActionMap
+                 , _configPluginContexts :: PluginContexts
+                 , _configDbPath :: FilePathS
+                 , _configNodeHost :: String
+                 , _configNodePort :: String
+                 }
+
+instance Default AgentContext where
+    def = AgentContext mempty mempty "./db" "127.0.0.1" "3546"
 
 class (Monad m) => ConfigReader m where
-    askConfig :: m AgentConfig
+    askConfig :: m AgentContext
 
-instance (Monad m) => ConfigReader (ReaderT AgentConfig m) where
+instance (Monad m) => ConfigReader (ReaderT AgentContext m) where
     askConfig = ask
 
 type MonadAgent m = (ConfigReader m, MonadProcess m, MonadLevelDB m)
 
-newtype Agent a = Agent { unAgent :: ReaderT AgentConfig (LevelDBT Process) a}
+newtype Agent a = Agent { unAgent :: ReaderT AgentContext (LevelDBT Process) a}
             deriving ( Functor, Applicative, Monad, MonadBase IO
                      , ConfigReader, MonadIO, MonadThrow, MonadUnsafeIO
                      , MonadResource, MonadLevelDB
                      )
 instance MonadBaseControl IO Agent where
-  newtype StM Agent a = StAgent {unSTAgent :: StM (ReaderT AgentConfig (LevelDBT Process)) a}
+  newtype StM Agent a = StAgent {unSTAgent :: StM (ReaderT AgentContext (LevelDBT Process)) a}
   restoreM (StAgent m) = Agent $ restoreM m
   liftBaseWith f = Agent $ liftBaseWith $ \ rib -> f (fmap StAgent . rib . unAgent)
 

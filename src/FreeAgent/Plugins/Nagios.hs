@@ -13,7 +13,7 @@ module FreeAgent.Plugins.Nagios
     ( Command(..)
     , CheckTCP(..)
     , NagiosResult(..)
-    , registerConfig, registerActions
+    , pluginDef
     ) where
 
 import           FreeAgent.Prelude
@@ -24,11 +24,9 @@ import           FreeAgent.Core
 import           System.Process     (readProcessWithExitCode)
 import           System.Exit (ExitCode(..))
 
-import qualified Data.Serialize                    as Cereal
+import qualified Data.Serialize                   as Cereal
 import           Data.SafeCopy
 
-import qualified Data.Map                         as Map
-import           Data.Dynamic
 import           Data.Default
 import           Data.Binary
 
@@ -38,14 +36,17 @@ data NagiosConfig = NagiosConfig {_nagiosconfigPluginsPath :: FilePath}
 
 makeFields ''NagiosConfig
 
-registerConfig :: PluginConfigs
-registerConfig = Map.fromList [("Nagios", toDyn defaultNagiosConfig)]
-
 extractConfig' :: (ConfigReader m) => m NagiosConfig
 extractConfig' = extractConfig "Nagios"
 
-defaultNagiosConfig :: NagiosConfig
-defaultNagiosConfig = NagiosConfig "/usr/lib/nagios/plugins/"
+defaultConfig :: NagiosConfig
+defaultConfig = NagiosConfig "/usr/lib/nagios/plugins/"
+
+pluginDef :: PluginDef
+pluginDef = definePlugin "Nagios" defaultConfig $ do
+    register (actionType :: Command)
+    register (actionType :: CheckTCP)
+    register (actionType :: CommandX)
 
 -- | Supported Actions
 data Command = Command { _commandHost :: Text
@@ -59,16 +60,8 @@ data CheckTCP = CheckTCP { _checktcpHost :: Text
 
 data CommandX = SeeItsExistentialBro Int deriving (Show, Eq, Typeable)
 
-registerActions :: PluginWriter
-registerActions = do
-    register (actionType :: Command)
-    register (actionType :: CheckTCP)
-    register (actionType :: CommandX)
-
-
 instance Default NagiosConfig where
-    def = defaultNagiosConfig
-
+    def = defaultConfig
 
 makeFields ''Command
 deriveSafeCopy 1 'base ''Command

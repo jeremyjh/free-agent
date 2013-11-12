@@ -15,7 +15,7 @@ import           FreeAgent.Core
 import           Database.LevelDB.Higher
 
 
-freeAgentMain:: AgentConfig -> IO ()
+freeAgentMain:: AgentContext -> IO ()
 freeAgentMain _ = do
     runCreateLevelDB "/tmp/leveltest10" "hello" $ do
         put "first" "firstvalue"
