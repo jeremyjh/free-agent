@@ -8,15 +8,14 @@ import FreeAgent.Plugins.Nagios as Nagios
 
 -- |App Config Section
 -- use record syntax to over-ride default configuration values
-appConfig :: AgentConfig
-appConfig = def {
-    --register all your plugin actions here
-      _configPlugins = registerAll $ do
-          Nagios.registerActions
-          Nagios.registerActions -- different plugin goes here!
-    , _configPluginConfigs = Nagios.registerConfig
-    , _configDbPath = "/tmp/leveltest"
-}
+appConfig :: AgentContext
+appConfig = (
+    registerPlugins $ do
+        addPlugin Nagios.pluginDef
+    -- add more plugins here!
+    ) { -- override config values here!
+        _configDbPath = "/tmp/leveltest"
+    }
 
 main :: IO ()
 main = freeAgentMain (appConfig)

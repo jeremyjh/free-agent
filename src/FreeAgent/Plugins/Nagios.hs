@@ -13,7 +13,7 @@ module FreeAgent.Plugins.Nagios
     ( Command(..)
     , CheckTCP(..)
     , NagiosResult(..)
-    , registerConfig, registerActions
+    , pluginDef
     ) where
 
 import           FreeAgent.Prelude
@@ -24,12 +24,11 @@ import           FreeAgent.Core
 import           System.Process     (readProcessWithExitCode)
 import           System.Exit (ExitCode(..))
 
-import           Data.Serialize                    as Cereal
+import qualified Data.Serialize                   as Cereal
 import           Data.SafeCopy
 
-import qualified Data.Map                         as Map
-import           Data.Dynamic
 import           Data.Default
+import           Data.Binary
 
 -- | Plugin-specific configuration
 data NagiosConfig = NagiosConfig {_nagiosconfigPluginsPath :: FilePath}
@@ -37,14 +36,17 @@ data NagiosConfig = NagiosConfig {_nagiosconfigPluginsPath :: FilePath}
 
 makeFields ''NagiosConfig
 
-registerConfig :: PluginConfigs
-registerConfig = Map.fromList [("Nagios", toDyn defaultNagiosConfig)]
-
 extractConfig' :: (ConfigReader m) => m NagiosConfig
 extractConfig' = extractConfig "Nagios"
 
-defaultNagiosConfig :: NagiosConfig
-defaultNagiosConfig = NagiosConfig "/usr/lib/nagios/plugins/"
+defaultConfig :: NagiosConfig
+defaultConfig = NagiosConfig "/usr/lib/nagios/plugins/"
+
+pluginDef :: PluginDef
+pluginDef = definePlugin "Nagios" defaultConfig $ do
+    register (actionType :: Command)
+    register (actionType :: CheckTCP)
+    register (actionType :: CommandX)
 
 -- | Supported Actions
 data Command = Command { _commandHost :: Text
@@ -58,21 +60,13 @@ data CheckTCP = CheckTCP { _checktcpHost :: Text
 
 data CommandX = SeeItsExistentialBro Int deriving (Show, Eq, Typeable)
 
-registerActions :: PluginWriter
-registerActions = do
-    register (actionType :: Command)
-    register (actionType :: CheckTCP)
-    register (actionType :: CommandX)
-
-
 instance Default NagiosConfig where
-    def = defaultNagiosConfig
-
+    def = defaultConfig
 
 makeFields ''Command
 deriveSafeCopy 1 'base ''Command
 
-instance Serialize Command where
+instance Cereal.Serialize Command where
     put = safePut
     get = safeGet
 
@@ -82,7 +76,11 @@ instance Stashable Command where
 data NagiosResult = OK Text | Warning Text | Critical Text | Unknown Text
     deriving (Show, Eq, Typeable)
 
-instance Runnable Command where
+instance Resulting NagiosResult
+
+deriveBinary ''NagiosResult
+
+instance Runnable Command NagiosResult where
     exec cmd =
         catchAny (
              do cmdPath <- commandPath
@@ -99,8 +97,8 @@ instance Runnable Command where
         makeArgs = ["-H", fromT $ cmd^.host, "-p", portS $ cmd^.port]
         portS (Just p) = showStr p
         portS Nothing = ""
-        completeAs :: (Text -> NagiosResult) -> String -> RunStatus Dynamic
-        completeAs f result = Complete $ toDyn $ f $ toT result
+        completeAs :: (Text -> NagiosResult) -> String -> RunStatus NagiosResult
+        completeAs f result = Complete $ f $ toT result
         commandPath = do
             nagconf <- extractConfig'
             let cmdPath = (nagconf^.pluginsPath) </> fromT (cmd^.shellCommand)
@@ -109,26 +107,26 @@ instance Runnable Command where
 
 deriveSafeCopy 1 'base ''CommandX
 
-instance Serialize CommandX where
+instance Cereal.Serialize CommandX where
     put = safePut
     get = safeGet
 
 instance Stashable CommandX where
     key _ = undefined
 
-instance Runnable CommandX where
+instance Runnable CommandX NagiosResult where
     exec _ = undefined
 
 
 makeFields ''CheckTCP
 deriveSafeCopy 1 'base ''CheckTCP
 
-instance Serialize CheckTCP where
+instance Cereal.Serialize CheckTCP where
     put = safePut
     get = safeGet
 
 instance Stashable CheckTCP where
     key c = fromT $ c^.host ++ ":" ++ tshow (c^.port)
 
-instance Runnable CheckTCP where
+instance Runnable CheckTCP NagiosResult where
     exec cmd = exec $ Command (cmd^.host) (Just $ cmd^.port) "check_tcp"

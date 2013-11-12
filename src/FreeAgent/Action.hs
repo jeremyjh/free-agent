@@ -8,6 +8,7 @@ module FreeAgent.Action
     ( fetchAction, scanActions, decodeAction, stash
     , register, actionType
     , registerAll
+    , actionResult, extractResult, toAction
     )
 where
 
@@ -15,41 +16,27 @@ import           FreeAgent.Prelude
 import qualified Prelude                 as P
 import           FreeAgent.Lenses
 import           FreeAgent.Core
-import           Data.Serialize          ( encode, decode)
-import qualified Data.Serialize          as Cereal
-import           Data.SafeCopy
+
+import           Data.Serialize          (decode)
+import           Data.Dynamic
+    (toDyn, fromDynamic, dynTypeRep)
 
 import           Database.LevelDB.Higher
 
 import qualified Data.ByteString.Char8   as BS
-import           Data.Typeable
 import qualified Data.Map                as Map
 
 import           Control.Monad.Writer    (runWriter, tell)
 
 
 
--- we need these Orphan instances here because the instance
--- for Serialize of Action has to use wrap function
-instance Cereal.Serialize Action where
-    put (Action a) = Cereal.put $ wrap a
-    get = error "decode/get directly on Action can't happen; use decodeAction"
-
-instance SafeCopy Action where
-    putCopy (Action a) = putCopy a
-
-instance Eq Action where
-    a == b = encode a == encode b
-
-instance Stashable Action where
-    key (Action a) = key a
 
 -- | Like Higher.Store.fetch for an action using 'decodeAction' to deserialize
 -- 'Wrapper' types using the 'register' 'actionType'
 fetchAction :: (MonadLevelDB m, ConfigReader m)
             => Key -> m FetchAction
 fetchAction k = do
-    pm <- viewConfig plugins
+    pm <- viewConfig actionMap
     wrapped <- get k
     return $ case wrapped of
         Nothing -> Left $ NotFound (showStr k)
@@ -59,7 +46,7 @@ fetchAction k = do
 scanActions :: (MonadLevelDB m, ConfigReader m)
              => Key -> m [FetchAction]
 scanActions prefix = do
-    pm <- viewConfig plugins
+    pm <- viewConfig actionMap
     let decoder = decodeAction pm
     scan prefix queryList { scanMap = decoder . snd }
 
@@ -72,55 +59,65 @@ stash s = store (key s) s
 
 -- | Deserializes and unWraps the underlying type using
 -- the registered 'actionType'for it
-decodeAction :: Plugins -> ByteString -> FetchAction
+decodeAction :: ActionMap -> ByteString -> FetchAction
 decodeAction pluginMap bs = do
-    wrapper <- case decode bs of
+    wrapped <- case decode bs of
                    Right w -> Right w
                    Left s -> Left $ ParseFail s
-    case Map.lookup (wrapper^.typeName) pluginMap of
-        Just f -> f wrapper
-        Nothing -> error $ "Type Name: " ++ BS.unpack (wrapper^.typeName)
+    case Map.lookup (wrapped^.typeName) pluginMap of
+        Just f -> f wrapped
+        Nothing -> error $ "Type Name: " ++ BS.unpack (wrapped^.typeName)
                     ++ " not matched! Is your plugin registered?"
 
 -- | Use to register your Action types so they can be
 -- deserialized dynamically at runtime; invoke as:
 --
 -- > register (actiontype :: MyType)
-register :: (Stashable a, Runnable a)
-         => a -> PluginWriter
+register :: (Actionable a b)
+         => a -> ActionsWriter
 register act = tell [(fqName act, unWrapAction (anUnWrap act))]
   where
       -- This fixes the type for unWrap to be that of the top-level param
       -- This way we get the concrete decode method we need to deserialize
       -- And yet, we bury it in the Existential Action
-      anUnWrap :: (Stashable a, Runnable a) => a -> UnWrapper a
+      anUnWrap :: (Stashable a, Runnable a b) => a -> UnWrapper a
       anUnWrap _ = unWrap
 
--- | Combine the results of multiple PluginWriters from different plugins
-registerAll :: PluginWriter -> Plugins
+-- | Combine the results of multiple ActionsWriters from different plugins
+registerAll :: ActionsWriter -> ActionMap
 registerAll = Map.fromList . snd . runWriter
 
 -- | Used only to fix the type passed to 'register' - this should not
 -- ever be evaluated and will throw an error if it is
-actionType :: (Stashable a, Runnable a) => a
+actionType :: (Actionable a b) => a
 actionType = error "actionType should never be evaluated! Only pass it \
                    \ to register which takes the TypeRep but does not evaluate it."
 
-wrap :: (Storeable a) => a -> Wrapped
-wrap st = Wrapped (fqName st) (encode st)
+-- | Box an Actionable in an Action - saves the hassle of having to provide the
+-- superfulous result parameter to the Action constructor.
+toAction :: (Actionable a b) => a -> Action
+toAction a = Action a (undefined :: b)
 
 -- | Unwrap a concrete type into an Action
 --
-unWrapAction :: (Stashable a, Runnable a) =>
+unWrapAction :: (Actionable a b) =>
                 UnWrapper a -> Wrapped -> FetchAction
-unWrapAction f wrapped = fmap Action (f wrapped)
+unWrapAction uw wrapped = Action <$> uw wrapped <*> pure (undefined :: b)
 
 -- | Unwrap a 'Wrapper' into a (known) concrete type
 unWrap :: (Stashable a) => Wrapped -> Either FetchFail a
 unWrap = decodeStore . _wrappedValue
 
-fqName :: (Typeable a) => a -> ByteString
-fqName typee =  modName ++ "." ++ name
+-- | Wrap a value in the ActionResult box
+actionResult :: (Serializable a, Show a) => a -> ActionResult
+actionResult a = ActionResult a (toDyn a)
+
+-- | Extract a concrete type from an ActionResult. Will throw an exception
+-- if the required type does not match.
+extractResult :: (Typeable a) => ActionResult -> a
+extractResult a =
+    case fromDynamic $ extract a of
+        (Just v) -> v
+        Nothing -> error $ "Cannot extract ActionResult of " ++ repName ++ "to the expected type."
   where
-    name = BS.pack $ P.show $ typeOf typee
-    modName = BS.pack $ tyConModule $ typeRepTyCon $ typeOf typee
+    repName = show $ dynTypeRep $ extract a

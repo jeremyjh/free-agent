@@ -16,5 +16,5 @@ where
 import FreeAgent.Prelude
 import FreeAgent.Types
 
-makeFields ''AgentConfig
+makeFields ''AgentContext
 makeFields ''Wrapped
