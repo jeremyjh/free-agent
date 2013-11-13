@@ -71,11 +71,10 @@ registerPlugins :: PluginWriter -> AgentContext
 registerPlugins pw =
     let plugins = execWriter pw
         actions = concat $ map _plugindefActions plugins
-        contexts = map buildContexts plugins
-        in
-        def { _configActionMap = Map.fromList actions
-            , _configPluginContexts = Map.fromList contexts
-            }
+        contexts = map buildContexts plugins in
+    def { _configActionMap = Map.fromList actions
+        , _configPluginContexts = Map.fromList contexts
+        }
   where
     buildContexts plugin =
         (_plugindefName plugin, _plugindefContext plugin)
