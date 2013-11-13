@@ -90,19 +90,19 @@ instance Runnable Command NagiosResult where
              do cmdPath <- commandPath
                 (rc, result, _) <- liftIO $ readProcessWithExitCode cmdPath makeArgs []
                 return $ case rc of
-                    ExitSuccess -> completeAs OK result
+                    ExitSuccess   -> completeAs OK result
                     ExitFailure 1 -> completeAs Warning result
                     ExitFailure 2 -> completeAs Critical result
-                    ExitFailure i -> Failed $ tshow i ++ ": " ++ toT result )
+                    ExitFailure i -> Left $ tshow i ++ ": " ++ toT result )
              (\ exception -> do
                 putStrLn $ "Command exec threw exception: " ++ tshow exception
-                return $ Failed $ tshow exception )
+                return $ Left $ tshow exception )
       where
         makeArgs = ["-H", fromT $ cmd^.host, "-p", portS $ cmd^.port]
         portS (Just p) = showStr p
         portS Nothing = ""
-        completeAs :: (Text -> NagiosResult) -> String -> RunStatus NagiosResult
-        completeAs f result = Complete $ f $ toT result
+        completeAs :: (Text -> NagiosResult) -> String -> Either Text NagiosResult
+        completeAs f result = Right $ f $ toT result
         commandPath = do
             nagconf <- extractConfig'
             let cmdPath = (nagconf^.pluginsPath) </> fromT (cmd^.shellCommand)

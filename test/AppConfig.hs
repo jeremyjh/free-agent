@@ -12,9 +12,9 @@ appConfig = (
     registerPlugins $ do
         addPlugin $ Nagios.pluginDef def {
             -- override default plugin-specific config
-            _nagiosPluginsPath = "/usr/lib/nagios/plugins/"
+            _nagiosPluginsPath = "/usr/lib/nagios/plugins"
         }
-    -- add more plugins here!
+        -- add more plugins here!
     ) { -- override Agent config values here!
         _configDbPath = "/tmp/leveltest"
     }

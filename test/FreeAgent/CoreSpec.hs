@@ -57,7 +57,7 @@ spec = do
                     catchAny $ do
                         stash $ toAction checkTCP
                         (Right action) <- fetchAction "localhost:17500"
-                        (Complete nr) <- exec action
+                        (Right nr) <- exec action
                         let (OK rs) = extractResult nr
                         result $ take 6 rs
                     $ \exception ->
@@ -68,9 +68,9 @@ spec = do
                 testAgent $ \result -> do
                     catchAny $ do
                         -- could just get a concrete from exec
-                        (Complete (OK _)) <- exec checkTCP
+                        (Right (OK _)) <- exec checkTCP
                          -- but ... need to test existential deliver for this spec
-                        (Complete nr) <- exec $ toAction checkTCP
+                        (Right nr) <- exec $ toAction checkTCP
                         parent <- getSelfPid
                         child <-  spawnAgent $ do
                             (OK _) <- expect :: Agent NagiosResult

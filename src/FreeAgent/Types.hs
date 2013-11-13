@@ -3,6 +3,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE FunctionalDependencies #-}
@@ -101,11 +102,8 @@ instance P.Show Action where
 instance Runnable Action ActionResult where
     exec (Action a _) = do
         execR <- exec a
-        case execR of
-            (Complete result) ->
-                return $ Complete (ActionResult result (toDyn result))
-            (Failed msg) -> return $ Failed msg
-            (Running pid) -> return (Running pid)
+        return $ flip fmap execR $ \result ->
+                ActionResult result (toDyn result)
 
 type FetchAction = Either FetchFail Action
 
@@ -139,7 +137,7 @@ class (Monad m) => ConfigReader m where
 instance (Monad m) => ConfigReader (ReaderT AgentContext m) where
     askConfig = ask
 
-type MonadAgent m = (ConfigReader m, MonadProcess m, MonadLevelDB m)
+type MonadAgent m = (ConfigReader m, MonadProcess m, MonadLevelDB m, MonadBaseControl IO m)
 
 newtype Agent a = Agent { unAgent :: ReaderT AgentContext (LevelDBT Process) a}
             deriving ( Functor, Applicative, Monad, MonadBase IO
@@ -154,13 +152,11 @@ instance MonadBaseControl IO Agent where
 instance MonadProcess Agent where
     liftProcess ma = Agent $ lift $ lift ma
 
-data RunStatus a = Running ProcessId
-                   | Complete a
-                   | Failed Text
+data RunStatus a = Either Text a
     deriving (Show, Eq)
 
 class (Serializable b, Show b) => Runnable a b | a -> b where
-    exec :: a -> Agent (RunStatus b)
+    exec :: (MonadAgent m) => a -> m (Either Text b)
 
 -- | Box for returning results from 'Action' exec.
 -- Box is an existential which implements Deliverable and thus can be
