@@ -69,10 +69,10 @@ extractConfig configName = do
 
 registerPlugins :: PluginWriter -> AgentContext
 registerPlugins pw =
-    let plugins = execWriter pw
-        actions = concat $ map _plugindefActions plugins
-        contexts = map buildContexts plugins in
-    def { _configActionMap = Map.fromList actions
+    let plugs = execWriter pw
+        acts = concat $ map _plugindefActions plugs
+        contexts = map buildContexts plugs in
+    def { _configActionMap = Map.fromList acts
         , _configPluginContexts = Map.fromList contexts
         }
   where
@@ -84,8 +84,8 @@ addPlugin pd = tell [pd]
 
 definePlugin :: (Typeable a)
              => ByteString -> a -> ActionsWriter -> PluginDef
-definePlugin name context pw
-  = PluginDef { _plugindefName = name
-              , _plugindefContext = toDyn context
+definePlugin pname pcontext pw
+  = PluginDef { _plugindefName = pname
+              , _plugindefContext = toDyn pcontext
               , _plugindefActions = execWriter pw
               }

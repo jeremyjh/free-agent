@@ -32,7 +32,7 @@ import qualified Data.ByteString.Char8   as BS
 import           Data.Typeable
 
 import           Control.Lens
-    (makeFields, (.~), (^.), (&), view, Getting)
+    ((.~), (^.), (&), view, Getting)
 import           Data.DeriveTH
 
 import           Language.Haskell.TH.All (Name, Q, Dec)

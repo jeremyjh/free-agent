@@ -40,7 +40,7 @@ import           Control.Distributed.Process.Serializable (Serializable)
 import           Control.Monad.Writer (Writer)
 
 import          Database.LevelDB.Higher
-    (LevelDBT, MonadLevelDB,Storeable, Key, Value, FetchFail)
+    (LevelDBT, MonadLevelDB,Storeable, Key, Value, FetchFail, ScanQuery(..))
 
 import           Control.Distributed.Process.Lifted
 import           Control.Monad.Base (MonadBase)
@@ -196,3 +196,34 @@ class (Serializable a) => Resulting a where
 instance Resulting ActionResult where
     deliver (ActionResult a _) p = send p a
     extract (ActionResult _ d) = d
+
+data Schedule = Now | Later
+    deriving (Show, Eq, Typeable)
+
+deriveSafeCopy 1 'base ''Schedule
+instance Serialize Schedule where
+    get = safeGet
+    put = safePut
+
+data Event = Event Schedule Action
+    deriving (Show, Eq, Typeable)
+
+deriveSafeCopy 1 'base ''Event
+instance Serialize Event where
+    get = safeGet
+    put = safePut
+
+instance Stashable Event where
+    key (Event sch act)
+      = Cereal.encode sch ++ key act
+
+data ActionHistory = ActionHistory
+data EventHistory = EventHistory
+
+data ExecutiveCommand = RegisterAction Action
+                      | UnregisterAction Key
+		              | ExecuteAction Action
+                      | QueryActionHistory (ScanQuery ActionHistory [ActionHistory])
+                      | RegisterEvent Event
+                      | UnregisterEvent Event
+                      | QueryEventHistory (ScanQuery EventHistory [EventHistory])

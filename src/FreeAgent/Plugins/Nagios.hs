@@ -28,8 +28,9 @@ import           System.Exit (ExitCode(..))
 import qualified Data.Serialize                   as Cereal
 import           Data.SafeCopy
 
-import           Data.Default
+import           Data.Default (Default(..))
 import           Data.Binary
+import           Control.Lens (makeFields)
 
 -- | Plugin-specific configuration
 data NagiosConfig = NagiosConfig {_nagiosPluginsPath :: FilePath}

@@ -13,9 +13,10 @@ module FreeAgent.Lenses
 )
 where
 
-import FreeAgent.Prelude
 import FreeAgent.Types
+import Control.Lens (makeFields, makeLenses)
 
 makeFields ''AgentContext
 makeFields ''Wrapped
 makeFields ''PluginDef
+makeLenses ''ExecutiveCommand
