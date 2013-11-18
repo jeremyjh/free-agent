@@ -42,7 +42,7 @@ spec = do
             describe "has special storage of Actions" $ do
                 it "writes Actions to the DB as wrapped for fetchAction" $ do
                     let act = toAction checkTCP
-                    withDBT (stash act) >>= shouldReturn (return())
+                    withDBT (stashAction act) >>= shouldReturn (return())
                 it "reads wrapped Actions from the DB" $ do
                     -- would fail if previous spec did not wrap
                     action <- withConfig $ fetchAction "localhost"
@@ -54,25 +54,25 @@ spec = do
                     withDBT (put "somekey" "somevalue") >>= shouldReturn (return ())
                 it "will fail to deserialize if data is not a valid Serialized" $ do
                     (Left (ParseFail msg)) <- withConfig $ fetchAction "somekey"
-                    take 25 msg `shouldBe` "Failed reading: safecopy:"
+                    take 25 msg `shouldBe` "too few bytes\nFrom:\tdeman"
             describe "supports batch operations such that" $ do
-                it "can stash in a batch" $ do
-                    runCreateLevelDB testDB "stashbatch" $ do
+                it "can stashAction in a batch" $ do
+                    runCreateLevelDB testDB "stashActionbatch" $ do
                         runBatch $ do
                             stash checkTCP
                             stash checkTCP{_commandHost="awesome.com"}
                         fetch $ key checkTCP
                     `shouldReturn` (Right checkTCP)
                 it "can fetch a set" $ do
-                    runCreateLevelDB testDB "stashbatch" $ do
+                    runCreateLevelDB testDB "stashActionbatch" $ do
                         xs <- scanFetch ""
                         return xs
                     `shouldReturn` ([Right checkTCP{_commandHost="awesome.com"}, Right checkTCP])
                 it "can scan a set of actions" $ do
-                    withConfig $ withKeySpace "scanActions" $ do
-                        stash $ wrap checkTCP
-                        stash $ wrap checkTCP {_commandHost = "check2"}
-                        stash $ wrap checkTCP {_commandHost = "check3"}
+                    withConfig $ do
+                        stashAction $ toAction checkTCP
+                        stashAction $ toAction checkTCP {_commandHost = "check2"}
+                        stashAction $ toAction checkTCP {_commandHost = "check3"}
                         scanActions "check"
                     `shouldReturn` [ (Right $ toAction checkTCP{_commandHost="check2"} )
                                    , (Right $ toAction checkTCP{_commandHost="check3"}) ]
@@ -80,10 +80,12 @@ spec = do
 
 testDB = appConfig^.dbPath
 
-withConfig ma = withDBT $ runReaderT ma appConfig
+withConfig ma = do
+    registerActionMap $ appConfig^.actionMap
+    withDBT $ runReaderT ma appConfig
 
 withDBT :: LevelDB a -> IO a
-withDBT = runCreateLevelDB testDB "FreeAgent.StoreSpec"
+withDBT = runCreateLevelDB testDB "agent:actions"
 
 
 fetchProto:: Key -> LevelDB (Either FetchFail Command)

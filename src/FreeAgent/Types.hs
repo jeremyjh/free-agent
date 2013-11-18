@@ -9,7 +9,6 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE RankNTypes #-}
 
 module FreeAgent.Types
  ( module FreeAgent.Types
@@ -76,40 +75,25 @@ wrap st = WrappedAction (key st) (fqName st) (Cereal.encode st)
 deriveSafeCopy 1 'base ''WrappedAction
 deriveBinary ''WrappedAction
 instance Cereal.Serialize WrappedAction where
-    get = safeGet
-    put = safePut
+        put (WrappedAction x1 x2 x3)
+          = do Cereal.put x1
+               Cereal.put x2
+               Cereal.put x3
+        get
+          = do x1 <- Cereal.get
+               x2 <- Cereal.get
+               x3 <- Cereal.get
+               return (WrappedAction x1 x2 x3)
 
 instance Stashable WrappedAction where
     key w = _wrappedWrappedActionKey w
 
 instance Runnable WrappedAction ActionResult where
-    exec wrapped = do
-        pm <- fmap _configActionMap askConfig
-        let eact = decodeAction pm (_wrappedValue wrapped)
-        case eact of
-            Right act -> exec act
-            Left (ParseFail msg) ->
-                error $ BS.unpack $ "Error: " ++
-                    BS.pack msg ++ "\n" ++
-                    "Could not decode WrappedAction Action " ++
-                    (_wrappedTypeName wrapped)
-            _ -> error "exec action result pattern crazy"
+    exec wrapped = undefined
 
 data WrappedResult
   = WrappedResult { _wresultValue :: ByteString }
 
--- | Deserializes and unWraps the underlying type using
--- the registered 'actionType'for it - this is in Types.hs
--- because it is required for WrappedAction exec
-decodeAction :: ActionMap -> ByteString -> FetchAction
-decodeAction pluginMap bs = do
-    wrapped <- case Cereal.decode bs of
-                   Right w -> Right w
-                   Left s -> Left $ ParseFail s
-    case Map.lookup (_wrappedTypeName wrapped) pluginMap of
-        Just f -> f wrapped
-        Nothing -> error $ "Type Name: " ++ BS.unpack (_wrappedTypeName wrapped)
-                    ++ " not matched! Is your plugin registered?"
 
 decodeAction' :: ActionMap -> WrappedAction -> Action
 decodeAction' pluginMap wrapped = do
@@ -118,8 +102,7 @@ decodeAction' pluginMap wrapped = do
         Nothing -> error $ "Type Name: " ++ BS.unpack (_wrappedTypeName wrapped)
                     ++ " not matched! Is your plugin registered?"
 
--- | public interface to global action map - the interface is one way
--- application code should use the ConfigReader to read the ActionMap if required
+-- | Set or re-set the top-level Action Map (done after plugins are registered)
 registerActionMap :: (MonadBase IO m) => ActionMap -> m ()
 registerActionMap = writeIORef globalActionMap
 
@@ -129,7 +112,9 @@ globalActionMap = unsafePerformIO $ newIORef (Map.fromList [])
 {-# NOINLINE globalActionMap #-}
 
 -- Yes...we are unsafe. This is necessary to transparently deserialize
--- Actions with Plugins registered at runtime.
+-- Actions defined in Plugins which are registered at runtime. There are workarounds for
+-- most cases but to receive an Action in a Cloud Haskell 'expect' we must be
+-- able to deserialize it directly.
 readActionMap :: ActionMap
 readActionMap = unsafePerformIO $ readIORef globalActionMap
 {-# NOINLINE readActionMap #-}
@@ -295,9 +280,9 @@ instance Stashable Event where
 data ActionHistory = ActionHistory
 data EventHistory = EventHistory
 
-data ExecutiveCommand = RegisterAction WrappedAction
+data ExecutiveCommand = RegisterAction Action
                       | UnregisterAction Key
-		              | ExecuteAction WrappedAction
+		              | ExecuteAction Action
                       | QueryActionHistory (ScanQuery ActionHistory [ActionHistory])
                       | RegisterEvent Event
                       | UnregisterEvent Event

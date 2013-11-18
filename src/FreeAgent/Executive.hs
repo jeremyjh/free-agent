@@ -24,7 +24,7 @@ perform (ExecuteAction a) = do (Right _) <- exec a; return ()
 perform (QueryActionHistory query) = undefined
 
 -- ExecutiveCommand realizations
-registerAction :: (MonadLevelDB m) => WrappedAction -> m ()
+registerAction :: (MonadLevelDB m) => Action -> m ()
 registerAction = withActionKS . withSync . stash
 
 unRegisterAction :: (MonadLevelDB m) => Key -> m ()
@@ -41,8 +41,6 @@ unRegisterEvent = withEventKS . withSync . delete
 withSync :: (MonadLevelDB m) => m () -> m()
 withSync = withOptions (def, def {sync = True})
 
-withActionKS :: (MonadLevelDB m) => m () -> m ()
-withActionKS = withKeySpace "agent:actions"
 
 withEventKS :: (MonadLevelDB m) => m () -> m ()
 withEventKS = withKeySpace "agent:events"

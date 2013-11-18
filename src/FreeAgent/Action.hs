@@ -5,7 +5,8 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module FreeAgent.Action
-    ( fetchAction, scanActions, decodeAction, stash
+    ( fetchAction, scanActions, decodeAction, stashAction, stash
+    , withActionKS
     , register, actionType
     , registerAll
     , actionResult, extractResult, toAction
@@ -17,6 +18,7 @@ import qualified Prelude                 as P
 import           FreeAgent.Lenses
 import           FreeAgent.Core
 
+import           Data.Serialize          (decode)
 import           Data.Dynamic
     (toDyn, fromDynamic, dynTypeRep)
 
@@ -29,24 +31,30 @@ import           Control.Monad.Writer    (runWriter, tell)
 
 
 
--- | Like Higher.Store.fetch for an action using 'decodeAction' to deserialize
--- 'Wrapper' types using the 'register' 'actionType'
+-- | Fix the type & keyspace to Action for fetch
 fetchAction :: (MonadLevelDB m, ConfigReader m)
             => Key -> m FetchAction
-fetchAction k = do
-    pm <- viewConfig actionMap
-    wrapped <- get k
-    return $ case wrapped of
-        Nothing -> Left $ NotFound (showStr k)
-        Just bs -> decodeAction pm bs
+fetchAction = withActionKS . fetch
 
--- | All keys from this keyspace are actions
+-- | Fix the type & keyspace to Action for fetch
+stashAction :: (MonadLevelDB m)
+            => Action -> m ()
+stashAction = withActionKS . stash
+
+-- | Fix the keyspace to 'withActionKS' and decodes each
+-- result into an Action.
 scanActions :: (MonadLevelDB m, ConfigReader m)
              => Key -> m [FetchAction]
-scanActions prefix = do
-    pm <- viewConfig actionMap
-    let decoder = decodeAction pm
-    scan prefix queryList { scanMap = decoder . snd }
+scanActions prefix = withActionKS $
+    scan prefix queryList { scanMap = decodeAction . snd }
+
+-- | Deserializes and unWraps the underlying type using
+-- the registered 'actionType'for it
+decodeAction :: ByteString -> FetchAction
+decodeAction bs =
+    case decode bs of
+        Right a -> Right a
+        Left s -> Left $ ParseFail s
 
 -- | Save a serializable type with an instance for Stash
 -- which provides the key.
@@ -108,3 +116,6 @@ extractResult a =
         Nothing -> error $ "Cannot extract ActionResult of " ++ repName ++ "to the expected type."
   where
     repName = show $ dynTypeRep $ extract a
+
+withActionKS :: (MonadLevelDB m) => m a -> m a
+withActionKS = withKeySpace "agent:actions"

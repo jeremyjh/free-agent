@@ -57,7 +57,7 @@ spec = do
             it "can read a wrapped Action from the DB and execute it" $ do
                 testAgent $ \result -> do
                     catchAny $ do
-                        stash $ toAction checkTCP
+                        stashAction $ toAction checkTCP
                         (Right action) <- fetchAction "localhost:17500"
                         (Right nr) <- exec action
                         let (OK rs) = extractResult nr
