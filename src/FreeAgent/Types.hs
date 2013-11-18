@@ -25,17 +25,14 @@ import           Control.Monad.Reader (ReaderT, ask)
 
 import           Data.Typeable        (mkTyConApp, mkTyCon3)
 import           Data.SafeCopy
-    (deriveSafeCopy, SafeCopy(..), base, safeGet, safePut)
+    (deriveSafeCopy, base, safeGet, safePut)
 import           Data.Default         (Default(..))
 import           Data.Dynamic         (Dynamic, toDyn)
-
-import qualified Data.Map             as Map
-import qualified Data.ByteString.Char8 as BS
 
 -- yes we have both cereal and binary ... cereal for safecopy
 -- binary for distributed-process
 import qualified Data.Serialize       as Cereal
-    (Serialize(..), encode, decode)
+    (Serialize(..), encode)
 import           Data.Binary          as Binary
 import           Control.Distributed.Process.Serializable (Serializable)
 
@@ -50,7 +47,6 @@ import           Control.Monad.Base (MonadBase)
 import           Control.Monad.Trans.Resource (MonadThrow, MonadUnsafeIO, MonadResource)
 import           Control.Monad.Trans.Control
 
-import           System.IO.Unsafe (unsafePerformIO)
 
 -- | Types that can be serialized, stored and retrieved
 --
@@ -88,64 +84,11 @@ instance Cereal.Serialize WrappedAction where
 instance Stashable WrappedAction where
     key w = _wrappedWrappedActionKey w
 
-instance Runnable WrappedAction ActionResult where
-    exec wrapped = undefined
-
 data WrappedResult
   = WrappedResult { _wresultValue :: ByteString }
 
-
-decodeAction' :: ActionMap -> WrappedAction -> Action
-decodeAction' pluginMap wrapped = do
-    case Map.lookup (_wrappedTypeName wrapped) pluginMap of
-        Just f -> let (Right a) = f wrapped in a
-        Nothing -> error $ "Type Name: " ++ BS.unpack (_wrappedTypeName wrapped)
-                    ++ " not matched! Is your plugin registered?"
-
--- | Set or re-set the top-level Action Map (done after plugins are registered)
-registerActionMap :: (MonadBase IO m) => ActionMap -> m ()
-registerActionMap = writeIORef globalActionMap
-
---TODO move this to Action module
-globalActionMap :: IORef ActionMap
-globalActionMap = unsafePerformIO $ newIORef (Map.fromList [])
-{-# NOINLINE globalActionMap #-}
-
--- Yes...we are unsafe. This is necessary to transparently deserialize
--- Actions defined in Plugins which are registered at runtime. There are workarounds for
--- most cases but to receive an Action in a Cloud Haskell 'expect' we must be
--- able to deserialize it directly.
-readActionMap :: ActionMap
-readActionMap = unsafePerformIO $ readIORef globalActionMap
-{-# NOINLINE readActionMap #-}
-
 type Actionable a b = (Stashable a, Runnable a b)
 data Action = forall p b. (Actionable p b) => Action p b
-
-instance Binary Action where
-    put (Action a _) = Binary.put $ wrap a
-    get = do
-        wk <- Binary.get
-        wt  <- Binary.get
-        wv <- Binary.get
-        return $ decodeAction' readActionMap (WrappedAction wk wt wv)
-
-instance Cereal.Serialize Action where
-    put (Action a _) = Cereal.put $ wrap a
-    get = do
-        wk <- Cereal.get
-        wt  <- Cereal.get
-        wv <- Cereal.get
-        return $ decodeAction' readActionMap (WrappedAction wk wt wv)
-
-instance SafeCopy Action where
-    putCopy (Action a _) = putCopy a
-
-instance Eq Action where
-    a == b =  Cereal.encode a == Cereal.encode b
-
-instance Stashable Action where
-    key (Action a _) = key a
 
 instance Typeable Action where
     typeOf _ = mkTyConApp (mkTyCon3 "free-agent" "FreeAgent.Types" "Action") []

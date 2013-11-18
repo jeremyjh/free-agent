@@ -13,6 +13,7 @@ module FreeAgent.Core
 
 import           FreeAgent.Prelude
 import           FreeAgent.Lenses
+import           FreeAgent.Action (registerActionMap)
 import           Control.Monad.Writer             (execWriter, tell)
 import           Database.LevelDB.Higher (mapLevelDBT, runCreateLevelDB)
 import           Control.Monad.Reader

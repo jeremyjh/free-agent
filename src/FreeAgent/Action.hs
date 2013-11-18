@@ -2,6 +2,7 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module FreeAgent.Action
@@ -9,6 +10,7 @@ module FreeAgent.Action
     , withActionKS
     , register, actionType
     , registerAll
+    , registerActionMap
     , actionResult, extractResult, toAction
     )
 where
@@ -16,20 +18,53 @@ where
 import           FreeAgent.Prelude
 import qualified Prelude                 as P
 import           FreeAgent.Lenses
-import           FreeAgent.Core
 
-import           Data.Serialize          (decode)
+import qualified Data.ByteString.Char8   as BS
+import           Data.SafeCopy
+import           Data.Serialize          (Serialize)
+import qualified Data.Serialize          as Cereal
+import           Data.Binary             (Binary)
+import qualified Data.Binary             as Binary
 import           Data.Dynamic
     (toDyn, fromDynamic, dynTypeRep)
 
+import           Control.Monad.Base (MonadBase)
 import           Database.LevelDB.Higher
 
 import qualified Data.Map                as Map
 
 import           Control.Monad.Writer    (runWriter, tell)
 
+import           System.IO.Unsafe (unsafePerformIO)
 
 
+-- Serialization instances for Action are all this module as they require specialized
+-- and sensitive functions we want to keep encapsulated
+
+instance Binary Action where
+    put (Action a _) = Binary.put $ wrap a
+    get = do
+        wk <- Binary.get
+        wt  <- Binary.get
+        wv <- Binary.get
+        return $ decodeAction' readActionMap (WrappedAction wk wt wv)
+
+instance Serialize Action where
+    put (Action a _) = Cereal.put $ wrap a
+    get = do
+        wk <- Cereal.get
+        wt  <- Cereal.get
+        wv <- Cereal.get
+        return $ decodeAction' readActionMap (WrappedAction wk wt wv)
+
+instance SafeCopy Action where
+    putCopy (Action a _) = putCopy a
+
+instance Eq Action where
+    a == b =  Cereal.encode a == Cereal.encode b
+
+instance Stashable Action where
+    key (Action a _) = key a
 
 -- | Fix the type & keyspace to Action for fetch
 fetchAction :: (MonadLevelDB m, ConfigReader m)
@@ -52,7 +87,7 @@ scanActions prefix = withActionKS $
 -- the registered 'actionType'for it
 decodeAction :: ByteString -> FetchAction
 decodeAction bs =
-    case decode bs of
+    case Cereal.decode bs of
         Right a -> Right a
         Left s -> Left $ ParseFail s
 
@@ -92,6 +127,31 @@ actionType = error "actionType should never be evaluated! Only pass it \
 -- superfulous result parameter to the Action constructor.
 toAction :: (Actionable a b) => a -> Action
 toAction a = Action a (undefined :: b)
+
+
+decodeAction' :: ActionMap -> WrappedAction -> Action
+decodeAction' pluginMap wrapped = do
+    case Map.lookup (_wrappedTypeName wrapped) pluginMap of
+        Just f -> let (Right a) = f wrapped in a
+        Nothing -> error $ "Type Name: " ++ BS.unpack (_wrappedTypeName wrapped)
+                    ++ " not matched! Is your plugin registered?"
+
+-- | Set or re-set the top-level Action Map (done after plugins are registered)
+registerActionMap :: (MonadBase IO m) => ActionMap -> m ()
+registerActionMap = writeIORef globalActionMap
+
+--TODO move this to Action module
+globalActionMap :: IORef ActionMap
+globalActionMap = unsafePerformIO $ newIORef (Map.fromList [])
+{-# NOINLINE globalActionMap #-}
+
+-- Yes...we are unsafe. This is necessary to transparently deserialize
+-- Actions defined in Plugins which are registered at runtime. There are workarounds for
+-- most cases but to receive an Action in a Cloud Haskell 'expect' we must be
+-- able to deserialize it directly.
+readActionMap :: ActionMap
+readActionMap = unsafePerformIO $ readIORef globalActionMap
+{-# NOINLINE readActionMap #-}
 
 -- | Unwrap a concrete type into an Action
 --
