@@ -1,4 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
+
 
 module FreeAgent.Executive where
 
@@ -13,12 +16,15 @@ import           Database.LevelDB.Higher
 listen :: (MonadProcess m, MonadLevelDB m) => m ProcessId
 listen = undefined -- we need to just start-out with distributed process platform
 
--- | execute a particular command
-perform :: (MonadLevelDB m) => ExecutiveCommand -> m ()
-perform = undefined
+-- | execute a particular command and send the response
+perform :: (MonadAgent m) => ExecutiveCommand -> m ()
+perform (RegisterAction a)  = registerAction a
+perform (UnregisterAction k) = unRegisterAction k
+perform (ExecuteAction a) = do (Right _) <- exec a; return ()
+perform (QueryActionHistory query) = undefined
 
 -- ExecutiveCommand realizations
-registerAction :: (MonadLevelDB m) => Action -> m ()
+registerAction :: (MonadLevelDB m) => WrappedAction -> m ()
 registerAction = withActionKS . withSync . stash
 
 unRegisterAction :: (MonadLevelDB m) => Key -> m ()

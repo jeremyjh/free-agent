@@ -29,15 +29,15 @@ library
                    , lens
                    , cereal
                    , safecopy
-                   , containers == 0.4.2.*
+                   , containers >= 0.5.0.0
                    , data-default
                    , distributed-process
+                   , distributed-process-platform
                    , network-transport-tcp
                    , network-transport
                    , resourcet
                    , transformers-base
                    , monad-control
-                   , network-transport
                    , derive
                    , binary
 
@@ -70,3 +70,4 @@ test-suite spec
                    , network-transport-tcp
                    , lifted-base
                    , text
+                   , binary

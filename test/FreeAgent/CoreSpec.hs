@@ -26,6 +26,8 @@ import          Control.Monad.Reader
 import          Database.LevelDB.Higher
 import          Control.Exception
 
+import qualified Data.Binary as Binary
+
 main :: IO ()
 main = hspec spec
 
@@ -82,6 +84,21 @@ spec = do
                         result $ "Exception: " ++ tshow exception
                 `shouldReturn` "Got OK"
 
+            it "can send/receive an action" $ do
+                testAgent $ \ result -> do
+                    catchAny $ do
+                        parent <- getSelfPid
+                        child <-  spawnAgent $ do
+                            action <- expect :: Agent Action
+                            (Right nr) <- exec action
+                            let (Just (OK _)) = fromDynamic $ extract nr
+                            send parent ("Got OK" :: Text)
+                        send child (toAction checkTCP)
+                        confirm <- expect :: Agent Text
+                        result confirm
+                    $ \exception ->
+                        result $ "Exception: " ++ tshow exception
+                `shouldReturn` "Got OK"
 
 -- helper for running agent and getting results out of
 -- the Process through partially applied putMVar

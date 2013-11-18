@@ -19,6 +19,7 @@ import           FreeAgent.Action
 import           FreeAgent.Plugins.Nagios as Nagios
 import           AppConfig(appConfig)
 
+import qualified Data.Binary as Binary
 
 --debug
 import           Debug.Trace

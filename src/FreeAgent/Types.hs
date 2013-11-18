@@ -11,7 +11,6 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE RankNTypes #-}
 
-
 module FreeAgent.Types
  ( module FreeAgent.Types
  , Storeable, MonadLevelDB, Key, Value
@@ -31,58 +30,128 @@ import           Data.SafeCopy
 import           Data.Default         (Default(..))
 import           Data.Dynamic         (Dynamic, toDyn)
 
+import qualified Data.Map             as Map
+import qualified Data.ByteString.Char8 as BS
+
 -- yes we have both cereal and binary ... cereal for safecopy
 -- binary for distributed-process
-import           Data.Serialize       as Cereal (Serialize(..), encode)
-import           Data.Binary          as Binary (Binary(..), encode)
+import qualified Data.Serialize       as Cereal
+    (Serialize(..), encode, decode)
+import           Data.Binary          as Binary
 import           Control.Distributed.Process.Serializable (Serializable)
 
 import           Control.Monad.Writer (Writer)
 
 import          Database.LevelDB.Higher
-    (LevelDBT, MonadLevelDB,Storeable, Key, Value, FetchFail, ScanQuery(..))
+    (LevelDBT, MonadLevelDB,Storeable, Key, Value
+    , FetchFail(..), ScanQuery(..))
 
 import           Control.Distributed.Process.Lifted
 import           Control.Monad.Base (MonadBase)
 import           Control.Monad.Trans.Resource (MonadThrow, MonadUnsafeIO, MonadResource)
 import           Control.Monad.Trans.Control
 
-
+import           System.IO.Unsafe (unsafePerformIO)
 
 -- | Types that can be serialized, stored and retrieved
 --
 class (Storeable a) => Stashable a where
     key :: a -> Key
 
--- | Wrapper lets us store an Action and recover it using
--- the type name in 'registerUnWrappers'
-data Wrapped
-  = Wrapped { _wrappedWrappedKey :: ByteString
-            , _wrappedTypeName :: ByteString
-            , _wrappedValue :: ByteString
-            }
-    deriving (Show, Typeable)
+-- WrappedAction
+-- | WrappedAction lets us store an Action and recover it using
+-- the type name in 'registerActionUnwrappers'
+data WrappedAction
+  = WrappedAction { _wrappedWrappedActionKey :: ByteString
+                  , _wrappedTypeName :: ByteString
+                  , _wrappedValue :: ByteString
+                  }
+    deriving (Show, Eq, Typeable)
 
 -- Wrap a concrete type for stash or send where it
 -- will be decoded to an Action
-wrap :: (Stashable a) => a -> Wrapped
-wrap st = Wrapped (key st) (fqName st) (Cereal.encode st)
+wrap :: (Stashable a) => a -> WrappedAction
+wrap st = WrappedAction (key st) (fqName st) (Cereal.encode st)
 
-deriveSafeCopy 1 'base ''Wrapped
-
-instance Serialize Wrapped where
+deriveSafeCopy 1 'base ''WrappedAction
+deriveBinary ''WrappedAction
+instance Cereal.Serialize WrappedAction where
     get = safeGet
     put = safePut
 
-instance Stashable Wrapped where
-    key w = _wrappedWrappedKey w
+instance Stashable WrappedAction where
+    key w = _wrappedWrappedActionKey w
+
+instance Runnable WrappedAction ActionResult where
+    exec wrapped = do
+        pm <- fmap _configActionMap askConfig
+        let eact = decodeAction pm (_wrappedValue wrapped)
+        case eact of
+            Right act -> exec act
+            Left (ParseFail msg) ->
+                error $ BS.unpack $ "Error: " ++
+                    BS.pack msg ++ "\n" ++
+                    "Could not decode WrappedAction Action " ++
+                    (_wrappedTypeName wrapped)
+            _ -> error "exec action result pattern crazy"
+
+data WrappedResult
+  = WrappedResult { _wresultValue :: ByteString }
+
+-- | Deserializes and unWraps the underlying type using
+-- the registered 'actionType'for it - this is in Types.hs
+-- because it is required for WrappedAction exec
+decodeAction :: ActionMap -> ByteString -> FetchAction
+decodeAction pluginMap bs = do
+    wrapped <- case Cereal.decode bs of
+                   Right w -> Right w
+                   Left s -> Left $ ParseFail s
+    case Map.lookup (_wrappedTypeName wrapped) pluginMap of
+        Just f -> f wrapped
+        Nothing -> error $ "Type Name: " ++ BS.unpack (_wrappedTypeName wrapped)
+                    ++ " not matched! Is your plugin registered?"
+
+decodeAction' :: ActionMap -> WrappedAction -> Action
+decodeAction' pluginMap wrapped = do
+    case Map.lookup (_wrappedTypeName wrapped) pluginMap of
+        Just f -> let (Right a) = f wrapped in a
+        Nothing -> error $ "Type Name: " ++ BS.unpack (_wrappedTypeName wrapped)
+                    ++ " not matched! Is your plugin registered?"
+
+-- | public interface to global action map - the interface is one way
+-- application code should use the ConfigReader to read the ActionMap if required
+registerActionMap :: (MonadBase IO m) => ActionMap -> m ()
+registerActionMap = writeIORef globalActionMap
+
+--TODO move this to Action module
+globalActionMap :: IORef ActionMap
+globalActionMap = unsafePerformIO $ newIORef (Map.fromList [])
+{-# NOINLINE globalActionMap #-}
+
+-- Yes...we are unsafe. This is necessary to transparently deserialize
+-- Actions with Plugins registered at runtime.
+readActionMap :: ActionMap
+readActionMap = unsafePerformIO $ readIORef globalActionMap
+{-# NOINLINE readActionMap #-}
 
 type Actionable a b = (Stashable a, Runnable a b)
 data Action = forall p b. (Actionable p b) => Action p b
 
+instance Binary Action where
+    put (Action a _) = Binary.put $ wrap a
+    get = do
+        wk <- Binary.get
+        wt  <- Binary.get
+        wv <- Binary.get
+        return $ decodeAction' readActionMap (WrappedAction wk wt wv)
+
 instance Cereal.Serialize Action where
     put (Action a _) = Cereal.put $ wrap a
-    get = error "decode/get directly on Action can't happen; use decodeAction"
+    get = do
+        wk <- Cereal.get
+        wt  <- Cereal.get
+        wv <- Cereal.get
+        return $ decodeAction' readActionMap (WrappedAction wk wt wv)
 
 instance SafeCopy Action where
     putCopy (Action a _) = putCopy a
@@ -107,10 +176,11 @@ instance Runnable Action ActionResult where
 
 type FetchAction = Either FetchFail Action
 
-type UnWrapper a = (Wrapped -> Either FetchFail a)
-type ActionMap = Map ByteString (UnWrapper Action)
+-- ActionUnwrapper and registration
+type ActionUnwrapper a = (WrappedAction -> Either FetchFail a)
+type ActionMap = Map ByteString (ActionUnwrapper Action)
 type PluginContexts = Map ByteString Dynamic
-type PluginActions = (ByteString, UnWrapper Action)
+type PluginActions = (ByteString, ActionUnwrapper Action)
 type PluginWriter = Writer [PluginDef] ()
 type ActionsWriter = Writer [PluginActions] ()
 
@@ -137,6 +207,7 @@ class (Monad m) => ConfigReader m where
 instance (Monad m) => ConfigReader (ReaderT AgentContext m) where
     askConfig = ask
 
+-- Agent Monad
 type MonadAgent m = (ConfigReader m, MonadProcess m, MonadLevelDB m, MonadBaseControl IO m)
 
 newtype Agent a = Agent { unAgent :: ReaderT AgentContext (LevelDBT Process) a}
@@ -158,6 +229,7 @@ data RunStatus a = Either Text a
 class (Serializable b, Show b) => Runnable a b | a -> b where
     exec :: (MonadAgent m) => a -> m (Either Text b)
 
+-- ActionResult
 -- | Box for returning results from 'Action' exec.
 -- Box is an existential which implements Deliverable and thus can be
 -- sent as a concrete type to registered listeners of the Action
@@ -197,19 +269,22 @@ instance Resulting ActionResult where
     deliver (ActionResult a _) p = send p a
     extract (ActionResult _ d) = d
 
+-- Scheduling and Events
 data Schedule = Now | Later
     deriving (Show, Eq, Typeable)
 
 deriveSafeCopy 1 'base ''Schedule
-instance Serialize Schedule where
+deriveBinary ''Schedule
+instance Cereal.Serialize Schedule where
     get = safeGet
     put = safePut
 
-data Event = Event Schedule Action
+data Event = Event Schedule WrappedAction
     deriving (Show, Eq, Typeable)
 
 deriveSafeCopy 1 'base ''Event
-instance Serialize Event where
+deriveBinary ''Event
+instance Cereal.Serialize Event where
     get = safeGet
     put = safePut
 
@@ -220,9 +295,9 @@ instance Stashable Event where
 data ActionHistory = ActionHistory
 data EventHistory = EventHistory
 
-data ExecutiveCommand = RegisterAction Action
+data ExecutiveCommand = RegisterAction WrappedAction
                       | UnregisterAction Key
-		              | ExecuteAction Action
+		              | ExecuteAction WrappedAction
                       | QueryActionHistory (ScanQuery ActionHistory [ActionHistory])
                       | RegisterEvent Event
                       | UnregisterEvent Event

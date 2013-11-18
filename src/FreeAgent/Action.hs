@@ -17,13 +17,11 @@ import qualified Prelude                 as P
 import           FreeAgent.Lenses
 import           FreeAgent.Core
 
-import           Data.Serialize          (decode)
 import           Data.Dynamic
     (toDyn, fromDynamic, dynTypeRep)
 
 import           Database.LevelDB.Higher
 
-import qualified Data.ByteString.Char8   as BS
 import qualified Data.Map                as Map
 
 import           Control.Monad.Writer    (runWriter, tell)
@@ -57,17 +55,6 @@ stash :: (MonadLevelDB m, Stashable s)
       => s -> m ()
 stash s = store (key s) s
 
--- | Deserializes and unWraps the underlying type using
--- the registered 'actionType'for it
-decodeAction :: ActionMap -> ByteString -> FetchAction
-decodeAction pluginMap bs = do
-    wrapped <- case decode bs of
-                   Right w -> Right w
-                   Left s -> Left $ ParseFail s
-    case Map.lookup (wrapped^.typeName) pluginMap of
-        Just f -> f wrapped
-        Nothing -> error $ "Type Name: " ++ BS.unpack (wrapped^.typeName)
-                    ++ " not matched! Is your plugin registered?"
 
 -- | Use to register your Action types so they can be
 -- deserialized dynamically at runtime; invoke as:
@@ -80,7 +67,7 @@ register act = tell [(fqName act, unWrapAction (anUnWrap act))]
       -- This fixes the type for unWrap to be that of the top-level param
       -- This way we get the concrete decode method we need to deserialize
       -- And yet, we bury it in the Existential Action
-      anUnWrap :: (Stashable a, Runnable a b) => a -> UnWrapper a
+      anUnWrap :: (Stashable a, Runnable a b) => a -> ActionUnwrapper a
       anUnWrap _ = unWrap
 
 -- | Combine the results of multiple ActionsWriters from different plugins
@@ -101,11 +88,11 @@ toAction a = Action a (undefined :: b)
 -- | Unwrap a concrete type into an Action
 --
 unWrapAction :: (Actionable a b) =>
-                UnWrapper a -> Wrapped -> FetchAction
+                ActionUnwrapper a -> WrappedAction -> FetchAction
 unWrapAction uw wrapped = Action <$> uw wrapped <*> pure (undefined :: b)
 
 -- | Unwrap a 'Wrapper' into a (known) concrete type
-unWrap :: (Stashable a) => Wrapped -> Either FetchFail a
+unWrap :: (Stashable a) => WrappedAction -> Either FetchFail a
 unWrap = decodeStore . _wrappedValue
 
 -- | Wrap a value in the ActionResult box
