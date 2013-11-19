@@ -70,6 +70,9 @@ wrap st = WrappedAction (key st) (fqName st) (Cereal.encode st)
 
 deriveSafeCopy 1 'base ''WrappedAction
 deriveBinary ''WrappedAction
+
+-- so, we need Cereal to implement SafeCopy so it is Storable and
+-- Stashable - yet we cannot use safeGet/safePut with decodeAction' presently
 instance Cereal.Serialize WrappedAction where
         put (WrappedAction x1 x2 x3)
           = do Cereal.put x1
