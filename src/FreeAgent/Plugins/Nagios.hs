@@ -84,6 +84,13 @@ data NagiosResult = OK Text | Warning Text | Critical Text | Unknown Text
 instance Resulting NagiosResult
 
 deriveBinary ''NagiosResult
+deriveSafeCopy 1 'base ''NagiosResult
+instance Cereal.Serialize NagiosResult where
+    put = safePut
+    get = safeGet
+
+instance Stashable NagiosResult where
+    key = error "NagiosResult not really stashable yet"
 
 instance Runnable Command NagiosResult where
     exec cmd =

@@ -36,6 +36,7 @@ import qualified Data.Map                as Map
 import           Control.Monad.Writer    (runWriter, tell)
 
 import           System.IO.Unsafe (unsafePerformIO)
+import           Control.Distributed.Process.Lifted (send)
 
 
 -- Serialization instances for Action are all this module as they require specialized
@@ -65,6 +66,7 @@ instance Eq Action where
 
 instance Stashable Action where
     key (Action a _) = key a
+
 
 -- | Fix the type & keyspace to Action for fetch
 fetchAction :: (MonadLevelDB m, ConfigReader m)
@@ -110,7 +112,7 @@ register act = tell [(fqName act, unWrapAction (anUnWrap act))]
       -- This fixes the type for unWrap to be that of the top-level param
       -- This way we get the concrete decode method we need to deserialize
       -- And yet, we bury it in the Existential Action
-      anUnWrap :: (Stashable a, Runnable a b) => a -> ActionUnwrapper a
+      anUnWrap :: (Stashable a) => a -> ActionUnwrapper a
       anUnWrap _ = unWrap
 
 -- | Combine the results of multiple ActionsWriters from different plugins
@@ -164,7 +166,7 @@ unWrap :: (Stashable a) => WrappedAction -> Either FetchFail a
 unWrap = decodeStore . _wrappedValue
 
 -- | Wrap a value in the ActionResult box
-actionResult :: (Serializable a, Show a) => a -> ActionResult
+actionResult :: (Stashable a, Serializable a, Show a) => a -> ActionResult
 actionResult a = ActionResult a (toDyn a)
 
 -- | Extract a concrete type from an ActionResult. Will throw an exception
@@ -179,3 +181,30 @@ extractResult a =
 
 withActionKS :: (MonadLevelDB m) => m a -> m a
 withActionKS = withKeySpace "agent:actions"
+
+-- same as Action - we need ActionResult serialization instances here
+instance Binary ActionResult where
+    put (ActionResult a _) = Binary.put a
+    get = error "You cannot decode to the ActionResult existential type."
+
+instance Cereal.Serialize ActionResult where
+    get = undefined
+    put = undefined
+
+instance SafeCopy ActionResult where
+
+-- ActionResult instance overrides the underlying implementation
+-- there is no reason for an different implementation to ever be used than
+-- the default, but this ensures ActionResults are all sent the same way
+instance Resulting ActionResult where
+    deliver (ActionResult a _) p = send p a
+    extract (ActionResult _ d) = d
+
+instance Runnable Action ActionResult where
+    exec (Action a _) = do
+        execR <- exec a
+        return $ flip fmap execR $ \result ->
+                ActionResult result (toDyn result)
+
+instance Stashable ActionResult where
+    key (ActionResult a _) = key a

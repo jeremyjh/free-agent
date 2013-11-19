@@ -64,7 +64,7 @@ data WrappedAction
     deriving (Show, Eq, Typeable)
 
 -- Wrap a concrete type for stash or send where it
--- will be decoded to an Action
+-- will be decoded to an Action or ActionResult
 wrap :: (Stashable a) => a -> WrappedAction
 wrap st = WrappedAction (key st) (fqName st) (Cereal.encode st)
 
@@ -90,8 +90,8 @@ instance Stashable WrappedAction where
 data WrappedResult
   = WrappedResult { _wresultValue :: ByteString }
 
-type Actionable a b = (Stashable a, Runnable a b)
-data Action = forall p b. (Actionable p b) => Action p b
+type Actionable a b = (Stashable a, Stashable b, Runnable a b)
+data Action = forall a b. (Actionable a b) => Action a b
 
 instance Typeable Action where
     typeOf _ = mkTyConApp (mkTyCon3 "free-agent" "FreeAgent.Types" "Action") []
@@ -99,11 +99,6 @@ instance Typeable Action where
 instance P.Show Action where
     show (Action a _) = "Action (" ++ P.show a ++ ")"
 
-instance Runnable Action ActionResult where
-    exec (Action a _) = do
-        execR <- exec a
-        return $ flip fmap execR $ \result ->
-                ActionResult result (toDyn result)
 
 type FetchAction = Either FetchFail Action
 
@@ -166,7 +161,7 @@ class (Serializable b, Show b) => Runnable a b | a -> b where
 -- sent as a concrete type to registered listeners of the Action
 --
 -- use the 'actionResult' and 'extractResult' functions from FreeAgent.Action
-data ActionResult = forall p. (Serializable p, Show p) => ActionResult p Dynamic
+data ActionResult = forall a. (Stashable a, Serializable a, Show a) => ActionResult a Dynamic
 
 instance Show ActionResult where
     show (ActionResult a _) = show a
@@ -176,10 +171,6 @@ instance Eq ActionResult where
 
 instance Typeable ActionResult where
     typeOf _ = mkTyConApp (mkTyCon3 "free-agent" "FreeAgent.Types" "ActionResult") []
-
-instance Binary ActionResult where
-    put (ActionResult a _) = Binary.put a
-    get = error "You cannot decode to the ActionResult existential type."
 
 -- | Class for types that will be boxed as ActionResult
 -- This let's us use the UnsafePrimitive's version of 'send' which
@@ -193,12 +184,6 @@ class (Serializable a) => Resulting a where
     -- | extract the embedded dynamic; for use by 'extractResult'
     extract = toDyn
 
--- ActionResult instance overrides the underlying implementation
--- there is no reason for an different implementation to ever be used than
--- the default, but this ensures ActionResults are all sent the same way
-instance Resulting ActionResult where
-    deliver (ActionResult a _) p = send p a
-    extract (ActionResult _ d) = d
 
 -- Scheduling and Events
 data Schedule = Now | Later
