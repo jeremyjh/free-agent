@@ -17,14 +17,14 @@ import           AppConfig(appConfig)
 import           Control.Concurrent.Lifted
 import           Control.Distributed.Process.Lifted
 
-import          Control.Distributed.Process.Node
-import          Network.Transport.TCP
+import           Control.Distributed.Process.Node
+import           Network.Transport.TCP
 
-import          Data.Dynamic
+import           Data.Dynamic
 
-import          Control.Monad.Reader
-import          Database.LevelDB.Higher
-import          Control.Exception
+import           Control.Monad.Reader
+import           Database.LevelDB.Higher
+import           Control.Exception
 
 import qualified Data.Binary as Binary
 
