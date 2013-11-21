@@ -3,6 +3,8 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module FreeAgent.Action
@@ -67,7 +69,6 @@ instance Eq Action where
 instance Stashable Action where
     key (Action a _) = key a
 
-
 -- | Fix the type & keyspace to Action for fetch
 fetchAction :: (MonadLevelDB m, ConfigReader m)
             => Key -> m FetchAction
@@ -100,20 +101,13 @@ stash :: (MonadLevelDB m, Stashable s)
       => s -> m ()
 stash s = store (key s) s
 
-
 -- | Use to register your Action types so they can be
 -- deserialized dynamically at runtime; invoke as:
 --
 -- > register (actiontype :: MyType)
-register :: (Actionable a b)
+register :: forall a b. (Actionable a b)
          => a -> ActionsWriter
-register act = tell [(fqName act, unWrapAction (anUnWrap act))]
-  where
-      -- This fixes the type for unWrap to be that of the top-level param
-      -- This way we get the concrete decode method we need to deserialize
-      -- And yet, we bury it in the Existential Action
-      anUnWrap :: (Stashable a) => a -> ActionUnwrapper a
-      anUnWrap _ = unWrap
+register act = tell [(fqName act, unWrapAction (unWrap :: ActionUnwrapper a))]
 
 -- | Combine the results of multiple ActionsWriters from different plugins
 registerAll :: ActionsWriter -> ActionMap
@@ -129,7 +123,6 @@ actionType = error "actionType should never be evaluated! Only pass it \
 -- superfulous result parameter to the Action constructor.
 toAction :: (Actionable a b) => a -> Action
 toAction a = Action a (undefined :: b)
-
 
 decodeAction' :: ActionMap -> WrappedAction -> Action
 decodeAction' pluginMap wrapped = do
@@ -160,6 +153,11 @@ readActionMap = unsafePerformIO $ readIORef globalActionMap
 unWrapAction :: (Actionable a b) =>
                 ActionUnwrapper a -> WrappedAction -> FetchAction
 unWrapAction uw wrapped = Action <$> uw wrapped <*> pure (undefined :: b)
+
+-- Wrap a concrete type for stash or send where it
+-- will be decoded to an Action or ActionResult
+wrap :: (Stashable a) => a -> WrappedAction
+wrap st = WrappedAction (key st) (fqName st) (Cereal.encode st)
 
 -- | Unwrap a 'Wrapper' into a (known) concrete type
 unWrap :: (Stashable a) => WrappedAction -> Either FetchFail a
