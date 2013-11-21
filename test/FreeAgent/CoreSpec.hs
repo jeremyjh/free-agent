@@ -75,10 +75,10 @@ spec = do
                         (Right nr) <- exec $ toAction checkTCP
                         parent <- getSelfPid
                         child <-  spawnAgent $ do
-                            (OK _) <- expect :: Agent NagiosResult
+                            (OK _) <- expect
                             send parent ("Got OK" :: Text)
                         deliver nr child
-                        confirm <- expect :: Agent Text
+                        confirm <- expect
                         result confirm
                     $ \exception ->
                         result $ "Exception: " ++ tshow exception
@@ -93,8 +93,8 @@ spec = do
                             (Right nr) <- exec action
                             let (Just (OK _)) = fromDynamic $ extract nr
                             send parent ("Got OK" :: Text)
-                        send child (toAction checkTCP)
-                        confirm <- expect :: Agent Text
+                        send child $ toAction checkTCP
+                        confirm <- expect
                         result confirm
                     $ \exception ->
                         result $ "Exception: " ++ tshow exception

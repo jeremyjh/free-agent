@@ -63,10 +63,6 @@ data WrappedAction
                   }
     deriving (Show, Eq, Typeable)
 
--- Wrap a concrete type for stash or send where it
--- will be decoded to an Action or ActionResult
-wrap :: (Stashable a) => a -> WrappedAction
-wrap st = WrappedAction (key st) (fqName st) (Cereal.encode st)
 
 deriveSafeCopy 1 'base ''WrappedAction
 deriveBinary ''WrappedAction
@@ -209,6 +205,7 @@ instance Stashable Event where
       = Cereal.encode sch ++ key act
 
 data ActionHistory = ActionHistory
+
 data EventHistory = EventHistory
 
 data ExecutiveCommand = RegisterAction Action
