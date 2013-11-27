@@ -12,7 +12,7 @@ module FreeAgent.Action
     , withActionKS
     , register, actionType
     , registerActionMap
-    , actionResult, extractResult, toAction
+    , actionResult, toAction
     )
 where
 
@@ -26,8 +26,7 @@ import           Data.Serialize          (Serialize)
 import qualified Data.Serialize          as Cereal
 import           Data.Binary             (Binary)
 import qualified Data.Binary             as Binary
-import           Data.Dynamic
-    (toDyn, fromDynamic, dynTypeRep)
+import           Data.Dynamic            (cast)
 
 import           Control.Monad.Base (MonadBase)
 import           Database.LevelDB.Higher
@@ -139,7 +138,7 @@ unWrapAction uw wrapped = Action <$> uw wrapped <*> pure (undefined :: b)
 
 unwrapResult :: (Resulting b)
              => ActionUnwrapper b -> Wrapped -> Either FetchFail ActionResult
-unwrapResult uw wrapped = ActionResult <$> uw wrapped <*> (toDyn <$> uw wrapped)
+unwrapResult uw wrapped = ActionResult <$> uw wrapped
 
 -- Wrap a concrete type for stash or send where it
 -- will be decoded to an Action or ActionResult
@@ -179,17 +178,7 @@ readActionMap = unsafePerformIO $ readIORef globalActionMap
 {-# NOINLINE readActionMap #-}
 -- | Wrap a value in the ActionResult box
 actionResult :: (Stashable a, Serializable a, Show a) => a -> ActionResult
-actionResult a = ActionResult a (toDyn a)
-
--- | Extract a concrete type from an ActionResult. Will throw an exception
--- if the required type does not match.
-extractResult :: (Typeable a) => ActionResult -> a
-extractResult a =
-    case fromDynamic $ extract a of
-        (Just v) -> v
-        Nothing -> error $ "Cannot extract ActionResult of " ++ repName ++ "to the expected type."
-  where
-    repName = show $ dynTypeRep $ extract a
+actionResult a = ActionResult a
 
 withActionKS :: (MonadLevelDB m) => m a -> m a
 withActionKS = withKeySpace "agent:actions"
@@ -206,7 +195,7 @@ decodeResult' pluginMap wrapped = do
 
 -- same as Action - we need ActionResult serialization instances here
 instance Binary ActionResult where
-    put (ActionResult a _) = Binary.put $ wrap a
+    put (ActionResult a) = Binary.put $ wrap a
     get = do
         wk <- Binary.get
         wt  <- Binary.get
@@ -214,7 +203,7 @@ instance Binary ActionResult where
         return $ decodeResult' (snd readActionMap) (Wrapped wk wt wv)
 
 instance Serialize ActionResult where
-    put (ActionResult a _) = Cereal.put $ wrap a
+    put (ActionResult a) = Cereal.put $ wrap a
     get = do
         wk <- Cereal.get
         wt  <- Cereal.get
@@ -227,14 +216,14 @@ instance SafeCopy ActionResult where
 -- there is no reason for an different implementation to ever be used than
 -- the default, but this ensures ActionResults are all sent the same way
 instance Resulting ActionResult where
-    deliver (ActionResult a _) p = send p a
-    extract (ActionResult a _) = toDyn a
+    deliver (ActionResult a) p = send p a
+    extract (ActionResult a) = cast a
 
 instance Runnable Action ActionResult where
     exec (Action a _) = do
         execR <- exec a
         return $ flip fmap execR $ \result ->
-                ActionResult result (toDyn result)
+                ActionResult result
 
 instance Stashable ActionResult where
-    key (ActionResult a _) = key a
+    key (ActionResult a) = key a

@@ -60,7 +60,7 @@ spec = do
                         stashAction $ toAction checkTCP
                         (Right action) <- fetchAction "localhost:17500"
                         (Right nr) <- exec action
-                        let (OK rs) = extractResult nr
+                        let Just (OK rs) = extract nr
                         result $ take 6 rs
                     $ \exception ->
                         result $ "Exception: " ++ tshow exception
@@ -90,8 +90,8 @@ spec = do
                         (Right nr) <- exec $ toAction checkTCP
                         parent <- getSelfPid
                         child <-  spawnAgent $ do
-                            wr <- expect
-                            let (OK _) = extractResult wr
+                            wr <- expect :: Agent ActionResult
+                            let Just (OK _) = extract wr
                             send parent ("Got OK" :: Text)
                         send child nr
                         confirm <- expect
@@ -107,7 +107,7 @@ spec = do
                         child <-  spawnAgent $ do
                             action <- expect :: Agent Action
                             (Right nr) <- exec action
-                            let (Just (OK _)) = fromDynamic $ extract nr
+                            let Just (OK _) = extract nr
                             send parent ("Got OK" :: Text)
                         send child $ toAction checkTCP
                         confirm <- expect

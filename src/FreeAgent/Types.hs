@@ -23,11 +23,11 @@ import           FreeAgent.Prelude
 import qualified Prelude              as P
 import           Control.Monad.Reader (ReaderT, ask)
 
-import           Data.Typeable        (mkTyConApp, mkTyCon3)
+import           Data.Typeable        (mkTyConApp, mkTyCon3, cast)
 import           Data.SafeCopy
     (deriveSafeCopy, base, safeGet, safePut)
 import           Data.Default         (Default(..))
-import           Data.Dynamic         (Dynamic, toDyn)
+import           Data.Dynamic         (Dynamic)
 
 -- yes we have both cereal and binary ... cereal for safecopy
 -- binary for distributed-process
@@ -161,13 +161,13 @@ class (Serializable b, Show b) => Runnable a b | a -> b where
 -- sent as a concrete type to registered listeners of the Action
 --
 -- use the 'actionResult' and 'extractResult' functions from FreeAgent.Action
-data ActionResult = forall a. (Stashable a, Serializable a, Show a) => ActionResult a Dynamic
+data ActionResult = forall a. (Stashable a, Serializable a, Show a) => ActionResult a
 
 instance Show ActionResult where
-    show (ActionResult a _) = show a
+    show (ActionResult a) = show a
 
 instance Eq ActionResult where
-    (ActionResult a _) == (ActionResult b _) = Binary.encode a == Binary.encode b
+    (ActionResult a) == (ActionResult b) = Binary.encode a == Binary.encode b
 
 instance Typeable ActionResult where
     typeOf _ = mkTyConApp (mkTyCon3 "free-agent" "FreeAgent.Types" "ActionResult") []
@@ -177,12 +177,12 @@ instance Typeable ActionResult where
 -- sends a message locally without serializing it
 class (Serializable a, Stashable a) => Resulting a where
     deliver :: (MonadProcess m) => a -> ProcessId -> m ()
-    extract :: a -> Dynamic
+    extract :: (Typeable b) => a -> Maybe b
 
     -- | send the result to the listener argument
     deliver a p = send p a
-    -- | extract the embedded dynamic; for use by 'extractResult'
-    extract = toDyn
+    -- | extract the concrete result - if you know what type it is
+    extract = cast
 
 
 -- Scheduling and Events
