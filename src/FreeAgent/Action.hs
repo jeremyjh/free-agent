@@ -11,7 +11,7 @@ module FreeAgent.Action
     ( fetchAction, scanActions, decodeAction, stashAction, stash
     , withActionKS
     , register, actionType
-    , registerActionMap
+    , registerPluginMaps
     , toAction
     )
 where
@@ -47,13 +47,13 @@ instance Binary Action where
     put (Action a _) = Binary.put $ wrap a
     get = do
         wrapped <- getWrappedBinary
-        return $ decodeAction' (fst readActionMap) wrapped
+        return $ decodeAction' (fst readPluginMaps) wrapped
 
 instance Serialize Action where
     put (Action a _) = Cereal.put $ wrap a
     get = do
         wrapped <- getWrappedCereal
-        return $ decodeAction' (fst readActionMap) wrapped
+        return $ decodeAction' (fst readPluginMaps) wrapped
 
 instance SafeCopy Action where
     putCopy (Action a _) = putCopy a
@@ -110,9 +110,9 @@ stash s = store (key s) s
 register :: forall a b. (Actionable a b, Resulting b)
          => a -> ActionsWriter
 register act = tell [( fqName act
-                     , unWrapAction (unWrap :: ActionUnwrapper a)
+                     , unWrapAction (unWrap :: Unwrapper a)
                      , fqName (undefined :: b)
-                     , unwrapResult (unWrap :: ActionUnwrapper b) )]
+                     , unwrapResult (unWrap :: Unwrapper b) )]
 
 
 -- | Used only to fix the type passed to 'register' - this should not
@@ -130,11 +130,11 @@ toAction a = Action a (undefined :: b)
 -- | Unwrap a concrete type into an Action
 --
 unWrapAction :: (Actionable a b)
-             => ActionUnwrapper a -> Wrapped -> FetchAction
+             => Unwrapper a -> Wrapped -> FetchAction
 unWrapAction uw wrapped = Action <$> uw wrapped <*> pure (undefined :: b)
 
 unwrapResult :: (Resulting b)
-             => ActionUnwrapper b -> Wrapped -> Either FetchFail ActionResult
+             => Unwrapper b -> Wrapped -> Either FetchFail ActionResult
 unwrapResult uw wrapped = ActionResult <$> uw wrapped
 
 -- Wrap a concrete type for stash or send where it
@@ -158,21 +158,21 @@ decodeAction' pluginMap wrapped =
                     ++ " not matched! Is your plugin registered?"
 
 -- | Set or re-set the top-level Action Map (done after plugins are registered)
-registerActionMap :: (MonadBase IO m) => PluginMaps -> m ()
-registerActionMap = writeIORef globalActionMap
+registerPluginMaps :: (MonadBase IO m) => PluginMaps -> m ()
+registerPluginMaps = writeIORef globalPluginMaps
 
 --TODO move this to Action module
-globalActionMap :: IORef PluginMaps
-globalActionMap = unsafePerformIO $ newIORef (Map.fromList [], Map.fromList [])
-{-# NOINLINE globalActionMap #-}
+globalPluginMaps :: IORef PluginMaps
+globalPluginMaps = unsafePerformIO $ newIORef (Map.fromList [], Map.fromList [])
+{-# NOINLINE globalPluginMaps #-}
 
 -- Yes...we are unsafe. This is necessary to transparently deserialize
 -- Actions defined in Plugins which are registered at runtime. There are workarounds for
 -- most cases but to receive an Action in a Cloud Haskell 'expect' we must be
 -- able to deserialize it directly.
-readActionMap :: PluginMaps
-readActionMap = unsafePerformIO $ readIORef globalActionMap
-{-# NOINLINE readActionMap #-}
+readPluginMaps :: PluginMaps
+readPluginMaps = unsafePerformIO $ readIORef globalPluginMaps
+{-# NOINLINE readPluginMaps #-}
 
 withActionKS :: (MonadLevelDB m) => m a -> m a
 withActionKS = withKeySpace "agent:actions"
@@ -192,13 +192,13 @@ instance Binary ActionResult where
     put (ActionResult a) = Binary.put $ wrap a
     get = do
         wrapped <- getWrappedBinary
-        return $ decodeResult' (snd readActionMap) wrapped
+        return $ decodeResult' (snd readPluginMaps) wrapped
 
 instance Serialize ActionResult where
     put (ActionResult a) = Cereal.put $ wrap a
     get = do
         wrapped <- getWrappedCereal
-        return $ decodeResult' (snd readActionMap) wrapped
+        return $ decodeResult' (snd readPluginMaps) wrapped
 
 instance SafeCopy ActionResult where
 

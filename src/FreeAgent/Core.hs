@@ -13,7 +13,7 @@ module FreeAgent.Core
 
 import           FreeAgent.Prelude
 import           FreeAgent.Lenses
-import           FreeAgent.Action                  (registerActionMap)
+import           FreeAgent.Action                  (registerPluginMaps)
 import           Control.Monad.Writer              (execWriter, tell)
 import           Database.LevelDB.Higher (mapLevelDBT, runCreateLevelDB)
 import           Control.Monad.Reader
@@ -29,7 +29,7 @@ import           Data.Dynamic (toDyn, fromDynamic)
 -- | Execute the agent - main entry point
 runAgent :: AgentContext -> Agent () -> IO ()
 runAgent config ma = do
-    registerActionMap (config^.actionMap, config^.resultMap)
+    registerPluginMaps (config^.actionMap, config^.resultMap)
     let lbt = runReaderT (unAgent ma) config
         proc = runCreateLevelDB (config^.dbPath) "agent" lbt
     eithertcp <- createTransport (config^.nodeHost) (config^.nodePort) defaultTCPParameters

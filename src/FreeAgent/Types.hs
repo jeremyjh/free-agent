@@ -55,7 +55,7 @@ class (Storeable a) => Stashable a where
 
 -- Wrapped
 -- | Wrapped lets us store an Action and recover it using
--- the type name in 'registerActionUnwrappers'
+-- TODO: fix this comment: the type name in 'registerUnwrappers'
 data Wrapped
   = Wrapped { _wrappedWrappedKey :: ByteString
                   , _wrappedTypeName :: ByteString
@@ -70,15 +70,15 @@ deriveBinary ''Wrapped
 -- so, we need Cereal to implement SafeCopy so it is Storable and
 -- Stashable - yet we cannot use safeGet/safePut with decodeAction' presently
 instance Cereal.Serialize Wrapped where
-        put (Wrapped x1 x2 x3)
-          = do Cereal.put x1
-               Cereal.put x2
-               Cereal.put x3
-        get
-          = do x1 <- Cereal.get
-               x2 <- Cereal.get
-               x3 <- Cereal.get
-               return (Wrapped x1 x2 x3)
+        put (Wrapped x1 x2 x3) = do
+            Cereal.put x1
+            Cereal.put x2
+            Cereal.put x3
+        get = do
+            x1 <- Cereal.get
+            x2 <- Cereal.get
+            x3 <- Cereal.get
+            return (Wrapped x1 x2 x3)
 
 instance Stashable Wrapped where
     key = _wrappedWrappedKey
@@ -98,14 +98,14 @@ instance P.Show Action where
 
 type FetchAction = Either FetchFail Action
 
--- ActionUnwrapper and registration types
-type ActionUnwrapper a = (Wrapped -> Either FetchFail a)
-type ActionMap = Map ByteString (ActionUnwrapper Action)
-type ResultMap = Map ByteString (ActionUnwrapper ActionResult)
+-- Unwrapper and registration types
+type Unwrapper a = (Wrapped -> Either FetchFail a)
+type ActionMap = Map ByteString (Unwrapper Action)
+type ResultMap = Map ByteString (Unwrapper ActionResult)
 type PluginMaps = (ActionMap, ResultMap)
 type PluginContexts = Map ByteString Dynamic
-type PluginActions = ( ByteString, ActionUnwrapper Action
-                     , ByteString, ActionUnwrapper ActionResult)
+type PluginActions = ( ByteString, Unwrapper Action
+                     , ByteString, Unwrapper ActionResult)
 type PluginWriter = Writer [PluginDef] ()
 type ActionsWriter = Writer [PluginActions] ()
 
