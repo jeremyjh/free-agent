@@ -66,7 +66,7 @@ spec = do
                         result $ "Exception: " ++ tshow exception
                 `shouldReturn` "TCP OK"
 
-            it "can send a result action to a listener as a concrete type" $ do
+            it "can send an action result to a listener as a concrete type" $ do
                 testAgent $ \result -> do
                     catchAny $ do
                         -- could just get a concrete from exec
@@ -78,6 +78,22 @@ spec = do
                             (OK _) <- expect
                             send parent ("Got OK" :: Text)
                         deliver nr child
+                        confirm <- expect
+                        result confirm
+                    $ \exception ->
+                        result $ "Exception: " ++ tshow exception
+                `shouldReturn` "Got OK"
+
+            it "can send a result action to a listener as an existential type" $ do
+                testAgent $ \result -> do
+                    catchAny $ do
+                        (Right nr) <- exec $ toAction checkTCP
+                        parent <- getSelfPid
+                        child <-  spawnAgent $ do
+                            wr <- expect
+                            let (OK _) = extractResult wr
+                            send parent ("Got OK" :: Text)
+                        send child nr
                         confirm <- expect
                         result confirm
                     $ \exception ->

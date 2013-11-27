@@ -25,6 +25,7 @@ import           FreeAgent.Core
 import           System.Process     (readProcessWithExitCode)
 import           System.Exit (ExitCode(..))
 
+import           Data.Serialize                   (Serialize)
 import qualified Data.Serialize                   as Cereal
 import           Data.SafeCopy
 
@@ -71,7 +72,7 @@ data CommandX = SeeItsExistentialBro Int deriving (Show, Eq, Typeable)
 makeFields ''Command
 deriveSafeCopy 1 'base ''Command
 
-instance Cereal.Serialize Command where
+instance Serialize Command where
     put = safePut
     get = safeGet
 
@@ -85,12 +86,12 @@ instance Resulting NagiosResult
 
 deriveBinary ''NagiosResult
 deriveSafeCopy 1 'base ''NagiosResult
-instance Cereal.Serialize NagiosResult where
+instance Serialize NagiosResult where
     put = safePut
     get = safeGet
 
 instance Stashable NagiosResult where
-    key = error "NagiosResult not really stashable yet"
+    key _ = "the letter two my friend"
 
 instance Runnable Command NagiosResult where
     exec cmd =
@@ -119,7 +120,7 @@ instance Runnable Command NagiosResult where
 
 deriveSafeCopy 1 'base ''CommandX
 
-instance Cereal.Serialize CommandX where
+instance Serialize CommandX where
     put = safePut
     get = safeGet
 

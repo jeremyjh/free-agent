@@ -53,24 +53,24 @@ import           Control.Monad.Trans.Control
 class (Storeable a) => Stashable a where
     key :: a -> Key
 
--- WrappedAction
--- | WrappedAction lets us store an Action and recover it using
+-- Wrapped
+-- | Wrapped lets us store an Action and recover it using
 -- the type name in 'registerActionUnwrappers'
-data WrappedAction
-  = WrappedAction { _wrappedWrappedActionKey :: ByteString
+data Wrapped
+  = Wrapped { _wrappedWrappedKey :: ByteString
                   , _wrappedTypeName :: ByteString
                   , _wrappedValue :: ByteString
                   }
     deriving (Show, Eq, Typeable)
 
 
-deriveSafeCopy 1 'base ''WrappedAction
-deriveBinary ''WrappedAction
+deriveSafeCopy 1 'base ''Wrapped
+deriveBinary ''Wrapped
 
 -- so, we need Cereal to implement SafeCopy so it is Storable and
 -- Stashable - yet we cannot use safeGet/safePut with decodeAction' presently
-instance Cereal.Serialize WrappedAction where
-        put (WrappedAction x1 x2 x3)
+instance Cereal.Serialize Wrapped where
+        put (Wrapped x1 x2 x3)
           = do Cereal.put x1
                Cereal.put x2
                Cereal.put x3
@@ -78,10 +78,10 @@ instance Cereal.Serialize WrappedAction where
           = do x1 <- Cereal.get
                x2 <- Cereal.get
                x3 <- Cereal.get
-               return (WrappedAction x1 x2 x3)
+               return (Wrapped x1 x2 x3)
 
-instance Stashable WrappedAction where
-    key w = _wrappedWrappedActionKey w
+instance Stashable Wrapped where
+    key w = _wrappedWrappedKey w
 
 data WrappedResult
   = WrappedResult { _wresultValue :: ByteString }
@@ -98,11 +98,14 @@ instance P.Show Action where
 
 type FetchAction = Either FetchFail Action
 
--- ActionUnwrapper and registration
-type ActionUnwrapper a = (WrappedAction -> Either FetchFail a)
+-- ActionUnwrapper and registration types
+type ActionUnwrapper a = (Wrapped -> Either FetchFail a)
 type ActionMap = Map ByteString (ActionUnwrapper Action)
+type ResultMap = Map ByteString (ActionUnwrapper ActionResult)
+type PluginMaps = (ActionMap, ResultMap)
 type PluginContexts = Map ByteString Dynamic
-type PluginActions = (ByteString, ActionUnwrapper Action)
+type PluginActions = ( ByteString, ActionUnwrapper Action
+                     , ByteString, ActionUnwrapper ActionResult)
 type PluginWriter = Writer [PluginDef] ()
 type ActionsWriter = Writer [PluginActions] ()
 
@@ -114,6 +117,7 @@ data PluginDef
 
 data AgentContext
   = AgentContext { _configActionMap :: ActionMap
+                 , _configResultMap :: ResultMap
                  , _configPluginContexts :: PluginContexts
                  , _configDbPath :: FilePathS
                  , _configNodeHost :: String
@@ -121,7 +125,7 @@ data AgentContext
                  }
 
 instance Default AgentContext where
-    def = AgentContext mempty mempty "./db" "127.0.0.1" "3546"
+    def = AgentContext mempty mempty mempty "./db" "127.0.0.1" "3546"
 
 class (Monad m) => ConfigReader m where
     askConfig :: m AgentContext
@@ -171,7 +175,7 @@ instance Typeable ActionResult where
 -- | Class for types that will be boxed as ActionResult
 -- This let's us use the UnsafePrimitive's version of 'send' which
 -- sends a message locally without serializing it
-class (Serializable a) => Resulting a where
+class (Serializable a, Stashable a) => Resulting a where
     deliver :: (MonadProcess m) => a -> ProcessId -> m ()
     extract :: a -> Dynamic
 
@@ -191,7 +195,7 @@ instance Cereal.Serialize Schedule where
     get = safeGet
     put = safePut
 
-data Event = Event Schedule WrappedAction
+data Event = Event Schedule Wrapped
     deriving (Show, Eq, Typeable)
 
 deriveSafeCopy 1 'base ''Event

@@ -81,7 +81,7 @@ spec = do
 testDB = appConfig^.dbPath
 
 withConfig ma = do
-    registerActionMap $ appConfig^.actionMap
+    registerActionMap $ (appConfig^.actionMap, appConfig^.resultMap)
     withDBT $ runReaderT ma appConfig
 
 withDBT :: LevelDB a -> IO a

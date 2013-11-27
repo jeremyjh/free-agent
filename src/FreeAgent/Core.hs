@@ -13,8 +13,8 @@ module FreeAgent.Core
 
 import           FreeAgent.Prelude
 import           FreeAgent.Lenses
-import           FreeAgent.Action (registerActionMap)
-import           Control.Monad.Writer             (execWriter, tell)
+import           FreeAgent.Action                  (registerActionMap)
+import           Control.Monad.Writer              (execWriter, tell)
 import           Database.LevelDB.Higher (mapLevelDBT, runCreateLevelDB)
 import           Control.Monad.Reader
 import           Control.Exception
@@ -29,7 +29,7 @@ import           Data.Dynamic (toDyn, fromDynamic)
 -- | Execute the agent - main entry point
 runAgent :: AgentContext -> Agent () -> IO ()
 runAgent config ma = do
-    registerActionMap $ config^.actionMap
+    registerActionMap $ (config^.actionMap, config^.resultMap)
     let lbt = runReaderT (unAgent ma) config
         proc = runCreateLevelDB (config^.dbPath) "agent" lbt
     eithertcp <- createTransport (config^.nodeHost) (config^.nodePort) defaultTCPParameters
@@ -63,7 +63,7 @@ extractConfig configName = do
     configMap <- viewConfig pluginContexts
     case Map.lookup configName configMap of
         Nothing ->
-            error (show (configName ++ " not found! Did you register the plugin config?"))
+            error $ show $ configName ++ " not found! Did you register the plugin config?"
         Just dynconf ->
             case fromDynamic dynconf of
                 Nothing -> error "fromDynamic failed for NagiosConfig!"
@@ -73,13 +73,20 @@ registerPlugins :: PluginWriter -> AgentContext
 registerPlugins pw =
     let plugs = execWriter pw
         acts = concat $ map _plugindefActions plugs
-        contexts = map buildContexts plugs in
-    def { _configActionMap = Map.fromList acts
+        contexts = map buildContexts plugs
+        (amap, rmap) = buildPluginMaps acts in
+    def { _configActionMap = amap
+        , _configResultMap = rmap
         , _configPluginContexts = Map.fromList contexts
         }
   where
     buildContexts plugin =
         (_plugindefName plugin, _plugindefContext plugin)
+    buildPluginMaps plugs =
+        let pairs = unzip $ map (\(q1, q2, q3, q4) -> ((q1, q2), (q3, q4))) plugs
+            amap = Map.fromList (fst pairs)
+            rmap = Map.fromList (snd pairs) in
+        (amap, rmap)
 
 addPlugin :: PluginDef -> PluginWriter
 addPlugin pd = tell [pd]
