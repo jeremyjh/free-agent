@@ -47,10 +47,10 @@ spec = do
                 testAgent $ \ result -> do
                     parent <- getSelfPid
                     child <-  spawnAgent $ do
-                        saysee <- expect :: Agent ByteString
+                        saysee <- texpect :: Agent ByteString
                         send parent ("I said: " ++ saysee)
                     send child ("foo" :: ByteString)
-                    said <- expect :: Agent ByteString
+                    said <- texpect :: Agent ByteString
                     result said
                 `shouldReturn` "I said: foo"
 
@@ -75,10 +75,10 @@ spec = do
                         (Right nr) <- exec $ toAction checkTCP
                         parent <- getSelfPid
                         child <-  spawnAgent $ do
-                            (OK _) <- expect
+                            (OK _) <- texpect
                             send parent ("Got OK" :: Text)
                         deliver nr child
-                        confirm <- expect
+                        confirm <- texpect
                         result confirm
                     $ \exception ->
                         result $ "Exception: " ++ tshow exception
@@ -90,11 +90,11 @@ spec = do
                         (Right nr) <- exec $ toAction checkTCP
                         parent <- getSelfPid
                         child <-  spawnAgent $ do
-                            wr <- expect :: Agent ActionResult
+                            wr <- texpect :: Agent ActionResult
                             let Just (OK _) = extract wr
                             send parent ("Got OK" :: Text)
                         send child nr
-                        confirm <- expect
+                        confirm <- texpect
                         result confirm
                     $ \exception ->
                         result $ "Exception: " ++ tshow exception
@@ -105,12 +105,12 @@ spec = do
                     catchAny $ do
                         parent <- getSelfPid
                         child <-  spawnAgent $ do
-                            action <- expect :: Agent Action
+                            action <- texpect :: Agent Action
                             (Right nr) <- exec action
                             let Just (OK _) = extract nr
                             send parent ("Got OK" :: Text)
                         send child $ toAction checkTCP
-                        confirm <- expect
+                        confirm <- texpect
                         result confirm
                     $ \exception ->
                         result $ "Exception: " ++ tshow exception
@@ -124,6 +124,14 @@ testAgent ma = do
     runAgent appConfig (ma (putMVar result))
     threadDelay 2000 -- so we dont get open port errors
     takeMVar result
+
+-- for testing - useful to throw an exception if we "never" get the value we're expecting
+texpect :: (MonadProcess m, Monad m) => forall a. Serializable a => m a
+texpect = do
+    gotit <- expectTimeout 10000 -- 100ms may as well be never
+    case gotit of
+        Nothing -> error "Timed out in test expect"
+        Just v -> return v
 
 setup :: IO ()
 setup = void $ system ("rm -rf " ++ appConfig^.dbPath)
