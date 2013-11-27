@@ -43,7 +43,7 @@ instance Default NagiosConfig where
 makeFields ''NagiosConfig
 
 extractConfig' :: (ConfigReader m) => m NagiosConfig
-extractConfig' = extractConfig $ (pluginDef def)^.name
+extractConfig' = extractConfig $ pluginDef def ^.name
 
 -- | Provides the PluginDef for the Nagios plugin. Provide this to
 -- 'addPlugin' in the 'registerPlugins' block in your app config/main.

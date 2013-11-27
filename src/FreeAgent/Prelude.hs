@@ -63,7 +63,7 @@ instance Binary Text where
     get = Text.decodeUtf8 <$> get
 
 deriveBinary :: Name -> Q [Dec]
-deriveBinary t = derive makeBinary t
+deriveBinary = derive makeBinary
 
 fqName :: (Typeable a) => a -> ByteString
 fqName typee =  modName ++ "." ++ name

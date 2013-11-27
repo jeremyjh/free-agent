@@ -12,7 +12,7 @@ module FreeAgent.Action
     , withActionKS
     , register, actionType
     , registerActionMap
-    , actionResult, toAction
+    , toAction
     )
 where
 
@@ -42,21 +42,18 @@ import           Control.Distributed.Process.Lifted (send)
 -- Serialization instances for Action are all this module as they require specialized
 -- and sensitive functions we want to keep encapsulated
 
+
 instance Binary Action where
     put (Action a _) = Binary.put $ wrap a
     get = do
-        wk <- Binary.get
-        wt  <- Binary.get
-        wv <- Binary.get
-        return $ decodeAction' (fst readActionMap) (Wrapped wk wt wv)
+        wrapped <- getWrappedBinary
+        return $ decodeAction' (fst readActionMap) wrapped
 
 instance Serialize Action where
     put (Action a _) = Cereal.put $ wrap a
     get = do
-        wk <- Cereal.get
-        wt  <- Cereal.get
-        wv <- Cereal.get
-        return $ decodeAction' (fst readActionMap) (Wrapped wk wt wv)
+        wrapped <- getWrappedCereal
+        return $ decodeAction' (fst readActionMap) wrapped
 
 instance SafeCopy Action where
     putCopy (Action a _) = putCopy a
@@ -92,7 +89,7 @@ scanActions prefix = withActionKS $ do
 decodeAction :: ActionMap -> ByteString -> FetchAction
 decodeAction pluginMap bs =
     case Cereal.decode bs of
-        Left s -> Left $ ParseFail $ s
+        Left s -> Left $ ParseFail s
         Right wrapped ->
             case Map.lookup (wrapped^.typeName) pluginMap of
                 Just uw -> uw wrapped
@@ -112,10 +109,10 @@ stash s = store (key s) s
 -- > register (actiontype :: MyType)
 register :: forall a b. (Actionable a b, Resulting b)
          => a -> ActionsWriter
-register act = tell $ [( fqName act
-                       , unWrapAction (unWrap :: ActionUnwrapper a)
-                       , fqName (undefined :: b)
-                       , unwrapResult (unWrap :: ActionUnwrapper b) )]
+register act = tell [( fqName act
+                     , unWrapAction (unWrap :: ActionUnwrapper a)
+                     , fqName (undefined :: b)
+                     , unwrapResult (unWrap :: ActionUnwrapper b) )]
 
 
 -- | Used only to fix the type passed to 'register' - this should not
@@ -151,12 +148,12 @@ unWrap = decodeStore . _wrappedValue
 
 --used in serialization instances - throws an exception since Binary decode is no maybe
 decodeAction' :: ActionMap -> Wrapped -> Action
-decodeAction' pluginMap wrapped = do
+decodeAction' pluginMap wrapped =
     case Map.lookup (wrapped^.typeName) pluginMap of
         Just f -> case f wrapped of
             Right act -> act
             Left (ParseFail s) -> error $ "Error deserializing wrapper: " ++ s
-            Left _ -> error $ "Unknown error deserializing wrapper"
+            Left _ -> error "Unknown error deserializing wrapper"
         Nothing -> error $ "Type Name: " ++ BS.unpack (wrapped^.typeName)
                     ++ " not matched! Is your plugin registered?"
 
@@ -176,20 +173,17 @@ globalActionMap = unsafePerformIO $ newIORef (Map.fromList [], Map.fromList [])
 readActionMap :: PluginMaps
 readActionMap = unsafePerformIO $ readIORef globalActionMap
 {-# NOINLINE readActionMap #-}
--- | Wrap a value in the ActionResult box
-actionResult :: (Stashable a, Serializable a, Show a) => a -> ActionResult
-actionResult a = ActionResult a
 
 withActionKS :: (MonadLevelDB m) => m a -> m a
 withActionKS = withKeySpace "agent:actions"
 
 decodeResult' :: ResultMap -> Wrapped -> ActionResult
-decodeResult' pluginMap wrapped = do
+decodeResult' pluginMap wrapped =
     case Map.lookup (wrapped^.typeName) pluginMap of
         Just f -> case f wrapped of
             Right act -> act
             Left (ParseFail s) -> error $ "Error deserializing wrapper: " ++ s
-            Left _ -> error $ "Unknown error deserializing wrapper"
+            Left _ -> error "Unknown error deserializing wrapper"
         Nothing -> error $ "Type Name: " ++ BS.unpack (wrapped^.typeName)
                     ++ " not matched! Is your plugin registered?"
 
@@ -197,18 +191,14 @@ decodeResult' pluginMap wrapped = do
 instance Binary ActionResult where
     put (ActionResult a) = Binary.put $ wrap a
     get = do
-        wk <- Binary.get
-        wt  <- Binary.get
-        wv <- Binary.get
-        return $ decodeResult' (snd readActionMap) (Wrapped wk wt wv)
+        wrapped <- getWrappedBinary
+        return $ decodeResult' (snd readActionMap) wrapped
 
 instance Serialize ActionResult where
     put (ActionResult a) = Cereal.put $ wrap a
     get = do
-        wk <- Cereal.get
-        wt  <- Cereal.get
-        wv <- Cereal.get
-        return $ decodeResult' (snd readActionMap) (Wrapped wk wt wv)
+        wrapped <- getWrappedCereal
+        return $ decodeResult' (snd readActionMap) wrapped
 
 instance SafeCopy ActionResult where
 
@@ -227,3 +217,17 @@ instance Runnable Action ActionResult where
 
 instance Stashable ActionResult where
     key (ActionResult a) = key a
+
+getWrappedBinary :: Binary.Get Wrapped
+getWrappedBinary = do
+        wk <- Binary.get
+        wt  <- Binary.get
+        wv <- Binary.get
+        return (Wrapped wk wt wv)
+
+getWrappedCereal :: Cereal.Get Wrapped
+getWrappedCereal = do
+        wk <- Cereal.get
+        wt  <- Cereal.get
+        wv <- Cereal.get
+        return (Wrapped wk wt wv)

@@ -29,7 +29,7 @@ import           Data.Dynamic (toDyn, fromDynamic)
 -- | Execute the agent - main entry point
 runAgent :: AgentContext -> Agent () -> IO ()
 runAgent config ma = do
-    registerActionMap $ (config^.actionMap, config^.resultMap)
+    registerActionMap (config^.actionMap, config^.resultMap)
     let lbt = runReaderT (unAgent ma) config
         proc = runCreateLevelDB (config^.dbPath) "agent" lbt
     eithertcp <- createTransport (config^.nodeHost) (config^.nodePort) defaultTCPParameters
@@ -72,7 +72,7 @@ extractConfig configName = do
 registerPlugins :: PluginWriter -> AgentContext
 registerPlugins pw =
     let plugs = execWriter pw
-        acts = concat $ map _plugindefActions plugs
+        acts = concatMap _plugindefActions plugs
         contexts = map buildContexts plugs
         (amap, rmap) = buildPluginMaps acts in
     def { _configActionMap = amap

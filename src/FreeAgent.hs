@@ -1,17 +1,14 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 module FreeAgent
-    ( module FreeAgent.Prelude
-    , module FreeAgent.Types
-    , module FreeAgent.Action
-    , module FreeAgent.Core
+    ( module X
     , freeAgentMain
     ) where
 
 
-import           FreeAgent.Prelude
-import           FreeAgent.Types
-import           FreeAgent.Action
-import           FreeAgent.Core
+import           FreeAgent.Prelude as X
+import           FreeAgent.Types as X
+import           FreeAgent.Action as X
+import           FreeAgent.Core as X
 import           Database.LevelDB.Higher
 
 

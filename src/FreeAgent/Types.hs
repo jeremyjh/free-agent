@@ -81,7 +81,7 @@ instance Cereal.Serialize Wrapped where
                return (Wrapped x1 x2 x3)
 
 instance Stashable Wrapped where
-    key w = _wrappedWrappedKey w
+    key = _wrappedWrappedKey
 
 data WrappedResult
   = WrappedResult { _wresultValue :: ByteString }
