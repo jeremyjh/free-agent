@@ -134,6 +134,6 @@ texpect = do
         Just v -> return v
 
 setup :: IO ()
-setup = void $ system ("rm -rf " ++ appConfig^.dbPath)
+setup = void $ system ("rm -rf " ++ appConfig^.agentConfig.dbPath)
 
 checkTCP = CheckTCP  "localhost" 17500

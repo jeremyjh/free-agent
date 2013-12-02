@@ -80,7 +80,7 @@ stashAction = withActionKS . stash
 scanActions :: (MonadLevelDB m, ConfigReader m)
              => Key -> m [FetchAction]
 scanActions prefix = withActionKS $ do
-    pm <- _configActionMap <$> askConfig
+    pm <- _contextActionMap <$> askConfig
     let decoder = decodeAction pm
     scan prefix queryList { scanMap = decoder . snd }
 

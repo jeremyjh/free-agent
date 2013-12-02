@@ -78,7 +78,7 @@ spec = do
                                    , (Right $ toAction checkTCP{_commandHost="check3"}) ]
 
 
-testDB = appConfig^.dbPath
+testDB = appConfig^.agentConfig.dbPath
 
 withConfig ma = do
     registerPluginMaps $ (appConfig^.actionMap, appConfig^.resultMap)
@@ -94,4 +94,4 @@ fetchProto= fetch
 checkTCP = Command  "localhost" (Just 17500) "check_tcp"
 
 setup :: IO ()
-setup = void $ system ("rm -rf " ++ appConfig^.dbPath)
+setup = void $ system ("rm -rf " ++ appConfig^.agentConfig.dbPath)

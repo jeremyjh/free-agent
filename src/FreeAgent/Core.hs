@@ -28,11 +28,13 @@ import           Data.Dynamic (toDyn, fromDynamic)
 
 -- | Execute the agent - main entry point
 runAgent :: AgentContext -> Agent () -> IO ()
-runAgent config ma = do
-    registerPluginMaps (config^.actionMap, config^.resultMap)
-    let lbt = runReaderT (unAgent ma) config
-        proc = runCreateLevelDB (config^.dbPath) "agent" lbt
-    eithertcp <- createTransport (config^.nodeHost) (config^.nodePort) defaultTCPParameters
+runAgent ctxt ma = do
+    registerPluginMaps (ctxt^.actionMap, ctxt^.resultMap)
+    let lbt = runReaderT (unAgent ma) ctxt
+        proc = runCreateLevelDB (ctxt^.agentConfig.dbPath) "agent" lbt
+    eithertcp <- createTransport (ctxt^.agentConfig.nodeHost)
+                                 (ctxt^.agentConfig.nodePort)
+                                 defaultTCPParameters
     case eithertcp of
         Right tcp -> do
             node <- newLocalNode tcp initRemoteTable
@@ -60,7 +62,7 @@ viewConfig lens = do
 -- and extract it to a concrete type with fromDynamic
 extractConfig :: (ConfigReader m, Typeable a) => ByteString -> m a
 extractConfig configName = do
-    configMap <- viewConfig pluginContexts
+    configMap <- viewConfig $ agentConfig.pluginContexts
     case Map.lookup configName configMap of
         Nothing ->
             error $ show $ configName ++ " not found! Did you register the plugin config?"
@@ -75,9 +77,9 @@ registerPlugins pw =
         acts = concatMap _plugindefActions plugs
         contexts = map buildContexts plugs
         (amap, rmap) = buildPluginMaps acts in
-    def { _configActionMap = amap
-        , _configResultMap = rmap
-        , _configPluginContexts = Map.fromList contexts
+    def { _contextActionMap = amap
+        , _contextResultMap = rmap
+        , _contextAgentConfig = def {_configPluginContexts = Map.fromList contexts}
         }
   where
     buildContexts plugin =

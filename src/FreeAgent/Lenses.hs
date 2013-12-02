@@ -17,6 +17,7 @@ import FreeAgent.Types
 import Control.Lens (makeFields, makeLenses)
 
 makeFields ''AgentContext
+makeFields ''AgentConfig
 makeFields ''Wrapped
 makeFields ''PluginDef
 makeLenses ''ExecutiveCommand

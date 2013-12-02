@@ -115,17 +115,24 @@ data PluginDef
               , _plugindefActions :: [PluginActions]
               }
 
-data AgentContext
-  = AgentContext { _configActionMap :: ActionMap
-                 , _configResultMap :: ResultMap
-                 , _configPluginContexts :: PluginContexts
-                 , _configDbPath :: FilePathS
+data AgentConfig
+  = AgentConfig  { _configDbPath :: FilePathS
                  , _configNodeHost :: String
                  , _configNodePort :: String
+                 , _configPluginContexts :: PluginContexts
                  }
 
+data AgentContext
+  = AgentContext { _contextActionMap :: ActionMap
+                 , _contextResultMap :: ResultMap
+                 , _contextAgentConfig :: AgentConfig
+                 }
+
+instance Default AgentConfig where
+    def = AgentConfig "./db" "127.0.0.1" "3546" mempty
+
 instance Default AgentContext where
-    def = AgentContext mempty mempty mempty "./db" "127.0.0.1" "3546"
+    def = AgentContext mempty mempty def
 
 class (Monad m) => ConfigReader m where
     askConfig :: m AgentContext

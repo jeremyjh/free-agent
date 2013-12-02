@@ -2,6 +2,7 @@
 module Main where
 
 import FreeAgent
+import FreeAgent.Lenses
 
 -- import all your plugins here
 import FreeAgent.Plugins.Nagios as Nagios
@@ -16,9 +17,7 @@ appConfig = (
             _nagiosPluginsPath = "/usr/lib/nagios/plugins/"
         }
     -- add more plugins here!
-    ) { -- override Agent config values here!
-        _configDbPath = "/tmp/leveltest"
-    }
+    ) & agentConfig.dbPath .~ "/tmp/leveltest" -- override Agent config values here!
 
 main :: IO ()
 main = freeAgentMain (appConfig)
