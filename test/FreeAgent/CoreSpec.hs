@@ -46,7 +46,7 @@ spec = do
             it "can do basic Process messaging" $ do
                 testAgent $ \ result -> do
                     parent <- getSelfPid
-                    child <-  spawnAgent $ do
+                    child <-  spawnLocal $ do
                         saysee <- texpect :: Agent ByteString
                         send parent ("I said: " ++ saysee)
                     send child ("foo" :: ByteString)
@@ -74,7 +74,7 @@ spec = do
                          -- but ... need to test existential deliver for this spec
                         (Right nr) <- exec $ toAction checkTCP
                         parent <- getSelfPid
-                        child <-  spawnAgent $ do
+                        child <-  spawnLocal $ do
                             (OK _) <- texpect
                             send parent ("Got OK" :: Text)
                         deliver nr child
@@ -89,7 +89,7 @@ spec = do
                     catchAny $ do
                         (Right nr) <- exec $ toAction checkTCP
                         parent <- getSelfPid
-                        child <-  spawnAgent $ do
+                        child <-  spawnLocal $ do
                             wr <- texpect :: Agent ActionResult
                             let Just (OK _) = extract wr
                             send parent ("Got OK" :: Text)
@@ -104,7 +104,7 @@ spec = do
                 testAgent $ \ result -> do
                     catchAny $ do
                         parent <- getSelfPid
-                        child <-  spawnAgent $ do
+                        child <-  spawnLocal $ do
                             action <- texpect :: Agent Action
                             (Right nr) <- exec action
                             let Just (OK _) = extract nr

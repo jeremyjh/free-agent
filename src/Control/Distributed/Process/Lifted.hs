@@ -17,7 +17,7 @@ import           Control.Monad.Base
 import           Control.Monad.Trans.Resource
 import qualified Control.Distributed.Process as Base
 import           Control.Distributed.Process
-    hiding (getSelfPid, send, expect, expectTimeout)
+    hiding (getSelfPid, send, expect, expectTimeout, spawnLocal)
 
 import           Control.Distributed.Process.Serializable
 import           Control.Distributed.Process.Internal.Types
@@ -35,10 +35,17 @@ instance MonadBaseControl IO Process where
 
 -- lifted versions of Process functions
 class MonadProcess m where
+    -- |lift a base 'Process' computation into the current monad
     liftProcess :: Process a -> m a
+    -- |map over an underlying Process to e.g. lift spawnLocal
+    mapProcess :: (Process a -> Process b) -> m a -> m b
 
 instance MonadProcess Process where
     liftProcess = id
+    mapProcess f = f
+
+spawnLocal :: (MonadProcess m) => m () -> m ProcessId
+spawnLocal = mapProcess Base.spawnLocal
 
 getSelfPid :: (MonadProcess m) => m ProcessId
 getSelfPid = liftProcess Base.getSelfPid

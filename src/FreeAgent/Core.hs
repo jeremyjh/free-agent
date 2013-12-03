@@ -2,8 +2,6 @@
 
 module FreeAgent.Core
     ( runAgent
-    , spawnAgent
-    , mapAgent
     , viewConfig
     , extractConfig
     , definePlugin
@@ -15,10 +13,9 @@ import           FreeAgent.Prelude
 import           FreeAgent.Lenses
 import           FreeAgent.Action                  (registerPluginMaps)
 import           Control.Monad.Writer              (execWriter, tell)
-import           Database.LevelDB.Higher (mapLevelDBT, runCreateLevelDB)
+import           Database.LevelDB.Higher (runCreateLevelDB)
 import           Control.Monad.Reader
 import           Control.Exception
-import           Control.Distributed.Process
 import           Control.Distributed.Process.Node
 import           Network.Transport.TCP
 import           Network.Transport (closeTransport)
@@ -41,16 +38,6 @@ runAgent ctxt ma = do
             runProcess node proc
             closeTransport tcp
         Left msg -> throw msg
-
--- | Agent version of 'Process' 'spawnLocal'
-spawnAgent :: Agent () -> Agent ProcessId
-spawnAgent = mapAgent spawnLocal
-
--- | Map over the underlying Process monad
-mapAgent :: (Process a -> Process b) -> Agent a -> Agent b
-mapAgent f ma = Agent $
-    mapReaderT (mapLevelDBT f) (unAgent ma)
-
 
 -- | Use a lens to view a portion of AgentContext
 viewConfig :: (ConfigReader m) => Getting a AgentContext a -> m a

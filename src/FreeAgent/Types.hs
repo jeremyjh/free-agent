@@ -22,7 +22,7 @@ where
 
 import           FreeAgent.Prelude
 import qualified Prelude              as P
-import           Control.Monad.Reader (ReaderT, ask)
+import           Control.Monad.Reader (ReaderT, mapReaderT, ask)
 
 import           Data.Typeable        (mkTyConApp, mkTyCon3, cast)
 import           Data.SafeCopy
@@ -41,7 +41,7 @@ import           Control.Monad.Writer (Writer)
 
 import          Database.LevelDB.Higher
     (LevelDBT, MonadLevelDB,Storeable, Key, Value
-    , FetchFail(..))
+    , mapLevelDBT, FetchFail(..))
 
 import           Control.Distributed.Process.Lifted
 import           Control.Monad.Base (MonadBase)
@@ -156,6 +156,8 @@ instance MonadBaseControl IO Agent where
 
 instance MonadProcess Agent where
     liftProcess ma = Agent $ lift $ lift ma
+    mapProcess f ma = Agent $
+        mapReaderT (mapLevelDBT f) (unAgent ma)
 
 data RunStatus a = Either Text a
     deriving (Show, Eq)
