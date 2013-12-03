@@ -7,7 +7,6 @@
 module FreeAgent.Prelude
     (
       module ClassyPrelude
-    , module Control.Lens
     , showStr
     , FilePathS
     , debug, dbg
@@ -31,8 +30,6 @@ import           Data.Binary             (Binary(..))
 import qualified Data.ByteString.Char8   as BS
 import           Data.Typeable
 
-import           Control.Lens
-    ((.~), (^.), (&), view, Getting, _1, _2)
 import           Data.DeriveTH
 
 import           Language.Haskell.TH.All (Name, Q, Dec)

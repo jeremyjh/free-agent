@@ -31,7 +31,6 @@ import           Data.SafeCopy
 
 import           Data.Default (Default(..))
 import           Data.Binary
-import           Control.Lens (makeFields)
 
 -- | Plugin-specific configuration
 data NagiosConfig = NagiosConfig {_nagiosPluginsPath :: FilePath}

@@ -9,6 +9,7 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE StandaloneDeriving#-}
 
 module FreeAgent.Types
  ( module FreeAgent.Types
@@ -40,7 +41,7 @@ import           Control.Monad.Writer (Writer)
 
 import          Database.LevelDB.Higher
     (LevelDBT, MonadLevelDB,Storeable, Key, Value
-    , FetchFail(..), ScanQuery(..))
+    , FetchFail(..))
 
 import           Control.Distributed.Process.Lifted
 import           Control.Monad.Base (MonadBase)
@@ -215,14 +216,6 @@ instance Stashable Event where
     key (Event sch act)
       = Cereal.encode sch ++ key act
 
-data ActionHistory = ActionHistory
+data ActionHistory = ActionHistory deriving (Show, Eq, Typeable)
 
-data EventHistory = EventHistory
-
-data ExecutiveCommand = RegisterAction Action
-                      | UnregisterAction Key
-		              | ExecuteAction Action
-                      | QueryActionHistory (ScanQuery ActionHistory [ActionHistory])
-                      | RegisterEvent Event
-                      | UnregisterEvent Event
-                      | QueryEventHistory (ScanQuery EventHistory [EventHistory])
+data EventHistory = EventHistory deriving (Show, Eq, Typeable)
