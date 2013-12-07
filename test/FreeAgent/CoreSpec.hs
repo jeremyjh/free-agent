@@ -60,7 +60,7 @@ spec = do
                         stashAction $ toAction checkTCP
                         (Right action) <- fetchAction "localhost:17500"
                         (Right nr) <- exec action
-                        let Just (OK rs) = extract nr
+                        let Just (NagiosResult (ResultSummary _ rs) OK) = extract nr
                         result $ take 6 rs
                     $ \exception ->
                         result $ "Exception: " ++ tshow exception
@@ -70,12 +70,12 @@ spec = do
                 testAgent $ \result -> do
                     catchAny $ do
                         -- could just get a concrete from exec
-                        (Right (OK _)) <- exec checkTCP
+                        Right (NagiosResult _ OK) <- exec checkTCP
                          -- but ... need to test existential deliver for this spec
-                        (Right nr) <- exec $ toAction checkTCP
+                        Right nr <- exec $ toAction checkTCP
                         parent <- getSelfPid
                         child <-  spawnLocal $ do
-                            (OK _) <- texpect
+                            NagiosResult _ OK <- texpect
                             send parent ("Got OK" :: Text)
                         deliver nr child
                         confirm <- texpect
@@ -91,7 +91,7 @@ spec = do
                         parent <- getSelfPid
                         child <-  spawnLocal $ do
                             wr <- texpect :: Agent ActionResult
-                            let Just (OK _) = extract wr
+                            let Just (NagiosResult _ OK)= extract wr
                             send parent ("Got OK" :: Text)
                         send child nr
                         confirm <- texpect
@@ -107,7 +107,7 @@ spec = do
                         child <-  spawnLocal $ do
                             action <- texpect :: Agent Action
                             (Right nr) <- exec action
-                            let Just (OK _) = extract nr
+                            let Just (NagiosResult _ OK) = extract nr
                             send parent ("Got OK" :: Text)
                         send child $ toAction checkTCP
                         confirm <- texpect

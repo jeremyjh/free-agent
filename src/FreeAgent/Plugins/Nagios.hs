@@ -6,12 +6,14 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module FreeAgent.Plugins.Nagios
     ( Command(..)
     , CheckTCP(..)
+    , CommandResult(..)
     , NagiosResult(..)
     , NagiosConfig(..)
     , pluginDef
@@ -31,6 +33,9 @@ import           Data.SafeCopy
 
 import           Data.Default (Default(..))
 import           Data.Binary
+import           Data.Time.Clock (getCurrentTime)
+
+import qualified Data.ByteString.Char8 as BS
 
 -- | Plugin-specific configuration
 data NagiosConfig = NagiosConfig {_nagiosPluginsPath :: FilePath}
@@ -78,10 +83,18 @@ instance Serialize Command where
 instance Stashable Command where
     key cmd = fromT $ cmd^.host
 
-data NagiosResult = OK Text | Warning Text | Critical Text | Unknown Text
+data CommandResult = OK | Warning | Critical | Unknown
     deriving (Show, Eq, Typeable)
 
-instance Resulting NagiosResult
+deriveBinary ''CommandResult
+deriveSafeCopy 1 'base ''CommandResult
+
+data NagiosResult
+  = NagiosResult ResultSummary CommandResult
+  deriving (Show, Eq, Typeable)
+
+instance Resulting NagiosResult where
+    summary (NagiosResult s _) = s
 
 deriveBinary ''NagiosResult
 deriveSafeCopy 1 'base ''NagiosResult
@@ -89,19 +102,20 @@ instance Serialize NagiosResult where
     put = safePut
     get = safeGet
 
+
 instance Stashable NagiosResult where
-    key _ = "the letter two my friend"
+    key (NagiosResult (ResultSummary time _) _) = Cereal.encode time
 
 instance Runnable Command NagiosResult where
     exec cmd =
         catchAny (
              do cmdPath <- commandPath
                 (rc, result, _) <- liftIO $ readProcessWithExitCode cmdPath makeArgs []
-                return $ case rc of
+                case rc of
                     ExitSuccess   -> completeAs OK result
                     ExitFailure 1 -> completeAs Warning result
                     ExitFailure 2 -> completeAs Critical result
-                    ExitFailure i -> Left $ tshow i ++ ": " ++ toT result )
+                    ExitFailure i -> return $ Left $ tshow i ++ ": " ++ toT result )
              (\ exception -> do
                 putStrLn $ "Command exec threw exception: " ++ tshow exception
                 return $ Left $ tshow exception )
@@ -109,8 +123,11 @@ instance Runnable Command NagiosResult where
         makeArgs = ["-H", fromT $ cmd^.host, "-p", portS $ cmd^.port]
         portS (Just p) = showStr p
         portS Nothing = ""
-        completeAs :: (Text -> NagiosResult) -> String -> Either Text NagiosResult
-        completeAs f result = Right $ f $ toT result
+        completeAs :: (MonadAgent m) => CommandResult -> String -> m (Either Text NagiosResult)
+        completeAs cmdres result
+          = do time <- liftIO getCurrentTime
+               let summ = ResultSummary time $ toT result
+               return $ Right $ NagiosResult summ cmdres
         commandPath = do
             nagconf <- extractConfig'
             let cmdPath = (nagconf^.pluginsPath) </> fromT (cmd^.shellCommand)

@@ -12,6 +12,7 @@ library
                    , FreeAgent.Lenses
                    , FreeAgent.Core
                    , FreeAgent.Action
+                   , FreeAgent.Executive
                    , FreeAgent.Plugins.Nagios
                    , FreeAgent.Prelude
                    , Control.Distributed.Process.Lifted
@@ -40,6 +41,7 @@ library
                    , monad-control
                    , derive
                    , binary
+                   , time
 
 executable example 
   ghc-options:       -Wall -Werror -threaded -with-rtsopts=-N -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags

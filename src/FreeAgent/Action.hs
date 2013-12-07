@@ -9,6 +9,7 @@
 
 module FreeAgent.Action
     ( fetchAction, scanActions, decodeAction, stashAction, stash
+    , deleteAction
     , withActionKS
     , register, actionType
     , registerPluginMaps
@@ -73,6 +74,11 @@ fetchAction = withActionKS . fetch
 stashAction :: (MonadLevelDB m)
             => Action -> m ()
 stashAction = withActionKS . stash
+
+-- | Fix the type & keyspace to Action for fetch
+deleteAction :: (MonadLevelDB m)
+            => Key -> m ()
+deleteAction = withActionKS . delete
 
 -- | Fix the keyspace to 'withActionKS' and decodes each
 -- result using 'decodeAction'.
@@ -208,6 +214,7 @@ instance SafeCopy ActionResult where
 instance Resulting ActionResult where
     deliver (ActionResult a) p = send p a
     extract (ActionResult a) = cast a
+    summary (ActionResult a) = summary a
 
 instance Runnable Action ActionResult where
     exec (Action a _) = do
