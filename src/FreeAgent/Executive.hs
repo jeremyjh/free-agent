@@ -4,6 +4,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 
 module FreeAgent.Executive where
@@ -13,6 +14,7 @@ import           FreeAgent.Lenses
 import           FreeAgent.Action
 
 import           Data.Binary
+import qualified Data.Map.Strict as Map
 
 import           Control.Distributed.Process.Lifted as Process
 import           Control.Distributed.Process.Platform.ManagedProcess
@@ -23,24 +25,37 @@ import qualified Database.LevelDB.Higher as DB
 -- -----------------------------
 -- Types
 -- -----------------------------
-data ActionsInProgress = Map Key ProcessId
+type RunningActions = Map Key ProcessId
+type ActionListeners = Map Key [ProcessId]
+
+data ExecState
+  = ExecState { _stateRunning :: RunningActions
+              , _stateListeners :: ActionListeners
+              } deriving (Show, Eq, Typeable, Generic)
+
+initialState :: ExecState
+initialState = ExecState (Map.fromList []) (Map.fromList [])
+-- -----------------------------
+-- Types
+-- -----------------------------
 
 data ExecutiveCommand = RegisterAction Action
                       | UnregisterAction Key
 		              | ExecuteAction Action
+		              | ExecuteRegistered Key
                       {-| QueryActionHistory (ScanQuery ActionHistory [ActionHistory])-}
                       | RegisterEvent Event
                       | UnregisterEvent Event
                       {-| QueryEventHistory (ScanQuery EventHistory [EventHistory])-}
                       | TerminateExecutive
-                      deriving (Show, Eq, Typeable)
-deriveBinary ''ExecutiveCommand
+                      deriving (Show, Eq, Typeable, Generic)
+instance Binary ExecutiveCommand where
 
 -- -----------------------------
 -- API
 -- -----------------------------
 
--- | initialize the executor server (call once at startup)
+-- | initialize the executive server (call once at startup)
 init :: (MonadAgent m) => m ProcessId
 init = do
     pid <- spawnLocal mainLoop
@@ -62,9 +77,11 @@ mainLoop = do
     command <- expect
     case command of
         TerminateExecutive -> logM "shutting down"
-        cmd -> void $ spawnLocal $ perform cmd >> mainLoop
+        cmd -> do
+            void $ spawnLocal $ perform cmd
+            mainLoop
 
-executiveProcess :: ProcessDefinition ActionsInProgress
+executiveProcess :: ProcessDefinition ExecState
 executiveProcess = defaultProcess {
        apiHandlers = [
          handleCall  (\s (n :: Int) -> reply (n * 2) s)
@@ -77,6 +94,7 @@ perform :: (MonadAgent m) => ExecutiveCommand -> m ()
 perform (RegisterAction a)  = registerAction a
 perform (UnregisterAction k) = unRegisterAction k
 perform (ExecuteAction a) = executeAction a
+perform (ExecuteRegistered k) = executeRegistered k
 perform _ = undefined
 {-perform (QueryActionHistory query) = undefined-}
 
@@ -88,7 +106,20 @@ unRegisterAction :: (MonadLevelDB m) => Key -> m ()
 unRegisterAction = withSync . deleteAction
 
 executeAction :: (MonadAgent m) => Action -> m ()
-executeAction act = void $ spawnLocal $ do
+executeAction = void . spawnLocal . doExec
+
+executeRegistered :: (MonadAgent m) => Key -> m ()
+executeRegistered k = void $ spawnLocal $ do
+    act <- fetchAction k
+    case act of
+        Right a -> doExec a
+        Left (DB.ParseFail msg) ->
+            logM ("Unable to retrieve action key: " ++ toT k ++ " - " ++ toT msg)
+        Left (DB.NotFound _) ->
+            logM ("Unable to retrieve action key: " ++ toT k ++ "not found in database.")
+
+doExec :: (MonadAgent m) => Action -> m ()
+doExec act = do
     eresult <- exec act
     case eresult of
         Left msg -> logM msg

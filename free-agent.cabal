@@ -5,7 +5,7 @@ build-type:          Custom
 cabal-version:       >=1.8
 
 library 
-  ghc-options:       -Wall -Werror
+  ghc-options:       -Wall
   hs-source-dirs:    src
   exposed-modules:   FreeAgent 
                    , FreeAgent.Types
@@ -39,12 +39,12 @@ library
                    , resourcet
                    , transformers-base
                    , monad-control
-                   , derive
                    , binary
                    , time
+                   , template-haskell
 
 executable example 
-  ghc-options:       -Wall -Werror -threaded -with-rtsopts=-N -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
+  ghc-options:       -Wall -threaded -with-rtsopts=-N -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
   main-is:           App.hs
   hs-source-dirs:  example 
   build-depends:     free-agent

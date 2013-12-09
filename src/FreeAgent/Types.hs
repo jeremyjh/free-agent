@@ -10,6 +10,8 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE StandaloneDeriving#-}
+{-# LANGUAGE DeriveGeneric#-}
+
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module FreeAgent.Types
@@ -26,16 +28,15 @@ import qualified Prelude              as P
 import           Control.Monad.Reader (ReaderT, mapReaderT, ask)
 
 import           Data.Typeable        (mkTyConApp, mkTyCon3, cast)
-import           Data.SafeCopy
-    (deriveSafeCopy, base, safeGet, safePut)
 import           Data.Default         (Default(..))
 import           Data.Dynamic         (Dynamic)
 
 -- yes we have both cereal and binary ... cereal for safecopy
 -- binary for distributed-process
 import qualified Data.Serialize       as Cereal
-    (Serialize(..), encode, Get(..))
+    (Serialize(..), encode, Get)
 import           Data.Binary          as Binary
+import           Data.SafeCopy        (deriveSafeCopy, base)
 import           Control.Distributed.Process.Serializable (Serializable)
 
 import           Control.Monad.Writer (Writer)
@@ -64,12 +65,9 @@ data Wrapped
                   , _wrappedTypeName :: ByteString
                   , _wrappedValue :: ByteString
                   }
-    deriving (Show, Eq, Typeable)
-
-
+    deriving (Show, Eq, Typeable, Generic)
 deriveSafeCopy 1 'base ''Wrapped
-deriveBinary ''Wrapped
-
+instance Binary Wrapped where
 -- so, we need Cereal to implement SafeCopy so it is Storable and
 -- Stashable - yet we cannot use safeGet/safePut with decodeAction' presently
 instance Cereal.Serialize Wrapped where
@@ -196,7 +194,7 @@ class (Serializable b, Show b) => Runnable a b | a -> b where
 data ResultSummary
   = ResultSummary { _resultTimestamp :: UTCTime
                   , _resultText :: Text
-                  } deriving (Eq, Show, Typeable)
+                  } deriving (Eq, Show, Typeable, Generic)
 
 instance Cereal.Serialize UTCTime where
     get = do
@@ -210,38 +208,21 @@ instance Binary UTCTime where
         return $ P.read stime
     put a = put (show a)
 
-deriveBinary ''ResultSummary
-deriveSafeCopy 1 'base ''ResultSummary
-instance Cereal.Serialize ResultSummary where
-    get = safeGet
-    put = safePut
-
-
-
+deriveSerializers ''ResultSummary
 
 -- Scheduling and Events
 data Schedule = Now | Later
-    deriving (Show, Eq, Typeable)
-
-deriveSafeCopy 1 'base ''Schedule
-deriveBinary ''Schedule
-instance Cereal.Serialize Schedule where
-    get = safeGet
-    put = safePut
+    deriving (Show, Eq, Typeable, Generic)
+deriveSerializers ''Schedule
 
 data Event = Event Schedule Wrapped
-    deriving (Show, Eq, Typeable)
-
-deriveSafeCopy 1 'base ''Event
-deriveBinary ''Event
-instance Cereal.Serialize Event where
-    get = safeGet
-    put = safePut
+    deriving (Show, Eq, Typeable, Generic)
+deriveSerializers ''Event
 
 instance Stashable Event where
     key (Event sch act)
       = Cereal.encode sch ++ key act
 
-data ActionHistory = ActionHistory deriving (Show, Eq, Typeable)
+data ActionHistory = ActionHistory deriving (Show, Eq, Typeable, Generic)
 
-data EventHistory = EventHistory deriving (Show, Eq, Typeable)
+data EventHistory = EventHistory deriving (Show, Eq, Typeable, Generic)

@@ -7,6 +7,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -27,84 +28,66 @@ import           FreeAgent.Core
 import           System.Process     (readProcessWithExitCode)
 import           System.Exit (ExitCode(..))
 
-import           Data.Serialize                   (Serialize)
 import qualified Data.Serialize                   as Cereal
-import           Data.SafeCopy
 
 import           Data.Default (Default(..))
-import           Data.Binary
 import           Data.Time.Clock (getCurrentTime)
 
-import qualified Data.ByteString.Char8 as BS
 
 -- | Plugin-specific configuration
 data NagiosConfig = NagiosConfig {_nagiosPluginsPath :: FilePath}
-                        deriving (Show, Eq, Typeable)
+                        deriving (Show, Eq, Typeable, Generic)
 
 instance Default NagiosConfig where
     def = NagiosConfig "/usr/lib/nagios/plugins/"
 
 makeFields ''NagiosConfig
 
-extractConfig' :: (ConfigReader m) => m NagiosConfig
-extractConfig' = extractConfig $ pluginDef def ^.name
-
 -- | Provides the PluginDef for the Nagios plugin. Provide this to
 -- 'addPlugin' in the 'registerPlugins' block in your app config/main.
 -- Provide a NagiosConfig record - use 'def' for default values
 --
 -- > addPlugin $ Nagios.pluginDef def { _nagiosPluginPath = ... }
+data CheckTCP = CheckTCP { _checktcpHost :: Text
+                         , _checktcpPort :: Int
+                         } deriving (Show, Eq, Typeable, Generic)
+makeFields ''CheckTCP
+deriveSerializers ''CheckTCP
+
 pluginDef :: NagiosConfig -> PluginDef
 pluginDef conf = definePlugin "Nagios" conf $ do
     register (actionType :: Command)
     register (actionType :: CheckTCP)
-    register (actionType :: CommandX)
+
+extractConfig' :: (ConfigReader m) => m NagiosConfig
+extractConfig' = extractConfig $ pluginDef def ^.name
 
 -- | Supported Actions
 data Command = Command { _commandHost :: Text
                        , _commandPort :: Maybe Int
                        , _commandShellCommand :: Text
-                       } deriving (Show, Eq, Typeable)
-
-data CheckTCP = CheckTCP { _checktcpHost :: Text
-                         , _checktcpPort :: Int
-                         } deriving (Show, Eq, Typeable)
-
-data CommandX = SeeItsExistentialBro Int deriving (Show, Eq, Typeable)
-
-
+                       } deriving (Show, Eq, Typeable, Generic)
 makeFields ''Command
-deriveSafeCopy 1 'base ''Command
-
-instance Serialize Command where
-    put = safePut
-    get = safeGet
+deriveSerializers ''Command
 
 instance Stashable Command where
     key cmd = fromT $ cmd^.host
 
-data CommandResult = OK | Warning | Critical | Unknown
-    deriving (Show, Eq, Typeable)
 
-deriveBinary ''CommandResult
-deriveSafeCopy 1 'base ''CommandResult
+data CommandResult = OK | Warning | Critical | Unknown
+    deriving (Show, Eq, Typeable, Generic)
+deriveSerializers ''CommandResult
 
 data NagiosResult
   = NagiosResult ResultSummary CommandResult
-  deriving (Show, Eq, Typeable)
-
-instance Resulting NagiosResult where
-    summary (NagiosResult s _) = s
-
-deriveBinary ''NagiosResult
-deriveSafeCopy 1 'base ''NagiosResult
-instance Serialize NagiosResult where
-    put = safePut
-    get = safeGet
-
+  deriving (Show, Eq, Typeable, Generic)
+deriveSerializers ''NagiosResult
 
 instance Stashable NagiosResult where
     key (NagiosResult (ResultSummary time _) _) = Cereal.encode time
+
+instance Resulting NagiosResult where
+    summary (NagiosResult s _) = s
 
 instance Runnable Command NagiosResult where
     exec cmd =
@@ -132,27 +115,6 @@ instance Runnable Command NagiosResult where
             nagconf <- extractConfig'
             let cmdPath = (nagconf^.pluginsPath) </> fromT (cmd^.shellCommand)
             return $ fpToString cmdPath
-
-
-deriveSafeCopy 1 'base ''CommandX
-
-instance Serialize CommandX where
-    put = safePut
-    get = safeGet
-
-instance Stashable CommandX where
-    key _ = undefined
-
-instance Runnable CommandX NagiosResult where
-    exec _ = undefined
-
-
-makeFields ''CheckTCP
-deriveSafeCopy 1 'base ''CheckTCP
-
-instance Cereal.Serialize CheckTCP where
-    put = safePut
-    get = safeGet
 
 instance Stashable CheckTCP where
     key c = fromT $ c^.host ++ ":" ++ tshow (c^.port)
