@@ -1,2 +1,8 @@
 ./
 ../higher-leveldb
+https://github.com/haskell-distributed/distributed-process development
+https://github.com/haskell-distributed/distributed-process-platform development
+https://github.com/haskell-distributed/network-transport development
+https://github.com/haskell-distributed/network-transport-tcp development
+https://github.com/haskell-distributed/rank1dynamic development
+https://github.com/haskell-distributed/distributed-static development

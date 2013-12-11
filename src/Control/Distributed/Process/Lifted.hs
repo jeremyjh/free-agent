@@ -13,11 +13,13 @@ where
 
 import           Control.Monad.Trans.Control
 import           Control.Monad.Reader
+import           Control.Monad.RWS
 import           Control.Monad.Base
 import           Control.Monad.Trans.Resource
 import qualified Control.Distributed.Process as Base
 import           Control.Distributed.Process
-    hiding (getSelfPid, send, expect, expectTimeout)
+    hiding ( getSelfPid, send, expect, expectTimeout, spawnLocal
+           , register, whereis)
 
 import           Control.Distributed.Process.Serializable
 import           Control.Distributed.Process.Internal.Types
@@ -35,10 +37,32 @@ instance MonadBaseControl IO Process where
 
 -- lifted versions of Process functions
 class MonadProcess m where
+    -- |lift a base 'Process' computation into the current monad
     liftProcess :: Process a -> m a
+    -- |map over an underlying Process to e.g. lift spawnLocal
+    mapProcess :: (Process a -> Process b) -> m a -> m b
 
 instance MonadProcess Process where
     liftProcess = id
+    mapProcess f = f
+
+instance (Monad m, MonadProcess m) => MonadProcess (ReaderT r m) where
+    liftProcess = lift . liftProcess
+    mapProcess f = mapReaderT (mapProcess f)
+
+-- example transformer implementation
+instance (Monoid w, Monad m, MonadProcess m) => MonadProcess (RWST r w s m) where
+    liftProcess = lift . liftProcess
+    mapProcess = undefined
+    {-f ma = -}
+        {-flip mapRWST (trace "hit map1" ma) $-}
+        {-\ma' -> do-}
+            {-(a, s, w) <- (trace "hit map2" ma')-}
+            {-b <- mapProcess (trace "hit map3" f) (return a)-}
+            {-return (b, s, w)-}
+
+spawnLocal :: (MonadProcess m) => m () -> m ProcessId
+spawnLocal = mapProcess Base.spawnLocal
 
 getSelfPid :: (MonadProcess m) => m ProcessId
 getSelfPid = liftProcess Base.getSelfPid
@@ -51,3 +75,9 @@ expect = liftProcess Base.expect
 
 expectTimeout :: (MonadProcess m) => forall a. Serializable a => Int -> m (Maybe a)
 expectTimeout = liftProcess . Base.expectTimeout
+
+register :: (MonadProcess m) => String -> ProcessId -> m ()
+register name = liftProcess . Base.register name
+
+whereis :: (MonadProcess m) => String -> m (Maybe ProcessId)
+whereis = liftProcess . Base.whereis

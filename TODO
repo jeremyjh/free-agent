@@ -1,0 +1,19 @@
+Executive:
+ * handle commands: 
+	* register action
+	* deregister action
+	* execute action 
+		* async version - exec and deliver result to registered listeners
+	* query execute action history
+	* register event
+		* event = action + schedule instance
+	* unregister event
+	* query event history 
+
+
+Plugins:
+ * register listeners through config
+	* create NagiosAlerts
+
+Domains / Zones : 
+* Dispatch Actions to Agents based on Domain/Zone they need to execute in

@@ -9,12 +9,14 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE StandaloneDeriving#-}
+{-# LANGUAGE DeriveGeneric#-}
 
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module FreeAgent.Types
  ( module FreeAgent.Types
- , Storeable, MonadLevelDB, Key, Value
+ , Storeable, MonadLevelDB, Key, Value, KeySpace
  , MonadProcess
  , Serializable
  )
@@ -23,30 +25,31 @@ where
 
 import           FreeAgent.Prelude
 import qualified Prelude              as P
-import           Control.Monad.Reader (ReaderT, ask)
+import           Control.Monad.Reader (ReaderT, mapReaderT, ask)
 
-import           Data.Typeable        (mkTyConApp, mkTyCon3)
-import           Data.SafeCopy
-    (deriveSafeCopy, SafeCopy(..), base, safeGet, safePut)
+import           Data.Typeable        (mkTyConApp, mkTyCon3, cast)
 import           Data.Default         (Default(..))
-import           Data.Dynamic         (Dynamic, toDyn)
+import           Data.Dynamic         (Dynamic)
 
 -- yes we have both cereal and binary ... cereal for safecopy
 -- binary for distributed-process
-import           Data.Serialize       as Cereal (Serialize(..), encode)
-import           Data.Binary          as Binary (Binary(..), encode)
+import qualified Data.Serialize       as Cereal
+    (Serialize(..), encode, Get)
+import           Data.Binary          as Binary
+import           Data.SafeCopy        (deriveSafeCopy, base)
 import           Control.Distributed.Process.Serializable (Serializable)
 
 import           Control.Monad.Writer (Writer)
 
 import          Database.LevelDB.Higher
-    (LevelDBT, MonadLevelDB,Storeable, Key, Value, FetchFail)
+    (LevelDBT, MonadLevelDB,Storeable, Key, Value, KeySpace
+    , mapLevelDBT, FetchFail(..))
 
 import           Control.Distributed.Process.Lifted
 import           Control.Monad.Base (MonadBase)
 import           Control.Monad.Trans.Resource (MonadThrow, MonadUnsafeIO, MonadResource)
 import           Control.Monad.Trans.Control
-
+import           Data.Time.Clock
 
 
 -- | Types that can be serialized, stored and retrieved
@@ -54,44 +57,35 @@ import           Control.Monad.Trans.Control
 class (Storeable a) => Stashable a where
     key :: a -> Key
 
--- | Wrapper lets us store an Action and recover it using
--- the type name in 'registerUnWrappers'
+-- Wrapped
+-- | Wrapped lets us store an Action and recover it using
+-- TODO: fix this comment: the type name in 'registerUnwrappers'
 data Wrapped
   = Wrapped { _wrappedWrappedKey :: ByteString
-            , _wrappedTypeName :: ByteString
-            , _wrappedValue :: ByteString
-            }
-    deriving (Show, Typeable)
-
--- Wrap a concrete type for stash or send where it
--- will be decoded to an Action
-wrap :: (Stashable a) => a -> Wrapped
-wrap st = Wrapped (key st) (fqName st) (Cereal.encode st)
-
+                  , _wrappedTypeName :: ByteString
+                  , _wrappedValue :: ByteString
+                  }
+    deriving (Show, Eq, Typeable, Generic)
 deriveSafeCopy 1 'base ''Wrapped
-
-instance Serialize Wrapped where
-    get = safeGet
-    put = safePut
+instance Binary Wrapped where
+-- so, we need Cereal to implement SafeCopy so it is Storable and
+-- Stashable - yet we cannot use safeGet/safePut with decodeAction' presently
+instance Cereal.Serialize Wrapped where
+        put (Wrapped x1 x2 x3) = do
+            Cereal.put x1
+            Cereal.put x2
+            Cereal.put x3
+        get = do
+            x1 <- Cereal.get
+            x2 <- Cereal.get
+            x3 <- Cereal.get
+            return (Wrapped x1 x2 x3)
 
 instance Stashable Wrapped where
-    key w = _wrappedWrappedKey w
+    key = _wrappedWrappedKey
 
-type Actionable a b = (Stashable a, Runnable a b)
-data Action = forall p b. (Actionable p b) => Action p b
-
-instance Cereal.Serialize Action where
-    put (Action a _) = Cereal.put $ wrap a
-    get = error "decode/get directly on Action can't happen; use decodeAction"
-
-instance SafeCopy Action where
-    putCopy (Action a _) = putCopy a
-
-instance Eq Action where
-    a == b =  Cereal.encode a == Cereal.encode b
-
-instance Stashable Action where
-    key (Action a _) = key a
+type Actionable a b = (Stashable a, Stashable b, Resulting b, Runnable a b)
+data Action = forall a b. (Actionable a b) => Action a b
 
 instance Typeable Action where
     typeOf _ = mkTyConApp (mkTyCon3 "free-agent" "FreeAgent.Types" "Action") []
@@ -99,18 +93,46 @@ instance Typeable Action where
 instance P.Show Action where
     show (Action a _) = "Action (" ++ P.show a ++ ")"
 
-instance Runnable Action ActionResult where
-    exec (Action a _) = do
-        execR <- exec a
-        return $ flip fmap execR $ \result ->
-                ActionResult result (toDyn result)
+-- | Class for types that will be boxed as ActionResult
+-- This let's us use the UnsafePrimitive's version of 'send' which
+-- sends a message locally without serializing it
+class (Serializable a, Stashable a) => Resulting a where
+    deliver :: (MonadProcess m) => a -> ProcessId -> m ()
+    extract :: (Typeable b) => a -> Maybe b
+    summary :: a -> ResultSummary
+
+    -- | send the result to the listener argument
+    deliver a p = send p a
+    -- | extract the concrete result - if you know what type it is
+    extract = cast
+
+-- ActionResult
+-- | Box for returning results from 'Action' exec.
+-- Box is an existential which implements Deliverable and thus can be
+-- sent as a concrete type to registered listeners of the Action
+--
+-- use the 'actionResult' and 'extractResult' functions from FreeAgent.Action
+data ActionResult = forall a. (Resulting a, Show a) => ActionResult a
+
+instance Show ActionResult where
+    show (ActionResult a) = show a
+
+instance Eq ActionResult where
+    (ActionResult a) == (ActionResult b) = Binary.encode a == Binary.encode b
+
+instance Typeable ActionResult where
+    typeOf _ = mkTyConApp (mkTyCon3 "free-agent" "FreeAgent.Types" "ActionResult") []
 
 type FetchAction = Either FetchFail Action
 
-type UnWrapper a = (Wrapped -> Either FetchFail a)
-type ActionMap = Map ByteString (UnWrapper Action)
+-- Unwrapper and registration types
+type Unwrapper a = (Wrapped -> Either FetchFail a)
+type ActionMap = Map ByteString (Unwrapper Action)
+type ResultMap = Map ByteString (Unwrapper ActionResult)
+type PluginMaps = (ActionMap, ResultMap)
 type PluginContexts = Map ByteString Dynamic
-type PluginActions = (ByteString, UnWrapper Action)
+type PluginActions = ( ByteString, Unwrapper Action
+                     , ByteString, Unwrapper ActionResult)
 type PluginWriter = Writer [PluginDef] ()
 type ActionsWriter = Writer [PluginActions] ()
 
@@ -120,16 +142,24 @@ data PluginDef
               , _plugindefActions :: [PluginActions]
               }
 
-data AgentContext
-  = AgentContext { _configActionMap :: ActionMap
-                 , _configPluginContexts :: PluginContexts
-                 , _configDbPath :: FilePathS
+data AgentConfig
+  = AgentConfig  { _configDbPath :: FilePathS
                  , _configNodeHost :: String
                  , _configNodePort :: String
+                 , _configPluginContexts :: PluginContexts
                  }
 
+data AgentContext
+  = AgentContext { _contextActionMap :: ActionMap
+                 , _contextResultMap :: ResultMap
+                 , _contextAgentConfig :: AgentConfig
+                 }
+
+instance Default AgentConfig where
+    def = AgentConfig "./db" "127.0.0.1" "3546" mempty
+
 instance Default AgentContext where
-    def = AgentContext mempty mempty "./db" "127.0.0.1" "3546"
+    def = AgentContext mempty mempty def
 
 class (Monad m) => ConfigReader m where
     askConfig :: m AgentContext
@@ -137,6 +167,7 @@ class (Monad m) => ConfigReader m where
 instance (Monad m) => ConfigReader (ReaderT AgentContext m) where
     askConfig = ask
 
+-- Agent Monad
 type MonadAgent m = (ConfigReader m, MonadProcess m, MonadLevelDB m, MonadBaseControl IO m)
 
 newtype Agent a = Agent { unAgent :: ReaderT AgentContext (LevelDBT Process) a}
@@ -151,6 +182,8 @@ instance MonadBaseControl IO Agent where
 
 instance MonadProcess Agent where
     liftProcess ma = Agent $ lift $ lift ma
+    mapProcess f ma = Agent $
+        mapReaderT (mapLevelDBT f) (unAgent ma)
 
 data RunStatus a = Either Text a
     deriving (Show, Eq)
@@ -158,41 +191,38 @@ data RunStatus a = Either Text a
 class (Serializable b, Show b) => Runnable a b | a -> b where
     exec :: (MonadAgent m) => a -> m (Either Text b)
 
--- | Box for returning results from 'Action' exec.
--- Box is an existential which implements Deliverable and thus can be
--- sent as a concrete type to registered listeners of the Action
---
--- use the 'actionResult' and 'extractResult' functions from FreeAgent.Action
-data ActionResult = forall p. (Serializable p, Show p) => ActionResult p Dynamic
+data ResultSummary
+  = ResultSummary { _resultTimestamp :: UTCTime
+                  , _resultText :: Text
+                  } deriving (Eq, Show, Typeable, Generic)
 
-instance Show ActionResult where
-    show (ActionResult a _) = show a
+instance Cereal.Serialize UTCTime where
+    get = do
+        stime <- Cereal.get :: Cereal.Get String
+        return $ P.read stime
+    put a = Cereal.put (show a)
 
-instance Eq ActionResult where
-    (ActionResult a _) == (ActionResult b _) = Binary.encode a == Binary.encode b
+instance Binary UTCTime where
+    get = do
+        stime <- get :: Get String
+        return $ P.read stime
+    put a = put (show a)
 
-instance Typeable ActionResult where
-    typeOf _ = mkTyConApp (mkTyCon3 "free-agent" "FreeAgent.Types" "ActionResult") []
+deriveSerializers ''ResultSummary
 
-instance Binary ActionResult where
-    put (ActionResult a _) = Binary.put a
-    get = error "You cannot decode to the ActionResult existential type."
+-- Scheduling and Events
+data Schedule = Now | Later
+    deriving (Show, Eq, Typeable, Generic)
+deriveSerializers ''Schedule
 
--- | Class for types that will be boxed as ActionResult
--- This let's us use the UnsafePrimitive's version of 'send' which
--- sends a message locally without serializing it
-class (Serializable a) => Resulting a where
-    deliver :: (MonadProcess m) => a -> ProcessId -> m ()
-    extract :: a -> Dynamic
+data Event = Event Schedule Wrapped
+    deriving (Show, Eq, Typeable, Generic)
+deriveSerializers ''Event
 
-    -- | send the result to the listener argument
-    deliver a p = send p a
-    -- | extract the embedded dynamic; for use by 'extractResult'
-    extract = toDyn
+instance Stashable Event where
+    key (Event sch act)
+      = Cereal.encode sch ++ key act
 
--- ActionResult instance overrides the underlying implementation
--- there is no reason for an different implementation to ever be used than
--- the default, but this ensures ActionResults are all sent the same way
-instance Resulting ActionResult where
-    deliver (ActionResult a _) p = send p a
-    extract (ActionResult _ d) = d
+data ActionHistory = ActionHistory deriving (Show, Eq, Typeable, Generic)
+
+data EventHistory = EventHistory deriving (Show, Eq, Typeable, Generic)
