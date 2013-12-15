@@ -10,6 +10,7 @@ import           Test.Hspec
 import           FreeAgent.Lenses
 import           FreeAgent.Core
 import           FreeAgent.Action
+import           FreeAgent.Database
 import           FreeAgent.Plugins.Nagios
 
 import           AppConfig(appConfig)
@@ -23,7 +24,6 @@ import           Network.Transport.TCP
 import           Data.Dynamic
 
 import           Control.Monad.Reader
-import           Database.LevelDB.Higher
 import           Control.Exception
 
 import qualified Data.Binary as Binary
@@ -57,8 +57,9 @@ spec = do
             it "can read a wrapped Action from the DB and execute it" $ do
                 testAgent $ \result -> do
                     catchAny $ do
-                        stashAction $ toAction checkTCP
-                        (Right action) <- fetchAction "localhost:17500"
+                        (Right action) <- fromAgentDB $ do
+                            stashAction $ toAction checkTCP
+                            fetchAction "localhost:17500"
                         (Right nr) <- exec action
                         let Just (NagiosResult (ResultSummary _ rs) OK) = extract nr
                         result $ take 6 rs

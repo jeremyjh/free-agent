@@ -10,6 +10,7 @@ import           Test.Hspec
 import           FreeAgent.Lenses
 import           FreeAgent.Core
 import           FreeAgent.Action
+import           FreeAgent.Database
 import           FreeAgent.Plugins.Nagios
 import           FreeAgent.Executive as Exec
 
@@ -24,7 +25,6 @@ import           Network.Transport.TCP
 import           Data.Dynamic
 
 import           Control.Monad.Reader
-import           Database.LevelDB.Higher as DB
 import           Control.Exception
 
 import qualified Data.Binary as Binary
@@ -45,8 +45,8 @@ spec = do
                     Exec.execute $ ExecuteRegistered $ key checkTCP
                     threadDelay 10000
                     -- confirm results were written
-                    items <- withKeySpace "agent:actions:localhost:17500" $ do
-                        DB.scan "" queryItems
+                    items <- fromAgentDB $ withKeySpace "agent:actions:localhost:17500" $ do
+                        scan "" queryItems
                     result $ tshow $ length items
                 $ \exception ->
                     result $ "Exception: " ++ tshow exception
@@ -59,8 +59,8 @@ spec = do
                     Exec.execute $ ExecuteAction $ toAction checkTCP
                     threadDelay 10000
                     -- confirm results were written
-                    items <- withKeySpace "agent:actions:localhost:17500" $ do
-                        DB.scan "" queryItems
+                    items <- fromAgentDB $ withKeySpace "agent:actions:localhost:17500" $ do
+                        scan "" queryItems
                     result $ tshow $ length items
                 $ \exception ->
                     result $ "Exception: " ++ tshow exception

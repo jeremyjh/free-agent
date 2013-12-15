@@ -11,9 +11,10 @@ module FreeAgent.Core
 
 import           FreeAgent.Prelude
 import           FreeAgent.Lenses
+import           FreeAgent.Database
 import           FreeAgent.Action                  (registerPluginMaps)
+
 import           Control.Monad.Writer              (execWriter, tell)
-import           Database.LevelDB.Higher (runCreateLevelDB)
 import           Control.Monad.Reader
 import           Control.Exception
 import           Control.Distributed.Process.Node
@@ -27,8 +28,9 @@ import           Data.Dynamic (toDyn, fromDynamic)
 runAgent :: AgentContext -> Agent () -> IO ()
 runAgent ctxt ma = do
     registerPluginMaps (ctxt^.actionMap, ctxt^.resultMap)
-    let lbt = runReaderT (unAgent ma) ctxt
-        proc = runCreateLevelDB (ctxt^.agentConfig.dbPath) "agent" lbt
+    (_, dbChan) <- initAgentDB ctxt
+    let ctxt' = ctxt & agentDBChan .~ dbChan
+    let proc = runReaderT (unAgent ma) ctxt'
     eithertcp <- createTransport (ctxt^.agentConfig.nodeHost)
                                  (ctxt^.agentConfig.nodePort)
                                  defaultTCPParameters
@@ -38,6 +40,7 @@ runAgent ctxt ma = do
             runProcess node proc
             closeTransport tcp
         Left msg -> throw msg
+    closeAgentDB dbChan
 
 -- | Use a lens to view a portion of AgentContext
 viewConfig :: (ConfigReader m) => Getting a AgentContext a -> m a

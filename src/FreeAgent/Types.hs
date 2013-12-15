@@ -19,6 +19,8 @@ module FreeAgent.Types
  , Storeable, MonadLevelDB, Key, Value, KeySpace
  , MonadProcess
  , Serializable
+ , MonadBase
+ , MonadBaseControl
  )
 
 where
@@ -41,13 +43,13 @@ import           Control.Distributed.Process.Serializable (Serializable)
 
 import           Control.Monad.Writer (Writer)
 
+import           Control.Concurrent.Chan.Lifted (Chan)
 import          Database.LevelDB.Higher
-    (LevelDBT, MonadLevelDB,Storeable, Key, Value, KeySpace
-    , mapLevelDBT, FetchFail(..))
+    ( LevelDB, MonadLevelDB,Storeable, Key, Value, KeySpace
+    , FetchFail(..))
 
 import           Control.Distributed.Process.Lifted
 import           Control.Monad.Base (MonadBase)
-import           Control.Monad.Trans.Resource (MonadThrow, MonadUnsafeIO, MonadResource)
 import           Control.Monad.Trans.Control
 import           Data.Time.Clock
 
@@ -135,6 +137,7 @@ type PluginActions = ( ByteString, Unwrapper Action
                      , ByteString, Unwrapper ActionResult)
 type PluginWriter = Writer [PluginDef] ()
 type ActionsWriter = Writer [PluginActions] ()
+data DBMessage = Perform (AgentDB ()) | Terminate
 
 data PluginDef
   = PluginDef { _plugindefName :: ByteString
@@ -153,43 +156,49 @@ data AgentContext
   = AgentContext { _contextActionMap :: ActionMap
                  , _contextResultMap :: ResultMap
                  , _contextAgentConfig :: AgentConfig
+                 , _contextAgentDBChan :: Chan DBMessage
                  }
 
 instance Default AgentConfig where
     def = AgentConfig "./db" "127.0.0.1" "3546" mempty
 
 instance Default AgentContext where
-    def = AgentContext mempty mempty def
+    def = AgentContext mempty mempty def (error "agentDB chan not initialized!")
 
-class (Monad m) => ConfigReader m where
+class (Functor m, Applicative m, Monad m)
+      => ConfigReader m where
     askConfig :: m AgentContext
 
-instance (Monad m) => ConfigReader (ReaderT AgentContext m) where
+instance (Functor m, Applicative m,Monad m)
+         => ConfigReader (ReaderT AgentContext m) where
     askConfig = ask
 
 -- Agent Monad
-type MonadAgent m = (ConfigReader m, MonadProcess m, MonadLevelDB m, MonadBaseControl IO m)
 
-newtype Agent a = Agent { unAgent :: ReaderT AgentContext (LevelDBT Process) a}
+type AgentDB m = LevelDB m
+
+type AgentBase m = (Applicative m, Monad m, MonadIO m, MonadBase IO m, MonadBaseControl IO m)
+type MonadAgent m = (AgentBase m, ConfigReader m, MonadProcess m)
+
+newtype Agent a = Agent { unAgent :: ReaderT AgentContext Process a}
             deriving ( Functor, Applicative, Monad, MonadBase IO
-                     , ConfigReader, MonadIO, MonadThrow, MonadUnsafeIO
-                     , MonadResource, MonadLevelDB
+                     , ConfigReader, MonadIO
                      )
 instance MonadBaseControl IO Agent where
-  newtype StM Agent a = StAgent {unSTAgent :: StM (ReaderT AgentContext (LevelDBT Process)) a}
+  newtype StM Agent a = StAgent {unSTAgent :: StM (ReaderT AgentContext Process) a}
   restoreM (StAgent m) = Agent $ restoreM m
   liftBaseWith f = Agent $ liftBaseWith $ \ rib -> f (fmap StAgent . rib . unAgent)
 
 instance MonadProcess Agent where
-    liftProcess ma = Agent $ lift $ lift ma
+    liftProcess ma = Agent $ lift ma
     mapProcess f ma = Agent $
-        mapReaderT (mapLevelDBT f) (unAgent ma)
+        mapReaderT f (unAgent ma)
 
 data RunStatus a = Either Text a
     deriving (Show, Eq)
 
 class (Serializable b, Show b) => Runnable a b | a -> b where
-    exec :: (MonadAgent m) => a -> m (Either Text b)
+    exec :: (MonadProcess m, ConfigReader m) => a -> m (Either Text b)
 
 data ResultSummary
   = ResultSummary { _resultTimestamp :: UTCTime

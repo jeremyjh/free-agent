@@ -18,6 +18,7 @@ module FreeAgent.Action
 where
 
 import           FreeAgent.Prelude
+
 import qualified Prelude                 as P
 import           FreeAgent.Lenses
 
@@ -29,7 +30,6 @@ import           Data.Binary             (Binary)
 import qualified Data.Binary             as Binary
 import           Data.Dynamic            (cast)
 
-import           Control.Monad.Base (MonadBase)
 import           Database.LevelDB.Higher
 
 import qualified Data.Map                as Map
@@ -66,28 +66,24 @@ instance Stashable Action where
     key (Action a _) = key a
 
 -- | Fix the type & keyspace to Action for fetch
-fetchAction :: (MonadLevelDB m, ConfigReader m)
-            => Key -> m FetchAction
+fetchAction :: Key -> AgentDB FetchAction
 fetchAction = withActionKS . fetch
 
--- | Fix the type & keyspace to Action for fetch
-stashAction :: (MonadLevelDB m)
-            => Action -> m ()
+-- | Fix the keyspace to Action for stash
+stashAction :: Action -> AgentDB ()
 stashAction = withActionKS . stash
 
--- | Fix the type & keyspace to Action for fetch
-deleteAction :: (MonadLevelDB m)
-            => Key -> m ()
+-- | Fix the keyspace to Action for delete
+deleteAction :: Key -> AgentDB ()
 deleteAction = withActionKS . delete
 
 -- | Fix the keyspace to 'withActionKS' and decodes each
 -- result using 'decodeAction'.
 --
-scanActions :: (MonadLevelDB m, ConfigReader m)
-             => Key -> m [FetchAction]
-scanActions prefix = withActionKS $ do
-    pm <- _contextActionMap <$> askConfig
-    let decoder = decodeAction pm
+scanActions :: AgentContext -> Key -> AgentDB [FetchAction]
+scanActions ctxt prefix = withActionKS $
+    let pm = _contextActionMap ctxt
+        decoder = decodeAction pm in
     scan prefix queryList { scanMap = decoder . snd }
 
 -- | Decode a Cerealized Wrapped Action - unlike the decode implementation

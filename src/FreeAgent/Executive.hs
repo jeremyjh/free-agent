@@ -2,7 +2,6 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 
@@ -12,13 +11,13 @@ module FreeAgent.Executive where
 import           FreeAgent.Prelude
 import           FreeAgent.Lenses
 import           FreeAgent.Action
+import           FreeAgent.Database
 
 import           Data.Binary
 import qualified Data.Map.Strict as Map
 
 import           Control.Distributed.Process.Lifted as Process
 import           Control.Distributed.Process.Platform.ManagedProcess
-import qualified Database.LevelDB.Higher as DB
 
 
 
@@ -99,39 +98,37 @@ perform _ = undefined
 {-perform (QueryActionHistory query) = undefined-}
 
 -- ExecutiveCommand realizations
-registerAction :: (MonadLevelDB m) => Action -> m ()
-registerAction = withSync . stashAction
+registerAction :: (MonadAgent m) => Action -> m ()
+registerAction = withAgentDB . withSync . stashAction
 
-unRegisterAction :: (MonadLevelDB m) => Key -> m ()
-unRegisterAction = withSync . deleteAction
+unRegisterAction :: (MonadAgent m) => Key -> m ()
+unRegisterAction = withAgentDB . withSync . deleteAction
 
 executeAction :: (MonadAgent m) => Action -> m ()
 executeAction = void . spawnLocal . doExec
 
-executeRegistered :: (MonadAgent m) => Key -> m ()
+executeRegistered :: (MonadProcess m, ConfigReader m) => Key -> m ()
 executeRegistered k = void $ spawnLocal $ do
-    act <- fetchAction k
+    act <- fromAgentDB $ fetchAction k
     case act of
         Right a -> doExec a
-        Left (DB.ParseFail msg) ->
+        Left (ParseFail msg) ->
             logM ("Unable to retrieve action key: " ++ toT k ++ " - " ++ toT msg)
-        Left (DB.NotFound _) ->
-            logM ("Unable to retrieve action key: " ++ toT k ++ "not found in database.")
+        Left (NotFound _) ->
+            logM ("Unable to retrieve action key: " ++ toT k ++ " not found in database.")
 
-doExec :: (MonadAgent m) => Action -> m ()
-doExec act = do
-    eresult <- exec act
-    case eresult of
-        Left msg -> logM msg
-        Right result -> do
-            DB.withKeySpace (resultKS act) $
-                DB.store (key result) result
+doExec :: (MonadProcess m, ConfigReader m) => Action -> m ()
+doExec act = exec act >>=
+    either logM
+           (\result -> withAgentDB $
+                withKeySpace (resultKS act) $
+                    store (key result) result)
 
 registerEvent :: (MonadLevelDB m) => Event -> m ()
 registerEvent = withEventKS . withSync . stash
 
 unRegisterEvent :: (MonadLevelDB m) => Key -> m ()
-unRegisterEvent = withEventKS . withSync . DB.delete
+unRegisterEvent = withEventKS . withSync . delete
 
 registeredAs :: String
 registeredAs = "Executive"
@@ -139,7 +136,7 @@ registeredAs = "Executive"
 -- TODO: higher-leveldb needs to let us supply a function
 -- that will change the current options rather than overriding them
 withSync :: (MonadLevelDB m) => m () -> m()
-withSync = DB.withOptions (def, def {DB.sync = True})
+withSync = withOptions (def, def {sync = True})
 
 resultKS :: (Actionable a b) => a -> KeySpace
 resultKS a = "agent:actions:" ++ key a
@@ -149,4 +146,4 @@ logM :: (MonadIO m) => Text -> m()
 logM = putStrLn
 
 withEventKS :: (MonadLevelDB m) => m () -> m ()
-withEventKS = DB.withKeySpace "agent:events"
+withEventKS = withKeySpace "agent:events"

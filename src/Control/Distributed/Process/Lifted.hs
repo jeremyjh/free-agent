@@ -3,6 +3,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Control.Distributed.Process.Lifted
@@ -36,7 +37,7 @@ instance MonadBaseControl IO Process where
   liftBaseWith f = Process $ liftBaseWith $ \ rib -> f (fmap StProcess . rib . unProcess)
 
 -- lifted versions of Process functions
-class MonadProcess m where
+class (MonadIO m, MonadBaseControl IO m) => MonadProcess m where
     -- |lift a base 'Process' computation into the current monad
     liftProcess :: Process a -> m a
     -- |map over an underlying Process to e.g. lift spawnLocal

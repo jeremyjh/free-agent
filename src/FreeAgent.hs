@@ -19,8 +19,8 @@ freeAgentMain ctxt = do
         mainPid <- getSelfPid
         Process.register "main" mainPid
         execPid <- Exec.init
-        putStrLn $ "Exec process awaiting commands on " ++ (tshow execPid)
-        putStrLn $ "Main process waiting for 'terminate' on " ++ (tshow mainPid)
+        putStrLn $ "Exec process awaiting commands on " ++ tshow execPid
+        putStrLn $ "Main process waiting for 'terminate' on " ++ tshow mainPid
         "terminate" <- expect :: Agent String
         return ()
     return ()

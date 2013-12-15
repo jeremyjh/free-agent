@@ -106,7 +106,7 @@ instance Runnable Command NagiosResult where
         makeArgs = ["-H", fromT $ cmd^.host, "-p", portS $ cmd^.port]
         portS (Just p) = showStr p
         portS Nothing = ""
-        completeAs :: (MonadAgent m) => CommandResult -> String -> m (Either Text NagiosResult)
+        completeAs :: (MonadProcess m, ConfigReader m) => CommandResult -> String -> m (Either Text NagiosResult)
         completeAs cmdres result
           = do time <- liftIO getCurrentTime
                let summ = ResultSummary time $ toT result
