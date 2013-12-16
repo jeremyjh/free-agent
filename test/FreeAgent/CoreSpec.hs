@@ -64,7 +64,7 @@ spec = do
                         let Just (NagiosResult (ResultSummary _ rs) OK) = extract nr
                         result $ take 6 rs
                     $ \exception ->
-                        result $ "Exception: " ++ tshow exception
+                        result $ throw exception
                 `shouldReturn` "TCP OK"
 
             it "can send an action result to a listener as a concrete type" $ do
@@ -79,10 +79,10 @@ spec = do
                             NagiosResult _ OK <- texpect
                             send parent ("Got OK" :: Text)
                         deliver nr child
-                        confirm <- texpect
+                        confirm <- texpect :: Agent Text
                         result confirm
                     $ \exception ->
-                        result $ "Exception: " ++ tshow exception
+                        result $ throw exception
                 `shouldReturn` "Got OK"
 
             it "can send a result action to a listener as an existential type" $ do
@@ -95,10 +95,10 @@ spec = do
                             let Just (NagiosResult _ OK)= extract wr
                             send parent ("Got OK" :: Text)
                         send child nr
-                        confirm <- texpect
+                        confirm <- texpect :: Agent Text
                         result confirm
                     $ \exception ->
-                        result $ "Exception: " ++ tshow exception
+                        result $ throw exception
                 `shouldReturn` "Got OK"
 
             it "can send/receive an action" $ do
@@ -111,10 +111,10 @@ spec = do
                             let Just (NagiosResult _ OK) = extract nr
                             send parent ("Got OK" :: Text)
                         send child $ toAction checkTCP
-                        confirm <- texpect
+                        confirm <- texpect :: Agent Text
                         result confirm
                     $ \exception ->
-                        result $ "Exception: " ++ tshow exception
+                        result $ throw exception
                 `shouldReturn` "Got OK"
 
 -- helper for running agent and getting results out of

@@ -20,6 +20,7 @@ module FreeAgent.Prelude
     , Generic
     , deriveSerializers
     , fqName
+    , logM
     ) where
 
 import           ClassyPrelude hiding    (undefined)
@@ -82,3 +83,7 @@ fqName typee =  modName ++ "." ++ name
   where
     name = BS.pack $ P.show $ typeOf typee
     modName = BS.pack $ tyConModule $ typeRepTyCon $ typeOf typee
+
+-- TODO: use real logging
+logM :: (MonadIO m) => Text -> m()
+logM = putStrLn

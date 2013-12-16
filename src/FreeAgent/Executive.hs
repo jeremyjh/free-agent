@@ -133,17 +133,8 @@ unRegisterEvent = withEventKS . withSync . delete
 registeredAs :: String
 registeredAs = "Executive"
 
--- TODO: higher-leveldb needs to let us supply a function
--- that will change the current options rather than overriding them
-withSync :: (MonadLevelDB m) => m () -> m()
-withSync = withOptions (def, def {sync = True})
-
 resultKS :: (Actionable a b) => a -> KeySpace
 resultKS a = "agent:actions:" ++ key a
-
--- TODO: use real logging
-logM :: (MonadIO m) => Text -> m()
-logM = putStrLn
 
 withEventKS :: (MonadLevelDB m) => m () -> m ()
 withEventKS = withKeySpace "agent:events"

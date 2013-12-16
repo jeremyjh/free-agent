@@ -47,10 +47,10 @@ spec = do
                     -- confirm results were written
                     items <- fromAgentDB $ withKeySpace "agent:actions:localhost:17500" $ do
                         scan "" queryItems
-                    result $ tshow $ length items
+                    result $ length items
                 $ \exception ->
-                    result $ "Exception: " ++ tshow exception
-            `shouldReturn` "1"
+                    result $ throw exception
+            `shouldReturn` 1
 
         it "can execute a supplied action" $ do
             testAgent $ \result -> do
@@ -61,10 +61,10 @@ spec = do
                     -- confirm results were written
                     items <- fromAgentDB $ withKeySpace "agent:actions:localhost:17500" $ do
                         scan "" queryItems
-                    result $ tshow $ length items
+                    result $ length items
                 $ \exception ->
-                    result $ "Exception: " ++ tshow exception
-            `shouldReturn` "1"
+                    result $ throw exception
+            `shouldReturn` 1
 
 
 -- helper for running agent and getting results out of
