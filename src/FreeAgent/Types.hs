@@ -11,6 +11,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE StandaloneDeriving#-}
 {-# LANGUAGE DeriveGeneric#-}
+{-# LANGUAGE RankNTypes #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -86,7 +87,7 @@ instance Cereal.Serialize Wrapped where
 instance Stashable Wrapped where
     key = _wrappedWrappedKey
 
-type Actionable a b = (Stashable a, Stashable b, Resulting b, Runnable a b)
+type Actionable a b = (Stashable a, Stashable b, Resulting b, Runnable a b, Deliverable a)
 data Action = forall a b. (Actionable a b) => Action a b
 
 instance Typeable Action where
@@ -95,18 +96,20 @@ instance Typeable Action where
 instance P.Show Action where
     show (Action a _) = "Action (" ++ P.show a ++ ")"
 
+
 -- | Class for types that will be boxed as ActionResult
+class (Serializable a, Stashable a, Deliverable a) => Resulting a where
+    -- | extract the concrete result - if you know what type it is
+    extract :: (Typeable b) => a -> Maybe b
+    -- | provide a 'ResultSummary'
+    summary :: a -> ResultSummary
+    extract = cast
+
 -- This let's us use the UnsafePrimitive's version of 'send' which
 -- sends a message locally without serializing it
-class (Serializable a, Stashable a) => Resulting a where
+class (Serializable a, Stashable a) => Deliverable a where
     deliver :: (MonadProcess m) => a -> ProcessId -> m ()
-    extract :: (Typeable b) => a -> Maybe b
-    summary :: a -> ResultSummary
-
-    -- | send the result to the listener argument
     deliver a p = send p a
-    -- | extract the concrete result - if you know what type it is
-    extract = cast
 
 -- ActionResult
 -- | Box for returning results from 'Action' exec.
@@ -137,12 +140,15 @@ type PluginActions = ( ByteString, Unwrapper Action
                      , ByteString, Unwrapper ActionResult)
 type PluginWriter = Writer [PluginDef] ()
 type ActionsWriter = Writer [PluginActions] ()
+type ActionListener = (Action -> Bool, ProcessId)
+
 data DBMessage = Perform (AgentDB ()) | Terminate
 
 data PluginDef
   = PluginDef { _plugindefName :: ByteString
               , _plugindefContext :: Dynamic
               , _plugindefActions :: [PluginActions]
+              , _plugindefActionListeners :: Agent [ActionListener]
               }
 
 data AgentConfig
@@ -157,13 +163,16 @@ data AgentContext
                  , _contextResultMap :: ResultMap
                  , _contextAgentConfig :: AgentConfig
                  , _contextAgentDBChan :: Chan DBMessage
+                 , _contextActionListeners :: Agent [ActionListener]
                  }
 
 instance Default AgentConfig where
     def = AgentConfig "./db" "127.0.0.1" "3546" mempty
 
 instance Default AgentContext where
-    def = AgentContext mempty mempty def (error "agentDB chan not initialized!")
+    def = AgentContext mempty mempty def
+            (error "agentDB chan not initialized!")
+            (return [])
 
 class (Functor m, Applicative m, Monad m)
       => ConfigReader m where
@@ -197,8 +206,15 @@ instance MonadProcess Agent where
 data RunStatus a = Either Text a
     deriving (Show, Eq)
 
-class (Serializable b, Show b) => Runnable a b | a -> b where
-    exec :: (MonadProcess m, ConfigReader m) => a -> m (Either Text b)
+class (Typeable a, Serializable b, Show b)
+     => Runnable a b | a -> b where
+    exec :: (MonadAgent m) => a -> m (Either Text b)
+    matches :: (Typeable c) => (c -> Bool) -> a -> Bool
+
+    matches f a =
+        case cast a of
+            Just a' -> f a'
+            Nothing -> False
 
 data ResultSummary
   = ResultSummary { _resultTimestamp :: UTCTime

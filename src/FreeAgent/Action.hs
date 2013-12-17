@@ -37,8 +37,6 @@ import qualified Data.Map                as Map
 import           Control.Monad.Writer    (tell)
 
 import           System.IO.Unsafe (unsafePerformIO)
-import           Control.Distributed.Process.Lifted (send)
-
 
 -- Serialization instances for Action are all this module as they require specialized
 -- and sensitive functions we want to keep encapsulated
@@ -64,6 +62,9 @@ instance Eq Action where
 
 instance Stashable Action where
     key (Action a _) = key a
+
+instance Deliverable Action where
+    deliver (Action a _) = deliver a
 
 -- | Fix the type & keyspace to Action for fetch
 fetchAction :: Key -> AgentDB FetchAction
@@ -208,7 +209,6 @@ instance SafeCopy ActionResult where
 -- there is no reason for an different implementation to ever be used than
 -- the default, but this ensures ActionResults are all sent the same way
 instance Resulting ActionResult where
-    deliver (ActionResult a) p = send p a
     extract (ActionResult a) = cast a
     summary (ActionResult a) = summary a
 
@@ -217,9 +217,16 @@ instance Runnable Action ActionResult where
         execR <- exec a
         return $ flip fmap execR $ \result ->
                 ActionResult result
+    matches f (Action a _)  =
+        case cast a of
+            Just a' -> f a'
+            Nothing -> False
 
 instance Stashable ActionResult where
     key (ActionResult a) = key a
+
+instance Deliverable ActionResult where
+    deliver (ActionResult a) = deliver a
 
 getWrappedBinary :: Binary.Get Wrapped
 getWrappedBinary = do

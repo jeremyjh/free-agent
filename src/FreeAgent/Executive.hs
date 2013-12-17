@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
 
 
@@ -16,6 +17,8 @@ import           FreeAgent.Database
 import           Data.Binary
 import qualified Data.Map.Strict as Map
 
+import           Control.Monad.Reader (runReaderT, ReaderT, ask)
+
 import           Control.Distributed.Process.Lifted as Process
 import           Control.Distributed.Process.Platform.ManagedProcess
 
@@ -25,15 +28,12 @@ import           Control.Distributed.Process.Platform.ManagedProcess
 -- Types
 -- -----------------------------
 type RunningActions = Map Key ProcessId
-type ActionListeners = Map Key [ProcessId]
 
 data ExecState
   = ExecState { _stateRunning :: RunningActions
-              , _stateListeners :: ActionListeners
-              } deriving (Show, Eq, Typeable, Generic)
+              , _stateListeners :: [ActionListener]
+              } deriving (Typeable, Generic)
 
-initialState :: ExecState
-initialState = ExecState (Map.fromList []) (Map.fromList [])
 -- -----------------------------
 -- Types
 -- -----------------------------
@@ -55,9 +55,11 @@ instance Binary ExecutiveCommand where
 -- -----------------------------
 
 -- | initialize the executive server (call once at startup)
-init :: (MonadAgent m) => m ProcessId
+init :: Agent ProcessId
 init = do
-    pid <- spawnLocal mainLoop
+    alisteners <- join $ _contextActionListeners <$> askConfig
+    let _state = ExecState (Map.fromList []) alisteners
+    pid <- spawnLocal $ runReaderT mainLoop _state
     Process.register registeredAs pid
     return pid
 
@@ -71,7 +73,13 @@ execute cmd = do
 -- Implementation
 -- -----------------------------
 
-mainLoop :: (MonadAgent m) => m ()
+type ExecAgent a = ReaderT ExecState Agent a
+
+instance (ConfigReader m)
+      => ConfigReader (ReaderT ExecState m) where
+    askConfig = lift askConfig
+
+mainLoop :: ExecAgent ()
 mainLoop = do
     command <- expect
     case command of
@@ -89,7 +97,7 @@ executiveProcess = defaultProcess {
     }
 
 -- | execute a particular command and send the response
-perform :: (MonadAgent m) => ExecutiveCommand -> m ()
+perform :: ExecutiveCommand -> ExecAgent ()
 perform (RegisterAction a)  = registerAction a
 perform (UnregisterAction k) = unRegisterAction k
 perform (ExecuteAction a) = executeAction a
@@ -98,16 +106,16 @@ perform _ = undefined
 {-perform (QueryActionHistory query) = undefined-}
 
 -- ExecutiveCommand realizations
-registerAction :: (MonadAgent m) => Action -> m ()
+registerAction ::  Action -> ExecAgent ()
 registerAction = withAgentDB . withSync . stashAction
 
-unRegisterAction :: (MonadAgent m) => Key -> m ()
+unRegisterAction :: Key -> ExecAgent ()
 unRegisterAction = withAgentDB . withSync . deleteAction
 
-executeAction :: (MonadAgent m) => Action -> m ()
+executeAction :: Action -> ExecAgent ()
 executeAction = void . spawnLocal . doExec
 
-executeRegistered :: (MonadProcess m, ConfigReader m) => Key -> m ()
+executeRegistered :: Key -> ExecAgent ()
 executeRegistered k = void $ spawnLocal $ do
     act <- fromAgentDB $ fetchAction k
     case act of
@@ -117,12 +125,19 @@ executeRegistered k = void $ spawnLocal $ do
         Left (NotFound _) ->
             logM ("Unable to retrieve action key: " ++ toT k ++ " not found in database.")
 
-doExec :: (MonadProcess m, ConfigReader m) => Action -> m ()
+doExec :: Action -> ExecAgent ()
 doExec act = exec act >>=
-    either logM
-           (\result -> withAgentDB $
-                withKeySpace (resultKS act) $
-                    store (key result) result)
+    either logM (storeResult >=> notifyListeners)
+  where
+    storeResult result = do
+        withAgentDB $ withKeySpace (resultKS act) $
+            store (key result) result
+        return result
+    notifyListeners result = do
+        ExecState _ listeners <- ask
+        forM_ listeners $ \(afilter, apid) ->
+            if afilter act then deliver result apid
+            else return ()
 
 registerEvent :: (MonadLevelDB m) => Event -> m ()
 registerEvent = withEventKS . withSync . stash

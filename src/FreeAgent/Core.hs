@@ -15,7 +15,7 @@ import           FreeAgent.Database
 import           FreeAgent.Action                  (registerPluginMaps)
 
 import           Control.Monad.Writer              (execWriter, tell)
-import           Control.Monad.Reader
+import           Control.Monad.Reader              (runReaderT)
 import           Control.Exception
 import           Control.Distributed.Process.Node
 import           Network.Transport.TCP
@@ -70,6 +70,7 @@ registerPlugins pw =
     def { _contextActionMap = amap
         , _contextResultMap = rmap
         , _contextAgentConfig = def {_configPluginContexts = Map.fromList contexts}
+        , _contextActionListeners = buildListeners plugs
         }
   where
     buildContexts plugin =
@@ -79,14 +80,19 @@ registerPlugins pw =
             amap = Map.fromList (fst pairs)
             rmap = Map.fromList (snd pairs) in
         (amap, rmap)
+    buildListeners = foldM appendListener []
+    appendListener acc = _plugindefActionListeners >=> return . (++ acc)
 
 addPlugin :: PluginDef -> PluginWriter
 addPlugin pd = tell [pd]
 
 definePlugin :: (Typeable a)
-             => ByteString -> a -> ActionsWriter -> PluginDef
-definePlugin pname pcontext pw
+             => ByteString -> a -> Agent [ActionListener]
+             -> ActionsWriter
+             -> PluginDef
+definePlugin pname pcontext alisteners pwriter
   = PluginDef { _plugindefName = pname
               , _plugindefContext = toDyn pcontext
-              , _plugindefActions = execWriter pw
+              , _plugindefActions = execWriter pwriter
+              , _plugindefActionListeners = alisteners
               }

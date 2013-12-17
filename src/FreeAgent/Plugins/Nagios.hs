@@ -18,6 +18,7 @@ module FreeAgent.Plugins.Nagios
     , NagiosResult(..)
     , NagiosConfig(..)
     , pluginDef
+    , initListeners
     ) where
 
 import           FreeAgent.Prelude
@@ -25,11 +26,11 @@ import           FreeAgent.Lenses
 import           FreeAgent.Action
 import           FreeAgent.Core
 
+import           Control.Distributed.Process.Lifted hiding (register)
+
 import           System.Process     (readProcessWithExitCode)
 import           System.Exit (ExitCode(..))
-
 import qualified Data.Serialize                   as Cereal
-
 import           Data.Default (Default(..))
 import           Data.Time.Clock (getCurrentTime)
 
@@ -43,25 +44,6 @@ instance Default NagiosConfig where
 
 makeFields ''NagiosConfig
 
--- | Provides the PluginDef for the Nagios plugin. Provide this to
--- 'addPlugin' in the 'registerPlugins' block in your app config/main.
--- Provide a NagiosConfig record - use 'def' for default values
---
--- > addPlugin $ Nagios.pluginDef def { _nagiosPluginPath = ... }
-data CheckTCP = CheckTCP { _checktcpHost :: Text
-                         , _checktcpPort :: Int
-                         } deriving (Show, Eq, Typeable, Generic)
-makeFields ''CheckTCP
-deriveSerializers ''CheckTCP
-
-pluginDef :: NagiosConfig -> PluginDef
-pluginDef conf = definePlugin "Nagios" conf $ do
-    register (actionType :: Command)
-    register (actionType :: CheckTCP)
-
-extractConfig' :: (ConfigReader m) => m NagiosConfig
-extractConfig' = extractConfig $ pluginDef def ^.name
-
 -- | Supported Actions
 data Command = Command { _commandHost :: Text
                        , _commandPort :: Maybe Int
@@ -73,15 +55,49 @@ deriveSerializers ''Command
 instance Stashable Command where
     key cmd = fromT $ cmd^.host
 
+instance Deliverable Command where
 
 data CommandResult = OK | Warning | Critical | Unknown
     deriving (Show, Eq, Typeable, Generic)
 deriveSerializers ''CommandResult
 
+-- | Provides the PluginDef for the Nagios plugin. Provide this to
+-- 'addPlugin' in the 'registerPlugins' block in your app config/main.
+-- Provide a NagiosConfig record - use 'def' for default values
+--
+-- > addPlugin $ Nagios.pluginDef def { _nagiosPluginPath = ... }
+data CheckTCP = CheckTCP { _checktcpHost :: Text
+                         , _checktcpPort :: Int
+                         } deriving (Show, Eq, Typeable, Generic)
+makeFields ''CheckTCP
+deriveSerializers ''CheckTCP
+instance Deliverable CheckTCP where
+
 data NagiosResult
   = NagiosResult ResultSummary CommandResult
   deriving (Show, Eq, Typeable, Generic)
 deriveSerializers ''NagiosResult
+
+instance Deliverable NagiosResult where
+
+pluginDef :: NagiosConfig -> PluginDef
+pluginDef conf = definePlugin "Nagios" conf initListeners $
+ do register (actionType :: Command)
+    register (actionType :: CheckTCP)
+
+initListeners :: Agent [ActionListener]
+initListeners = do
+    let listenLocal = do
+        --TODO need to get Action here too
+        result <- expect :: Agent NagiosResult
+        putStrLn "got a result from listener: "
+        print result
+        listenLocal
+    lpid <- spawnLocal listenLocal
+    return [(matches (\c -> _checktcpHost c == "localhost"), lpid)]
+
+extractConfig' :: (ConfigReader m) => m NagiosConfig
+extractConfig' = extractConfig $ pluginDef def ^.name
 
 instance Stashable NagiosResult where
     key (NagiosResult (ResultSummary time _) _) = Cereal.encode time

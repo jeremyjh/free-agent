@@ -83,6 +83,10 @@ spec = do
                             scanActions ctxt "check"
                     `shouldReturn` [ (Right $ toAction checkTCP{_commandHost="check2"} )
                                    , (Right $ toAction checkTCP{_commandHost="check3"}) ]
+        it "can be matched" $ do
+            let matcher = matches (\c -> (_commandHost c) == "localhost")
+            matcher (toAction checkTCP) `shouldBe` True
+
 
 
 testDB = appConfig^.agentConfig.dbPath
