@@ -97,7 +97,7 @@ initListeners = do
     return [(matches (\c -> _checktcpHost c == "localhost"), lpid)]
 
 extractConfig' :: (ConfigReader m) => m NagiosConfig
-extractConfig' = extractConfig $ pluginDef def ^.name
+extractConfig' = extractConfig $ (pluginDef def)^.name
 
 instance Stashable NagiosResult where
     key (NagiosResult (ResultSummary time _) _) = Cereal.encode time

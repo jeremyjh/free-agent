@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE ConstraintKinds #-}
 
 module FreeAgent.Database
@@ -29,8 +30,16 @@ initAgentDB :: AgentContext -> IO (ThreadId, Chan DBMessage)
 initAgentDB ctxt = do
     chan <- newChan
     thread <- forkOS $
-        runCreateLevelDB (ctxt^.agentConfig.dbPath) "agent" $ mainLoop chan
+        runCreateLevelDB (ctxt^.agentConfig.dbPath) "agent" $ loop chan
     return (thread, chan)
+  where
+    loop chan = do
+        msg <- readChan chan
+        case msg of
+            Perform ma -> do
+                void $ forkLevelDB ma
+                loop chan
+            Terminate -> return ()
 
 -- Terminate the AgentDB background thread
 closeAgentDB :: Chan DBMessage -> IO ()
@@ -52,20 +61,12 @@ fromAgentDB ma = do
     dbChan <- _contextAgentDBChan <$> askConfig
     result <- newEmptyMVar
     writeChan dbChan $ Perform $
-        catchAny (ma >>= putMVar result)
+        catchAny ( do !a <- ma --TODO: use NFData
+                      putMVar result a)
                  (\exception -> do
                      logM $ "fromAgentDB action exception: " ++ tshow exception
                      putMVar result (throw exception) )
     takeMVar result
-
-mainLoop :: Chan DBMessage -> AgentDB ()
-mainLoop chan = do
-    msg <- readChan chan
-    case msg of
-        Perform ma -> do
-            void $ forkLevelDB ma
-            mainLoop chan
-        Terminate -> return ()
 
 -- | Set the write option sync = True for a block of database operations
 withSync :: (MonadLevelDB m) => m () -> m()
