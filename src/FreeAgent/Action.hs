@@ -98,21 +98,21 @@ instance Runnable Action ActionResult where
 instance Stashable ActionResult where
     key (ActionResult a) = key a
 -- | Fix the type & keyspace to Action for fetch
-fetchAction :: Key -> AgentDB FetchAction
+fetchAction :: MonadLevelDB m => Key -> m FetchAction
 fetchAction = withActionKS . fetch
 
 -- | Fix the keyspace to Action for stash
-stashAction :: Action -> AgentDB ()
+stashAction :: MonadLevelDB m => Action -> m ()
 stashAction = withActionKS . stash
 
 -- | Fix the keyspace to Action for delete
-deleteAction :: Key -> AgentDB ()
+deleteAction :: MonadLevelDB m => Key -> m ()
 deleteAction = withActionKS . delete
 
 -- | Fix the keyspace to 'withActionKS' and decodes each
 -- result using 'decodeAction'.
 --
-scanActions :: AgentContext -> Key -> AgentDB [FetchAction]
+scanActions :: MonadLevelDB m => AgentContext -> Key -> m [FetchAction]
 scanActions ctxt prefix = withActionKS $
     let pm = _contextActionMap ctxt
         decoder = decodeAction pm in
