@@ -55,8 +55,6 @@ deriveSerializers ''Command
 instance Stashable Command where
     key cmd = fromT $ cmd^.host
 
-instance Deliverable Command where
-
 data CommandResult = OK | Warning | Critical | Unknown
     deriving (Show, Eq, Typeable, Generic)
 deriveSerializers ''CommandResult
@@ -71,14 +69,11 @@ data CheckTCP = CheckTCP { _checktcpHost :: Text
                          } deriving (Show, Eq, Typeable, Generic)
 makeFields ''CheckTCP
 deriveSerializers ''CheckTCP
-instance Deliverable CheckTCP where
 
 data NagiosResult
   = NagiosResult ResultSummary CommandResult
   deriving (Show, Eq, Typeable, Generic)
 deriveSerializers ''NagiosResult
-
-instance Deliverable NagiosResult where
 
 pluginDef :: NagiosConfig -> PluginDef
 pluginDef conf = definePlugin "Nagios" conf initListeners $
@@ -88,8 +83,7 @@ pluginDef conf = definePlugin "Nagios" conf initListeners $
 initListeners :: Agent [ActionListener]
 initListeners = do
     let listenLocal = do
-        --TODO need to get Action here too
-        result <- expect :: Agent NagiosResult
+        result <- expect :: Agent ActionResult
         putStrLn "got a result from listener: "
         print result
         listenLocal
@@ -100,7 +94,7 @@ extractConfig' :: (ConfigReader m) => m NagiosConfig
 extractConfig' = extractConfig $ (pluginDef def)^.name
 
 instance Stashable NagiosResult where
-    key (NagiosResult (ResultSummary time _) _) = Cereal.encode time
+    key (NagiosResult (ResultSummary time _ _) _) = Cereal.encode time
 
 instance Resulting NagiosResult where
     summary (NagiosResult s _) = s
@@ -125,7 +119,7 @@ instance Runnable Command NagiosResult where
         completeAs :: (MonadProcess m, ConfigReader m) => CommandResult -> String -> m (Either Text NagiosResult)
         completeAs cmdres result
           = do time <- liftIO getCurrentTime
-               let summ = ResultSummary time $ toT result
+               let summ = ResultSummary time (toT result) (Action cmd)
                return $ Right $ NagiosResult summ cmdres
         commandPath = do
             nagconf <- extractConfig'

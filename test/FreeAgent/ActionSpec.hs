@@ -43,13 +43,13 @@ spec = do
                 `shouldReturn` (Right checkTCP)
             describe "has special storage of Actions" $ do
                 it "writes Actions to the DB as wrapped for fetchAction" $ do
-                    let act = toAction checkTCP
+                    let act = Action checkTCP
                     withConfig (withAgentDB (stashAction act) )
                     `shouldReturn` ()
                 it "reads wrapped Actions from the DB" $ do
                     -- would fail if previous spec did not wrap
                     action <- withConfig $ fromAgentDB $ fetchAction "localhost"
-                    action `shouldBe` (Right $ toAction checkTCP)
+                    action `shouldBe` (Right $ Action checkTCP)
                 it "will fail to read if key is wrong" $ do
                     (Left (NotFound _)) <- withConfig $ fromAgentDB (fetchProto "notgonnamatch")
                     True `shouldBe` True -- NOT exception
@@ -77,15 +77,15 @@ spec = do
                     withConfig $ do
                         ctxt <- askConfig
                         fromAgentDB $ do
-                            stashAction $ toAction checkTCP
-                            stashAction $ toAction checkTCP {_commandHost = "check2"}
-                            stashAction $ toAction checkTCP {_commandHost = "check3"}
+                            stashAction $ Action checkTCP
+                            stashAction $ Action checkTCP {_commandHost = "check2"}
+                            stashAction $ Action checkTCP {_commandHost = "check3"}
                             scanActions ctxt "check"
-                    `shouldReturn` [ (Right $ toAction checkTCP{_commandHost="check2"} )
-                                   , (Right $ toAction checkTCP{_commandHost="check3"}) ]
+                    `shouldReturn` [ (Right $ Action checkTCP{_commandHost="check2"} )
+                                   , (Right $ Action checkTCP{_commandHost="check3"}) ]
         it "can be matched" $ do
             let matcher = matches (\c -> (_commandHost c) == "localhost")
-            matcher (toAction checkTCP) `shouldBe` True
+            matcher (Action checkTCP) `shouldBe` True
 
 
 

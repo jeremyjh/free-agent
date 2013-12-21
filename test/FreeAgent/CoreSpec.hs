@@ -58,37 +58,19 @@ spec = do
                 testAgent $ \result -> do
                     catchAny $ do
                         (Right action) <- fromAgentDB $ do
-                            stashAction $ toAction checkTCP
+                            stashAction $ Action checkTCP
                             fetchAction "localhost:17500"
                         (Right nr) <- exec action
-                        let Just (NagiosResult (ResultSummary _ rs) OK) = extract nr
+                        let Just (NagiosResult (ResultSummary _ rs _) OK) = extract nr
                         result $ take 6 rs
                     $ \exception ->
                         result $ throw exception
                 `shouldReturn` "TCP OK"
 
-            it "can send an action result to a listener as a concrete type" $ do
-                testAgent $ \result -> do
-                    catchAny $ do
-                        -- could just get a concrete from exec
-                        Right (NagiosResult _ OK) <- exec checkTCP
-                         -- but ... need to test existential deliver for this spec
-                        Right nr <- exec $ toAction checkTCP
-                        parent <- getSelfPid
-                        child <-  spawnLocal $ do
-                            NagiosResult _ OK <- texpect
-                            send parent ("Got OK" :: Text)
-                        deliver nr child
-                        confirm <- texpect :: Agent Text
-                        result confirm
-                    $ \exception ->
-                        result $ throw exception
-                `shouldReturn` "Got OK"
-
             it "can send a result action to a listener as an existential type" $ do
                 testAgent $ \result -> do
                     catchAny $ do
-                        (Right nr) <- exec $ toAction checkTCP
+                        (Right nr) <- exec $ Action checkTCP
                         parent <- getSelfPid
                         child <-  spawnLocal $ do
                             wr <- texpect :: Agent ActionResult
@@ -110,7 +92,7 @@ spec = do
                             (Right nr) <- exec action
                             let Just (NagiosResult _ OK) = extract nr
                             send parent ("Got OK" :: Text)
-                        send child $ toAction checkTCP
+                        send child $ Action checkTCP
                         confirm <- texpect :: Agent Text
                         result confirm
                     $ \exception ->

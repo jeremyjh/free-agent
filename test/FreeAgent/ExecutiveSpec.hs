@@ -40,7 +40,7 @@ spec = do
             testAgent $ \result -> do
                 catchAny $ do
                     void Exec.init
-                    Exec.execute $ RegisterAction $ toAction checkTCP
+                    Exec.execute $ RegisterAction $ Action checkTCP
                     threadDelay 10000
                     Exec.execute $ ExecuteRegistered $ key checkTCP
                     threadDelay 10000
@@ -56,7 +56,7 @@ spec = do
             testAgent $ \result -> do
                 catchAny $ do
                     void Exec.init
-                    Exec.execute $ ExecuteAction $ toAction checkTCP
+                    Exec.execute $ ExecuteAction $ Action checkTCP
                     threadDelay 10000
                     -- confirm results were written
                     items <- fromAgentDB $ withKeySpace "agent:actions:localhost:17500" $ do

@@ -136,7 +136,7 @@ doExec act = exec act >>=
     notifyListeners result = do
         ExecState _ listeners <- ask
         forM_ listeners $ \(afilter, apid) ->
-            if afilter act then deliver result apid
+            if afilter act then send apid result
             else return ()
 
 registerEvent :: (MonadLevelDB m) => Event -> m ()

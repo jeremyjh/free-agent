@@ -87,36 +87,27 @@ instance Cereal.Serialize Wrapped where
 instance Stashable Wrapped where
     key = _wrappedWrappedKey
 
-type Actionable a b = (Stashable a, Stashable b, Resulting b, Runnable a b, Deliverable a)
-data Action = forall a b. (Actionable a b) => Action a b
+type Actionable a b = (Stashable a, Stashable b, Resulting b, Runnable a b)
+data Action = forall a b. (Actionable a b) => Action a
 
 instance Typeable Action where
     typeOf _ = mkTyConApp (mkTyCon3 "free-agent" "FreeAgent.Types" "Action") []
 
 instance P.Show Action where
-    show (Action a _) = "Action (" ++ P.show a ++ ")"
+    show (Action a) = "Action (" ++ P.show a ++ ")"
 
 
 -- | Class for types that will be boxed as ActionResult
-class (Serializable a, Stashable a, Deliverable a) => Resulting a where
+class (Serializable a, Stashable a) => Resulting a where
     -- | extract the concrete result - if you know what type it is
     extract :: (Typeable b) => a -> Maybe b
     -- | provide a 'ResultSummary'
     summary :: a -> ResultSummary
     extract = cast
 
--- This let's us use the UnsafePrimitive's version of 'send' which
--- sends a message locally without serializing it
-class (Serializable a, Stashable a) => Deliverable a where
-    deliver :: (MonadProcess m) => a -> ProcessId -> m ()
-    deliver a p = send p a
-
 -- ActionResult
 -- | Box for returning results from 'Action' exec.
--- Box is an existential which implements Deliverable and thus can be
--- sent as a concrete type to registered listeners of the Action
 --
--- use the 'actionResult' and 'extractResult' functions from FreeAgent.Action
 data ActionResult = forall a. (Resulting a, Show a) => ActionResult a
 
 instance Show ActionResult where
@@ -206,7 +197,7 @@ instance MonadProcess Agent where
 data RunStatus a = Either Text a
     deriving (Show, Eq)
 
-class (Typeable a, Serializable b, Show b)
+class (Serializable a, Serializable b, Stashable a, Stashable b, Resulting b)
      => Runnable a b | a -> b where
     exec :: (MonadAgent m) => a -> m (Either Text b)
     matches :: (Typeable c) => (c -> Bool) -> a -> Bool
@@ -219,7 +210,8 @@ class (Typeable a, Serializable b, Show b)
 data ResultSummary
   = ResultSummary { _resultTimestamp :: UTCTime
                   , _resultText :: Text
-                  } deriving (Eq, Show, Typeable, Generic)
+                  , _resultResultOf :: Action
+                  } deriving (Show, Typeable, Generic)
 
 instance Cereal.Serialize UTCTime where
     get = do
@@ -233,7 +225,6 @@ instance Binary UTCTime where
         return $ P.read stime
     put a = put (show a)
 
-deriveSerializers ''ResultSummary
 
 -- Scheduling and Events
 data Schedule = Now | Later

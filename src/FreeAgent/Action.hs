@@ -4,6 +4,8 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -13,7 +15,6 @@ module FreeAgent.Action
     , withActionKS
     , register, actionType
     , registerPluginMaps
-    , toAction
     )
 where
 
@@ -39,33 +40,63 @@ import           Control.Monad.Writer    (tell)
 import           System.IO.Unsafe (unsafePerformIO)
 
 -- Serialization instances for Action are all this module as they require specialized
--- and sensitive functions we want to keep encapsulated
+-- and sensitive functions we want to keep encapsulated e.g. (readPluginMaps)
 
+deriving instance Eq ResultSummary
+deriveSerializers ''ResultSummary
 
 instance Binary Action where
-    put (Action a _) = Binary.put $ wrap a
+    put (Action a) = Binary.put $ wrap a
     get = do
         wrapped <- getWrappedBinary
         return $ decodeAction' (fst readPluginMaps) wrapped
 
 instance Serialize Action where
-    put (Action a _) = Cereal.put $ wrap a
+    put (Action a) = Cereal.put $ wrap a
     get = do
         wrapped <- getWrappedCereal
         return $ decodeAction' (fst readPluginMaps) wrapped
 
 instance SafeCopy Action where
-    putCopy (Action a _) = putCopy a
+    putCopy (Action a) = putCopy a
 
 instance Eq Action where
     a == b =  Cereal.encode a == Cereal.encode b
 
 instance Stashable Action where
-    key (Action a _) = key a
+    key (Action a) = key a
 
-instance Deliverable Action where
-    deliver (Action a _) = deliver a
+-- same as Action - we need ActionResult serialization instances here
+instance Binary ActionResult where
+    put (ActionResult a) = Binary.put $ wrap a
+    get = do
+        wrapped <- getWrappedBinary
+        return $ decodeResult' (snd readPluginMaps) wrapped
 
+instance Serialize ActionResult where
+    put (ActionResult a) = Cereal.put $ wrap a
+    get = do
+        wrapped <- getWrappedCereal
+        return $ decodeResult' (snd readPluginMaps) wrapped
+
+instance SafeCopy ActionResult where
+
+instance Resulting ActionResult where
+    extract (ActionResult a) = cast a
+    summary (ActionResult a) = summary a
+
+instance Runnable Action ActionResult where
+    exec (Action a) = do
+        execR <- exec a
+        return $ flip fmap execR $ \result ->
+                ActionResult result
+    matches f (Action a)  =
+        case cast a of
+            Just a' -> f a'
+            Nothing -> False
+
+instance Stashable ActionResult where
+    key (ActionResult a) = key a
 -- | Fix the type & keyspace to Action for fetch
 fetchAction :: Key -> AgentDB FetchAction
 fetchAction = withActionKS . fetch
@@ -124,17 +155,11 @@ actionType :: (Actionable a b) => a
 actionType = error "actionType should never be evaluated! Only pass it \
                    \ to register which takes the TypeRep but does not evaluate it."
 
--- | Box an Actionable in an Action - saves the hassle of having to provide the
--- superfulous result parameter to the Action constructor.
-toAction :: (Actionable a b) => a -> Action
-toAction a = Action a (undefined :: b)
-
-
 -- | Unwrap a concrete type into an Action
 --
 unWrapAction :: (Actionable a b)
              => Unwrapper a -> Wrapped -> FetchAction
-unWrapAction uw wrapped = Action <$> uw wrapped <*> pure (undefined :: b)
+unWrapAction uw wrapped = Action <$> uw wrapped
 
 unwrapResult :: (Resulting b)
              => Unwrapper b -> Wrapped -> Either FetchFail ActionResult
@@ -189,44 +214,6 @@ decodeResult' pluginMap wrapped =
             Left _ -> error "Unknown error deserializing wrapper"
         Nothing -> error $ "Type Name: " ++ BS.unpack (wrapped^.typeName)
                     ++ " not matched! Is your plugin registered?"
-
--- same as Action - we need ActionResult serialization instances here
-instance Binary ActionResult where
-    put (ActionResult a) = Binary.put $ wrap a
-    get = do
-        wrapped <- getWrappedBinary
-        return $ decodeResult' (snd readPluginMaps) wrapped
-
-instance Serialize ActionResult where
-    put (ActionResult a) = Cereal.put $ wrap a
-    get = do
-        wrapped <- getWrappedCereal
-        return $ decodeResult' (snd readPluginMaps) wrapped
-
-instance SafeCopy ActionResult where
-
--- ActionResult instance overrides the underlying implementation
--- there is no reason for an different implementation to ever be used than
--- the default, but this ensures ActionResults are all sent the same way
-instance Resulting ActionResult where
-    extract (ActionResult a) = cast a
-    summary (ActionResult a) = summary a
-
-instance Runnable Action ActionResult where
-    exec (Action a _) = do
-        execR <- exec a
-        return $ flip fmap execR $ \result ->
-                ActionResult result
-    matches f (Action a _)  =
-        case cast a of
-            Just a' -> f a'
-            Nothing -> False
-
-instance Stashable ActionResult where
-    key (ActionResult a) = key a
-
-instance Deliverable ActionResult where
-    deliver (ActionResult a) = deliver a
 
 getWrappedBinary :: Binary.Get Wrapped
 getWrappedBinary = do
