@@ -139,8 +139,7 @@ doExec act = exec act >>=
     notifyListeners result = do
         listeners' <- use listeners
         forM_ listeners' $ \(afilter, apid) ->
-            if afilter act then send apid result
-            else return ()
+            when (afilter act) $ send apid result
 
 registerEvent :: (MonadLevelDB m) => Event -> m ()
 registerEvent = withEventKS . withSync . stash

@@ -18,15 +18,12 @@ module FreeAgent.Plugins.Nagios
     , NagiosResult(..)
     , NagiosConfig(..)
     , pluginDef
-    , initListeners
     ) where
 
 import           FreeAgent.Prelude
 import           FreeAgent.Lenses
 import           FreeAgent.Action
 import           FreeAgent.Core
-
-import           Control.Distributed.Process.Lifted hiding (register)
 
 import           System.Process     (readProcessWithExitCode)
 import           System.Exit (ExitCode(..))
@@ -76,22 +73,12 @@ data NagiosResult
 deriveSerializers ''NagiosResult
 
 pluginDef :: NagiosConfig -> PluginDef
-pluginDef conf = definePlugin "Nagios" conf initListeners $
+pluginDef conf = definePlugin "Nagios" conf (return []) $
  do register (actionType :: Command)
     register (actionType :: CheckTCP)
 
-initListeners :: Agent [ActionListener]
-initListeners = do
-    let listenLocal = do
-        result <- expect :: Agent ActionResult
-        putStrLn "got a result from listener: "
-        print result
-        listenLocal
-    lpid <- spawnLocal listenLocal
-    return [(matches (\c -> _checktcpHost c == "localhost"), lpid)]
-
 extractConfig' :: (ConfigReader m) => m NagiosConfig
-extractConfig' = extractConfig $ (pluginDef def)^.name
+extractConfig' = extractConfig $ pluginDef def ^.name
 
 instance Stashable NagiosResult where
     key (NagiosResult (ResultSummary time _ _) _) = Cereal.encode time

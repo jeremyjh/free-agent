@@ -11,20 +11,17 @@ import           FreeAgent.Lenses
 import           FreeAgent.Core
 import           FreeAgent.Action
 import           FreeAgent.Database
-import           FreeAgent.Plugins.Nagios
+import           FreeAgent.Plugins.Nagios as Nagios
 import           FreeAgent.Executive as Exec
 
-import           AppConfig(appConfig)
-
 import           Control.Concurrent.Lifted
-import           Control.Distributed.Process.Lifted
+import           Control.Distributed.Process.Lifted as Process
 
 import           Control.Distributed.Process.Node
 import           Network.Transport.TCP
 
 import           Data.Dynamic
 
-import           Control.Monad.Reader
 import           Control.Exception
 
 import qualified Data.Binary as Binary
@@ -66,6 +63,25 @@ spec = do
                     result $ throw exception
             `shouldReturn` 1
 
+        it "will invoke any configured listeners" $ do
+            testAgent $ \result -> do
+                catchAny $ do
+                    void Exec.init
+                    -- generate some results to hear about
+                    forM_ [0..2] $ \_ ->
+                        Exec.execute $ ExecuteAction $ Action checkTCP
+                    threadDelay 10000
+
+                    -- make sure he's been listening
+                    Just lpid <- whereis "ExecSpecListener"
+                    pid <- getSelfPid
+                    send lpid ("ask-result-count" :: ByteString, pid)
+                    resCount <- expect :: Agent Int
+                    result resCount
+                $ \exception ->
+                    result $ throw exception
+            `shouldReturn` 3
+
 
 -- helper for running agent and getting results out of
 -- the Process through partially applied putMVar
@@ -91,3 +107,33 @@ setup = void $ system ("rm -rf " ++ appConfig^.agentConfig.dbPath)
 
 
 checkTCP = CheckTCP  "localhost" 17500
+
+-- use a local config here because we are wiring up our own test listener
+appConfig :: AgentContext
+appConfig = (
+    registerPlugins $ do
+        addPlugin $ Nagios.pluginDef def {
+            -- override default plugin-specific config
+            _nagiosPluginsPath = "/usr/lib/nagios/plugins"
+        }
+        addPlugin $ testDef def
+        -- add more plugins here!
+    ) & agentConfig.dbPath .~ "/tmp/leveltest" -- override Agent config values here!
+
+testListener :: Agent [ActionListener]
+testListener = do
+    let listenLocal resCount = do
+        receiveWait [
+            match (\ (result :: ActionResult) -> do
+                listenLocal $ resCount + 1
+            ),
+            match (\ ("ask-result-count" :: ByteString, pid) ->
+                send pid resCount
+            )
+            ]
+    lpid <- liftProcess $ spawnLocal $ listenLocal (0::Int)
+    Process.register "ExecSpecListener" lpid
+    return [(matches (\c -> _checktcpHost c == "localhost"), lpid)]
+
+testDef :: NagiosConfig -> PluginDef
+testDef conf = definePlugin "ExecSpec" conf testListener (return ())
