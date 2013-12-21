@@ -16,7 +16,7 @@ where
 
 import FreeAgent.Types
 import           Control.Lens
-    (makeFields, (.~), (^.), (&), view, Getting, _1, _2)
+    (makeFields, (.~), (^.), (&), view, Getting, _1, _2, use)
 
 makeFields ''AgentContext
 makeFields ''AgentConfig

@@ -5,6 +5,9 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FunctionalDependencies #-}
 
 
 module FreeAgent.Executive where
@@ -17,7 +20,7 @@ import           FreeAgent.Database
 import           Data.Binary
 import qualified Data.Map.Strict as Map
 
-import           Control.Monad.Reader (runReaderT, ReaderT, ask)
+import           Control.Monad.State (evalStateT, StateT)
 
 import           Control.Distributed.Process.Lifted as Process
 import           Control.Distributed.Process.Platform.ManagedProcess
@@ -33,6 +36,7 @@ data ExecState
   = ExecState { _stateRunning :: RunningActions
               , _stateListeners :: [ActionListener]
               } deriving (Typeable, Generic)
+makeFields ''ExecState
 
 -- -----------------------------
 -- Types
@@ -47,7 +51,7 @@ data ExecutiveCommand = RegisterAction Action
                       | UnregisterEvent Event
                       {-| QueryEventHistory (ScanQuery EventHistory [EventHistory])-}
                       | TerminateExecutive
-                      deriving (Show, Eq, Typeable, Generic)
+                      deriving (Typeable, Generic)
 instance Binary ExecutiveCommand where
 
 -- -----------------------------
@@ -59,9 +63,17 @@ init :: Agent ProcessId
 init = do
     alisteners <- join $ _contextActionListeners <$> askConfig
     let _state = ExecState (Map.fromList []) alisteners
-    pid <- spawnLocal $ runReaderT mainLoop _state
+    pid <- spawnLocal $ evalStateT loop _state
     Process.register registeredAs pid
     return pid
+  where
+    loop = do
+        command <- expect
+        case command of
+            TerminateExecutive -> logM "shutting down"
+            cmd -> do
+                void $ spawnLocal $ perform cmd
+                loop
 
 -- | send a command to the executive process for execution
 execute :: (MonadAgent m) => ExecutiveCommand -> m ()
@@ -73,20 +85,11 @@ execute cmd = do
 -- Implementation
 -- -----------------------------
 
-type ExecAgent a = ReaderT ExecState Agent a
+type ExecAgent a = StateT ExecState Agent a
 
 instance (ConfigReader m)
-      => ConfigReader (ReaderT ExecState m) where
+      => ConfigReader (StateT ExecState m) where
     askConfig = lift askConfig
-
-mainLoop :: ExecAgent ()
-mainLoop = do
-    command <- expect
-    case command of
-        TerminateExecutive -> logM "shutting down"
-        cmd -> do
-            void $ spawnLocal $ perform cmd
-            mainLoop
 
 executiveProcess :: ProcessDefinition ExecState
 executiveProcess = defaultProcess {
@@ -134,8 +137,8 @@ doExec act = exec act >>=
             store (key result) result
         return result
     notifyListeners result = do
-        ExecState _ listeners <- ask
-        forM_ listeners $ \(afilter, apid) ->
+        listeners' <- use listeners
+        forM_ listeners' $ \(afilter, apid) ->
             if afilter act then send apid result
             else return ()
 

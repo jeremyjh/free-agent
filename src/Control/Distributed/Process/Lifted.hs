@@ -15,6 +15,7 @@ where
 import           Control.Monad.Trans.Control
 import           Control.Monad.Reader
 import           Control.Monad.RWS
+import           Control.Monad.State
 import           Control.Monad.Base
 import           Control.Monad.Trans.Resource
 import qualified Control.Distributed.Process as Base
@@ -50,6 +51,16 @@ instance MonadProcess Process where
 instance (Monad m, MonadProcess m) => MonadProcess (ReaderT r m) where
     liftProcess = lift . liftProcess
     mapProcess f = mapReaderT (mapProcess f)
+
+instance (Monad m, MonadProcess m) => MonadProcess (StateT s m) where
+    liftProcess = lift . liftProcess
+    mapProcess f ma =
+        flip mapStateT ma $
+        \ma' -> do
+            (a, s) <- ma'
+            b <- mapProcess f (return a)
+            return (b, s)
+
 
 -- example transformer implementation
 instance (Monoid w, Monad m, MonadProcess m) => MonadProcess (RWST r w s m) where
