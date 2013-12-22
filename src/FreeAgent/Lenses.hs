@@ -22,3 +22,5 @@ makeFields ''AgentContext
 makeFields ''AgentConfig
 makeFields ''Wrapped
 makeFields ''PluginDef
+makeFields ''ResultSummary
+

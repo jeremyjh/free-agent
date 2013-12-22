@@ -136,15 +136,17 @@ doExec act = exec act >>=
   where
     storeResult result = do
         withAgentDB $ withKeySpace (resultKS act) $
-            store (key result) result
+            store (timestampKey result) result
         return result
     notifyListeners result = do
         alisteners <- use actionListeners
         forM_ alisteners $ \(afilter, apid) ->
             when (afilter act) $ send apid result
         rlisteners <- use resultListeners
-        forM_ rlisteners $ \(rfilter, rpid) -> do
+        forM_ rlisteners $ \(rfilter, rpid) ->
             when (rfilter result) $ send rpid result
+    resultKS a = "agent:actions:" ++ key a
+    timestampKey = utcToBytes . view timestamp . summary
 
 registerEvent :: (MonadLevelDB m) => Event -> m ()
 registerEvent = withEventKS . withSync . stash
@@ -154,9 +156,6 @@ unRegisterEvent = withEventKS . withSync . delete
 
 registeredAs :: String
 registeredAs = "Executive"
-
-resultKS :: (Actionable a b) => a -> KeySpace
-resultKS a = "agent:actions:" ++ key a
 
 withEventKS :: (MonadLevelDB m) => m () -> m ()
 withEventKS = withKeySpace "agent:events"

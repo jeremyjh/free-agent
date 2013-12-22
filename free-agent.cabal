@@ -42,6 +42,7 @@ library
                    , monad-control
                    , binary
                    , time
+                   , old-locale
                    , template-haskell
 
 executable example 

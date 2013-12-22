@@ -21,28 +21,28 @@ module FreeAgent.Prelude
     , deriveSerializers
     , fqName
     , logM
+    , utcToBytes
+    , bytesToUtc
     ) where
 
 import           ClassyPrelude hiding    (undefined)
-
 import qualified Prelude                 as P
-
 import           Debug.FileLocation      (debug, dbg)
 import qualified Data.Text.Encoding      as Text (decodeUtf8, encodeUtf8)
 import qualified Data.Text               as Text
-
 import           Data.Default            (def)
 import           Data.Binary             as Binary (Binary(..))
 import qualified Data.ByteString.Char8   as BS
 import           Data.Typeable
-
 import           Database.LevelDB.Higher.Store (deriveStorableVersion, Version)
-
-
 import           GHC.Generics            (Generic)
-
 import           Language.Haskell.TH (Name, Q, Dec)
 import           Language.Haskell.TH.Lib (conT)
+
+import           System.Locale           (defaultTimeLocale)
+import           Data.Time               (UTCTime)
+import           Data.Time.Format        (formatTime, parseTime)
+
 showStr :: (Show a) => a -> String
 showStr = P.show
 
@@ -77,7 +77,6 @@ deriveSerializersVersion ver name = do
     bi <- [d| instance Binary $(conT name) where |]
     return $ sc ++ bi
 
-
 fqName :: (Typeable a) => a -> ByteString
 fqName typee =  modName ++ "." ++ name
   where
@@ -87,3 +86,17 @@ fqName typee =  modName ++ "." ++ name
 -- TODO: use real logging
 logM :: (MonadIO m) => Text -> m()
 logM = putStrLn
+
+-- | Convert UTCTime to ByteString - the format of the
+-- ByteString is epoch seconds append with (12 digit padded) pico seconds.
+utcToBytes :: UTCTime -> ByteString
+utcToBytes = BS.pack . formatTime defaultTimeLocale "%s%q"
+
+-- | Convert ByteString timestamp to UTCTime
+-- throws an Error if parsing fails
+bytesToUtc :: ByteString -> UTCTime
+bytesToUtc bs =
+    case parseTime defaultTimeLocale "%s%q" $ BS.unpack bs of
+        Nothing -> error $
+            "Failed to parse UTCTime: " ++ (BS.unpack bs)
+        Just t -> t

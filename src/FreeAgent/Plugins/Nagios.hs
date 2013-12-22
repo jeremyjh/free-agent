@@ -27,7 +27,6 @@ import           FreeAgent.Core
 
 import           System.Process     (readProcessWithExitCode)
 import           System.Exit (ExitCode(..))
-import qualified Data.Serialize                   as Cereal
 import           Data.Default (Default(..))
 import           Data.Time.Clock (getCurrentTime)
 
@@ -81,7 +80,7 @@ extractConfig' :: (ConfigReader m) => m NagiosConfig
 extractConfig' = extractConfig $ pluginDef def ^.name
 
 instance Stashable NagiosResult where
-    key (NagiosResult (ResultSummary time _ _) _) = Cereal.encode time
+    key (NagiosResult (ResultSummary time _ _) _) = utcToBytes time
 
 instance Resulting NagiosResult where
     summary (NagiosResult s _) = s
