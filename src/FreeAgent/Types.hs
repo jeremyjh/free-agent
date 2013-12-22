@@ -103,6 +103,12 @@ class (Serializable a, Stashable a) => Resulting a where
     extract :: (Typeable b) => a -> Maybe b
     -- | provide a 'ResultSummary'
     summary :: a -> ResultSummary
+    matchResult :: (Typeable b) => (b -> Bool) -> a -> Bool
+
+    matchResult f a =
+        case cast a of
+            Just a' -> f a'
+            Nothing -> False
     extract = cast
 
 -- ActionResult
@@ -132,29 +138,32 @@ type PluginActions = ( ByteString, Unwrapper Action
 type PluginWriter = Writer [PluginDef] ()
 type ActionsWriter = Writer [PluginActions] ()
 type ActionListener = (Action -> Bool, ProcessId)
+type ResultListener = (ActionResult -> Bool, ProcessId)
 
 data DBMessage = Perform (AgentDB ()) | Terminate
 
 data PluginDef
-  = PluginDef { _plugindefName :: ByteString
-              , _plugindefContext :: Dynamic
-              , _plugindefActions :: [PluginActions]
+  = PluginDef { _plugindefName :: !ByteString
+              , _plugindefContext :: !Dynamic
+              , _plugindefActions :: ![PluginActions]
               , _plugindefActionListeners :: Agent [ActionListener]
+              , _plugindefResultListeners :: Agent [ResultListener]
               }
 
 data AgentConfig
-  = AgentConfig  { _configDbPath :: FilePathS
-                 , _configNodeHost :: String
-                 , _configNodePort :: String
-                 , _configPluginContexts :: PluginContexts
+  = AgentConfig  { _configDbPath :: !FilePathS
+                 , _configNodeHost :: !String
+                 , _configNodePort :: !String
+                 , _configPluginContexts :: !PluginContexts
                  }
 
 data AgentContext
-  = AgentContext { _contextActionMap :: ActionMap
-                 , _contextResultMap :: ResultMap
-                 , _contextAgentConfig :: AgentConfig
+  = AgentContext { _contextActionMap :: !ActionMap
+                 , _contextResultMap :: !ResultMap
+                 , _contextAgentConfig :: !AgentConfig
                  , _contextAgentDBChan :: Chan DBMessage
                  , _contextActionListeners :: Agent [ActionListener]
+                 , _contextResultListeners :: Agent [ResultListener]
                  }
 
 instance Default AgentConfig where
@@ -163,6 +172,7 @@ instance Default AgentConfig where
 instance Default AgentContext where
     def = AgentContext mempty mempty def
             (error "agentDB chan not initialized!")
+            (return [])
             (return [])
 
 class (Functor m, Applicative m, Monad m)
@@ -200,9 +210,9 @@ data RunStatus a = Either Text a
 class (Serializable a, Serializable b, Stashable a, Stashable b, Resulting b)
      => Runnable a b | a -> b where
     exec :: (MonadAgent m) => a -> m (Either Text b)
-    matches :: (Typeable c) => (c -> Bool) -> a -> Bool
+    matchAction :: (Typeable c) => (c -> Bool) -> a -> Bool
 
-    matches f a =
+    matchAction f a =
         case cast a of
             Just a' -> f a'
             Nothing -> False

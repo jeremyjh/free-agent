@@ -84,13 +84,17 @@ instance SafeCopy ActionResult where
 instance Resulting ActionResult where
     extract (ActionResult a) = cast a
     summary (ActionResult a) = summary a
+    matchResult f (ActionResult a)  =
+        case cast a of
+            Just a' -> f a'
+            Nothing -> False
 
 instance Runnable Action ActionResult where
     exec (Action a) = do
         execR <- exec a
         return $ flip fmap execR $ \result ->
                 ActionResult result
-    matches f (Action a)  =
+    matchAction f (Action a)  =
         case cast a of
             Just a' -> f a'
             Nothing -> False

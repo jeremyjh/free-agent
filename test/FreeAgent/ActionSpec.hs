@@ -84,7 +84,7 @@ spec = do
                     `shouldReturn` [ (Right $ Action checkTCP{_commandHost="check2"} )
                                    , (Right $ Action checkTCP{_commandHost="check3"}) ]
         it "can be matched" $ do
-            let matcher = matches (\c -> (_commandHost c) == "localhost")
+            let matcher = matchAction (\c -> (_commandHost c) == "localhost")
             matcher (Action checkTCP) `shouldBe` True
 
 

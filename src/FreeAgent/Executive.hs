@@ -33,8 +33,9 @@ import           Control.Distributed.Process.Platform.ManagedProcess
 type RunningActions = Map Key ProcessId
 
 data ExecState
-  = ExecState { _stateRunning :: RunningActions
-              , _stateListeners :: [ActionListener]
+  = ExecState { _stateRunning :: !RunningActions
+              , _stateActionListeners :: ![ActionListener]
+              , _stateResultListeners :: ![ResultListener]
               } deriving (Typeable, Generic)
 makeFields ''ExecState
 
@@ -62,7 +63,8 @@ instance Binary ExecutiveCommand where
 init :: Agent ProcessId
 init = do
     alisteners <- join $ _contextActionListeners <$> askConfig
-    let _state = ExecState (Map.fromList []) alisteners
+    rlisteners <- join $ _contextResultListeners <$> askConfig
+    let _state = ExecState (Map.fromList []) alisteners rlisteners
     pid <- spawnLocal $ evalStateT loop _state
     Process.register registeredAs pid
     return pid
@@ -137,9 +139,12 @@ doExec act = exec act >>=
             store (key result) result
         return result
     notifyListeners result = do
-        listeners' <- use listeners
-        forM_ listeners' $ \(afilter, apid) ->
+        alisteners <- use actionListeners
+        forM_ alisteners $ \(afilter, apid) ->
             when (afilter act) $ send apid result
+        rlisteners <- use resultListeners
+        forM_ rlisteners $ \(rfilter, rpid) -> do
+            when (rfilter result) $ send rpid result
 
 registerEvent :: (MonadLevelDB m) => Event -> m ()
 registerEvent = withEventKS . withSync . stash

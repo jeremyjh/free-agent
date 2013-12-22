@@ -70,17 +70,20 @@ spec = do
                     -- generate some results to hear about
                     forM_ [0..2] $ \_ ->
                         Exec.execute $ ExecuteAction $ Action checkTCP
-                    threadDelay 10000
+                    threadDelay 20000
 
                     -- make sure he's been listening
-                    Just lpid <- whereis "ExecSpecListener"
+                    Just lpid <- whereis "ExecSpecActionListener"
                     pid <- getSelfPid
-                    send lpid ("ask-result-count" :: ByteString, pid)
-                    resCount <- expect :: Agent Int
-                    result resCount
+                    send lpid ("ask-result-count" :: String, pid)
+                    actionCount <- expect :: Agent Int
+                    Just rpid <- whereis "ExecSpecResultListener"
+                    send rpid ("ask-result-count" :: String, pid)
+                    resultCount <- expect :: Agent Int
+                    result (actionCount, resultCount)
                 $ \exception ->
                     result $ throw exception
-            `shouldReturn` 3
+            `shouldReturn` (3,3)
 
 
 -- helper for running agent and getting results out of
@@ -120,20 +123,34 @@ appConfig = (
         -- add more plugins here!
     ) & agentConfig.dbPath .~ "/tmp/leveltest" -- override Agent config values here!
 
-testListener :: Agent [ActionListener]
-testListener = do
-    let listenLocal resCount = do
-        receiveWait [
-            match (\ (result :: ActionResult) -> do
-                listenLocal $ resCount + 1
-            ),
-            match (\ ("ask-result-count" :: ByteString, pid) ->
-                send pid resCount
-            )
+
+testActionListener :: Agent [ActionListener]
+testActionListener = do
+    apid <- liftProcess $ spawnLocal $ loop (0::Int)
+    Process.register "ExecSpecActionListener" apid
+    return [(matchAction (\c -> _checktcpHost c == "localhost"), apid)]
+  where
+    loop count = do
+        receiveWait
+            [ match $ \ (result :: ActionResult) -> do
+                  loop $ count + 1
+            , match $ \ ("ask-result-count" :: String, pid) ->
+                  send pid count
             ]
-    lpid <- liftProcess $ spawnLocal $ listenLocal (0::Int)
-    Process.register "ExecSpecListener" lpid
-    return [(matches (\c -> _checktcpHost c == "localhost"), lpid)]
+
+testResultListener :: Agent [ResultListener]
+testResultListener = do
+    rpid <- liftProcess $ spawnLocal $ loop (0::Int)
+    Process.register "ExecSpecResultListener" rpid
+    return [(matchResult (\ (NagiosResult _ r) -> r == OK), rpid)]
+  where
+    loop count = do
+        receiveWait
+            [ match $ \ (result :: ActionResult) ->
+                  loop $ count + 1
+            , match $ \ ("ask-result-count" :: String, pid) ->
+                  send pid count
+            ]
 
 testDef :: NagiosConfig -> PluginDef
-testDef conf = definePlugin "ExecSpec" conf testListener (return ())
+testDef conf = definePlugin "ExecSpec" conf testActionListener testResultListener (return ())

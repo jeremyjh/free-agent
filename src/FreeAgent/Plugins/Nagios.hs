@@ -73,7 +73,7 @@ data NagiosResult
 deriveSerializers ''NagiosResult
 
 pluginDef :: NagiosConfig -> PluginDef
-pluginDef conf = definePlugin "Nagios" conf (return []) $
+pluginDef conf = definePlugin "Nagios" conf (return []) (return []) $
  do register (actionType :: Command)
     register (actionType :: CheckTCP)
 

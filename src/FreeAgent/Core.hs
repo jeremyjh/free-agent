@@ -70,7 +70,8 @@ registerPlugins pw =
     def { _contextActionMap = amap
         , _contextResultMap = rmap
         , _contextAgentConfig = def {_configPluginContexts = Map.fromList contexts}
-        , _contextActionListeners = buildListeners plugs
+        , _contextActionListeners = buildActionListeners plugs
+        , _contextResultListeners = buildResultListeners plugs
         }
   where
     buildContexts plugin =
@@ -80,19 +81,24 @@ registerPlugins pw =
             amap = Map.fromList (fst pairs)
             rmap = Map.fromList (snd pairs) in
         (amap, rmap)
-    buildListeners = foldM appendListener []
-    appendListener acc = _plugindefActionListeners >=> return . (++ acc)
+    buildActionListeners = foldM appendActionListener []
+    appendActionListener acc = _plugindefActionListeners >=> return . (++ acc)
+    buildResultListeners = foldM appendResultListener []
+    appendResultListener acc = _plugindefResultListeners >=> return . (++ acc)
 
 addPlugin :: PluginDef -> PluginWriter
 addPlugin pd = tell [pd]
 
 definePlugin :: (Typeable a)
-             => ByteString -> a -> Agent [ActionListener]
+             => ByteString -> a
+             -> Agent [ActionListener]
+             -> Agent [ResultListener]
              -> ActionsWriter
              -> PluginDef
-definePlugin pname pcontext alisteners pwriter
+definePlugin pname pcontext alisteners rlisteners pwriter
   = PluginDef { _plugindefName = pname
               , _plugindefContext = toDyn pcontext
               , _plugindefActions = execWriter pwriter
               , _plugindefActionListeners = alisteners
+              , _plugindefResultListeners = rlisteners
               }
