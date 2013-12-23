@@ -2,10 +2,11 @@ name:                free-agent
 version:             0.1.0.0
 author:              Jeremy Huffman
 build-type:          Custom 
-cabal-version:       >=1.8
+cabal-version:       >=1.10
 
 library 
   ghc-options:       -Wall
+  default-language:  Haskell2010
   hs-source-dirs:    src
   exposed-modules:   FreeAgent 
                    , FreeAgent.Database
@@ -49,12 +50,14 @@ library
 
 executable example 
   ghc-options:       -Wall -threaded -with-rtsopts=-N -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
+  default-language:  Haskell2010
   main-is:           App.hs
   hs-source-dirs:  example 
   build-depends:     free-agent, base == 4.*
 
 test-suite spec
   ghc-options:       -threaded -rtsopts -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
+  default-language:  Haskell2010
   type:              exitcode-stdio-1.0
   hs-source-dirs:    test
   main-is:           Spec.hs

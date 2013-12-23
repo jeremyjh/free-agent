@@ -16,6 +16,7 @@ import           FreeAgent.Prelude
 import           FreeAgent.Lenses
 import           FreeAgent.Action
 import           FreeAgent.Database
+import           FreeAgent.Core ()
 
 import           Data.Binary
 import qualified Data.Map.Strict as Map

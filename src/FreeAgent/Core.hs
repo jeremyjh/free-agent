@@ -1,4 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module FreeAgent.Core
     ( runAgent
@@ -18,18 +19,20 @@ import           Control.Monad.Writer              (execWriter, tell)
 import           Control.Monad.Reader              (runReaderT)
 import           Control.Exception
 import           Control.Distributed.Process.Node
+
 import           Network.Transport.TCP
 import           Network.Transport (closeTransport)
 
 import qualified Data.Map as Map
 import           Data.Dynamic (toDyn, fromDynamic)
 
+
 -- | Execute the agent - main entry point
 runAgent :: AgentContext -> Agent () -> IO ()
 runAgent ctxt ma = do
     registerPluginMaps (ctxt^.actionMap, ctxt^.resultMap)
     (_, dbChan) <- initAgentDB ctxt
-    let proc   = runAgentLoggingT $
+    let proc   = runAgentLoggingT (ctxt^.agentConfig.debugLogCount) $
                     runReaderT (unAgent ma) $
                                ctxt & agentDBChan .~ dbChan
     eithertcp <- createTransport (ctxt^.agentConfig.nodeHost)

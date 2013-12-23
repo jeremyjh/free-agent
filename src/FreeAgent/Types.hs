@@ -42,7 +42,9 @@ import           Data.Binary          as Binary
 import           Data.SafeCopy        (deriveSafeCopy, base)
 import           Control.Distributed.Process.Serializable (Serializable)
 
-import           Control.Monad.Logger  (LoggingT, MonadLogger)
+import           Control.Monad.Logger
+    ( LoggingT, MonadLogger(..), LogLevel(..), runStdoutLoggingT
+    , withChannelLogger )
 import           Control.Monad.Writer (Writer)
 
 import           Control.Concurrent.Chan.Lifted (Chan)
@@ -156,6 +158,8 @@ data AgentConfig
                  , _configNodeHost :: !String
                  , _configNodePort :: !String
                  , _configPluginContexts :: !PluginContexts
+                 , _configDebugLogCount :: !Int
+                 , _configMinLogLevel :: !LogLevel
                  }
 
 data AgentContext
@@ -168,7 +172,7 @@ data AgentContext
                  }
 
 instance Default AgentConfig where
-    def = AgentConfig "./db" "127.0.0.1" "3546" mempty
+    def = AgentConfig "./db" "127.0.0.1" "3546" mempty 10 LevelWarn
 
 instance Default AgentContext where
     def = AgentContext mempty mempty def
@@ -193,19 +197,31 @@ type MonadAgent m = (AgentBase m, ConfigReader m, MonadProcess m)
 
 newtype Agent a = Agent { unAgent :: ReaderT AgentContext (LoggingT Process) a}
             deriving ( Functor, Applicative, Monad, MonadBase IO
-                     , ConfigReader, MonadIO, MonadLogger
+                     , ConfigReader, MonadIO
                      )
 instance MonadBaseControl IO Agent where
   newtype StM Agent a = StAgent {unSTAgent :: StM (ReaderT AgentContext (LoggingT Process)) a}
   restoreM (StAgent m) = Agent $ restoreM m
   liftBaseWith f = Agent $ liftBaseWith $ \ rib -> f (fmap StAgent . rib . unAgent)
 
+instance MonadLogger (Agent) where
+    monadLoggerLog a b level d =
+        (_configMinLogLevel . _contextAgentConfig) <$> askConfig >>= doLog
+      where doLog minlev
+              | level >= minlev = runStdoutLoggingT $ monadLoggerLog a b level d
+              | otherwise = Agent $ lift $ monadLoggerLog a b LevelDebug d
+
+runAgentLoggingT :: (MonadIO m, MonadBaseControl IO m) => Int -> LoggingT m a -> m a
+runAgentLoggingT debugCount = runStdoutLoggingT . withChannelLogger debugCount
+
 instance MonadProcess Agent where
     liftProcess ma = Agent . lift $ lift ma
-    mapProcess f ma = Agent $
-        mapReaderT (mapLoggingT f) (unAgent ma)
+    mapProcess f ma = Agent $ do
+        debugCount <- (_configDebugLogCount . _contextAgentConfig) <$> askConfig
+        mapReaderT (mapLoggingT debugCount f) (unAgent ma)
       where
-        mapLoggingT f' = lift . f' . runAgentLoggingT
+        mapLoggingT conf f' = lift . f' . runAgentLoggingT conf
+
 
 data RunStatus a = Either Text a
     deriving (Show, Eq)

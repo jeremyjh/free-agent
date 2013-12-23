@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings, FlexibleInstances #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE DeriveGeneric        #-}
@@ -24,19 +25,15 @@ module FreeAgent.Prelude
     , logM
     , utcToBytes
     , bytesToUtc
-    , runAgentLoggingT
     , logDebug
-    , logWarn
+    , Log.logWarn
     ) where
 
 import           ClassyPrelude hiding    (undefined)
 import qualified Prelude                 as P
 import           Debug.FileLocation      (debug, dbg)
 
-import           Control.Monad.Trans.Control (MonadBaseControl)
-import           Control.Monad.Logger
-    ( LoggingT, runStdoutLoggingT, withChannelLogger
-    , logDebug, logWarn )
+import qualified Control.Monad.Logger    as Log (logDebug, logWarn )
 import qualified Data.Text.Encoding      as Text (decodeUtf8, encodeUtf8)
 import qualified Data.Text               as Text
 import           Data.Default            (def)
@@ -47,8 +44,9 @@ import           Data.Typeable
 
 import           Database.LevelDB.Higher.Store (deriveStorableVersion, Version)
 import           GHC.Generics            (Generic)
-import           Language.Haskell.TH (Name, Q, Dec)
+import           Language.Haskell.TH (Name, Q, Dec, Exp)
 import           Language.Haskell.TH.Lib (conT)
+{-import           Language.Haskell.TH.Syntax (Q, Exp)-}
 
 
 import           System.Locale           (defaultTimeLocale)
@@ -113,5 +111,12 @@ bytesToUtc bs =
             "Failed to parse UTCTime: " ++ (BS.unpack bs)
         Just t -> t
 
-runAgentLoggingT :: (MonadIO m, MonadBaseControl IO m) => LoggingT m a -> m a
-runAgentLoggingT = runStdoutLoggingT . withChannelLogger 50
+logDebug :: Q Exp
+logDebug =
+--TODO: benchmark this with large amount of data once we
+--have lots of debug statements in code
+#ifdef NO_DEBUG
+  [e|return . const ()|]
+#else
+  Log.logDebug
+#endif
