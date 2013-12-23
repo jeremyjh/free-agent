@@ -42,6 +42,7 @@ import           Data.Binary          as Binary
 import           Data.SafeCopy        (deriveSafeCopy, base)
 import           Control.Distributed.Process.Serializable (Serializable)
 
+import           Control.Monad.Logger  (LoggingT, MonadLogger)
 import           Control.Monad.Writer (Writer)
 
 import           Control.Concurrent.Chan.Lifted (Chan)
@@ -190,19 +191,21 @@ type AgentDB m = LevelDB m
 type AgentBase m = (Applicative m, Monad m, MonadIO m, MonadBase IO m, MonadBaseControl IO m)
 type MonadAgent m = (AgentBase m, ConfigReader m, MonadProcess m)
 
-newtype Agent a = Agent { unAgent :: ReaderT AgentContext Process a}
+newtype Agent a = Agent { unAgent :: ReaderT AgentContext (LoggingT Process) a}
             deriving ( Functor, Applicative, Monad, MonadBase IO
-                     , ConfigReader, MonadIO
+                     , ConfigReader, MonadIO, MonadLogger
                      )
 instance MonadBaseControl IO Agent where
-  newtype StM Agent a = StAgent {unSTAgent :: StM (ReaderT AgentContext Process) a}
+  newtype StM Agent a = StAgent {unSTAgent :: StM (ReaderT AgentContext (LoggingT Process)) a}
   restoreM (StAgent m) = Agent $ restoreM m
   liftBaseWith f = Agent $ liftBaseWith $ \ rib -> f (fmap StAgent . rib . unAgent)
 
 instance MonadProcess Agent where
-    liftProcess ma = Agent $ lift ma
+    liftProcess ma = Agent . lift $ lift ma
     mapProcess f ma = Agent $
-        mapReaderT f (unAgent ma)
+        mapReaderT (mapLoggingT f) (unAgent ma)
+      where
+        mapLoggingT f' = lift . f' . runAgentLoggingT
 
 data RunStatus a = Either Text a
     deriving (Show, Eq)

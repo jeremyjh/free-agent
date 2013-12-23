@@ -44,6 +44,8 @@ library
                    , time
                    , old-locale
                    , template-haskell
+                   , fast-logger == 2.*
+                   , monad-logger
 
 executable example 
   ghc-options:       -Wall -threaded -with-rtsopts=-N -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
@@ -52,7 +54,7 @@ executable example
   build-depends:     free-agent, base == 4.*
 
 test-suite spec
-  ghc-options:       -threaded -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
+  ghc-options:       -threaded -rtsopts -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
   type:              exitcode-stdio-1.0
   hs-source-dirs:    test
   main-is:           Spec.hs

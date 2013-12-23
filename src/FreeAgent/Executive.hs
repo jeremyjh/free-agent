@@ -26,7 +26,6 @@ import           Control.Distributed.Process.Lifted as Process
 import           Control.Distributed.Process.Platform.ManagedProcess
 
 
-
 -- -----------------------------
 -- Types
 -- -----------------------------
@@ -131,8 +130,10 @@ executeRegistered k = void $ spawnLocal $ do
             logM ("Unable to retrieve action key: " ++ toT k ++ " not found in database.")
 
 doExec :: Action -> ExecAgent ()
-doExec act = exec act >>=
-    either logM (storeResult >=> notifyListeners)
+doExec act =
+    $(logDebug) ("Executing action: " ++ tshow act) >>
+    exec act >>=
+    either $(logWarn) (storeResult >=> notifyListeners)
   where
     storeResult result = do
         withAgentDB $ withKeySpace (resultKS act) $
@@ -141,7 +142,9 @@ doExec act = exec act >>=
     notifyListeners result = do
         alisteners <- use actionListeners
         forM_ alisteners $ \(afilter, apid) ->
-            when (afilter act) $ send apid result
+            when (afilter act) $ do
+                $(logDebug) $ "Sending Result: " ++ tshow result
+                send apid result
         rlisteners <- use resultListeners
         forM_ rlisteners $ \(rfilter, rpid) ->
             when (rfilter result) $ send rpid result

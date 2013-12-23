@@ -29,8 +29,9 @@ runAgent :: AgentContext -> Agent () -> IO ()
 runAgent ctxt ma = do
     registerPluginMaps (ctxt^.actionMap, ctxt^.resultMap)
     (_, dbChan) <- initAgentDB ctxt
-    let ctxt' = ctxt & agentDBChan .~ dbChan
-    let proc = runReaderT (unAgent ma) ctxt'
+    let proc   = runAgentLoggingT $
+                    runReaderT (unAgent ma) $
+                               ctxt & agentDBChan .~ dbChan
     eithertcp <- createTransport (ctxt^.agentConfig.nodeHost)
                                  (ctxt^.agentConfig.nodePort)
                                  defaultTCPParameters
