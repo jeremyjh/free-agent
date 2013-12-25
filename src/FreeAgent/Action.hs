@@ -118,7 +118,7 @@ deleteAction = withActionKS . delete
 --
 scanActions :: MonadLevelDB m => AgentContext -> Key -> m [FetchAction]
 scanActions ctxt prefix = withActionKS $
-    let pm = _contextActionMap ctxt
+    let pm = ctxt^.actionMap
         decoder = decodeAction pm in
     scan prefix queryList { scanMap = decoder . snd }
 

@@ -62,8 +62,8 @@ instance Binary ExecutiveCommand where
 -- | initialize the executive server (call once at startup)
 init :: Agent ProcessId
 init = do
-    alisteners <- join $ _contextActionListeners <$> askConfig
-    rlisteners <- join $ _contextResultListeners <$> askConfig
+    alisteners <- join $ view actionListeners <$> askConfig
+    rlisteners <- join $ view resultListeners <$> askConfig
     let _state = ExecState (Map.fromList []) alisteners rlisteners
     pid <- spawnLocal $ evalStateT loop _state
     Process.register registeredAs pid

@@ -49,16 +49,15 @@ closeAgentDB dbChan =
 -- | Asynchronous perform an action on the database that will not
 -- return a value - typically a put or delete
 withAgentDB :: (AgentBase m, ConfigReader m) => AgentDB () -> m ()
-withAgentDB ma = do
-    dbChan <- _contextAgentDBChan <$> askConfig
-    writeChan dbChan $ Perform ma
+withAgentDB ma =
+    (view agentDBChan <$> askConfig) >>= (flip writeChan $ Perform ma)
 
 -- | Perform an action on the database and wait for a result. Can be
 -- used to confirm a put/delete succeeded but you also need to set the
 -- database writee option to use a sync operation (e.g. use 'withSync')
 fromAgentDB :: (AgentBase m, ConfigReader m) => AgentDB a -> m a
 fromAgentDB ma = do
-    dbChan <- _contextAgentDBChan <$> askConfig
+    dbChan <- view agentDBChan <$> askConfig
     result <- newEmptyMVar
     writeChan dbChan $ Perform $
         catchAny ( do !a <- ma --TODO: use NFData
