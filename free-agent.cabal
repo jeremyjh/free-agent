@@ -47,6 +47,8 @@ library
                    , template-haskell
                    , fast-logger == 2.*
                    , monad-logger
+                   , deepseq
+                   , deepseq-th 
 
 executable example 
   ghc-options:       -Wall -threaded -with-rtsopts=-N -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags

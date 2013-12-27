@@ -73,12 +73,10 @@ spec = do
                     threadDelay 20000
 
                     -- make sure he's been listening
-                    Just lpid <- whereis "ExecSpecActionListener"
                     pid <- getSelfPid
-                    send lpid ("ask-result-count" :: String, pid)
+                    nsend "ExecSpecActionListener" ("ask-result-count" :: String, pid)
                     actionCount <- expect :: Agent Int
-                    Just rpid <- whereis "ExecSpecResultListener"
-                    send rpid ("ask-result-count" :: String, pid)
+                    nsend "ExecSpecResultListener" ("ask-result-count" :: String, pid)
                     resultCount <- expect :: Agent Int
                     result (actionCount, resultCount)
                 $ \exception ->
@@ -98,7 +96,7 @@ testAgent ma = do
 
 
 -- for testing - useful to throw an exception if we "never" get the value we're expecting
-texpect :: (MonadProcess m, Monad m) => forall a. Serializable a => m a
+texpect :: (MonadProcess m, Monad m) => forall a. NFSerializable a => m a
 texpect = do
     gotit <- expectTimeout 10000 -- 100ms may as well be never
     case gotit of

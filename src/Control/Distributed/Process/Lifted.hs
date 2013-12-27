@@ -9,6 +9,7 @@
 module Control.Distributed.Process.Lifted
     ( module Control.Distributed.Process
     , module Control.Distributed.Process.Lifted
+    , NFSerializable
     )
 where
 
@@ -21,9 +22,9 @@ import           Control.Monad.Trans.Resource
 import qualified Control.Distributed.Process as Base
 import           Control.Distributed.Process
     hiding ( getSelfPid, send, expect, expectTimeout, spawnLocal
-           , register, whereis)
-
-import           Control.Distributed.Process.Serializable
+           , register, whereis, nsend)
+import qualified Control.Distributed.Process.Platform.UnsafePrimitives as NF
+import           Control.Distributed.Process.Platform (NFSerializable)
 import           Control.Distributed.Process.Internal.Types
 
 
@@ -79,13 +80,20 @@ spawnLocal = mapProcess Base.spawnLocal
 getSelfPid :: (MonadProcess m) => m ProcessId
 getSelfPid = liftProcess Base.getSelfPid
 
-send :: (MonadProcess m, Serializable a) => ProcessId -> a -> m ()
-send pid = liftProcess . Base.send pid
+-- | Send a processId a message - note this is actually the "unsafe" version
+-- from Control.Distributed.Process.Platform.UnsafePrimitives
+send :: (MonadProcess m, NFSerializable a) => ProcessId -> a -> m ()
+send pid = liftProcess . NF.send pid
 
-expect :: (MonadProcess m) => forall a. Serializable a => m a
+-- | Send a named process a message - note this is actually the "unsafe" version
+-- from Control.Distributed.Process.Platform.UnsafePrimitives
+nsend :: (MonadProcess m, NFSerializable a) => String -> a -> m ()
+nsend name = liftProcess . NF.nsend name
+
+expect :: (MonadProcess m) => forall a. NFSerializable a => m a
 expect = liftProcess Base.expect
 
-expectTimeout :: (MonadProcess m) => forall a. Serializable a => Int -> m (Maybe a)
+expectTimeout :: (MonadProcess m) => forall a. NFSerializable a => Int -> m (Maybe a)
 expectTimeout = liftProcess . Base.expectTimeout
 
 register :: (MonadProcess m) => String -> ProcessId -> m ()

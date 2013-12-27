@@ -40,14 +40,13 @@ import           Data.Default            (def)
 import           Data.Binary             as Binary (Binary(..))
 import qualified Data.ByteString.Char8   as BS
 import           Data.Typeable
+import           Control.DeepSeq.TH      (deriveNFData)
 
 
 import           Database.LevelDB.Higher.Store (deriveStorableVersion, Version)
 import           GHC.Generics            (Generic)
 import           Language.Haskell.TH (Name, Q, Dec, Exp)
 import           Language.Haskell.TH.Lib (conT)
-{-import           Language.Haskell.TH.Syntax (Q, Exp)-}
-
 
 import           System.Locale           (defaultTimeLocale)
 import           Data.Time               (UTCTime)
@@ -78,20 +77,28 @@ instance Binary.Binary Text where
     put = Binary.put . Text.encodeUtf8
     get = Text.decodeUtf8 <$> Binary.get
 
+-- | TemplateHaskell function to generate required serializers and related
+-- instances for Actions/ActionResults.
+-- This includes Cereal, SafeCopy, Binary and NFData.
 deriveSerializers :: Name -> Q [Dec]
 deriveSerializers = deriveSerializersVersion 1
 
+-- | Same as 'deriveSerializers' except that the 'SafeCopy' instance will be
+-- for an extension of the provided version. This would also require
+-- a migration from the previous verison. See the SafeCopy documentation
+-- for more details.
 deriveSerializersVersion :: Version a -> Name -> Q [Dec]
 deriveSerializersVersion ver name = do
     sc <- deriveStorableVersion ver name
     bi <- [d| instance Binary $(conT name) where |]
-    return $ sc ++ bi
+    nf <- deriveNFData name
+    return $ sc ++ bi ++ nf
 
 fqName :: (Typeable a) => a -> ByteString
 fqName typee =  modName ++ "." ++ name
   where
-    name = BS.pack $ P.show $ typeOf typee
-    modName = BS.pack $ tyConModule $ typeRepTyCon $ typeOf typee
+    name = BS.pack . P.show $ typeOf typee
+    modName = BS.pack . tyConModule . typeRepTyCon $ typeOf typee
 
 -- TODO: use real logging
 logM :: (MonadIO m) => Text -> m()

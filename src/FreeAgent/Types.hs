@@ -19,9 +19,10 @@ module FreeAgent.Types
  ( module FreeAgent.Types
  , Storeable, MonadLevelDB, Key, Value, KeySpace
  , MonadProcess
- , Serializable
+ , NFSerializable
  , MonadBase
  , MonadBaseControl
+ , NFData(..)
  )
 
 where
@@ -30,7 +31,7 @@ import           FreeAgent.Prelude
 import qualified Prelude              as P
 import           Control.Monad.Reader (ReaderT, mapReaderT, ask)
 
-import           Data.Typeable        (mkTyConApp, mkTyCon3, cast)
+import           Data.Typeable        (cast)
 import           Data.Default         (Default(..))
 import           Data.Dynamic         (Dynamic)
 
@@ -40,7 +41,8 @@ import qualified Data.Serialize       as Cereal
     (Serialize(..), encode, Get)
 import           Data.Binary          as Binary
 import           Data.SafeCopy        (deriveSafeCopy, base)
-import           Control.Distributed.Process.Serializable (Serializable)
+import           Control.DeepSeq      (NFData(..))
+import           Control.DeepSeq.TH   (deriveNFData)
 
 import           Control.Monad.Logger
     ( LoggingT, MonadLogger(..), LogLevel(..), runStdoutLoggingT
@@ -73,6 +75,8 @@ data Wrapped
                   }
     deriving (Show, Eq, Typeable, Generic)
 deriveSafeCopy 1 'base ''Wrapped
+deriveNFData ''Wrapped
+
 instance Binary Wrapped where
 -- so, we need Cereal to implement SafeCopy so it is Storable and
 -- Stashable - yet we cannot use safeGet/safePut with decodeAction' presently
@@ -90,18 +94,20 @@ instance Cereal.Serialize Wrapped where
 instance Stashable Wrapped where
     key = _wrappedWrappedKey
 
-type Actionable a b = (Stashable a, Stashable b, Resulting b, Runnable a b)
+type Actionable a b = (Stashable a, Stashable b, Resulting b, Runnable a b, NFData a, NFData b)
 data Action = forall a b. (Actionable a b) => Action a
 
-instance Typeable Action where
-    typeOf _ = mkTyConApp (mkTyCon3 "free-agent" "FreeAgent.Types" "Action") []
+deriving instance Typeable Action
 
 instance P.Show Action where
     show (Action a) = "Action (" ++ P.show a ++ ")"
 
+instance NFData Action where
+    rnf (Action a) = rnf a
+
 
 -- | Class for types that will be boxed as ActionResult
-class (Serializable a, Stashable a) => Resulting a where
+class (NFSerializable a, Stashable a) => Resulting a where
     -- | extract the concrete result - if you know what type it is
     extract :: (Typeable b) => a -> Maybe b
     -- | provide a 'ResultSummary'
@@ -125,11 +131,16 @@ instance Show ActionResult where
 instance Eq ActionResult where
     (ActionResult a) == (ActionResult b) = Binary.encode a == Binary.encode b
 
-instance Typeable ActionResult where
-    typeOf _ = mkTyConApp (mkTyCon3 "free-agent" "FreeAgent.Types" "ActionResult") []
+deriving instance Typeable ActionResult
+
+instance NFData ActionResult where
+    rnf (ActionResult a) = rnf a
+
+
+
+instance NFData FetchFail
 
 type FetchAction = Either FetchFail Action
-
 -- Unwrapper and registration types
 type Unwrapper a = (Wrapped -> Either FetchFail a)
 type ActionMap = Map ByteString (Unwrapper Action)
@@ -226,7 +237,7 @@ instance MonadProcess Agent where
 data RunStatus a = Either Text a
     deriving (Show, Eq)
 
-class (Serializable a, Serializable b, Stashable a, Stashable b, Resulting b)
+class (NFSerializable a, NFSerializable b, Stashable a, Stashable b, Resulting b)
      => Runnable a b | a -> b where
     exec :: (MonadAgent m) => a -> m (Either Text b)
     matchAction :: (Typeable c) => (c -> Bool) -> a -> Bool
@@ -270,3 +281,4 @@ instance Stashable Event where
 data ActionHistory = ActionHistory deriving (Show, Eq, Typeable, Generic)
 
 data EventHistory = EventHistory deriving (Show, Eq, Typeable, Generic)
+

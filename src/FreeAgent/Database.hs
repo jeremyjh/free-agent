@@ -4,6 +4,7 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module FreeAgent.Database
     ( module Database.LevelDB.Higher
@@ -19,15 +20,14 @@ where
 import           FreeAgent.Prelude
 import           FreeAgent.Lenses
 
+import           Control.Exception              (throw)
 
 import           Control.Concurrent.Chan.Lifted
+import           Control.Concurrent.Lifted      (forkOS, ThreadId)
+import           Control.Monad.Logger           (MonadLogger, LoggingT(..), runStdoutLoggingT)
 import           Database.LevelDB.Higher
 import           Database.LevelDB.Higher.Store
 
-import           Control.Exception              (throw)
-import           Control.Concurrent.Lifted      (forkOS, ThreadId)
-
-import           Control.Monad.Logger           (MonadLogger, LoggingT(..), runStdoutLoggingT)
 
 instance (ConfigReader m) => ConfigReader (LoggingT m)
     where askConfig = lift askConfig
@@ -70,22 +70,23 @@ closeAgentDB dbChan =
 -- return a value - typically a put or delete
 withAgentDB :: (AgentBase m, ConfigReader m) => AgentDB () -> m ()
 withAgentDB ma = viewConfig agentDBChan >>=
-    (flip writeChan $ Perform $
-        catchAny (ma)
-                 (\exception -> do
+    flip writeChan (Perform $
+        catchAny ma
+                 (\exception ->
                      $(logWarn) $ "withAgentDB exception: " ++ tshow exception))
 
 
 -- | Perform an action on the database and wait for a result. Can be
 -- used to confirm a put/delete succeeded but you also need to set the
 -- database writee option to use a sync operation (e.g. use 'withSync')
-fromAgentDB :: (AgentBase m, ConfigReader m) => AgentDB a -> m a
+fromAgentDB :: (AgentBase m, ConfigReader m, NFData a) => AgentDB a -> m a
 fromAgentDB ma = do
     dbChan <- viewConfig agentDBChan
     result <- newEmptyMVar
     writeChan dbChan $ Perform $
-        catchAny (do  !a <- ma --TODO: use NFData
-                      putMVar result a)
+        catchAny (do  !a <- ma
+                      return $ rnf a
+                      putMVar result a )
                  (\exception -> do
                      $(logWarn) $ "fromAgentDB exception: " ++ tshow exception
                      putMVar result (throw exception) )

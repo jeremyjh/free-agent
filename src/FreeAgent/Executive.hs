@@ -54,6 +54,7 @@ data ExecutiveCommand = RegisterAction Action
                       | TerminateExecutive
                       deriving (Typeable, Generic)
 instance Binary ExecutiveCommand where
+instance NFData ExecutiveCommand where
 
 -- -----------------------------
 -- API
@@ -79,9 +80,7 @@ init = do
 
 -- | send a command to the executive process for execution
 execute :: (MonadAgent m) => ExecutiveCommand -> m ()
-execute cmd = do
-    (Just pid) <- whereis registeredAs
-    send pid cmd
+execute = nsend registeredAs
 
 -- -----------------------------
 -- Implementation
