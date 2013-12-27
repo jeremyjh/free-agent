@@ -49,7 +49,7 @@ import           Control.Monad.Writer (Writer)
 
 import           Control.Concurrent.Chan.Lifted (Chan)
 import          Database.LevelDB.Higher
-    ( LevelDB, MonadLevelDB,Storeable, Key, Value, KeySpace
+    ( LevelDBT, MonadLevelDB,Storeable, Key, Value, KeySpace
     , FetchFail(..))
 
 import           Control.Distributed.Process.Lifted
@@ -190,10 +190,10 @@ instance (Functor m, Applicative m,Monad m)
 
 -- Agent Monad
 
-type AgentDB m = LevelDB m
+type AgentDB m = LoggingT (LevelDBT IO) m
 
 type AgentBase m = (Applicative m, Monad m, MonadIO m, MonadBase IO m, MonadBaseControl IO m)
-type MonadAgent m = (AgentBase m, ConfigReader m, MonadProcess m)
+type MonadAgent m = (AgentBase m, ConfigReader m, MonadProcess m, MonadLogger m)
 
 newtype Agent a = Agent { unAgent :: ReaderT AgentContext (LoggingT Process) a}
             deriving ( Functor, Applicative, Monad, MonadBase IO

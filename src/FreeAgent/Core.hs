@@ -3,7 +3,6 @@
 
 module FreeAgent.Core
     ( runAgent
-    , viewConfig
     , extractConfig
     , definePlugin
     , registerPlugins
@@ -46,11 +45,6 @@ runAgent ctxt ma = do
         Left msg -> throw msg
     closeAgentDB dbChan
 
--- | Use a lens to view a portion of AgentContext
-viewConfig :: (ConfigReader m) => Getting a AgentContext a -> m a
-viewConfig lens = do
-    conf <- askConfig
-    return $ view lens conf
 
 -- | Lookup a plugin-specific config from the pluginConfigs map
 -- and extract it to a concrete type with fromDynamic

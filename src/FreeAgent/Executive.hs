@@ -62,8 +62,8 @@ instance Binary ExecutiveCommand where
 -- | initialize the executive server (call once at startup)
 init :: Agent ProcessId
 init = do
-    alisteners <- join $ view actionListeners <$> askConfig
-    rlisteners <- join $ view resultListeners <$> askConfig
+    alisteners <- join $ viewConfig actionListeners
+    rlisteners <- join $ viewConfig resultListeners
     let _state = ExecState (Map.fromList []) alisteners rlisteners
     pid <- spawnLocal $ evalStateT loop _state
     Process.register registeredAs pid
@@ -152,11 +152,11 @@ doExec act =
     resultKS a = "agent:actions:" ++ key a
     timestampKey = utcToBytes . view timestamp . summary
 
-registerEvent :: (MonadLevelDB m) => Event -> m ()
-registerEvent = withEventKS . withSync . stash
+registerEvent :: Event -> ExecAgent ()
+registerEvent = withAgentDB . withEventKS . withSync . stash
 
-unRegisterEvent :: (MonadLevelDB m) => Key -> m ()
-unRegisterEvent = withEventKS . withSync . delete
+unRegisterEvent :: Key -> ExecAgent ()
+unRegisterEvent = withAgentDB . withEventKS . withSync . delete
 
 registeredAs :: String
 registeredAs = "Executive"

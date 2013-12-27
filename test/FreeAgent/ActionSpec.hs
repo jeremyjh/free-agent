@@ -51,7 +51,7 @@ spec = do
                     action <- withConfig $ fromAgentDB $ fetchAction "localhost"
                     action `shouldBe` (Right $ Action checkTCP)
                 it "will fail to read if key is wrong" $ do
-                    (Left (NotFound _)) <- withConfig $ fromAgentDB (fetchProto "notgonnamatch")
+                    (Left (NotFound _)) <- withConfig $ fromAgentDB (fetchAction "notgonnamatch")
                     True `shouldBe` True -- NOT exception
                 it "can write an arbitrary bytestring" $
                     withConfig (withAgentDB . withKeySpace "agent:actions" $

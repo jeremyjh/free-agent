@@ -14,6 +14,7 @@ module FreeAgent.Lenses
 )
 where
 
+import FreeAgent.Prelude
 import FreeAgent.Types
 import           Control.Lens
     (makeFields, (.~), (^.), (&), view, Getting, _1, _2, use)
@@ -24,3 +25,8 @@ makeFields ''Wrapped
 makeFields ''PluginDef
 makeFields ''ResultSummary
 
+-- | Use a lens to view a portion of AgentContext
+viewConfig :: (ConfigReader m) => Getting a AgentContext a -> m a
+viewConfig lens = do
+    conf <- askConfig
+    return $ view lens conf
