@@ -1,9 +1,10 @@
-{-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE BangPatterns      #-}
+{-# LANGUAGE ConstraintKinds   #-}
+{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module FreeAgent.Database
@@ -17,14 +18,15 @@ module FreeAgent.Database
     )
 where
 
-import           FreeAgent.Prelude
 import           FreeAgent.Lenses
+import           FreeAgent.Prelude
 
 import           Control.Exception              (throw)
 
 import           Control.Concurrent.Chan.Lifted
-import           Control.Concurrent.Lifted      (forkOS, ThreadId)
-import           Control.Monad.Logger           (MonadLogger, LoggingT(..), runStdoutLoggingT)
+import           Control.Concurrent.Lifted      (ThreadId, forkOS)
+import           Control.Monad.Logger           (LoggingT (..), MonadLogger,
+                                                 runStdoutLoggingT)
 import           Database.LevelDB.Higher
 import           Database.LevelDB.Higher.Store
 

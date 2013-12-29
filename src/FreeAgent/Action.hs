@@ -1,11 +1,12 @@
-{-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
-{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE ConstraintKinds       #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE NoImplicitPrelude     #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE StandaloneDeriving    #-}
+{-# LANGUAGE TemplateHaskell       #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -19,25 +20,21 @@ module FreeAgent.Action
 where
 
 import           FreeAgent.Prelude
-
-import qualified Prelude                 as P
 import           FreeAgent.Lenses
 
+import           Control.Monad.Writer    (tell)
+import           Data.Binary             (Binary)
+import qualified Data.Binary             as Binary
 import qualified Data.ByteString.Char8   as BS
+import           Data.Dynamic            (cast)
+import qualified Data.Map                as Map
+import qualified Prelude                 as P
+import           System.IO.Unsafe        (unsafePerformIO)
+
 import           Data.SafeCopy
 import           Data.Serialize          (Serialize)
 import qualified Data.Serialize          as Cereal
-import           Data.Binary             (Binary)
-import qualified Data.Binary             as Binary
-import           Data.Dynamic            (cast)
-
 import           Database.LevelDB.Higher
-
-import qualified Data.Map                as Map
-
-import           Control.Monad.Writer    (tell)
-
-import           System.IO.Unsafe (unsafePerformIO)
 
 -- Serialization instances for Action are all this module as they require specialized
 -- and sensitive functions we want to keep encapsulated e.g. (readPluginMaps)

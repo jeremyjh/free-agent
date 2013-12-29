@@ -1,13 +1,14 @@
-{-# LANGUAGE NoImplicitPrelude, OverloadedStrings  #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE ConstraintKinds        #-}
+{-# LANGUAGE DeriveDataTypeable     #-}
+{-# LANGUAGE DeriveGeneric          #-}
+{-# LANGUAGE FlexibleContexts       #-}
+{-# LANGUAGE FlexibleInstances      #-}
 {-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE MultiParamTypeClasses  #-}
+{-# LANGUAGE NoImplicitPrelude      #-}
+{-# LANGUAGE OverloadedStrings      #-}
+{-# LANGUAGE ScopedTypeVariables    #-}
+{-# LANGUAGE TemplateHaskell        #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -20,15 +21,16 @@ module FreeAgent.Plugins.Nagios
     , pluginDef
     ) where
 
-import           FreeAgent.Prelude
-import           FreeAgent.Lenses
 import           FreeAgent.Action
 import           FreeAgent.Core
+import           FreeAgent.Lenses
+import           FreeAgent.Prelude
 
-import           System.Process     (readProcessWithExitCode)
-import           System.Exit (ExitCode(..))
-import           Data.Default (Default(..))
-import           Data.Time.Clock (getCurrentTime)
+import           Data.Time.Clock   (getCurrentTime)
+import           System.Exit       (ExitCode (..))
+import           System.Process    (readProcessWithExitCode)
+
+import           Data.Default      (Default (..))
 
 
 -- | Plugin-specific configuration
@@ -41,8 +43,8 @@ instance Default NagiosConfig where
 makeFields ''NagiosConfig
 
 -- | Supported Actions
-data Command = Command { _commandHost :: Text
-                       , _commandPort :: Maybe Int
+data Command = Command { _commandHost         :: Text
+                       , _commandPort         :: Maybe Int
                        , _commandShellCommand :: Text
                        } deriving (Show, Eq, Typeable, Generic)
 makeFields ''Command

@@ -1,9 +1,11 @@
-{-# LANGUAGE NoImplicitPrelude, OverloadedStrings, FlexibleInstances #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE CPP #-}
-{-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE DeriveGeneric        #-}
+{-# LANGUAGE CPP               #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -29,28 +31,26 @@ module FreeAgent.Prelude
     , Log.logWarn
     ) where
 
-import           ClassyPrelude hiding    (undefined)
-import qualified Prelude                 as P
-import           Debug.FileLocation      (debug, dbg)
+import           ClassyPrelude                 hiding (undefined)
+import qualified Prelude                       as P
 
-import qualified Control.Monad.Logger    as Log (logDebug, logWarn )
-import qualified Data.Text.Encoding      as Text (decodeUtf8, encodeUtf8)
-import qualified Data.Text               as Text
-import           Data.Default            (def)
-import           Data.Binary             as Binary (Binary(..))
-import qualified Data.ByteString.Char8   as BS
+import           Control.DeepSeq.TH            (deriveNFData)
+import qualified Control.Monad.Logger          as Log (logDebug, logWarn)
+import           Data.Binary                   as Binary (Binary (..))
+import qualified Data.ByteString.Char8         as BS
+import           Data.Default                  (def)
+import qualified Data.Text                     as Text
+import qualified Data.Text.Encoding            as Text (decodeUtf8, encodeUtf8)
+import           Data.Time                     (UTCTime)
+import           Data.Time.Format              (formatTime, parseTime)
 import           Data.Typeable
-import           Control.DeepSeq.TH      (deriveNFData)
+import           GHC.Generics                  (Generic)
+import           Language.Haskell.TH           (Dec, Exp, Name, Q)
+import           Language.Haskell.TH.Lib       (conT)
+import           System.Locale                 (defaultTimeLocale)
 
-
-import           Database.LevelDB.Higher.Store (deriveStorableVersion, Version)
-import           GHC.Generics            (Generic)
-import           Language.Haskell.TH (Name, Q, Dec, Exp)
-import           Language.Haskell.TH.Lib (conT)
-
-import           System.Locale           (defaultTimeLocale)
-import           Data.Time               (UTCTime)
-import           Data.Time.Format        (formatTime, parseTime)
+import           Database.LevelDB.Higher.Store (Version, deriveStorableVersion)
+import           Debug.FileLocation            (dbg, debug)
 
 showStr :: (Show a) => a -> String
 showStr = P.show

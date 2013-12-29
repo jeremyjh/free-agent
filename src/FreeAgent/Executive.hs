@@ -1,29 +1,30 @@
-{-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
-{-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE ConstraintKinds        #-}
+{-# LANGUAGE DeriveDataTypeable     #-}
+{-# LANGUAGE DeriveGeneric          #-}
+{-# LANGUAGE FlexibleContexts       #-}
+{-# LANGUAGE FlexibleInstances      #-}
 {-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE MultiParamTypeClasses  #-}
+{-# LANGUAGE NoImplicitPrelude      #-}
+{-# LANGUAGE OverloadedStrings      #-}
+{-# LANGUAGE ScopedTypeVariables    #-}
+{-# LANGUAGE TemplateHaskell        #-}
 
 
 module FreeAgent.Executive where
 
-import           FreeAgent.Prelude
-import           FreeAgent.Lenses
 import           FreeAgent.Action
+import           FreeAgent.Core                                      ()
 import           FreeAgent.Database
-import           FreeAgent.Core ()
+import           FreeAgent.Lenses
+import           FreeAgent.Prelude
 
 import           Data.Binary
-import qualified Data.Map.Strict as Map
+import qualified Data.Map.Strict                                     as Map
 
-import           Control.Monad.State (evalStateT, StateT)
+import           Control.Monad.State                                 (StateT, evalStateT)
 
-import           Control.Distributed.Process.Lifted as Process
+import           Control.Distributed.Process.Lifted                  as Process
 import           Control.Distributed.Process.Platform.ManagedProcess
 
 
@@ -33,7 +34,7 @@ import           Control.Distributed.Process.Platform.ManagedProcess
 type RunningActions = Map Key ProcessId
 
 data ExecState
-  = ExecState { _stateRunning :: !RunningActions
+  = ExecState { _stateRunning         :: !RunningActions
               , _stateActionListeners :: ![ActionListener]
               , _stateResultListeners :: ![ResultListener]
               } deriving (Typeable, Generic)

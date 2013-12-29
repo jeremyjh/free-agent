@@ -1,17 +1,18 @@
-{-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
-{-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE ConstraintKinds            #-}
+{-# LANGUAGE DeriveDataTypeable         #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE ExistentialQuantification  #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE FunctionalDependencies     #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE StandaloneDeriving#-}
-{-# LANGUAGE DeriveGeneric#-}
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE NoImplicitPrelude          #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -28,36 +29,34 @@ module FreeAgent.Types
 where
 
 import           FreeAgent.Prelude
-import qualified Prelude              as P
-import           Control.Monad.Reader (ReaderT, mapReaderT, ask)
+import qualified Prelude                            as P
 
-import           Data.Typeable        (cast)
-import           Data.Default         (Default(..))
-import           Data.Dynamic         (Dynamic)
+import           Control.Monad.Reader               (ReaderT, ask, mapReaderT)
+import           Control.Monad.Writer               (Writer)
+import           Data.Binary                        as Binary
+import           Data.Dynamic                       (Dynamic)
+import           Data.Typeable                      (cast)
 
--- yes we have both cereal and binary ... cereal for safecopy
--- binary for distributed-process
-import qualified Data.Serialize       as Cereal
-    (Serialize(..), encode, Get)
-import           Data.Binary          as Binary
-import           Data.SafeCopy        (deriveSafeCopy, base)
-import           Control.DeepSeq      (NFData(..))
-import           Control.DeepSeq.TH   (deriveNFData)
-
-import           Control.Monad.Logger
-    ( LoggingT, MonadLogger(..), LogLevel(..), runStdoutLoggingT
-    , withChannelLogger )
-import           Control.Monad.Writer (Writer)
-
-import           Control.Concurrent.Chan.Lifted (Chan)
-import          Database.LevelDB.Higher
-    ( LevelDBT, MonadLevelDB,Storeable, Key, Value, KeySpace
-    , FetchFail(..))
-
+import           Control.Concurrent.Chan.Lifted     (Chan)
+import           Control.DeepSeq                    (NFData (..))
+import           Control.DeepSeq.TH                 (deriveNFData)
 import           Control.Distributed.Process.Lifted
-import           Control.Monad.Base (MonadBase)
+import           Control.Monad.Base                 (MonadBase)
+import           Control.Monad.Logger               (LogLevel (..), LoggingT,
+                                                     MonadLogger (..),
+                                                     runStdoutLoggingT,
+                                                     withChannelLogger)
 import           Control.Monad.Trans.Control
+import           Data.Default                       (Default (..))
+import           Data.SafeCopy                      (base, deriveSafeCopy)
+import qualified Data.Serialize                     as Cereal (Get,
+                                                               Serialize (..),
+                                                               encode)
 import           Data.Time.Clock
+import           Database.LevelDB.Higher            (FetchFail (..), Key,
+                                                     KeySpace, LevelDBT,
+                                                     MonadLevelDB, Storeable,
+                                                     Value)
 
 
 -- | Types that can be serialized, stored and retrieved
@@ -70,16 +69,16 @@ class (Storeable a) => Stashable a where
 -- TODO: fix this comment: the type name in 'registerUnwrappers'
 data Wrapped
   = Wrapped { _wrappedWrappedKey :: ByteString
-                  , _wrappedTypeName :: ByteString
-                  , _wrappedValue :: ByteString
-                  }
-    deriving (Show, Eq, Typeable, Generic)
+            , _wrappedTypeName   :: ByteString
+            , _wrappedValue      :: ByteString
+            } deriving (Show, Eq, Typeable, Generic)
 deriveSafeCopy 1 'base ''Wrapped
 deriveNFData ''Wrapped
 
 instance Binary Wrapped where
--- so, we need Cereal to implement SafeCopy so it is Storable and
--- Stashable - yet we cannot use safeGet/safePut with decodeAction' presently
+
+-- we cannot use safeGet/safePut with decodeAction' presently
+-- so we can't use deriveSerializable
 instance Cereal.Serialize Wrapped where
         put (Wrapped x1 x2 x3) = do
             Cereal.put x1
@@ -95,6 +94,7 @@ instance Stashable Wrapped where
     key = _wrappedWrappedKey
 
 type Actionable a b = (Stashable a, Stashable b, Resulting b, Runnable a b, NFData a, NFData b)
+
 data Action = forall a b. (Actionable a b) => Action a
 
 deriving instance Typeable Action
@@ -157,27 +157,27 @@ type ResultListener = (ActionResult -> Bool, ProcessId)
 data DBMessage = Perform (AgentDB ()) | Terminate
 
 data PluginDef
-  = PluginDef { _plugindefName :: !ByteString
-              , _plugindefContext :: !Dynamic
-              , _plugindefActions :: ![PluginActions]
+  = PluginDef { _plugindefName            :: !ByteString
+              , _plugindefContext         :: !Dynamic
+              , _plugindefActions         :: ![PluginActions]
               , _plugindefActionListeners :: Agent [ActionListener]
               , _plugindefResultListeners :: Agent [ResultListener]
               }
 
 data AgentConfig
-  = AgentConfig  { _configDbPath :: !FilePathS
-                 , _configNodeHost :: !String
-                 , _configNodePort :: !String
+  = AgentConfig  { _configDbPath         :: !FilePathS
+                 , _configNodeHost       :: !String
+                 , _configNodePort       :: !String
                  , _configPluginContexts :: !PluginContexts
-                 , _configDebugLogCount :: !Int
-                 , _configMinLogLevel :: !LogLevel
+                 , _configDebugLogCount  :: !Int
+                 , _configMinLogLevel    :: !LogLevel
                  }
 
 data AgentContext
-  = AgentContext { _contextActionMap :: !ActionMap
-                 , _contextResultMap :: !ResultMap
-                 , _contextAgentConfig :: !AgentConfig
-                 , _contextAgentDBChan :: Chan DBMessage
+  = AgentContext { _contextActionMap       :: !ActionMap
+                 , _contextResultMap       :: !ResultMap
+                 , _contextAgentConfig     :: !AgentConfig
+                 , _contextAgentDBChan     :: Chan DBMessage
                  , _contextActionListeners :: Agent [ActionListener]
                  , _contextResultListeners :: Agent [ResultListener]
                  }
@@ -249,8 +249,8 @@ class (NFSerializable a, NFSerializable b, Stashable a, Stashable b, Resulting b
 
 data ResultSummary
   = ResultSummary { _resultTimestamp :: UTCTime
-                  , _resultText :: Text
-                  , _resultResultOf :: Action
+                  , _resultText      :: Text
+                  , _resultResultOf  :: Action
                   } deriving (Show, Typeable, Generic)
 
 instance Cereal.Serialize UTCTime where

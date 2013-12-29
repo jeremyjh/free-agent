@@ -1,9 +1,10 @@
-{-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 {-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances         #-}
+{-# LANGUAGE FunctionalDependencies    #-}
+{-# LANGUAGE MultiParamTypeClasses     #-}
+{-# LANGUAGE NoImplicitPrelude         #-}
+{-# LANGUAGE OverloadedStrings         #-}
+{-# LANGUAGE TemplateHaskell           #-}
 
 -- Tuck away all the lens classes and instances - also export
 -- types for convenience - modules that needs lenses should only import lenses
@@ -14,10 +15,11 @@ module FreeAgent.Lenses
 )
 where
 
-import FreeAgent.Prelude
-import FreeAgent.Types
-import           Control.Lens
-    (makeFields, (.~), (^.), (&), view, Getting, _1, _2, use)
+import           FreeAgent.Prelude
+import           FreeAgent.Types
+
+import           Control.Lens      (Getting, makeFields, use, view, (&), (.~),
+                                    (^.), _1, _2)
 
 makeFields ''AgentContext
 makeFields ''AgentConfig
@@ -27,6 +29,4 @@ makeFields ''ResultSummary
 
 -- | Use a lens to view a portion of AgentContext
 viewConfig :: (ConfigReader m) => Getting a AgentContext a -> m a
-viewConfig lens = do
-    conf <- askConfig
-    return $ view lens conf
+viewConfig lens = view lens <$> askConfig

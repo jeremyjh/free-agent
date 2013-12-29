@@ -1,5 +1,6 @@
-{-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module FreeAgent.Core
     ( runAgent
@@ -9,21 +10,22 @@ module FreeAgent.Core
     , addPlugin
     ) where
 
-import           FreeAgent.Prelude
-import           FreeAgent.Lenses
+import           FreeAgent.Action                 (registerPluginMaps)
 import           FreeAgent.Database
-import           FreeAgent.Action                  (registerPluginMaps)
+import           FreeAgent.Lenses
+import           FreeAgent.Prelude
 
-import           Control.Monad.Writer              (execWriter, tell)
-import           Control.Monad.Reader              (runReaderT)
 import           Control.Exception
+import           Control.Monad.Reader             (runReaderT)
+import           Control.Monad.Writer             (execWriter, tell)
+import           Data.Dynamic                     (fromDynamic, toDyn)
+import qualified Data.Map                         as Map
+
 import           Control.Distributed.Process.Node
-
+import           Network.Transport                (closeTransport)
 import           Network.Transport.TCP
-import           Network.Transport (closeTransport)
 
-import qualified Data.Map as Map
-import           Data.Dynamic (toDyn, fromDynamic)
+
 
 
 -- | Execute the agent - main entry point

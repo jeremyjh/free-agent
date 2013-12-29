@@ -1,9 +1,9 @@
-{-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE TypeFamilies               #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Control.Distributed.Process.Lifted
@@ -13,19 +13,22 @@ module Control.Distributed.Process.Lifted
     )
 where
 
-import           Control.Monad.Trans.Control
 import           Control.Monad.Reader
 import           Control.Monad.RWS
 import           Control.Monad.State
-import           Control.Monad.Base
-import           Control.Monad.Trans.Resource
-import qualified Control.Distributed.Process as Base
-import           Control.Distributed.Process
-    hiding ( getSelfPid, send, expect, expectTimeout, spawnLocal
-           , register, whereis, nsend)
-import qualified Control.Distributed.Process.Platform.UnsafePrimitives as NF
-import           Control.Distributed.Process.Platform (NFSerializable)
+
+import           Control.Distributed.Process                           hiding
+                                                                        (expect, expectTimeout, getSelfPid,
+                                                                        nsend, register,
+                                                                        send, spawnLocal,
+                                                                        whereis)
+import qualified Control.Distributed.Process                           as Base
 import           Control.Distributed.Process.Internal.Types
+import           Control.Distributed.Process.Platform                  (NFSerializable)
+import qualified Control.Distributed.Process.Platform.UnsafePrimitives as NF
+import           Control.Monad.Base
+import           Control.Monad.Trans.Control
+import           Control.Monad.Trans.Resource
 
 
 -- instances required under ResourceT
