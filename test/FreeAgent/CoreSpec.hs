@@ -73,7 +73,7 @@ spec = do
                         (Right nr) <- exec $ Action checkTCP
                         parent <- getSelfPid
                         child <-  spawnLocal $ do
-                            wr <- texpect :: Agent ActionResult
+                            wr <- texpect :: Agent Result
                             let Just (NagiosResult _ OK)= extract wr
                             send parent ("Got OK" :: Text)
                         send child nr

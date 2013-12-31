@@ -78,7 +78,7 @@ instance Binary.Binary Text where
     get = Text.decodeUtf8 <$> Binary.get
 
 -- | TemplateHaskell function to generate required serializers and related
--- instances for Actions/ActionResults.
+-- instances for Actions/Results.
 -- This includes Cereal, SafeCopy, Binary and NFData.
 deriveSerializers :: Name -> Q [Dec]
 deriveSerializers = deriveSerializersVersion 1

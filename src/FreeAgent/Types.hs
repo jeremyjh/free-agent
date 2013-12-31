@@ -107,7 +107,7 @@ instance NFData Action where
     rnf (Action a) = rnf a
 
 
--- | Class for types that will be boxed as ActionResult
+-- | Class for types that will be boxed as Result
 class (NFSerializable a, Stashable a) => Resulting a where
     -- | extract the concrete result - if you know what type it is
     extract :: (Typeable b) => a -> Maybe b
@@ -121,21 +121,21 @@ class (NFSerializable a, Stashable a) => Resulting a where
             Nothing -> False
     extract = cast
 
--- ActionResult
+-- Result
 -- | Box for returning results from 'Action' exec.
 --
-data ActionResult = forall a. (Resulting a, Show a) => ActionResult a
+data Result = forall a. (Resulting a, Show a) => Result a
 
-instance Show ActionResult where
-    show (ActionResult a) = show a
+instance Show Result where
+    show (Result a) = show a
 
-instance Eq ActionResult where
-    (ActionResult a) == (ActionResult b) = Binary.encode a == Binary.encode b
+instance Eq Result where
+    (Result a) == (Result b) = Binary.encode a == Binary.encode b
 
-deriving instance Typeable ActionResult
+deriving instance Typeable Result
 
-instance NFData ActionResult where
-    rnf (ActionResult a) = rnf a
+instance NFData Result where
+    rnf (Result a) = rnf a
 
 
 
@@ -145,15 +145,15 @@ type FetchAction = Either FetchFail Action
 -- Unwrapper and registration types
 type Unwrapper a = (Wrapped -> Either FetchFail a)
 type ActionMap = Map ByteString (Unwrapper Action)
-type ResultMap = Map ByteString (Unwrapper ActionResult)
+type ResultMap = Map ByteString (Unwrapper Result)
 type PluginMaps = (ActionMap, ResultMap)
 type PluginContexts = Map ByteString Dynamic
 type PluginActions = ( ByteString, Unwrapper Action
-                     , ByteString, Unwrapper ActionResult)
+                     , ByteString, Unwrapper Result)
 type PluginWriter = Writer [PluginDef] ()
 type ActionsWriter = Writer [PluginActions] ()
 type ActionListener = (Action -> Bool, ProcessId)
-type ResultListener = (ActionResult -> Bool, ProcessId)
+type ResultListener = (Result -> Bool, ProcessId)
 
 data DBMessage = Perform (AgentDB ()) | Terminate
 

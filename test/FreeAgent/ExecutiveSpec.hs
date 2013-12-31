@@ -126,7 +126,7 @@ testActionListener = do
   where
     loop count = do
         receiveWait
-            [ match $ \ (result :: ActionResult) -> do
+            [ match $ \ (result :: Result) -> do
                   loop $ count + 1
             , match $ \ ("ask-result-count" :: String, pid) ->
                   send pid count
@@ -140,7 +140,7 @@ testResultListener = do
   where
     loop count = do
         receiveWait
-            [ match $ \ (result :: ActionResult) ->
+            [ match $ \ (result :: Result) ->
                   loop $ count + 1
             , match $ \ ("ask-result-count" :: String, pid) ->
                   send pid count

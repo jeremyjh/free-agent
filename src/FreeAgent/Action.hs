@@ -63,41 +63,41 @@ instance Eq Action where
 instance Stashable Action where
     key (Action a) = key a
 
--- same as Action - we need ActionResult serialization instances here
-instance Binary ActionResult where
-    put (ActionResult a) = Binary.put $ wrap a
+-- same as Action - we need Result serialization instances here
+instance Binary Result where
+    put (Result a) = Binary.put $ wrap a
     get = do
         wrapped <- getWrappedBinary
         return $ decodeResult' (snd readPluginMaps) wrapped
 
-instance Serialize ActionResult where
-    put (ActionResult a) = Cereal.put $ wrap a
+instance Serialize Result where
+    put (Result a) = Cereal.put $ wrap a
     get = do
         wrapped <- getWrappedCereal
         return $ decodeResult' (snd readPluginMaps) wrapped
 
-instance SafeCopy ActionResult where
+instance SafeCopy Result where
 
-instance Resulting ActionResult where
-    extract (ActionResult a) = cast a
-    summary (ActionResult a) = summary a
-    matchResult f (ActionResult a)  =
+instance Resulting Result where
+    extract (Result a) = cast a
+    summary (Result a) = summary a
+    matchResult f (Result a)  =
         case cast a of
             Just a' -> f a'
             Nothing -> False
 
-instance Runnable Action ActionResult where
+instance Runnable Action Result where
     exec (Action a) = do
         execR <- exec a
         return $ flip fmap execR $ \result ->
-                ActionResult result
+                Result result
     matchAction f (Action a)  =
         case cast a of
             Just a' -> f a'
             Nothing -> False
 
-instance Stashable ActionResult where
-    key (ActionResult a) = key a
+instance Stashable Result where
+    key (Result a) = key a
 -- | Fix the type & keyspace to Action for fetch
 fetchAction :: MonadLevelDB m => Key -> m FetchAction
 fetchAction = withActionKS . fetch
@@ -163,11 +163,11 @@ unWrapAction :: (Actionable a b)
 unWrapAction uw wrapped = Action <$> uw wrapped
 
 unwrapResult :: (Resulting b)
-             => Unwrapper b -> Wrapped -> Either FetchFail ActionResult
-unwrapResult uw wrapped = ActionResult <$> uw wrapped
+             => Unwrapper b -> Wrapped -> Either FetchFail Result
+unwrapResult uw wrapped = Result <$> uw wrapped
 
 -- Wrap a concrete type for stash or send where it
--- will be decoded to an Action or ActionResult
+-- will be decoded to an Action or Result
 wrap :: (Stashable a) => a -> Wrapped
 wrap st = Wrapped (key st) (fqName st) (Cereal.encode st)
 
@@ -206,7 +206,7 @@ readPluginMaps = unsafePerformIO $ readIORef globalPluginMaps
 withActionKS :: (MonadLevelDB m) => m a -> m a
 withActionKS = withKeySpace "agent:actions"
 
-decodeResult' :: ResultMap -> Wrapped -> ActionResult
+decodeResult' :: ResultMap -> Wrapped -> Result
 decodeResult' pluginMap wrapped =
     case Map.lookup (wrapped^.typeName) pluginMap of
         Just f -> case f wrapped of
