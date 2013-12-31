@@ -75,7 +75,7 @@ spec = do
                     `shouldReturn` ([Right checkTCP{_commandHost="awesome.com"}, Right checkTCP])
                 it "can scan a set of actions" $ do
                     withConfig $ do
-                        ctxt <- askConfig
+                        ctxt <- askContext
                         fromAgentDB $ do
                             stashAction $ Action checkTCP
                             stashAction $ Action checkTCP {_commandHost = "check2"}

@@ -76,7 +76,7 @@ executeAction = sendCommand . ExecuteAction
 -- | send a command to the executive process for execution
 sendCommand :: (MonadAgent m) => ExecutiveCommand -> m ()
 sendCommand cmd = do
-    ctxt <- askConfig
+    ctxt <- askContext
     pid <- liftProcess $ whereisOrStart registeredAs (withAgent ctxt init)
     send pid cmd
 
@@ -97,9 +97,9 @@ init = do
 
 type ExecAgent a = StateT ExecState Agent a
 
-instance (ConfigReader m)
-      => ConfigReader (StateT ExecState m) where
-    askConfig = lift askConfig
+instance (ContextReader m)
+      => ContextReader (StateT ExecState m) where
+    askContext = lift askContext
 
 executiveProcess :: ProcessDefinition ExecState
 executiveProcess = defaultProcess {

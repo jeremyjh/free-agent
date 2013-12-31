@@ -67,8 +67,7 @@ spec = do
                     -- generate some results to hear about
                     forM_ [0..2] $ \_ ->
                         executeAction $ Action checkTCP
-                    threadDelay 20000
-
+                    threadDelay 30000
                     -- make sure he's been listening
                     pid <- getSelfPid
                     nsend "ExecSpecActionListener" ("ask-result-count" :: String, pid)

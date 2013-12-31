@@ -78,7 +78,7 @@ pluginDef conf = definePlugin "Nagios" conf (return []) (return []) $
  do register (actionType :: Command)
     register (actionType :: CheckTCP)
 
-extractConfig' :: (ConfigReader m) => m NagiosConfig
+extractConfig' :: (ContextReader m) => m NagiosConfig
 extractConfig' = extractConfig $ pluginDef def ^.name
 
 instance Stashable NagiosResult where
@@ -104,7 +104,7 @@ instance Runnable Command NagiosResult where
         makeArgs = ["-H", fromT $ cmd^.host, "-p", portS $ cmd^.port]
         portS (Just p) = showStr p
         portS Nothing = ""
-        completeAs :: (MonadProcess m, ConfigReader m) => CommandResult -> String -> m (Either Text NagiosResult)
+        completeAs :: (MonadProcess m, ContextReader m) => CommandResult -> String -> m (Either Text NagiosResult)
         completeAs cmdres result
           = do time <- liftIO getCurrentTime
                let summ = ResultSummary time (toT result) (Action cmd)

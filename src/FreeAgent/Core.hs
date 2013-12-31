@@ -60,7 +60,7 @@ withAgent ctxt ma =
 
 -- | Lookup a plugin-specific config from the pluginConfigs map
 -- and extract it to a concrete type with fromDynamic
-extractConfig :: (ConfigReader m, Typeable a) => ByteString -> m a
+extractConfig :: (ContextReader m, Typeable a) => ByteString -> m a
 extractConfig configName = do
     configMap <- viewConfig $ agentConfig.pluginContexts
     case Map.lookup configName configMap of

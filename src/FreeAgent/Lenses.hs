@@ -28,5 +28,5 @@ makeFields ''PluginDef
 makeFields ''ResultSummary
 
 -- | Use a lens to view a portion of AgentContext
-viewConfig :: (ConfigReader m) => Getting a AgentContext a -> m a
-viewConfig lens = view lens <$> askConfig
+viewConfig :: (ContextReader m) => Getting a AgentContext a -> m a
+viewConfig lens = view lens <$> askContext

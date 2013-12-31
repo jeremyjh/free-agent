@@ -195,23 +195,23 @@ instance Default AgentContext where
             (error "process node not initialized!")
 
 class (Functor m, Applicative m, Monad m)
-      => ConfigReader m where
-    askConfig :: m AgentContext
+      => ContextReader m where
+    askContext :: m AgentContext
 
 instance (Functor m, Applicative m,Monad m)
-         => ConfigReader (ReaderT AgentContext m) where
-    askConfig = ask
+         => ContextReader (ReaderT AgentContext m) where
+    askContext = ask
 
 -- Agent Monad
 
 type AgentDB m = LoggingT (LevelDBT IO) m
 
 type AgentBase m = (Applicative m, Monad m, MonadIO m, MonadBase IO m, MonadBaseControl IO m)
-type MonadAgent m = (AgentBase m, ConfigReader m, MonadProcess m, MonadLogger m)
+type MonadAgent m = (AgentBase m, ContextReader m, MonadProcess m, MonadLogger m)
 
 newtype Agent a = Agent { unAgent :: ReaderT AgentContext (LoggingT Process) a}
             deriving ( Functor, Applicative, Monad, MonadBase IO
-                     , ConfigReader, MonadIO
+                     , ContextReader, MonadIO
                      )
 instance MonadBaseControl IO Agent where
   newtype StM Agent a = StAgent {unSTAgent :: StM (ReaderT AgentContext (LoggingT Process)) a}
@@ -220,7 +220,7 @@ instance MonadBaseControl IO Agent where
 
 instance MonadLogger (Agent) where
     monadLoggerLog a b level d =
-        (_configMinLogLevel . _contextAgentConfig) <$> askConfig >>= doLog
+        (_configMinLogLevel . _contextAgentConfig) <$> askContext >>= doLog
       where doLog minlev
               | level >= minlev = runStdoutLoggingT $ monadLoggerLog a b level d
               | otherwise = Agent $ lift $ monadLoggerLog a b LevelDebug d
@@ -231,7 +231,7 @@ runAgentLoggingT debugCount = runStdoutLoggingT . withChannelLogger debugCount
 instance MonadProcess Agent where
     liftProcess ma = Agent . lift $ lift ma
     mapProcess f ma = Agent $ do
-        debugCount <- (_configDebugLogCount . _contextAgentConfig) <$> askConfig
+        debugCount <- (_configDebugLogCount . _contextAgentConfig) <$> askContext
         mapReaderT (mapLoggingT debugCount f) (unAgent ma)
       where
         mapLoggingT conf f' = lift . f' . runAgentLoggingT conf

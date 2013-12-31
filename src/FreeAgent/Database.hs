@@ -31,8 +31,8 @@ import           Database.LevelDB.Higher
 import           Database.LevelDB.Higher.Store
 
 
-instance (ConfigReader m) => ConfigReader (LoggingT m)
-    where askConfig = lift askConfig
+instance (ContextReader m) => ContextReader (LoggingT m)
+    where askContext = lift askContext
 
 instance MonadLevelDB (LoggingT (LevelDBT IO))
     where
@@ -42,7 +42,7 @@ instance MonadLevelDB (LoggingT (LevelDBT IO))
       liftLevelDB = lift . liftLevelDB
       withDBContext f = mapLoggingT (withDBContext f)
       --TODO: debug log count is hardcoded - need to newtype AgentDB
-      -- and include ConfigReader so it works like Agent logging
+      -- and include ContextReader so it works like Agent logging
         where mapLoggingT f' = lift . f' . runAgentLoggingT 10
 
 
@@ -70,7 +70,7 @@ closeAgentDB dbChan =
 
 -- | Asynchronous perform an action on the database that will not
 -- return a value - typically a put or delete
-withAgentDB :: (AgentBase m, ConfigReader m) => AgentDB () -> m ()
+withAgentDB :: (AgentBase m, ContextReader m) => AgentDB () -> m ()
 withAgentDB ma = viewConfig agentDBChan >>=
     flip writeChan (Perform $
         catchAny ma
@@ -81,7 +81,7 @@ withAgentDB ma = viewConfig agentDBChan >>=
 -- | Perform an action on the database and wait for a result. Can be
 -- used to confirm a put/delete succeeded but you also need to set the
 -- database writee option to use a sync operation (e.g. use 'withSync')
-fromAgentDB :: (AgentBase m, ConfigReader m, NFData a) => AgentDB a -> m a
+fromAgentDB :: (AgentBase m, ContextReader m, NFData a) => AgentDB a -> m a
 fromAgentDB ma = do
     dbChan <- viewConfig agentDBChan
     result <- newEmptyMVar
