@@ -41,6 +41,7 @@ import           Control.Concurrent.Chan.Lifted     (Chan)
 import           Control.DeepSeq                    (NFData (..))
 import           Control.DeepSeq.TH                 (deriveNFData)
 import           Control.Distributed.Process.Lifted
+import           Control.Distributed.Process.Node   (LocalNode)
 import           Control.Monad.Base                 (MonadBase)
 import           Control.Monad.Logger               (LogLevel (..), LoggingT,
                                                      MonadLogger (..),
@@ -180,6 +181,7 @@ data AgentContext
                  , _contextAgentDBChan     :: Chan DBMessage
                  , _contextActionListeners :: Agent [ActionListener]
                  , _contextResultListeners :: Agent [ResultListener]
+                 , _contextProcessNode     :: LocalNode
                  }
 
 instance Default AgentConfig where
@@ -190,6 +192,7 @@ instance Default AgentContext where
             (error "agentDB chan not initialized!")
             (return [])
             (return [])
+            (error "process node not initialized!")
 
 class (Functor m, Applicative m, Monad m)
       => ConfigReader m where

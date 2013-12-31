@@ -4,6 +4,7 @@
 
 module FreeAgent.Core
     ( runAgent
+    , withAgent
     , extractConfig
     , definePlugin
     , registerPlugins
@@ -21,7 +22,9 @@ import           Control.Monad.Writer             (execWriter, tell)
 import           Data.Dynamic                     (fromDynamic, toDyn)
 import qualified Data.Map                         as Map
 
-import           Control.Distributed.Process.Node
+import           Control.Distributed.Process      (Process)
+import           Control.Distributed.Process.Node ( newLocalNode, runProcess
+                                                  , initRemoteTable )
 import           Network.Transport                (closeTransport)
 import           Network.Transport.TCP
 
@@ -33,20 +36,27 @@ runAgent :: AgentContext -> Agent () -> IO ()
 runAgent ctxt ma = do
     registerPluginMaps (ctxt^.actionMap, ctxt^.resultMap)
     (_, dbChan) <- initAgentDB ctxt
-    let proc   = runAgentLoggingT (ctxt^.agentConfig.debugLogCount) $
-                    runReaderT (unAgent ma) $
-                               ctxt & agentDBChan .~ dbChan
     eithertcp <- createTransport (ctxt^.agentConfig.nodeHost)
                                  (ctxt^.agentConfig.nodePort)
                                  defaultTCPParameters
-    case eithertcp of
+    (node, tcp) <- case eithertcp of
         Right tcp -> do
             node <- newLocalNode tcp initRemoteTable
-            runProcess node proc
-            closeTransport tcp
+            return (node, tcp)
         Left msg -> throw msg
+    let proc   = runAgentLoggingT (ctxt^.agentConfig.debugLogCount) $
+                    runReaderT (unAgent ma) $ ctxt
+                               & agentDBChan .~ dbChan
+                               & processNode .~ node
+    runProcess node proc
+    closeTransport tcp
     closeAgentDB dbChan
 
+-- | Used to embed Agent code in the Process monad
+withAgent :: AgentContext -> Agent a -> Process a
+withAgent ctxt ma =
+    runAgentLoggingT (ctxt^.agentConfig.debugLogCount) $
+        runReaderT (unAgent ma) ctxt
 
 -- | Lookup a plugin-specific config from the pluginConfigs map
 -- and extract it to a concrete type with fromDynamic

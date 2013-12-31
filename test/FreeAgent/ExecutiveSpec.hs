@@ -36,10 +36,9 @@ spec = do
         it "can execute a registered action" $ do
             testAgent $ \result -> do
                 catchAny $ do
-                    void Exec.init
-                    Exec.execute $ RegisterAction $ Action checkTCP
+                    registerAction $ Action checkTCP
                     threadDelay 10000
-                    Exec.execute $ ExecuteRegistered $ key checkTCP
+                    executeRegistered $ key checkTCP
                     threadDelay 10000
                     -- confirm results were written
                     items <- fromAgentDB $ withKeySpace "agent:actions:localhost:17500" $ do
@@ -52,8 +51,7 @@ spec = do
         it "can execute a supplied action" $ do
             testAgent $ \result -> do
                 catchAny $ do
-                    void Exec.init
-                    Exec.execute $ ExecuteAction $ Action checkTCP
+                    executeAction $ Action checkTCP
                     threadDelay 10000
                     -- confirm results were written
                     items <- fromAgentDB $ withKeySpace "agent:actions:localhost:17500" $ do
@@ -66,10 +64,9 @@ spec = do
         it "will invoke any configured listeners" $ do
             testAgent $ \result -> do
                 catchAny $ do
-                    void Exec.init
                     -- generate some results to hear about
                     forM_ [0..2] $ \_ ->
-                        Exec.execute $ ExecuteAction $ Action checkTCP
+                        executeAction $ Action checkTCP
                     threadDelay 20000
 
                     -- make sure he's been listening

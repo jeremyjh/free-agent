@@ -13,9 +13,10 @@ module Control.Distributed.Process.Lifted
     )
 where
 
-import           Control.Monad.Reader
-import           Control.Monad.RWS
-import           Control.Monad.State
+import           Control.Monad.Reader                                  (ReaderT, mapReaderT)
+import           Control.Monad.Trans                                   (lift, MonadIO)
+import           Control.Monad.RWS                                     (RWST, Monoid)
+import           Control.Monad.State                                   (StateT, mapStateT)
 
 import           Control.Distributed.Process                           hiding
                                                                         (expect, expectTimeout, getSelfPid,
@@ -23,12 +24,12 @@ import           Control.Distributed.Process                           hiding
                                                                         send, spawnLocal,
                                                                         whereis)
 import qualified Control.Distributed.Process                           as Base
-import           Control.Distributed.Process.Internal.Types
+import           Control.Distributed.Process.Internal.Types            (Process(..), LocalProcess(..))
 import           Control.Distributed.Process.Platform                  (NFSerializable)
 import qualified Control.Distributed.Process.Platform.UnsafePrimitives as NF
-import           Control.Monad.Base
-import           Control.Monad.Trans.Control
-import           Control.Monad.Trans.Resource
+import           Control.Monad.Base                                    (MonadBase(..))
+import           Control.Monad.Trans.Control                           (MonadBaseControl(..))
+import           Control.Monad.Trans.Resource                          (MonadThrow(..), MonadUnsafeIO(..))
 
 
 -- instances required under ResourceT

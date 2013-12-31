@@ -14,7 +14,7 @@
 module FreeAgent.Executive where
 
 import           FreeAgent.Action
-import           FreeAgent.Core                                      ()
+import           FreeAgent.Core                                      (withAgent)
 import           FreeAgent.Database
 import           FreeAgent.Lenses
 import           FreeAgent.Prelude
@@ -26,6 +26,7 @@ import           Control.Monad.State                                 (StateT, ev
 
 import           Control.Distributed.Process.Lifted                  as Process
 import           Control.Distributed.Process.Platform.ManagedProcess
+import           Control.Distributed.Process.Platform                (whereisOrStart)
 
 
 -- -----------------------------
@@ -60,16 +61,31 @@ instance NFData ExecutiveCommand where
 -- -----------------------------
 -- API
 -- -----------------------------
+registerAction :: (MonadAgent m) => Action -> m ()
+registerAction = sendCommand . RegisterAction
 
--- | initialize the executive server (call once at startup)
-init :: Agent ProcessId
+executeRegistered :: (MonadAgent m) => Key -> m ()
+executeRegistered = sendCommand . ExecuteRegistered
+
+executeAction :: (MonadAgent m) => Action -> m ()
+executeAction = sendCommand . ExecuteAction
+-- -----------------------------
+-- Implementation
+-- -----------------------------
+
+-- | send a command to the executive process for execution
+sendCommand :: (MonadAgent m) => ExecutiveCommand -> m ()
+sendCommand cmd = do
+    ctxt <- askConfig
+    pid <- liftProcess $ whereisOrStart registeredAs (withAgent ctxt init)
+    send pid cmd
+
+init :: Agent ()
 init = do
     alisteners <- join $ viewConfig actionListeners
     rlisteners <- join $ viewConfig resultListeners
     let _state = ExecState (Map.fromList []) alisteners rlisteners
-    pid <- spawnLocal $ evalStateT loop _state
-    Process.register registeredAs pid
-    return pid
+    evalStateT loop _state
   where
     loop = do
         command <- expect
@@ -78,14 +94,6 @@ init = do
             cmd -> do
                 void $ spawnLocal $ perform cmd
                 loop
-
--- | send a command to the executive process for execution
-execute :: (MonadAgent m) => ExecutiveCommand -> m ()
-execute = nsend registeredAs
-
--- -----------------------------
--- Implementation
--- -----------------------------
 
 type ExecAgent a = StateT ExecState Agent a
 
@@ -101,27 +109,27 @@ executiveProcess = defaultProcess {
        ]
     }
 
--- | execute a particular command and send the response
+-- | sendCommand a particular command and send the response
 perform :: ExecutiveCommand -> ExecAgent ()
-perform (RegisterAction a)  = registerAction a
-perform (UnregisterAction k) = unRegisterAction k
-perform (ExecuteAction a) = executeAction a
-perform (ExecuteRegistered k) = executeRegistered k
+perform (RegisterAction a)  = doRegisterAction a
+perform (UnregisterAction k) = doUnRegisterAction k
+perform (ExecuteAction a) = doExecuteAction a
+perform (ExecuteRegistered k) = doExecuteRegistered k
 perform _ = undefined
 {-perform (QueryActionHistory query) = undefined-}
 
 -- ExecutiveCommand realizations
-registerAction ::  Action -> ExecAgent ()
-registerAction = withAgentDB . withSync . stashAction
+doRegisterAction ::  Action -> ExecAgent ()
+doRegisterAction = withAgentDB . withSync . stashAction
 
-unRegisterAction :: Key -> ExecAgent ()
-unRegisterAction = withAgentDB . withSync . deleteAction
+doUnRegisterAction :: Key -> ExecAgent ()
+doUnRegisterAction = withAgentDB . withSync . deleteAction
 
-executeAction :: Action -> ExecAgent ()
-executeAction = void . spawnLocal . doExec
+doExecuteAction :: Action -> ExecAgent ()
+doExecuteAction = void . spawnLocal . doExec
 
-executeRegistered :: Key -> ExecAgent ()
-executeRegistered k = void $ spawnLocal $ do
+doExecuteRegistered :: Key -> ExecAgent ()
+doExecuteRegistered k = void $ spawnLocal $ do
     act <- fromAgentDB $ fetchAction k
     case act of
         Right a -> doExec a
@@ -152,11 +160,11 @@ doExec act =
     resultKS a = "agent:actions:" ++ key a
     timestampKey = utcToBytes . view timestamp . summary
 
-registerEvent :: Event -> ExecAgent ()
-registerEvent = withAgentDB . withEventKS . withSync . stash
+doRegisterEvent :: Event -> ExecAgent ()
+doRegisterEvent = withAgentDB . withEventKS . withSync . stash
 
-unRegisterEvent :: Key -> ExecAgent ()
-unRegisterEvent = withAgentDB . withEventKS . withSync . delete
+doUnregisterEvent :: Key -> ExecAgent ()
+doUnregisterEvent = withAgentDB . withEventKS . withSync . delete
 
 registeredAs :: String
 registeredAs = "Executive"
