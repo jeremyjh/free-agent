@@ -3,10 +3,9 @@
 
 module FreeAgent.ExecutiveSpec (main, spec) where
 
-import           FreeAgent.Prelude
-import           System.Process(system)
 import           Test.Hspec
 
+import           FreeAgent.Prelude
 import           FreeAgent.Lenses
 import           FreeAgent.Core
 import           FreeAgent.Action
@@ -14,12 +13,12 @@ import           FreeAgent.Database
 import           FreeAgent.Plugins.Nagios as Nagios
 import           FreeAgent.Executive as Exec
 
+import           System.Process(system)
+
 import           Control.Concurrent.Lifted
 import           Control.Distributed.Process.Lifted as Process
-
 import           Control.Distributed.Process.Node
 import           Network.Transport.TCP
-
 import           Data.Dynamic
 
 import           Control.Exception
@@ -41,7 +40,7 @@ spec = do
                     executeRegistered $ key checkTCP
                     threadDelay 10000
                     -- confirm results were written
-                    items <- fromAgentDB $ withKeySpace "agent:actions:localhost:17500" $ do
+                    items <- agentDb $ withKeySpace "agent:actions:localhost:53" $ do
                         scan "" queryItems
                     result $ length items
                 $ \exception ->
@@ -54,7 +53,7 @@ spec = do
                     executeAction $ Action checkTCP
                     threadDelay 10000
                     -- confirm results were written
-                    items <- fromAgentDB $ withKeySpace "agent:actions:localhost:17500" $ do
+                    items <- agentDb $ withKeySpace "agent:actions:localhost:53" $ do
                         scan "" queryItems
                     result $ length items
                 $ \exception ->
@@ -78,6 +77,21 @@ spec = do
                 $ \exception ->
                     result $ throw exception
             `shouldReturn` (3,3)
+
+        it "can deliver a package" $ do
+            testAgent $ \result -> do
+                catchAny $ do
+                    package <- set actions [Action checkTCP] <$> defaultPackage
+                    deliverPackage package
+
+                    threadDelay 10000
+                    -- confirm results were written
+                    items <- agentDb $ withKeySpace "agent:actions:localhost:53" $ do
+                        scan "" queryItems
+                    result $ length items
+                $ \exception ->
+                    result $ throw exception
+            `shouldReturn` 1
 
 
 -- helper for running agent and getting results out of
@@ -103,7 +117,7 @@ setup :: IO ()
 setup = void $ system ("rm -rf " ++ appConfig^.agentConfig.dbPath)
 
 
-checkTCP = CheckTCP  "localhost" 17500
+checkTCP = CheckTCP  "localhost" 53
 
 -- use a local config here because we are wiring up our own test listener
 appConfig :: AgentContext
@@ -116,6 +130,7 @@ appConfig = (
         addPlugin $ testDef def
         -- add more plugins here!
     ) & agentConfig.dbPath .~ "/tmp/leveltest" -- override Agent config values here!
+      {-& agentConfig.minLogLevel .~ LevelDebug-}
 
 
 testActionListener :: Agent [ActionListener]

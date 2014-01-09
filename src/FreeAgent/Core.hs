@@ -75,11 +75,11 @@ registerPlugins :: PluginWriter -> AgentContext
 registerPlugins pw =
     let plugs = execWriter pw
         acts = concatMap _plugindefActions plugs
-        contexts = map buildContexts plugs
+        acontexts = map buildContexts plugs
         (amap, rmap) = buildPluginMaps acts in
     def { _contextActionMap = amap
         , _contextResultMap = rmap
-        , _contextAgentConfig = def {_configPluginContexts = Map.fromList contexts}
+        , _contextAgentConfig = def {_configPluginContexts = Map.fromList acontexts}
         , _contextActionListeners = buildActionListeners plugs
         , _contextResultListeners = buildResultListeners plugs
         }

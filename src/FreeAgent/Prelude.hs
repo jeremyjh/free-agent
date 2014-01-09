@@ -19,6 +19,7 @@ module FreeAgent.Prelude
     , FilePathS
     , debug, dbg
     , ConvertText(..)
+    , ConvertByteString(..)
     , def
     , P.undefined --classy undefined is obnoxious
     , Generic
@@ -50,6 +51,7 @@ import           Language.Haskell.TH.Lib       (conT)
 import           System.Locale                 (defaultTimeLocale)
 
 import           Database.LevelDB.Higher.Store (Version, deriveStorableVersion)
+import           Data.UUID                     (toASCIIBytes, fromASCIIBytes, UUID)
 import           Debug.FileLocation            (dbg, debug)
 
 showStr :: (Show a) => a -> String
@@ -76,6 +78,14 @@ instance ConvertText FilePath where
 instance Binary.Binary Text where
     put = Binary.put . Text.encodeUtf8
     get = Text.decodeUtf8 <$> Binary.get
+
+class ConvertByteString a where
+    toBytes :: a -> ByteString
+    fromBytes :: ByteString -> a
+
+instance ConvertByteString UUID where
+    toBytes = toASCIIBytes
+    fromBytes uuid = fromMaybe  (error "invalid UUUID Bytes") (fromASCIIBytes uuid)
 
 -- | TemplateHaskell function to generate required serializers and related
 -- instances for Actions/Results.

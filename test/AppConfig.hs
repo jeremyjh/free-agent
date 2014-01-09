@@ -17,3 +17,4 @@ appConfig = (
         }
         -- add more plugins here!
     ) & agentConfig.dbPath .~ "/tmp/leveltest" -- override Agent config values here!
+      {-& agentConfig.minLogLevel .~ LevelDebug-}

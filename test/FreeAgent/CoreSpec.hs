@@ -57,9 +57,9 @@ spec = do
             it "can read a wrapped Action from the DB and execute it" $ do
                 testAgent $ \result -> do
                     catchAny $ do
-                        (Right action) <- fromAgentDB $ do
+                        (Right action) <- agentDb $ do
                             stashAction $ Action checkTCP
-                            fetchAction "localhost:17500"
+                            fetchAction "localhost:53"
                         (Right nr) <- exec action
                         let Just (NagiosResult (ResultSummary _ rs _) OK) = extract nr
                         result $ take 6 rs
@@ -119,4 +119,4 @@ texpect = do
 setup :: IO ()
 setup = void $ system ("rm -rf " ++ appConfig^.agentConfig.dbPath)
 
-checkTCP = CheckTCP  "localhost" 17500
+checkTCP = CheckTCP  "localhost" 53

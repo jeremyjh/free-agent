@@ -49,6 +49,7 @@ library
                    , monad-logger
                    , deepseq
                    , deepseq-th 
+                   , uuid
 
 executable example 
   ghc-options:       -Wall -threaded -with-rtsopts=-N -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags

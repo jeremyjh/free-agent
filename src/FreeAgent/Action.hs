@@ -16,6 +16,7 @@ module FreeAgent.Action
     , withActionKS
     , register, actionType
     , registerPluginMaps
+    , defaultPackage
     )
 where
 
@@ -34,6 +35,7 @@ import           System.IO.Unsafe        (unsafePerformIO)
 import           Data.SafeCopy
 import           Data.Serialize          (Serialize)
 import qualified Data.Serialize          as Cereal
+import           Data.UUID.V1 (nextUUID)
 import           Database.LevelDB.Higher
 
 -- Serialization instances for Action are all this module as they require specialized
@@ -57,11 +59,9 @@ instance Serialize Action where
 instance SafeCopy Action where
     putCopy (Action a) = putCopy a
 
-instance Eq Action where
-    a == b =  Cereal.encode a == Cereal.encode b
-
 instance Stashable Action where
     key (Action a) = key a
+
 
 -- same as Action - we need Result serialization instances here
 instance Binary Result where
@@ -229,3 +229,17 @@ getWrappedCereal = do
         wt  <- Cereal.get
         wv <- Cereal.get
         return (Wrapped wk wt wv)
+
+deriveSerializers ''Package
+
+-- | initialize a default Package with a new UUID
+defaultPackage :: (MonadIO m) => m Package
+defaultPackage = do
+    (Just newid) <- liftIO nextUUID
+    return $ Package newid
+                     []
+                     []
+                     []
+                     []
+                     []
+                     Now

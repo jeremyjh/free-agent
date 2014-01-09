@@ -49,10 +49,8 @@ data ExecutiveCommand = RegisterAction Action
                       | UnregisterAction Key
 		              | ExecuteAction Action
 		              | ExecuteRegistered Key
+                      | DeliverPackage Package
                       {-| QueryActionHistory (ScanQuery ActionHistory [ActionHistory])-}
-                      | RegisterEvent Event
-                      | UnregisterEvent Event
-                      {-| QueryEventHistory (ScanQuery EventHistory [EventHistory])-}
                       | TerminateExecutive
                       deriving (Typeable, Generic)
 instance Binary ExecutiveCommand where
@@ -69,6 +67,11 @@ executeRegistered = sendCommand . ExecuteRegistered
 
 executeAction :: (MonadAgent m) => Action -> m ()
 executeAction = sendCommand . ExecuteAction
+
+-- | Send / register a package and optional list of Actions to register
+-- to each context leader defined in the package
+deliverPackage :: (MonadAgent m) => Package -> m ()
+deliverPackage p = sendCommand $ DeliverPackage p
 -- -----------------------------
 -- Implementation
 -- -----------------------------
@@ -77,7 +80,7 @@ executeAction = sendCommand . ExecuteAction
 sendCommand :: (MonadAgent m) => ExecutiveCommand -> m ()
 sendCommand cmd = do
     ctxt <- askContext
-    pid <- liftProcess $ whereisOrStart registeredAs (withAgent ctxt init)
+    pid <- liftProcess $ whereisOrStart "executive" (withAgent ctxt init)
     send pid cmd
 
 init :: Agent ()
@@ -115,37 +118,48 @@ perform (RegisterAction a)  = doRegisterAction a
 perform (UnregisterAction k) = doUnRegisterAction k
 perform (ExecuteAction a) = doExecuteAction a
 perform (ExecuteRegistered k) = doExecuteRegistered k
+perform (DeliverPackage p) = doDeliverPackage p
 perform _ = undefined
 {-perform (QueryActionHistory query) = undefined-}
 
 -- ExecutiveCommand realizations
 doRegisterAction ::  Action -> ExecAgent ()
-doRegisterAction = withAgentDB . withSync . stashAction
+doRegisterAction act = do
+    $(logDebug) $ "Registering action: " ++ tshow act
+    agentDb $ stashAction act
 
 doUnRegisterAction :: Key -> ExecAgent ()
-doUnRegisterAction = withAgentDB . withSync . deleteAction
+doUnRegisterAction k = do
+    $(logDebug) $ "Unregistering action key: " ++ tshow k
+    agentDb $ deleteAction k
 
 doExecuteAction :: Action -> ExecAgent ()
-doExecuteAction = void . spawnLocal . doExec
+doExecuteAction act = do
+    $(logDebug) $ "Executing action: " ++ tshow act
+    void $ spawnLocal $ doExec act
 
 doExecuteRegistered :: Key -> ExecAgent ()
 doExecuteRegistered k = void $ spawnLocal $ do
-    act <- fromAgentDB $ fetchAction k
+    $(logDebug) $ "Executing action key: " ++ tshow k
+    act <- agentDb $ fetchAction k
     case act of
-        Right a -> doExec a
+        Right a -> do
+            $(logDebug) $ "Executing action: " ++ tshow a
+            doExec a
         Left (ParseFail msg) ->
-            logM ("Unable to retrieve action key: " ++ toT k ++ " - " ++ toT msg)
+            $(logWarn) $ "Unable to retrieve action key: " ++ toT k
+                         ++ " - " ++ toT msg
         Left (NotFound _) ->
-            logM ("Unable to retrieve action key: " ++ toT k ++ " not found in database.")
+            $(logWarn) $ "Unable to retrieve action key: " ++ toT k
+                        ++ " not found in database."
 
 doExec :: Action -> ExecAgent ()
 doExec act =
-    $(logDebug) ("Executing action: " ++ tshow act) >>
     exec act >>=
     either $(logWarn) (storeResult >=> notifyListeners)
   where
     storeResult result = do
-        withAgentDB $ withKeySpace (resultKS act) $
+        asyncAgentDb $ withKeySpace (resultKS act) $
             store (timestampKey result) result
         return result
     notifyListeners result = do
@@ -160,14 +174,27 @@ doExec act =
     resultKS a = "agent:actions:" ++ key a
     timestampKey = utcToBytes . view timestamp . summary
 
-doRegisterEvent :: Event -> ExecAgent ()
-doRegisterEvent = withAgentDB . withEventKS . withSync . stash
+doDeliverPackage :: Package -> ExecAgent ()
+doDeliverPackage package = do
+    $(logDebug) $ "Delivering package: " ++ tshow package
+    registerIt >>= storeIt >>= scheduleIt
+  where
+    registerIt = do
+        keys <- forM (package^.actions) $ \act -> do
+            doRegisterAction act
+            return $ key act
+        return $ package & actionKeys .~ (keys ++ (package^.actionKeys))
+                & actions .~ []
+    storeIt pkg = do
+        agentDb $ withPackageKS $
+                store (toBytes $ pkg^.uuid) pkg
+        return pkg
+    scheduleIt pkg =
+        case pkg^.schedule of
+            Now ->
+                forM_ (pkg^.actionKeys) $ \akey ->
+                    doExecuteRegistered akey
+            _ -> return () --TODO: add to scheduler
 
-doUnregisterEvent :: Key -> ExecAgent ()
-doUnregisterEvent = withAgentDB . withEventKS . withSync . delete
-
-registeredAs :: String
-registeredAs = "Executive"
-
-withEventKS :: (MonadLevelDB m) => m () -> m ()
-withEventKS = withKeySpace "agent:events"
+withPackageKS :: (MonadLevelDB m) => m () -> m ()
+withPackageKS = withKeySpace "agent:packages"

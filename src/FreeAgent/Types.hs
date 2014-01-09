@@ -24,6 +24,7 @@ module FreeAgent.Types
  , MonadBase
  , MonadBaseControl
  , NFData(..)
+ , LogLevel(..)
  )
 
 where
@@ -35,6 +36,7 @@ import           Control.Monad.Reader               (ReaderT, ask, mapReaderT)
 import           Control.Monad.Writer               (Writer)
 import           Data.Binary                        as Binary
 import           Data.Dynamic                       (Dynamic)
+import           Data.Time.Clock                    (UTCTime)
 import           Data.Typeable                      (cast)
 
 import           Control.Concurrent.Chan.Lifted     (Chan)
@@ -51,13 +53,12 @@ import           Control.Monad.Trans.Control
 import           Data.Default                       (Default (..))
 import           Data.SafeCopy                      (base, deriveSafeCopy)
 import qualified Data.Serialize                     as Cereal (Get,
-                                                               Serialize (..),
-                                                               encode)
-import           Data.Time.Clock
+                                                               Serialize (..))
+import           Data.UUID                          (UUID)
 import           Database.LevelDB.Higher            (FetchFail (..), Key,
                                                      KeySpace, LevelDBT,
                                                      MonadLevelDB, Storeable,
-                                                     Value)
+                                                     Value, deriveStorable)
 
 
 -- | Types that can be serialized, stored and retrieved
@@ -73,8 +74,6 @@ data Wrapped
             , _wrappedTypeName   :: ByteString
             , _wrappedValue      :: ByteString
             } deriving (Show, Eq, Typeable, Generic)
-deriveSafeCopy 1 'base ''Wrapped
-deriveNFData ''Wrapped
 
 instance Binary Wrapped where
 
@@ -94,11 +93,17 @@ instance Cereal.Serialize Wrapped where
 instance Stashable Wrapped where
     key = _wrappedWrappedKey
 
-type Actionable a b = (Stashable a, Stashable b, Resulting b, Runnable a b, NFData a, NFData b)
+type Actionable a b = (Stashable a, Stashable b, Resulting b, Runnable a b, NFData a, NFData b, Eq a)
 
 data Action = forall a b. (Actionable a b) => Action a
 
 deriving instance Typeable Action
+
+instance Eq Action where
+    (Action a) == (Action b) =
+        case cast b of
+            Just b' -> a == b'
+            Nothing -> False
 
 instance P.Show Action where
     show (Action a) = "Action (" ++ P.show a ++ ")"
@@ -174,6 +179,15 @@ data AgentConfig
                  , _configMinLogLevel    :: !LogLevel
                  }
 
+-- | Each agent belongs to one or more contexts - every 'Package' specifies
+-- the Context(s) in which it will execute
+data Context = Context !Text deriving (Show, Eq, Typeable, Generic)
+
+-- | Each agent belongs to one or more Zones - functionally this is the
+-- similar to a Context but it is intended to indicate geographic or
+-- network location (e.g. Zone "BehindFirewall", Zone "DMZ", Zone "Public")
+data Zone = Zone !Text deriving (Show, Eq, Typeable, Generic)
+
 data AgentContext
   = AgentContext { _contextActionMap       :: !ActionMap
                  , _contextResultMap       :: !ResultMap
@@ -182,6 +196,8 @@ data AgentContext
                  , _contextActionListeners :: Agent [ActionListener]
                  , _contextResultListeners :: Agent [ResultListener]
                  , _contextProcessNode     :: LocalNode
+                 , _contextContexts        :: ![Context]
+                 , _contextZones           :: ![Zone]
                  }
 
 instance Default AgentConfig where
@@ -193,6 +209,8 @@ instance Default AgentContext where
             (return [])
             (return [])
             (error "process node not initialized!")
+            [Context "default"]
+            [Zone "default"]
 
 class (Functor m, Applicative m, Monad m)
       => ContextReader m where
@@ -250,6 +268,7 @@ class (NFSerializable a, NFSerializable b, Stashable a, Stashable b, Resulting b
             Just a' -> f a'
             Nothing -> False
 
+
 data ResultSummary
   = ResultSummary { _resultTimestamp :: UTCTime
                   , _resultText      :: Text
@@ -268,20 +287,25 @@ instance Binary UTCTime where
         return $ bytesToUtc stime
     put = put . utcToBytes
 
--- Scheduling and Events
+-- Scheduling
 data Schedule = Now | Later
     deriving (Show, Eq, Typeable, Generic)
-deriveSerializers ''Schedule
 
-data Event = Event Schedule Wrapped
-    deriving (Show, Eq, Typeable, Generic)
-deriveSerializers ''Event
-
-instance Stashable Event where
-    key (Event sch act)
-      = Cereal.encode sch ++ key act
+data Package = Package {
+      _packageUuid :: UUID
+    , _packageContexts :: [Context]
+    , _packageZones :: [Zone]
+    , _packageActions :: [Action]
+    , _packageActionKeys :: [Key]
+    , _packageMeta :: [(Text, Text)]
+    , _packageSchedule :: Schedule
+} deriving (Show, Eq, Typeable, Generic)
 
 data ActionHistory = ActionHistory deriving (Show, Eq, Typeable, Generic)
 
-data EventHistory = EventHistory deriving (Show, Eq, Typeable, Generic)
-
+deriveStorable ''UUID
+deriveSerializers ''Context
+deriveSerializers ''Zone
+deriveSafeCopy 1 'base ''Wrapped
+deriveNFData ''Wrapped
+deriveSerializers ''Schedule

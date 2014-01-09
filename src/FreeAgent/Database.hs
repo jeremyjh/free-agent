@@ -11,10 +11,9 @@ module FreeAgent.Database
     ( module Database.LevelDB.Higher
     , module Database.LevelDB.Higher.Store
     , initAgentDB
-    , withAgentDB
-    , fromAgentDB
+    , asyncAgentDb
+    , agentDb
     , closeAgentDB
-    , withSync
     )
 where
 
@@ -25,7 +24,7 @@ import           Control.Exception              (throw)
 
 import           Control.Concurrent.Chan.Lifted
 import           Control.Concurrent.Lifted      (ThreadId, forkOS)
-import           Control.Monad.Logger           (LoggingT (..), MonadLogger,
+import           Control.Monad.Logger           (LoggingT (..),
                                                  runStdoutLoggingT)
 import           Database.LevelDB.Higher
 import           Database.LevelDB.Higher.Store
@@ -51,7 +50,10 @@ initAgentDB :: AgentContext -> IO (ThreadId, Chan DBMessage)
 initAgentDB ctxt = do
     chan <- newChan
     thread <- forkOS $
-        runCreateLevelDB (ctxt^.agentConfig.dbPath) "agent" $ loop chan
+        runLevelDB (ctxt^.agentConfig.dbPath)
+                   def {createIfMissing = True}
+                   (def, def {sync=True})
+                   "agent" $ loop chan
     return (thread, chan)
   where
     loop chan = do
@@ -70,19 +72,19 @@ closeAgentDB dbChan =
 
 -- | Asynchronous perform an action on the database that will not
 -- return a value - typically a put or delete
-withAgentDB :: (AgentBase m, ContextReader m) => AgentDB () -> m ()
-withAgentDB ma = viewConfig agentDBChan >>=
+asyncAgentDb :: (AgentBase m, ContextReader m) => AgentDB () -> m ()
+asyncAgentDb ma = viewConfig agentDBChan >>=
     flip writeChan (Perform $
-        catchAny ma
+        catchAny (withOptions def ma)
                  (\exception ->
-                     $(logWarn) $ "withAgentDB exception: " ++ tshow exception))
+                     $(logWarn) $ "asyncAgentDb exception: " ++ tshow exception))
 
 
 -- | Perform an action on the database and wait for a result. Can be
 -- used to confirm a put/delete succeeded but you also need to set the
 -- database writee option to use a sync operation (e.g. use 'withSync')
-fromAgentDB :: (AgentBase m, ContextReader m, NFData a) => AgentDB a -> m a
-fromAgentDB ma = do
+agentDb :: (AgentBase m, ContextReader m, NFData a) => AgentDB a -> m a
+agentDb ma = do
     dbChan <- viewConfig agentDBChan
     result <- newEmptyMVar
     writeChan dbChan $ Perform $
@@ -90,10 +92,6 @@ fromAgentDB ma = do
                       return $ rnf a
                       putMVar result a )
                  (\exception -> do
-                     $(logWarn) $ "fromAgentDB exception: " ++ tshow exception
+                     $(logWarn) $ "agentDb exception: " ++ tshow exception
                      putMVar result (throw exception) )
     takeMVar result
-
--- | Set the write option sync = True for a block of database operations
-withSync :: (MonadLogger m, MonadLevelDB m) => m () -> m()
-withSync = withOptions (def, def {sync = True})

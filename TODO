@@ -11,5 +11,5 @@ that pass the action filter
 Plugins:
 	* create NagiosAlerts
 
-Domains / Zones : 
+Contexts / Zones : 
 * Dispatch Actions to Agents based on Domain/Zone they need to execute in

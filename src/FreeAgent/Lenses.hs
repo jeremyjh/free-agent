@@ -19,13 +19,14 @@ import           FreeAgent.Prelude
 import           FreeAgent.Types
 
 import           Control.Lens      (Getting, makeFields, use, view, (&), (.~),
-                                    (^.), _1, _2)
+                                    (^.), _1, _2, set)
 
 makeFields ''AgentContext
 makeFields ''AgentConfig
 makeFields ''Wrapped
 makeFields ''PluginDef
 makeFields ''ResultSummary
+makeFields ''Package
 
 -- | Use a lens to view a portion of AgentContext
 viewConfig :: (ContextReader m) => Getting a AgentContext a -> m a
