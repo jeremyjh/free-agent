@@ -1,7 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings, BangPatterns #-}
 module FreeAgent.ActionSpec (main, spec) where
 
-import           FreeAgent.Prelude
+import           AgentPrelude
 import qualified Data.ByteString                  as BS
 import           Data.Map
 import           Control.Monad.Reader

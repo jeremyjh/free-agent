@@ -5,7 +5,7 @@ module FreeAgent.ExecutiveSpec (main, spec) where
 
 import           Test.Hspec
 
-import           FreeAgent.Prelude
+import           AgentPrelude
 import           FreeAgent.Lenses
 import           FreeAgent.Core
 import           FreeAgent.Action

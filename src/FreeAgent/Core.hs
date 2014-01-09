@@ -14,7 +14,7 @@ module FreeAgent.Core
 import           FreeAgent.Action                 (registerPluginMaps)
 import           FreeAgent.Database
 import           FreeAgent.Lenses
-import           FreeAgent.Prelude
+import           AgentPrelude
 
 import           Control.Exception
 import           Control.Monad.Reader             (runReaderT)

@@ -15,7 +15,7 @@ module FreeAgent.Lenses
 )
 where
 
-import           FreeAgent.Prelude
+import           AgentPrelude
 import           FreeAgent.Types
 
 import           Control.Lens      (Getting, makeFields, use, view, (&), (.~),

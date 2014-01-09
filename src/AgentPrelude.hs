@@ -12,7 +12,7 @@
 -- | Extensions to ClassyPrelude that are useful to most modules & plugins in Dash
 -- This module should NOT import from any Dash modules and anything
 -- exported here should be used in at least two Dash modules
-module FreeAgent.Prelude
+module AgentPrelude
     (
       module ClassyPrelude
     , showStr

@@ -17,7 +17,7 @@ import           FreeAgent.Action
 import           FreeAgent.Core                                      (withAgent)
 import           FreeAgent.Database
 import           FreeAgent.Lenses
-import           FreeAgent.Prelude
+import           AgentPrelude
 
 import           Data.Binary
 import qualified Data.Map.Strict                                     as Map
@@ -184,7 +184,7 @@ doDeliverPackage package = do
             doRegisterAction act
             return $ key act
         return $ package & actionKeys .~ (keys ++ (package^.actionKeys))
-                & actions .~ []
+                         & actions .~ []
     storeIt pkg = do
         agentDb $ withPackageKS $
                 store (toBytes $ pkg^.uuid) pkg

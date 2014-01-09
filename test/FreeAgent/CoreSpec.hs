@@ -3,7 +3,7 @@
 
 module FreeAgent.CoreSpec (main, spec) where
 
-import           FreeAgent.Prelude
+import           AgentPrelude
 import           System.Process(system)
 import           Test.Hspec
 

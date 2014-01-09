@@ -20,7 +20,7 @@ module FreeAgent.Action
     )
 where
 
-import           FreeAgent.Prelude
+import           AgentPrelude
 import           FreeAgent.Lenses
 
 import           Control.Monad.Writer    (tell)

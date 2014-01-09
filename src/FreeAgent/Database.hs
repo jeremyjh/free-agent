@@ -18,7 +18,7 @@ module FreeAgent.Database
 where
 
 import           FreeAgent.Lenses
-import           FreeAgent.Prelude
+import           AgentPrelude
 
 import           Control.Exception              (throw)
 

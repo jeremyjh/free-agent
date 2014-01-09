@@ -1,7 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 module FreeAgentSpec (main, spec) where
 
-import           FreeAgent.Prelude
+import           AgentPrelude
 import           Test.Hspec
 import           FreeAgent
 

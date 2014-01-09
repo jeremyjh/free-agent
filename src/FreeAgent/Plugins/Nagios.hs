@@ -24,7 +24,7 @@ module FreeAgent.Plugins.Nagios
 import           FreeAgent.Action
 import           FreeAgent.Core
 import           FreeAgent.Lenses
-import           FreeAgent.Prelude
+import           AgentPrelude
 
 import           Data.Time.Clock   (getCurrentTime)
 import           System.Exit       (ExitCode (..))

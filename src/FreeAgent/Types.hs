@@ -29,7 +29,7 @@ module FreeAgent.Types
 
 where
 
-import           FreeAgent.Prelude
+import           AgentPrelude
 import qualified Prelude                            as P
 
 import           Control.Monad.Reader               (ReaderT, ask, mapReaderT)
