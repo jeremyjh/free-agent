@@ -78,17 +78,28 @@ spec = do
                     result $ throw exception
             `shouldReturn` (3,3)
 
-        it "can deliver a package" $ do
+        it "can deliver and remove a package" $ do
             testAgent $ \result -> do
                 catchAny $ do
                     package <- set actions [Action checkTCP] <$> defaultPackage
                     deliverPackage package
-
                     threadDelay 10000
+
+                    -- confirm package was added
+                    (Just _) <- agentDb $ withPackageKS $
+                        get $ key package
+
                     -- confirm results were written
-                    items <- agentDb $ withKeySpace "agent:actions:localhost:53" $ do
-                        scan "" queryItems
-                    result $ length items
+                    resultsAdded <- agentDb $ withKeySpace "agent:actions:localhost:53" $
+                        length <$> scan "" queryItems
+
+                    -- now test remove
+                    removePackage $ package^.uuid
+                    threadDelay 10000
+                    Nothing <- agentDb $ withPackageKS $ do
+                        get $ key package
+
+                    result $ resultsAdded
                 $ \exception ->
                     result $ throw exception
             `shouldReturn` 1

@@ -25,6 +25,7 @@ module FreeAgent.Types
  , MonadBaseControl
  , NFData(..)
  , LogLevel(..)
+ , UUID
  )
 
 where
@@ -300,6 +301,7 @@ data Package = Package {
     , _packageMeta :: [(Text, Text)]
     , _packageSchedule :: Schedule
 } deriving (Show, Eq, Typeable, Generic)
+
 
 data ActionHistory = ActionHistory deriving (Show, Eq, Typeable, Generic)
 

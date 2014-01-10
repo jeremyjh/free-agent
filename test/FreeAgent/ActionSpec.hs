@@ -37,15 +37,15 @@ spec = do
         describe "uses basic storage functionality from higher-leveldb" $ do
             it "writes Commands to the DB" $ do
                 withConfig $  agentDb $ stash checkTCP
-                `shouldReturn` ()
+                `shouldReturn` checkTCP
             it "reads Commands from the DB" $
                 withConfig (agentDb (fetch "localhost"))
                 `shouldReturn` (Right checkTCP)
             describe "has special storage of Actions" $ do
                 it "writes Actions to the DB as wrapped for fetchAction" $ do
                     let act = Action checkTCP
-                    withConfig (agentDb (stashAction act) )
-                    `shouldReturn` ()
+                    do withConfig (agentDb (stashAction act) )
+                       `shouldReturn` act
                 it "reads wrapped Actions from the DB" $ do
                     -- would fail if previous spec did not wrap
                     action <- withConfig $ agentDb $ fetchAction "localhost"

@@ -1,9 +1,6 @@
 Executive:
  * handle commands: 
 	* query execute action history
-	* register event
-		* event = action + schedule instance
-	* unregister event
 	* query event history 
 * result listener coupled to action listener - e.g. result filter is applied only to results
 that pass the action filter

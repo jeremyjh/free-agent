@@ -103,7 +103,7 @@ fetchAction :: MonadLevelDB m => Key -> m FetchAction
 fetchAction = withActionKS . fetch
 
 -- | Fix the keyspace to Action for stash
-stashAction :: MonadLevelDB m => Action -> m ()
+stashAction :: MonadLevelDB m => Action -> m Action
 stashAction = withActionKS . stash
 
 -- | Fix the keyspace to Action for delete
@@ -132,11 +132,10 @@ decodeAction pluginMap bs =
                             ++ " not matched! Is your plugin registered?"
 
 -- | Save a serializable type with an instance for Stash
--- which provides the key.
---
-stash :: (MonadLevelDB m, Stashable s)
-      => s -> m ()
-stash s = store (key s) s
+-- which provides the key - returns the same input.
+stash :: (MonadLevelDB m, Stashable a)
+      => a -> m a
+stash s = do store (key s) s; return s
 
 -- | Use to register your Action types so they can be
 -- deserialized dynamically at runtime; invoke as:
@@ -231,6 +230,8 @@ getWrappedCereal = do
         return (Wrapped wk wt wv)
 
 deriveSerializers ''Package
+instance Stashable Package where
+    key p = toBytes $ _packageUuid p
 
 -- | initialize a default Package with a new UUID
 defaultPackage :: (MonadIO m) => m Package

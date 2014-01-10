@@ -50,6 +50,7 @@ data ExecutiveCommand = RegisterAction Action
 		              | ExecuteAction Action
 		              | ExecuteRegistered Key
                       | DeliverPackage Package
+                      | RemovePackage UUID
                       {-| QueryActionHistory (ScanQuery ActionHistory [ActionHistory])-}
                       | TerminateExecutive
                       deriving (Typeable, Generic)
@@ -72,6 +73,12 @@ executeAction = sendCommand . ExecuteAction
 -- to each context leader defined in the package
 deliverPackage :: (MonadAgent m) => Package -> m ()
 deliverPackage p = sendCommand $ DeliverPackage p
+
+-- | Remove a package definition from the context leader(s). Does
+-- not unregister Actions or remove history.
+removePackage :: (MonadAgent m) => UUID -> m ()
+removePackage uuid = sendCommand $ RemovePackage uuid
+
 -- -----------------------------
 -- Implementation
 -- -----------------------------
@@ -119,6 +126,7 @@ perform (UnregisterAction k) = doUnRegisterAction k
 perform (ExecuteAction a) = doExecuteAction a
 perform (ExecuteRegistered k) = doExecuteRegistered k
 perform (DeliverPackage p) = doDeliverPackage p
+perform (RemovePackage uuid) = doRemovePackage uuid
 perform _ = undefined
 {-perform (QueryActionHistory query) = undefined-}
 
@@ -126,7 +134,7 @@ perform _ = undefined
 doRegisterAction ::  Action -> ExecAgent ()
 doRegisterAction act = do
     $(logDebug) $ "Registering action: " ++ tshow act
-    agentDb $ stashAction act
+    void . agentDb $ stashAction act
 
 doUnRegisterAction :: Key -> ExecAgent ()
 doUnRegisterAction k = do
@@ -176,6 +184,7 @@ doExec act =
 
 doDeliverPackage :: Package -> ExecAgent ()
 doDeliverPackage package = do
+    --TODO: Figure out what it even means to "route"
     $(logDebug) $ "Delivering package: " ++ tshow package
     registerIt >>= storeIt >>= scheduleIt
   where
@@ -185,10 +194,7 @@ doDeliverPackage package = do
             return $ key act
         return $ package & actionKeys .~ (keys ++ (package^.actionKeys))
                          & actions .~ []
-    storeIt pkg = do
-        agentDb $ withPackageKS $
-                store (toBytes $ pkg^.uuid) pkg
-        return pkg
+    storeIt = agentDb . withPackageKS . stash
     scheduleIt pkg =
         case pkg^.schedule of
             Now ->
@@ -196,5 +202,10 @@ doDeliverPackage package = do
                     doExecuteRegistered akey
             _ -> return () --TODO: add to scheduler
 
-withPackageKS :: (MonadLevelDB m) => m () -> m ()
+doRemovePackage :: UUID -> ExecAgent ()
+doRemovePackage uuid = do
+    $(logDebug) $ "Unregistering package: " ++ tshow uuid
+    agentDb . withPackageKS . delete $ toBytes uuid
+
+withPackageKS :: (MonadLevelDB m) => m a -> m a
 withPackageKS = withKeySpace "agent:packages"
