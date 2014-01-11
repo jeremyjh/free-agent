@@ -279,14 +279,14 @@ data ResultSummary
 instance Cereal.Serialize UTCTime where
     get = do
         stime <- Cereal.get :: Cereal.Get ByteString
-        return $ bytesToUtc stime
-    put = Cereal.put . utcToBytes
+        return $ fromBytes stime
+    put = Cereal.put . toBytes
 
 instance Binary UTCTime where
     get = do
         stime <- get :: Get ByteString
-        return $ bytesToUtc stime
-    put = put . utcToBytes
+        return $ fromBytes stime
+    put = put . toBytes
 
 -- Scheduling
 data Schedule = Now | Later

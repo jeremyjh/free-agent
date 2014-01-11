@@ -26,8 +26,6 @@ module AgentPrelude
     , deriveSerializers
     , fqName
     , logM
-    , utcToBytes
-    , bytesToUtc
     , logDebug
     , Log.logWarn
     ) where
@@ -87,6 +85,14 @@ instance ConvertByteString UUID where
     toBytes = toASCIIBytes
     fromBytes uuid = fromMaybe  (error "invalid UUUID Bytes") (fromASCIIBytes uuid)
 
+instance ConvertByteString UTCTime where
+    toBytes = BS.pack . formatTime defaultTimeLocale "%s%q"
+    fromBytes bs =
+        case parseTime defaultTimeLocale "%s%q" $ BS.unpack bs of
+            Nothing -> error $
+                "Failed to parse UTCTime: " ++ (BS.unpack bs)
+            Just t -> t
+
 -- | TemplateHaskell function to generate required serializers and related
 -- instances for Actions/Results.
 -- This includes Cereal, SafeCopy, Binary and NFData.
@@ -114,19 +120,6 @@ fqName typee =  modName ++ "." ++ name
 logM :: (MonadIO m) => Text -> m()
 logM = putStrLn
 
--- | Convert UTCTime to ByteString - the format of the
--- ByteString is epoch seconds append with (12 digit padded) pico seconds.
-utcToBytes :: UTCTime -> ByteString
-utcToBytes = BS.pack . formatTime defaultTimeLocale "%s%q"
-
--- | Convert ByteString timestamp to UTCTime
--- throws an Error if parsing fails
-bytesToUtc :: ByteString -> UTCTime
-bytesToUtc bs =
-    case parseTime defaultTimeLocale "%s%q" $ BS.unpack bs of
-        Nothing -> error $
-            "Failed to parse UTCTime: " ++ (BS.unpack bs)
-        Just t -> t
 
 logDebug :: Q Exp
 logDebug =

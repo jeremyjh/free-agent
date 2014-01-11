@@ -19,10 +19,10 @@ import           FreeAgent.Database
 import           FreeAgent.Lenses
 import           AgentPrelude
 
+import           Control.Monad.State                                 (StateT, evalStateT)
 import           Data.Binary
 import qualified Data.Map.Strict                                     as Map
-
-import           Control.Monad.State                                 (StateT, evalStateT)
+import           Data.Time.Clock                                     (getCurrentTime)
 
 import           Control.Distributed.Process.Lifted                  as Process
 import           Control.Distributed.Process.Platform.ManagedProcess
@@ -77,7 +77,7 @@ deliverPackage p = sendCommand $ DeliverPackage p
 -- | Remove a package definition from the context leader(s). Does
 -- not unregister Actions or remove history.
 removePackage :: (MonadAgent m) => UUID -> m ()
-removePackage uuid = sendCommand $ RemovePackage uuid
+removePackage = sendCommand . RemovePackage
 
 -- -----------------------------
 -- Implementation
@@ -126,7 +126,7 @@ perform (UnregisterAction k) = doUnRegisterAction k
 perform (ExecuteAction a) = doExecuteAction a
 perform (ExecuteRegistered k) = doExecuteRegistered k
 perform (DeliverPackage p) = doDeliverPackage p
-perform (RemovePackage uuid) = doRemovePackage uuid
+perform (RemovePackage u) = doRemovePackage u
 perform _ = undefined
 {-perform (QueryActionHistory query) = undefined-}
 
@@ -166,7 +166,9 @@ doExec act =
     exec act >>=
     either $(logWarn) (storeResult >=> notifyListeners)
   where
+    storeResult :: Result -> ExecAgent Result
     storeResult result = do
+        $(logDebug) $ "Storing result: " ++ tshow result
         asyncAgentDb $ withKeySpace (resultKS act) $
             store (timestampKey result) result
         return result
@@ -180,7 +182,7 @@ doExec act =
         forM_ rlisteners $ \(rfilter, rpid) ->
             when (rfilter result) $ send rpid result
     resultKS a = "agent:actions:" ++ key a
-    timestampKey = utcToBytes . view timestamp . summary
+    timestampKey = toBytes . view timestamp . summary
 
 doDeliverPackage :: Package -> ExecAgent ()
 doDeliverPackage package = do
@@ -197,15 +199,23 @@ doDeliverPackage package = do
     storeIt = agentDb . withPackageKS . stash
     scheduleIt pkg =
         case pkg^.schedule of
-            Now ->
+            Now -> do
+                -- execute all actions
                 forM_ (pkg^.actionKeys) $ \akey ->
                     doExecuteRegistered akey
+
+                -- record package execution history
+                time <- liftIO getCurrentTime
+                agentDb . withKeySpace (historyKS pkg) $
+                    store (toBytes time) pkg
+
             _ -> return () --TODO: add to scheduler
+    historyKS a = "agent:packages:" ++ key a
 
 doRemovePackage :: UUID -> ExecAgent ()
-doRemovePackage uuid = do
-    $(logDebug) $ "Unregistering package: " ++ tshow uuid
-    agentDb . withPackageKS . delete $ toBytes uuid
+doRemovePackage uid = do
+    $(logDebug) $ "Unregistering package: " ++ tshow uid
+    agentDb . withPackageKS . delete $ toBytes uid
 
 withPackageKS :: (MonadLevelDB m) => m a -> m a
 withPackageKS = withKeySpace "agent:packages"

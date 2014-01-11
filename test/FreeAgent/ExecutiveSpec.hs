@@ -90,8 +90,14 @@ spec = do
                         get $ key package
 
                     -- confirm results were written
-                    resultsAdded <- agentDb $ withKeySpace "agent:actions:localhost:53" $
-                        length <$> scan "" queryItems
+                    resultsAdded <- agentDb $
+                        withKeySpace "agent:actions:localhost:53" $ do
+                            length <$> scan "" queryItems
+
+                    -- confirm history was added
+                    historyAdded <- agentDb $
+                        withKeySpace ("agent:packages:" ++ key package) $ do
+                            length <$> scan "" queryItems
 
                     -- now test remove
                     removePackage $ package^.uuid
@@ -99,10 +105,10 @@ spec = do
                     Nothing <- agentDb $ withPackageKS $ do
                         get $ key package
 
-                    result $ resultsAdded
+                    result $ (resultsAdded, historyAdded)
                 $ \exception ->
                     result $ throw exception
-            `shouldReturn` 1
+            `shouldReturn` (1,1)
 
 
 -- helper for running agent and getting results out of

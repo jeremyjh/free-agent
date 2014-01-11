@@ -82,7 +82,7 @@ extractConfig' :: (ContextReader m) => m NagiosConfig
 extractConfig' = extractConfig $ pluginDef def ^.name
 
 instance Stashable NagiosResult where
-    key (NagiosResult (ResultSummary time _ _) _) = utcToBytes time
+    key (NagiosResult (ResultSummary time _ _) _) = toBytes time
 
 instance Resulting NagiosResult where
     summary (NagiosResult s _) = s
