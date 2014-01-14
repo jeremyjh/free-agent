@@ -150,11 +150,12 @@ appConfig = (
       {-& agentConfig.minLogLevel .~ LevelDebug-}
 
 
-testActionListener :: Agent [ActionListener]
+testActionListener :: Agent [Listener]
 testActionListener = do
     apid <- liftProcess $ spawnLocal $ loop (0::Int)
     Process.register "ExecSpecActionListener" apid
-    return [(matchAction (\c -> _checktcpHost c == "localhost"), apid)]
+    return [ActionMatching (matchAction (\c -> _checktcpHost c == "localhost"))
+                           apid]
   where
     loop count = do
         receiveWait
@@ -164,11 +165,13 @@ testActionListener = do
                   send pid count
             ]
 
-testResultListener :: Agent [ResultListener]
+testResultListener :: Agent [Listener]
 testResultListener = do
     rpid <- liftProcess $ spawnLocal $ loop (0::Int)
     Process.register "ExecSpecResultListener" rpid
-    return [(matchResult (\ (NagiosResult _ r) -> r == OK), rpid)]
+    return [ResultMatching (const True)
+                           (matchResult (\ (NagiosResult _ r) -> r == OK))
+                           rpid]
   where
     loop count = do
         receiveWait
@@ -179,4 +182,6 @@ testResultListener = do
             ]
 
 testDef :: NagiosConfig -> PluginDef
-testDef conf = definePlugin "ExecSpec" conf testActionListener testResultListener (return ())
+testDef conf = definePlugin "ExecSpec" conf ((++) <$> testActionListener
+                                                  <*> testResultListener)
+                                            (return ())

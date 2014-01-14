@@ -35,9 +35,8 @@ import           Control.Distributed.Process.Platform                (whereisOrS
 type RunningActions = Map Key ProcessId
 
 data ExecState
-  = ExecState { _stateRunning         :: !RunningActions
-              , _stateActionListeners :: ![ActionListener]
-              , _stateResultListeners :: ![ResultListener]
+  = ExecState { _stateRunning   :: !RunningActions
+              , _stateListeners :: ![Listener]
               } deriving (Typeable, Generic)
 makeFields ''ExecState
 
@@ -92,9 +91,8 @@ sendCommand cmd = do
 
 init :: Agent ()
 init = do
-    alisteners <- join $ viewConfig actionListeners
-    rlisteners <- join $ viewConfig resultListeners
-    let _state = ExecState (Map.fromList []) alisteners rlisteners
+    listeners' <- join $ viewConfig listeners
+    let _state = ExecState (Map.fromList []) listeners'
     evalStateT loop _state
   where
     loop = do
@@ -173,14 +171,21 @@ doExec act =
             store (timestampKey result) result
         return result
     notifyListeners result = do
-        alisteners <- use actionListeners
-        forM_ alisteners $ \(afilter, apid) ->
-            when (afilter act) $ do
-                $(logDebug) $ "Sending Result: " ++ tshow result
-                send apid result
-        rlisteners <- use resultListeners
-        forM_ rlisteners $ \(rfilter, rpid) ->
-            when (rfilter result) $ send rpid result
+        listeners' <- use listeners
+        forM_ listeners' $ \listener ->
+            sendMatching $ case listener of
+                   ActionMatching afilter pid ->
+                            if afilter act then Just pid
+                                else Nothing
+                   ResultMatching afilter rfilter pid ->
+                            if afilter act && rfilter result then Just pid
+                                else Nothing
+      where
+        sendMatching (Just pid) = do
+            $(logDebug) $ "Sending Result: " ++ tshow result ++ "\n" ++
+                          "To: " ++ tshow pid
+            send pid result
+        sendMatching Nothing = return ()
     resultKS a = "agent:actions:" ++ key a
     timestampKey = toBytes . view timestamp . summary
 

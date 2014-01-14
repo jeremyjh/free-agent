@@ -158,17 +158,19 @@ type PluginActions = ( ByteString, Unwrapper Action
                      , ByteString, Unwrapper Result)
 type PluginWriter = Writer [PluginDef] ()
 type ActionsWriter = Writer [PluginActions] ()
-type ActionListener = (Action -> Bool, ProcessId)
-type ResultListener = (Result -> Bool, ProcessId)
+type ActionMatcher = (Action -> Bool)
+type ResultMatcher = (Result -> Bool)
+
+data Listener = ActionMatching ActionMatcher ProcessId
+              | ResultMatching ActionMatcher ResultMatcher ProcessId
 
 data DBMessage = Perform (AgentDB ()) | Terminate
 
 data PluginDef
-  = PluginDef { _plugindefName            :: !ByteString
-              , _plugindefContext         :: !Dynamic
-              , _plugindefActions         :: ![PluginActions]
-              , _plugindefActionListeners :: Agent [ActionListener]
-              , _plugindefResultListeners :: Agent [ResultListener]
+  = PluginDef { _plugindefName      :: !ByteString
+              , _plugindefContext   :: !Dynamic
+              , _plugindefActions   :: ![PluginActions]
+              , _plugindefListeners :: Agent [Listener]
               }
 
 data AgentConfig
@@ -194,8 +196,7 @@ data AgentContext
                  , _contextResultMap       :: !ResultMap
                  , _contextAgentConfig     :: !AgentConfig
                  , _contextAgentDBChan     :: Chan DBMessage
-                 , _contextActionListeners :: Agent [ActionListener]
-                 , _contextResultListeners :: Agent [ResultListener]
+                 , _contextListeners       :: Agent [Listener]
                  , _contextProcessNode     :: LocalNode
                  , _contextContexts        :: ![Context]
                  , _contextZones           :: ![Zone]
@@ -207,7 +208,6 @@ instance Default AgentConfig where
 instance Default AgentContext where
     def = AgentContext mempty mempty def
             (error "agentDB chan not initialized!")
-            (return [])
             (return [])
             (error "process node not initialized!")
             [Context "default"]
