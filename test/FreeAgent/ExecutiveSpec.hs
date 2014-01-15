@@ -182,6 +182,7 @@ testResultListener = do
             ]
 
 testDef :: NagiosConfig -> PluginDef
-testDef conf = definePlugin "ExecSpec" conf ((++) <$> testActionListener
-                                                  <*> testResultListener)
-                                            (return ())
+testDef conf = definePlugin "ExecSpec"
+                            conf
+                            ((++) <$> testActionListener <*> testResultListener)
+                            (return ())

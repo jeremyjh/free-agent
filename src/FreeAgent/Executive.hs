@@ -173,19 +173,15 @@ doExec act =
     notifyListeners result = do
         listeners' <- use listeners
         forM_ listeners' $ \listener ->
-            sendMatching $ case listener of
+            let (matched,pid) = case listener of
                    ActionMatching afilter pid ->
-                            if afilter act then Just pid
-                                else Nothing
+                            (afilter act, pid)
                    ResultMatching afilter rfilter pid ->
-                            if afilter act && rfilter result then Just pid
-                                else Nothing
-      where
-        sendMatching (Just pid) = do
-            $(logDebug) $ "Sending Result: " ++ tshow result ++ "\n" ++
-                          "To: " ++ tshow pid
-            send pid result
-        sendMatching Nothing = return ()
+                            (afilter act && rfilter result, pid) in
+            when matched $ do
+                $(logDebug) $ "Sending Result: " ++ tshow result ++ "\n" ++
+                              "To: " ++ tshow pid
+                send pid result
     resultKS a = "agent:actions:" ++ key a
     timestampKey = toBytes . view timestamp . summary
 
