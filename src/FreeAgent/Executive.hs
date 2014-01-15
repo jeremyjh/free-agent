@@ -16,6 +16,7 @@ module FreeAgent.Executive where
 import           FreeAgent.Action
 import           FreeAgent.Core                                      (withAgent)
 import           FreeAgent.Database
+import qualified FreeAgent.Database.KeySpace                         as KS
 import           FreeAgent.Lenses
 import           AgentPrelude
 
@@ -167,22 +168,21 @@ doExec act =
     storeResult :: Result -> ExecAgent Result
     storeResult result = do
         $(logDebug) $ "Storing result: " ++ tshow result
-        asyncAgentDb $ withKeySpace (resultKS act) $
+        asyncAgentDb $ withKeySpace (KS.actionsAp $ key act) $
             store (timestampKey result) result
         return result
     notifyListeners result = do
         listeners' <- use listeners
         forM_ listeners' $ \listener ->
             let (matched,pid) = case listener of
-                   ActionMatching afilter pid ->
-                            (afilter act, pid)
-                   ResultMatching afilter rfilter pid ->
-                            (afilter act && rfilter result, pid) in
+                   ActionMatching afilter apid ->
+                            (afilter act, apid)
+                   ResultMatching afilter rfilter apid ->
+                            (afilter act && rfilter result, apid) in
             when matched $ do
                 $(logDebug) $ "Sending Result: " ++ tshow result ++ "\n" ++
                               "To: " ++ tshow pid
                 send pid result
-    resultKS a = "agent:actions:" ++ key a
     timestampKey = toBytes . view timestamp . summary
 
 doDeliverPackage :: Package -> ExecAgent ()
@@ -197,7 +197,7 @@ doDeliverPackage package = do
             return $ key act
         return $ package & actionKeys .~ (keys ++ (package^.actionKeys))
                          & actions .~ []
-    storeIt = agentDb . withPackageKS . stash
+    storeIt = agentDb . withKeySpace KS.packages . stash
     scheduleIt pkg =
         case pkg^.schedule of
             Now -> do
@@ -207,16 +207,12 @@ doDeliverPackage package = do
 
                 -- record package execution history
                 time <- liftIO getCurrentTime
-                agentDb . withKeySpace (historyKS pkg) $
+                agentDb . withKeySpace (KS.packagesAp $ key pkg) $
                     store (toBytes time) pkg
 
             _ -> return () --TODO: add to scheduler
-    historyKS a = "agent:packages:" ++ key a
 
 doRemovePackage :: UUID -> ExecAgent ()
 doRemovePackage uid = do
     $(logDebug) $ "Unregistering package: " ++ tshow uid
-    agentDb . withPackageKS . delete $ toBytes uid
-
-withPackageKS :: (MonadLevelDB m) => m a -> m a
-withPackageKS = withKeySpace "agent:packages"
+    agentDb . withKeySpace KS.packages . delete $ toBytes uid

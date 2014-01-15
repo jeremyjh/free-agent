@@ -15,6 +15,7 @@ import           FreeAgent.Lenses
 import           FreeAgent.Core
 import           FreeAgent.Action
 import           FreeAgent.Database
+import qualified FreeAgent.Database.KeySpace as KS
 import           FreeAgent.Plugins.Nagios as Nagios
 import           AppConfig(appConfig)
 import           Control.Concurrent (threadDelay)
@@ -54,7 +55,7 @@ spec = do
                     (Left (NotFound _)) <- withConfig $ agentDb (fetchAction "notgonnamatch")
                     True `shouldBe` True -- NOT exception
                 it "can write an arbitrary bytestring" $
-                    withConfig (agentDb . withKeySpace "agent:actions" $
+                    withConfig (agentDb . withKeySpace KS.actions $
                         (put "somekey" "somevalue"))
                     `shouldReturn` ()
                 it "will fail to deserialize if data is not a valid Serialized" $ do

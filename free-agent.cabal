@@ -11,6 +11,7 @@ library
   exposed-modules:   AgentPrelude
                    , FreeAgent 
                    , FreeAgent.Database
+                   , FreeAgent.Database.KeySpace
                    , FreeAgent.Types
                    , FreeAgent.Lenses
                    , FreeAgent.Core

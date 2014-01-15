@@ -4,7 +4,6 @@ Executive:
 	* query event history 
 
 * integrate scheduler
-* composable keyspace helpers
 
 Plugins:
 	* create NagiosAlerts

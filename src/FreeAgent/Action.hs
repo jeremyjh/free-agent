@@ -13,7 +13,6 @@
 module FreeAgent.Action
     ( fetchAction, scanActions, decodeAction, stashAction, stash
     , deleteAction
-    , withActionKS
     , register, actionType
     , registerPluginMaps
     , defaultPackage
@@ -21,20 +20,21 @@ module FreeAgent.Action
 where
 
 import           AgentPrelude
+import qualified FreeAgent.Database.KeySpace as KS
 import           FreeAgent.Lenses
 
-import           Control.Monad.Writer    (tell)
-import           Data.Binary             (Binary)
-import qualified Data.Binary             as Binary
-import qualified Data.ByteString.Char8   as BS
-import           Data.Dynamic            (cast)
-import qualified Data.Map                as Map
-import qualified Prelude                 as P
-import           System.IO.Unsafe        (unsafePerformIO)
+import           Control.Monad.Writer        (tell)
+import           Data.Binary                 (Binary)
+import qualified Data.Binary                 as Binary
+import qualified Data.ByteString.Char8       as BS
+import           Data.Dynamic                (cast)
+import qualified Data.Map                    as Map
+import qualified Prelude                     as P
+import           System.IO.Unsafe            (unsafePerformIO)
 
 import           Data.SafeCopy
-import           Data.Serialize          (Serialize)
-import qualified Data.Serialize          as Cereal
+import           Data.Serialize              (Serialize)
+import qualified Data.Serialize              as Cereal
 import           Data.UUID.V1 (nextUUID)
 import           Database.LevelDB.Higher
 
@@ -203,7 +203,7 @@ readPluginMaps = unsafePerformIO $ readIORef globalPluginMaps
 {-# NOINLINE readPluginMaps #-}
 
 withActionKS :: (MonadLevelDB m) => m a -> m a
-withActionKS = withKeySpace "agent:actions"
+withActionKS = withKeySpace $ KS.actions
 
 decodeResult' :: ResultMap -> Wrapped -> Result
 decodeResult' pluginMap wrapped =

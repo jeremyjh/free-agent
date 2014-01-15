@@ -10,6 +10,7 @@ import           FreeAgent.Lenses
 import           FreeAgent.Core
 import           FreeAgent.Action
 import           FreeAgent.Database
+import qualified FreeAgent.Database.KeySpace as KS
 import           FreeAgent.Plugins.Nagios as Nagios
 import           FreeAgent.Executive as Exec
 
@@ -86,7 +87,7 @@ spec = do
                     threadDelay 10000
 
                     -- confirm package was added
-                    (Just _) <- agentDb $ withPackageKS $
+                    (Just _) <- agentDb $ withKeySpace KS.packages $
                         get $ key package
 
                     -- confirm results were written
@@ -102,7 +103,7 @@ spec = do
                     -- now test remove
                     removePackage $ package^.uuid
                     threadDelay 10000
-                    Nothing <- agentDb $ withPackageKS $ do
+                    Nothing <- agentDb $ withKeySpace KS.packages $ do
                         get $ key package
 
                     result $ (resultsAdded, historyAdded)
