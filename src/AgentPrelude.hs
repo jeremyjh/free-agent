@@ -4,7 +4,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
@@ -28,6 +27,10 @@ module AgentPrelude
     , logM
     , logDebug
     , Log.logWarn
+    , qinfo
+    , qdebug
+    , qwarn
+    , qerror
     ) where
 
 import           ClassyPrelude                 hiding (undefined)
@@ -51,6 +54,7 @@ import           System.Locale                 (defaultTimeLocale)
 import           Database.LevelDB.Higher.Store (Version, deriveStorableVersion)
 import           Data.UUID                     (toASCIIBytes, fromASCIIBytes, UUID)
 import           Debug.FileLocation            (dbg, debug)
+import           Control.Monad.Logger.Quote    (qinfo, qdebug, qwarn, qerror)
 
 showStr :: (Show a) => a -> String
 showStr = P.show

@@ -203,7 +203,7 @@ readPluginMaps = unsafePerformIO $ readIORef globalPluginMaps
 {-# NOINLINE readPluginMaps #-}
 
 withActionKS :: (MonadLevelDB m) => m a -> m a
-withActionKS = withKeySpace $ KS.actions
+withActionKS = withKeySpace KS.actions
 
 decodeResult' :: ResultMap -> Wrapped -> Result
 decodeResult' pluginMap wrapped =

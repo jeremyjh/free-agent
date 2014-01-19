@@ -10,7 +10,7 @@ type KeySpacer = KeySpace -> KeySpace
 
 append :: KeySpace -> KeySpace -> KeySpace
 append x y
-    | length y > 0 = x ++ ":" ++ y
+    | not $ null y = x ++ ":" ++ y
     | otherwise = x
 
 agentAp :: KeySpacer

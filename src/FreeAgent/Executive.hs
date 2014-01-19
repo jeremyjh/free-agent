@@ -9,6 +9,7 @@
 {-# LANGUAGE OverloadedStrings      #-}
 {-# LANGUAGE ScopedTypeVariables    #-}
 {-# LANGUAGE TemplateHaskell        #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 
 module FreeAgent.Executive where
@@ -30,10 +31,18 @@ import           Control.Distributed.Process.Platform.ManagedProcess
 import           Control.Distributed.Process.Platform                (whereisOrStart)
 
 
+
 -- -----------------------------
 -- Types
 -- -----------------------------
 type RunningActions = Map Key ProcessId
+
+data Peer = Peer { _peerProcessId :: !ProcessId
+                 , _peerContexts  :: Set Context
+                 , _peerZones     :: Set Zone
+                 } deriving (Show, Eq, Typeable, Generic)
+makeFields ''Peer
+{-instance Binary Peer-}
 
 data ExecState
   = ExecState { _stateRunning   :: !RunningActions
@@ -132,33 +141,32 @@ perform _ = undefined
 -- ExecutiveCommand realizations
 doRegisterAction ::  Action -> ExecAgent ()
 doRegisterAction act = do
-    $(logDebug) $ "Registering action: " ++ tshow act
+    [qdebug|Registering action: #{act}|]
     void . agentDb $ stashAction act
 
 doUnRegisterAction :: Key -> ExecAgent ()
 doUnRegisterAction k = do
-    $(logDebug) $ "Unregistering action key: " ++ tshow k
+    [qdebug|Unregistering action key: #{k}|]
     agentDb $ deleteAction k
 
 doExecuteAction :: Action -> ExecAgent ()
 doExecuteAction act = do
-    $(logDebug) $ "Executing action: " ++ tshow act
+    [qdebug|Executing action: #{act}|]
     void $ spawnLocal $ doExec act
 
 doExecuteRegistered :: Key -> ExecAgent ()
 doExecuteRegistered k = void $ spawnLocal $ do
-    $(logDebug) $ "Executing action key: " ++ tshow k
+    [qdebug|Executing action key: #{k}|]
     act <- agentDb $ fetchAction k
     case act of
         Right a -> do
             $(logDebug) $ "Executing action: " ++ tshow a
             doExec a
         Left (ParseFail msg) ->
-            $(logWarn) $ "Unable to retrieve action key: " ++ toT k
-                         ++ " - " ++ toT msg
+            [qwarn| Unable to retrieve action key: #{k} - #{msg}|]
         Left (NotFound _) ->
-            $(logWarn) $ "Unable to retrieve action key: " ++ toT k
-                        ++ " not found in database."
+            [qwarn| Unable to retrieve action key: #{k}
+                            not found in database. |]
 
 doExec :: Action -> ExecAgent ()
 doExec act =
@@ -167,7 +175,7 @@ doExec act =
   where
     storeResult :: Result -> ExecAgent Result
     storeResult result = do
-        $(logDebug) $ "Storing result: " ++ tshow result
+        [qdebug| Storing result: #{result}|]
         asyncAgentDb $ withKeySpace (KS.actionsAp $ key act) $
             store (timestampKey result) result
         return result
@@ -180,15 +188,14 @@ doExec act =
                    ResultMatching afilter rfilter apid ->
                             (afilter act && rfilter result, apid) in
             when matched $ do
-                $(logDebug) $ "Sending Result: " ++ tshow result ++ "\n" ++
-                              "To: " ++ tshow pid
+                [qdebug|Sending Result: #{result} To: #{pid}|]
                 send pid result
     timestampKey = toBytes . view timestamp . summary
 
 doDeliverPackage :: Package -> ExecAgent ()
 doDeliverPackage package = do
     --TODO: Figure out what it even means to "route"
-    $(logDebug) $ "Delivering package: " ++ tshow package
+    [qdebug|Delivering package: #{package}|]
     registerIt >>= storeIt >>= scheduleIt
   where
     registerIt = do
@@ -214,5 +221,5 @@ doDeliverPackage package = do
 
 doRemovePackage :: UUID -> ExecAgent ()
 doRemovePackage uid = do
-    $(logDebug) $ "Unregistering package: " ++ tshow uid
+    [qdebug|Unregistering package: #{uid}|]
     agentDb . withKeySpace KS.packages . delete $ toBytes uid

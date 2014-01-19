@@ -26,6 +26,7 @@ import           Control.Exception
 
 import qualified Data.Binary as Binary
 
+
 main :: IO ()
 main = hspec spec
 
@@ -111,7 +112,6 @@ spec = do
                     result $ throw exception
             `shouldReturn` (1,1)
 
-
 -- helper for running agent and getting results out of
 -- the Process through partially applied putMVar
 testAgent :: ((a -> Agent ()) -> Agent ()) -> IO a
@@ -148,7 +148,7 @@ appConfig = (
         addPlugin $ testDef def
         -- add more plugins here!
     ) & agentConfig.dbPath .~ "/tmp/leveltest" -- override Agent config values here!
-      {-& agentConfig.minLogLevel .~ LevelDebug-}
+      & agentConfig.minLogLevel .~ LevelDebug
 
 
 testActionListener :: Agent [Listener]
