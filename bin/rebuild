@@ -1,2 +1,2 @@
 #!/bin/bash
-cabal clean && cabal configure --enable-tests --disable-library-profiling && cabal build $1 && bin/spec
+cabal clean && cabal configure --enable-tests --disable-library-profiling && cabal build $1 --ghc-options=-Werror && bin/spec

@@ -19,30 +19,24 @@ import           FreeAgent.Core                                      (withAgent)
 import           FreeAgent.Database
 import qualified FreeAgent.Database.KeySpace                         as KS
 import           FreeAgent.Lenses
+import           FreeAgent.Process.ManagedAgent
 import           AgentPrelude
 
-import           Control.Monad.State                                 (StateT, evalStateT)
+import           Control.Monad.State                                 (StateT)
 import           Data.Binary
 import qualified Data.Map.Strict                                     as Map
+import qualified Data.Set                                            as Set
 import           Data.Time.Clock                                     (getCurrentTime)
 
-import           Control.Distributed.Process.Lifted                  as Process
-import           Control.Distributed.Process.Platform.ManagedProcess
-import           Control.Distributed.Process.Platform                (whereisOrStart)
-
+import           FreeAgent.Process                  as Process
+import           Control.Distributed.Process.Platform.ManagedProcess as Managed
+                                                                    hiding (cast, call, syncCallChan)
 
 
 -- -----------------------------
 -- Types
 -- -----------------------------
 type RunningActions = Map Key ProcessId
-
-data Peer = Peer { _peerProcessId :: !ProcessId
-                 , _peerContexts  :: Set Context
-                 , _peerZones     :: Set Zone
-                 } deriving (Show, Eq, Typeable, Generic)
-makeFields ''Peer
-{-instance Binary Peer-}
 
 data ExecState
   = ExecState { _stateRunning   :: !RunningActions
@@ -70,73 +64,61 @@ instance NFData ExecutiveCommand where
 -- API
 -- -----------------------------
 registerAction :: (MonadAgent m) => Action -> m ()
-registerAction = sendCommand . RegisterAction
+registerAction = sendCommand execServer . RegisterAction
 
-executeRegistered :: (MonadAgent m) => Key -> m ()
-executeRegistered = sendCommand . ExecuteRegistered
+executeRegistered :: (MonadAgent m) => Key -> m EResult
+executeRegistered = sendCommand execServer . ExecuteRegistered
 
-executeAction :: (MonadAgent m) => Action -> m ()
-executeAction = sendCommand . ExecuteAction
+executeAction :: (MonadAgent m) => Action -> m EResult
+executeAction = sendCommand execServer . ExecuteAction
 
 -- | Send / register a package and optional list of Actions to register
 -- to each context leader defined in the package
-deliverPackage :: (MonadAgent m) => Package -> m ()
-deliverPackage p = sendCommand $ DeliverPackage p
+deliverPackage :: (MonadAgent m) => Package -> m [EResult]
+deliverPackage p = sendCommand execServer $ DeliverPackage p
 
 -- | Remove a package definition from the context leader(s). Does
 -- not unregister Actions or remove history.
 removePackage :: (MonadAgent m) => UUID -> m ()
-removePackage = sendCommand . RemovePackage
+removePackage = sendCommand execServer . RemovePackage
 
 -- -----------------------------
 -- Implementation
 -- -----------------------------
 
--- | send a command to the executive process for execution
-sendCommand :: (MonadAgent m) => ExecutiveCommand -> m ()
-sendCommand cmd = do
-    ctxt <- askContext
-    pid <- liftProcess $ whereisOrStart "executive" (withAgent ctxt init)
-    send pid cmd
-
-init :: Agent ()
-init = do
-    listeners' <- join $ viewConfig listeners
-    let _state = ExecState (Map.fromList []) listeners'
-    evalStateT loop _state
+execServer :: AgentServer
+execServer = AgentServer "agent:executive" init
   where
-    loop = do
-        command <- expect
-        case command of
-            TerminateExecutive -> logM "shutting down"
-            cmd -> do
-                void $ spawnLocal $ perform cmd
-                loop
+    init ctxt = do
+        listeners' <- withAgent ctxt $ join $ viewConfig listeners
+        let state' = ExecState (Map.fromList []) listeners'
+        serve state' (initState ctxt) executiveProcess
+
+    executiveProcess = defaultProcess {
+        apiHandlers =
+        [ handleRpcChan $ asyncAgentHandler $
+              \cmd -> case cmd of
+                  ExecuteAction act -> doExecuteAction act
+                  ExecuteRegistered k -> doExecuteRegistered k
+                  _ -> $(err "illegal pattern match")
+
+        , handleRpcChan $ asyncAgentHandler $
+            \(DeliverPackage pkg) -> doDeliverPackage pkg
+
+        , handleRpcChan $ asyncAgentHandler $ \cmd -> perform cmd
+        ]
+
+    } where
+        perform (RegisterAction a)  = doRegisterAction a
+        perform (UnregisterAction k) = doUnRegisterAction k
+        perform (RemovePackage u) = doRemovePackage u
+        perform _ = $(err "illegal pattern match")
 
 type ExecAgent a = StateT ExecState Agent a
 
 instance (ContextReader m)
       => ContextReader (StateT ExecState m) where
     askContext = lift askContext
-
-executiveProcess :: ProcessDefinition ExecState
-executiveProcess = defaultProcess {
-       apiHandlers = [
-         handleCall  (\s (n :: Int) -> reply (n * 2) s)
-       , handleCast  (\s (_ :: ExecutiveCommand) -> continue s )
-       ]
-    }
-
--- | sendCommand a particular command and send the response
-perform :: ExecutiveCommand -> ExecAgent ()
-perform (RegisterAction a)  = doRegisterAction a
-perform (UnregisterAction k) = doUnRegisterAction k
-perform (ExecuteAction a) = doExecuteAction a
-perform (ExecuteRegistered k) = doExecuteRegistered k
-perform (DeliverPackage p) = doDeliverPackage p
-perform (RemovePackage u) = doRemovePackage u
-perform _ = undefined
-{-perform (QueryActionHistory query) = undefined-}
 
 -- ExecutiveCommand realizations
 doRegisterAction ::  Action -> ExecAgent ()
@@ -149,31 +131,36 @@ doUnRegisterAction k = do
     [qdebug|Unregistering action key: #{k}|]
     agentDb $ deleteAction k
 
-doExecuteAction :: Action -> ExecAgent ()
+doExecuteAction :: Action -> ExecAgent EResult
 doExecuteAction act = do
     [qdebug|Executing action: #{act}|]
-    void $ spawnLocal $ doExec act
+    doExec act
 
-doExecuteRegistered :: Key -> ExecAgent ()
-doExecuteRegistered k = void $ spawnLocal $ do
+doExecuteRegistered :: Key -> ExecAgent EResult
+doExecuteRegistered k = do
     [qdebug|Executing action key: #{k}|]
     act <- agentDb $ fetchAction k
     case act of
         Right a -> do
-            $(logDebug) $ "Executing action: " ++ tshow a
+            [qdebug|Executing action: #{a}|]
             doExec a
-        Left (ParseFail msg) ->
+        Left (ParseFail msg) -> do
             [qwarn| Unable to retrieve action key: #{k} - #{msg}|]
-        Left (NotFound _) ->
+            undefined
+        Left (NotFound _) -> do
             [qwarn| Unable to retrieve action key: #{k}
                             not found in database. |]
+            undefined
 
-doExec :: Action -> ExecAgent ()
+doExec :: Action -> ExecAgent EResult
 doExec act =
-    exec act >>=
-    either $(logWarn) (storeResult >=> notifyListeners)
+    exec act >>= processResult
   where
-    storeResult :: Result -> ExecAgent Result
+    processResult (Left msg) = do
+            [qwarn| Execution of action: #{key act} has failed
+            with message: #{msg} |]
+            return $ Left msg
+    processResult (Right r) = Right <$> (storeResult r >>= notifyListeners)
     storeResult result = do
         [qdebug| Storing result: #{result}|]
         asyncAgentDb $ withKeySpace (KS.actionsAp $ key act) $
@@ -190,14 +177,27 @@ doExec act =
             when matched $ do
                 [qdebug|Sending Result: #{result} To: #{pid}|]
                 send pid result
+        return result
     timestampKey = toBytes . view timestamp . summary
 
-doDeliverPackage :: Package -> ExecAgent ()
+-- | Register and schedule a list of Actions
+doDeliverPackage :: Package -> ExecAgent [EResult]
 doDeliverPackage package = do
-    --TODO: Figure out what it even means to "route"
     [qdebug|Delivering package: #{package}|]
-    registerIt >>= storeIt >>= scheduleIt
+    doLocal <- (&&) <$> localContext <*> localZone
+    if doLocal then registerIt >>= storeIt >>= scheduleIt
+               else return [] --TODO: implement routing
   where
+    localContext :: ExecAgent Bool
+    localContext = do
+        supported <- viewConfig (agentConfig.contexts)
+        let found = Set.intersection (package^.contexts) supported
+        return $ not $ Set.null found
+    localZone :: ExecAgent Bool
+    localZone = do
+        supported <- viewConfig (agentConfig.zones)
+        let found = Set.intersection (package^.zones) supported
+        return $ not $ Set.null found
     registerIt = do
         keys <- forM (package^.actions) $ \act -> do
             doRegisterAction act
@@ -209,7 +209,8 @@ doDeliverPackage package = do
         case pkg^.schedule of
             Now -> do
                 -- execute all actions
-                forM_ (pkg^.actionKeys) $ \akey ->
+                -- TODO: execute concurrently w/ Platform.Asnc
+                results <- forM (pkg^.actionKeys) $ \akey ->
                     doExecuteRegistered akey
 
                 -- record package execution history
@@ -217,7 +218,9 @@ doDeliverPackage package = do
                 agentDb . withKeySpace (KS.packagesAp $ key pkg) $
                     store (toBytes time) pkg
 
-            _ -> return () --TODO: add to scheduler
+                return results
+
+            _ -> return [] --TODO: add to scheduler
 
 doRemovePackage :: UUID -> ExecAgent ()
 doRemovePackage uid = do

@@ -29,6 +29,7 @@ import qualified Data.Binary                 as Binary
 import qualified Data.ByteString.Char8       as BS
 import           Data.Dynamic                (cast)
 import qualified Data.Map                    as Map
+import qualified Data.Set                    as Set
 import qualified Prelude                     as P
 import           System.IO.Unsafe            (unsafePerformIO)
 
@@ -238,8 +239,8 @@ defaultPackage :: (MonadIO m) => m Package
 defaultPackage = do
     (Just newid) <- liftIO nextUUID
     return $ Package newid
-                     []
-                     []
+                     (Set.fromList [Context "default"])
+                     (Set.fromList [Zone "default"])
                      []
                      []
                      []

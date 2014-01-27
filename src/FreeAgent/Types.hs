@@ -20,11 +20,11 @@ module FreeAgent.Types
  ( module FreeAgent.Types
  , Storeable, MonadLevelDB, Key, Value, KeySpace
  , MonadProcess
- , NFSerializable
+ , NFSerializable, Process, ProcessId
  , MonadBase
  , MonadBaseControl
  , NFData(..)
- , LogLevel(..)
+ , LogLevel(..), MonadLogger
  , UUID
  )
 
@@ -43,7 +43,8 @@ import           Data.Typeable                      (cast)
 import           Control.Concurrent.Chan.Lifted     (Chan)
 import           Control.DeepSeq                    (NFData (..))
 import           Control.DeepSeq.TH                 (deriveNFData)
-import           Control.Distributed.Process.Lifted
+import           FreeAgent.Process (MonadProcess(..), Process
+                                                    ,ProcessId, NFSerializable )
 import           Control.Distributed.Process.Node   (LocalNode)
 import           Control.Monad.Base                 (MonadBase)
 import           Control.Monad.Logger               (LogLevel (..), LoggingT,
@@ -55,6 +56,7 @@ import           Data.Default                       (Default (..))
 import           Data.SafeCopy                      (base, deriveSafeCopy)
 import qualified Data.Serialize                     as Cereal (Get,
                                                                Serialize (..))
+import qualified Data.Set                           as Set
 import           Data.UUID                          (UUID)
 import           Database.LevelDB.Higher            (FetchFail (..), Key,
                                                      KeySpace, LevelDBT,
@@ -132,6 +134,8 @@ class (NFSerializable a, Stashable a) => Resulting a where
 --
 data Result = forall a. (Resulting a, Show a) => Result a
 
+type EResult = Either Text Result
+
 instance Show Result where
     show (Result a) = show a
 
@@ -173,6 +177,8 @@ data PluginDef
               , _plugindefListeners :: Agent [Listener]
               }
 
+-- | AgentConfig data is set at startup and does not change while
+-- the process is running
 data AgentConfig
   = AgentConfig  { _configDbPath         :: !FilePathS
                  , _configNodeHost       :: !String
@@ -180,17 +186,21 @@ data AgentConfig
                  , _configPluginContexts :: !PluginContexts
                  , _configDebugLogCount  :: !Int
                  , _configMinLogLevel    :: !LogLevel
+                 , _configContexts       :: Set Context
+                 , _configZones          :: Set Zone
                  }
 
 -- | Each agent belongs to one or more contexts - every 'Package' specifies
 -- the Context(s) in which it will execute
-data Context = Context !Text deriving (Show, Eq, Typeable, Generic)
+data Context = Context !Text deriving (Show, Eq, Ord, Typeable, Generic)
 
 -- | Each agent belongs to one or more Zones - functionally this is the
 -- similar to a Context but it is intended to indicate geographic or
 -- network location (e.g. Zone "BehindFirewall", Zone "DMZ", Zone "Public")
-data Zone = Zone !Text deriving (Show, Eq, Typeable, Generic)
+data Zone = Zone !Text deriving (Show, Eq, Ord, Typeable, Generic)
 
+-- | AgentContext may be initialized during startup but is more
+-- dynamic than config and may change and/or provide communications
 data AgentContext
   = AgentContext { _contextActionMap       :: !ActionMap
                  , _contextResultMap       :: !ResultMap
@@ -198,20 +208,18 @@ data AgentContext
                  , _contextAgentDBChan     :: Chan DBMessage
                  , _contextListeners       :: Agent [Listener]
                  , _contextProcessNode     :: LocalNode
-                 , _contextContexts        :: ![Context]
-                 , _contextZones           :: ![Zone]
                  }
 
 instance Default AgentConfig where
     def = AgentConfig "./db" "127.0.0.1" "3546" mempty 10 LevelWarn
+            (Set.fromList [Context "default"])
+            (Set.fromList [Zone "default"])
 
 instance Default AgentContext where
     def = AgentContext mempty mempty def
             (error "agentDB chan not initialized!")
             (return [])
             (error "process node not initialized!")
-            [Context "default"]
-            [Zone "default"]
 
 class (Functor m, Applicative m, Monad m)
       => ContextReader m where
@@ -294,8 +302,8 @@ data Schedule = Now | Later
 
 data Package = Package {
       _packageUuid :: UUID
-    , _packageContexts :: [Context]
-    , _packageZones :: [Zone]
+    , _packageContexts :: Set Context
+    , _packageZones :: Set Zone
     , _packageActions :: [Action]
     , _packageActionKeys :: [Key]
     , _packageMeta :: [(Text, Text)]

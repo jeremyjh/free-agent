@@ -15,9 +15,10 @@ import           FreeAgent.Plugins.Nagios as Nagios
 import           FreeAgent.Executive as Exec
 
 import           System.Process(system)
+import qualified Data.Set as Set
 
 import           Control.Concurrent.Lifted
-import           Control.Distributed.Process.Lifted as Process
+import           FreeAgent.Process as Process
 import           Control.Distributed.Process.Node
 import           Network.Transport.TCP
 import           Data.Dynamic
@@ -38,8 +39,8 @@ spec = do
             testAgent $ \result -> do
                 catchAny $ do
                     registerAction $ Action checkTCP
-                    threadDelay 10000
-                    executeRegistered $ key checkTCP
+                    (Right nr) <- executeRegistered $ key checkTCP
+                    let Just (NagiosResult _ OK) = extract nr
                     threadDelay 10000
                     -- confirm results were written
                     items <- agentDb $ withKeySpace "agent:actions:localhost:53" $ do
@@ -52,8 +53,8 @@ spec = do
         it "can execute a supplied action" $ do
             testAgent $ \result -> do
                 catchAny $ do
-                    executeAction $ Action checkTCP
-                    threadDelay 10000
+                    (Right nr) <- executeAction $ Action checkTCP
+                    let Just (NagiosResult _ OK) = extract nr
                     -- confirm results were written
                     items <- agentDb $ withKeySpace "agent:actions:localhost:53" $ do
                         scan "" queryItems
@@ -68,7 +69,6 @@ spec = do
                     -- generate some results to hear about
                     forM_ [0..2] $ \_ ->
                         executeAction $ Action checkTCP
-                    threadDelay 30000
                     -- make sure he's been listening
                     pid <- getSelfPid
                     nsend "ExecSpecActionListener" ("ask-result-count" :: String, pid)
@@ -80,12 +80,11 @@ spec = do
                     result $ throw exception
             `shouldReturn` (3,3)
 
-        it "can deliver and remove a package" $ do
+        it "can deliver and remove a basic package" $ do
             testAgent $ \result -> do
                 catchAny $ do
                     package <- set actions [Action checkTCP] <$> defaultPackage
-                    deliverPackage package
-                    threadDelay 10000
+                    results <- deliverPackage package
 
                     -- confirm package was added
                     (Just _) <- agentDb $ withKeySpace KS.packages $
@@ -103,14 +102,42 @@ spec = do
 
                     -- now test remove
                     removePackage $ package^.uuid
-                    threadDelay 10000
+
                     Nothing <- agentDb $ withKeySpace KS.packages $ do
                         get $ key package
 
-                    result $ (resultsAdded, historyAdded)
+                    result $ (length results, resultsAdded, historyAdded)
                 $ \exception ->
                     result $ throw exception
-            `shouldReturn` (1,1)
+            `shouldReturn` (1,1,1)
+
+        it "it won't deliver a package for an unknown context or zone" $ do
+            testAgent $ \result -> do
+                catchAny $ do
+                    let unknownContext = Set.fromList [Context "unknown"]
+                    package <- set actions [Action checkTCP] <$> defaultPackage
+                                   & fmap (set contexts unknownContext)
+
+                    results <- deliverPackage package
+
+                    -- confirm package was not added
+                    Nothing <- agentDb $ withKeySpace KS.packages $
+                        get $ key package
+
+                    let unknownZone = Set.fromList [Zone "unknown"]
+                    package' <- set actions [Action checkTCP] <$> defaultPackage
+                                    & fmap (set zones unknownZone)
+
+                    deliverPackage package'
+
+                    -- confirm package was not added
+                    Nothing <- agentDb $ withKeySpace KS.packages $
+                        get $ key package'
+
+                    result $ True
+                $ \exception ->
+                    result $ throw exception
+            `shouldReturn` True
 
 -- helper for running agent and getting results out of
 -- the Process through partially applied putMVar
@@ -148,7 +175,7 @@ appConfig = (
         addPlugin $ testDef def
         -- add more plugins here!
     ) & agentConfig.dbPath .~ "/tmp/leveltest" -- override Agent config values here!
-      & agentConfig.minLogLevel .~ LevelDebug
+      {-& agentConfig.minLogLevel .~ LevelDebug-}
 
 
 testActionListener :: Agent [Listener]

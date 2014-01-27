@@ -6,9 +6,11 @@
 {-# LANGUAGE TypeFamilies               #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Control.Distributed.Process.Lifted
+-- | Provides MonadProcess typeclass and lifted versions of commonly used
+-- functions
+module FreeAgent.Process
     ( module Control.Distributed.Process
-    , module Control.Distributed.Process.Lifted
+    , module FreeAgent.Process
     , NFSerializable
     )
 where
@@ -22,14 +24,21 @@ import           Control.Distributed.Process                           hiding
                                                                         (expect, expectTimeout, getSelfPid,
                                                                         nsend, register,
                                                                         send, spawnLocal,
-                                                                        whereis)
+                                                                        call,
+                                                                        whereis, sendChan)
 import qualified Control.Distributed.Process                           as Base
 import           Control.Distributed.Process.Internal.Types            (Process(..), LocalProcess(..))
-import           Control.Distributed.Process.Platform                  (NFSerializable)
+import           Control.Distributed.Process.Platform                  (NFSerializable, Addressable)
+import           Control.Distributed.Process.Serializable              (Serializable)
+import qualified Control.Distributed.Process.Platform                  as Base (spawnLinkLocal)
 import qualified Control.Distributed.Process.Platform.UnsafePrimitives as NF
+import qualified Control.Distributed.Process.Platform.ManagedProcess.UnsafeClient   as Managed
 import           Control.Monad.Base                                    (MonadBase(..))
 import           Control.Monad.Trans.Control                           (MonadBaseControl(..))
 import           Control.Monad.Trans.Resource                          (MonadThrow(..), MonadUnsafeIO(..))
+
+import           Data.ByteString.Lazy
+import           Data.Binary
 
 
 -- instances required under ResourceT
@@ -51,7 +60,7 @@ class (MonadIO m, MonadBaseControl IO m) => MonadProcess m where
 
 instance MonadProcess Process where
     liftProcess = id
-    mapProcess f = f
+    mapProcess = id
 
 instance (Monad m, MonadProcess m) => MonadProcess (ReaderT r m) where
     liftProcess = lift . liftProcess
@@ -81,6 +90,9 @@ instance (Monoid w, Monad m, MonadProcess m) => MonadProcess (RWST r w s m) wher
 spawnLocal :: (MonadProcess m) => m () -> m ProcessId
 spawnLocal = mapProcess Base.spawnLocal
 
+spawnLinkLocal :: (MonadProcess m) => m () -> m ProcessId
+spawnLinkLocal = mapProcess Base.spawnLinkLocal
+
 getSelfPid :: (MonadProcess m) => m ProcessId
 getSelfPid = liftProcess Base.getSelfPid
 
@@ -89,15 +101,24 @@ getSelfPid = liftProcess Base.getSelfPid
 send :: (MonadProcess m, NFSerializable a) => ProcessId -> a -> m ()
 send pid = liftProcess . NF.send pid
 
+
+-- | Send a processId a message - note this is actually the "unsafe" version
+-- from Control.Distributed.Process.Platform.UnsafePrimitives
+sendChan :: (MonadProcess m, NFSerializable a) => SendPort a -> a -> m ()
+sendChan port = liftProcess . NF.sendChan port
+
+syncCallChan :: forall s a b m. (MonadProcess m, Addressable s, NFSerializable a, NFSerializable b) => s -> a -> m b
+syncCallChan port = liftProcess . Managed.syncCallChan port
+
 -- | Send a named process a message - note this is actually the "unsafe" version
 -- from Control.Distributed.Process.Platform.UnsafePrimitives
 nsend :: (MonadProcess m, NFSerializable a) => String -> a -> m ()
 nsend name = liftProcess . NF.nsend name
 
-expect :: (MonadProcess m) => forall a. NFSerializable a => m a
+expect :: (MonadProcess m) => forall a. Serializable a => m a
 expect = liftProcess Base.expect
 
-expectTimeout :: (MonadProcess m) => forall a. NFSerializable a => Int -> m (Maybe a)
+expectTimeout :: (MonadProcess m) => forall a. Serializable a => Int -> m (Maybe a)
 expectTimeout = liftProcess . Base.expectTimeout
 
 register :: (MonadProcess m) => String -> ProcessId -> m ()
@@ -105,3 +126,15 @@ register name = liftProcess . Base.register name
 
 whereis :: (MonadProcess m) => String -> m (Maybe ProcessId)
 whereis = liftProcess . Base.whereis
+
+-- | Cast to a managed process server - this is the "unsafe" version
+cast :: (MonadProcess m, NFSerializable a) => ProcessId -> a -> m ()
+cast pid = liftProcess . Managed.cast pid
+
+-- | Call to a managed process server - this is the "unsafe" version
+call :: (MonadProcess m, NFSerializable a, NFSerializable b) => ProcessId -> a -> m b
+call pid = liftProcess . Managed.call pid
+
+doSer :: ProcessId -> ByteString
+doSer = encode
+

@@ -16,7 +16,7 @@ import           FreeAgent.Plugins.Nagios
 import           AppConfig(appConfig)
 
 import           Control.Concurrent.Lifted
-import           Control.Distributed.Process.Lifted
+import           FreeAgent.Process
 
 import           Control.Distributed.Process.Node
 import           Network.Transport.TCP

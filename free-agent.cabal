@@ -14,11 +14,12 @@ library
                    , FreeAgent.Database.KeySpace
                    , FreeAgent.Types
                    , FreeAgent.Lenses
+                   , FreeAgent.Process
+                   , FreeAgent.Process.ManagedAgent
                    , FreeAgent.Core
                    , FreeAgent.Action
                    , FreeAgent.Executive
                    , FreeAgent.Plugins.Nagios
-                   , Control.Distributed.Process.Lifted
                    , Control.Monad.Logger.Quote
 
   build-depends:     base == 4.*
@@ -38,6 +39,7 @@ library
                    , data-default
                    , distributed-process
                    , distributed-process-platform
+                   --, distributed-process-p2p
                    , network-transport-tcp
                    , network-transport
                    , resourcet

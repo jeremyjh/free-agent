@@ -5,6 +5,7 @@
 module FreeAgent.Core
     ( runAgent
     , withAgent
+    , spawnAgent
     , extractConfig
     , definePlugin
     , registerPlugins
@@ -22,7 +23,7 @@ import           Control.Monad.Writer             (execWriter, tell)
 import           Data.Dynamic                     (fromDynamic, toDyn)
 import qualified Data.Map                         as Map
 
-import           Control.Distributed.Process      (Process)
+import           FreeAgent.Process (spawnLocal)
 import           Control.Distributed.Process.Node ( newLocalNode, runProcess
                                                   , initRemoteTable )
 import           Network.Transport                (closeTransport)
@@ -57,6 +58,11 @@ withAgent :: AgentContext -> Agent a -> Process a
 withAgent ctxt ma =
     runAgentLoggingT (ctxt^.agentConfig.debugLogCount) $
         runReaderT (unAgent ma) ctxt
+
+-- | Spawn a new process with an Agent Context and throwing
+-- away the result
+spawnAgent :: AgentContext -> Agent a -> Process ProcessId
+spawnAgent ctxt ma = spawnLocal (void $ withAgent ctxt ma)
 
 -- | Lookup a plugin-specific config from the pluginConfigs map
 -- and extract it to a concrete type with fromDynamic

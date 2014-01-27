@@ -1,2 +1,0 @@
-#!/bin/bash
-cabal clean && cabal configure --enable-tests --enable-library-profiling --enable-executable-profiling --ghc-option=-auto-all && cabal build && bin/spec +RTS  -p -hc -sspec.summary

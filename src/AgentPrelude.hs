@@ -16,7 +16,7 @@ module AgentPrelude
       module ClassyPrelude
     , showStr
     , FilePathS
-    , debug, dbg
+    , debug, dbg, err
     , ConvertText(..)
     , ConvertByteString(..)
     , def
@@ -24,20 +24,16 @@ module AgentPrelude
     , Generic
     , deriveSerializers
     , fqName
-    , logM
-    , logDebug
-    , Log.logWarn
-    , qinfo
-    , qdebug
-    , qwarn
-    , qerror
+    , qdebug, qinfo, qwarn, qerror
+    , logDebug, logInfo, logWarn, logError
     ) where
 
 import           ClassyPrelude                 hiding (undefined)
 import qualified Prelude                       as P
 
 import           Control.DeepSeq.TH            (deriveNFData)
-import qualified Control.Monad.Logger          as Log (logDebug, logWarn)
+import           Control.Monad.Logger          (logDebug, logInfo, logWarn, logError)
+import           Control.Monad.Logger.Quote    (qdebug, qinfo, qwarn, qerror)
 import           Data.Binary                   as Binary (Binary (..))
 import qualified Data.ByteString.Char8         as BS
 import           Data.Default                  (def)
@@ -47,14 +43,13 @@ import           Data.Time                     (UTCTime)
 import           Data.Time.Format              (formatTime, parseTime)
 import           Data.Typeable
 import           GHC.Generics                  (Generic)
-import           Language.Haskell.TH           (Dec, Exp, Name, Q)
+import           Language.Haskell.TH           (Dec, Name, Q)
 import           Language.Haskell.TH.Lib       (conT)
 import           System.Locale                 (defaultTimeLocale)
 
 import           Database.LevelDB.Higher.Store (Version, deriveStorableVersion)
 import           Data.UUID                     (toASCIIBytes, fromASCIIBytes, UUID)
-import           Debug.FileLocation            (dbg, debug)
-import           Control.Monad.Logger.Quote    (qinfo, qdebug, qwarn, qerror)
+import           FileLocation                  (dbg, debug, err)
 
 showStr :: (Show a) => a -> String
 showStr = P.show
@@ -119,18 +114,3 @@ fqName typee =  modName ++ "." ++ name
   where
     name = BS.pack . P.show $ typeOf typee
     modName = BS.pack . tyConModule . typeRepTyCon $ typeOf typee
-
--- TODO: use real logging
-logM :: (MonadIO m) => Text -> m()
-logM = putStrLn
-
-
-logDebug :: Q Exp
-logDebug =
---TODO: benchmark this with large amount of data once we
---have lots of debug statements in code
-#ifdef NO_DEBUG
-  [e|return . const ()|]
-#else
-  Log.logDebug
-#endif
