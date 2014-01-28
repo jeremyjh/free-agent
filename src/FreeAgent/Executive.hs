@@ -29,8 +29,9 @@ import qualified Data.Set                                            as Set
 import           Data.Time.Clock                                     (getCurrentTime)
 
 import           FreeAgent.Process                  as Process
-import           Control.Distributed.Process.Platform.ManagedProcess as Managed
-                                                                    hiding (cast, call, syncCallChan)
+import           Control.Distributed.Process.Platform.Supervisor
+import           Control.Distributed.Process.Platform.Time
+       (Delay(..), milliSeconds)
 
 
 -- -----------------------------
@@ -64,55 +65,68 @@ instance NFData ExecutiveCommand where
 -- API
 -- -----------------------------
 registerAction :: (MonadAgent m) => Action -> m ()
-registerAction = sendCommand execServer . RegisterAction
+registerAction = callServer execServer . RegisterAction
 
 executeRegistered :: (MonadAgent m) => Key -> m EResult
-executeRegistered = sendCommand execServer . ExecuteRegistered
+executeRegistered = callServer execServer . ExecuteRegistered
 
 executeAction :: (MonadAgent m) => Action -> m EResult
-executeAction = sendCommand execServer . ExecuteAction
+executeAction = callServer execServer . ExecuteAction
 
 -- | Send / register a package and optional list of Actions to register
 -- to each context leader defined in the package
 deliverPackage :: (MonadAgent m) => Package -> m [EResult]
-deliverPackage p = sendCommand execServer $ DeliverPackage p
+deliverPackage p = callServer execServer $ DeliverPackage p
 
 -- | Remove a package definition from the context leader(s). Does
 -- not unregister Actions or remove history.
 removePackage :: (MonadAgent m) => UUID -> m ()
-removePackage = sendCommand execServer . RemovePackage
+removePackage = callServer execServer . RemovePackage
 
 -- -----------------------------
 -- Implementation
 -- -----------------------------
 
+
 execServer :: AgentServer
-execServer = AgentServer "agent:executive" init
+execServer = AgentServer "agent:executive" init child
   where
     init ctxt = do
         listeners' <- withAgent ctxt $ join $ viewConfig listeners
         let state' = ExecState (Map.fromList []) listeners'
         serve state' (initState ctxt) executiveProcess
+      where
+        executiveProcess = defaultProcess {
+            apiHandlers =
+            [ handleRpcChan $ agentAsyncCallHandler $
+                  \cmd -> case cmd of
+                      ExecuteAction act -> doExecuteAction act
+                      ExecuteRegistered k -> doExecuteRegistered k
+                      _ -> $(err "illegal pattern match")
 
-    executiveProcess = defaultProcess {
-        apiHandlers =
-        [ handleRpcChan $ asyncAgentHandler $
-              \cmd -> case cmd of
-                  ExecuteAction act -> doExecuteAction act
-                  ExecuteRegistered k -> doExecuteRegistered k
-                  _ -> $(err "illegal pattern match")
+            , handleRpcChan $ agentAsyncCallHandler $
+                \(DeliverPackage pkg) -> doDeliverPackage pkg
 
-        , handleRpcChan $ asyncAgentHandler $
-            \(DeliverPackage pkg) -> doDeliverPackage pkg
+            , handleRpcChan $ agentAsyncCallHandler $ \cmd -> perform cmd
+            ]
 
-        , handleRpcChan $ asyncAgentHandler $ \cmd -> perform cmd
-        ]
+        } where
+            perform (RegisterAction a)  = doRegisterAction a
+            perform (UnregisterAction k) = doUnRegisterAction k
+            perform (RemovePackage u) = doRemovePackage u
+            perform _ = $(err "illegal pattern match")
 
-    } where
-        perform (RegisterAction a)  = doRegisterAction a
-        perform (UnregisterAction k) = doUnRegisterAction k
-        perform (RemovePackage u) = doRemovePackage u
-        perform _ = $(err "illegal pattern match")
+    child ctxt = do
+        initChild <- toChildStart $ init ctxt
+
+        return $ ChildSpec {
+              childKey     = ""
+            , childType    = Worker
+            , childRestart = Permanent
+            , childStop    = TerminateTimeout (Delay $ milliSeconds 10)
+            , childStart   = initChild
+            , childRegName = Just $ LocalName "agent:executive"
+        }
 
 type ExecAgent a = StateT ExecState Agent a
 

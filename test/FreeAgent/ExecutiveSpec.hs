@@ -35,6 +35,15 @@ spec :: Spec
 spec = do
     describe "FreeAgent.Executive" $ do
 
+        it "is started by Core supervisor" $ do
+            testAgent $ \result -> do
+                catchAny $ do
+                    Just pid <- whereis $ execServer^.name
+                    result True
+                $ \exception ->
+                    result $ throw exception
+            `shouldReturn` True
+
         it "can execute a registered action" $ do
             testAgent $ \result -> do
                 catchAny $ do

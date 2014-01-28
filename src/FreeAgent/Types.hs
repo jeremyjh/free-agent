@@ -44,7 +44,8 @@ import           Control.Concurrent.Chan.Lifted     (Chan)
 import           Control.DeepSeq                    (NFData (..))
 import           Control.DeepSeq.TH                 (deriveNFData)
 import           FreeAgent.Process (MonadProcess(..), Process
-                                                    ,ProcessId, NFSerializable )
+                                                    ,ProcessId, NFSerializable
+                                                    ,ChildSpec)
 import           Control.Distributed.Process.Node   (LocalNode)
 import           Control.Monad.Base                 (MonadBase)
 import           Control.Monad.Logger               (LogLevel (..), LoggingT,
@@ -319,3 +320,9 @@ deriveSerializers ''Zone
 deriveSafeCopy 1 'base ''Wrapped
 deriveNFData ''Wrapped
 deriveSerializers ''Schedule
+
+
+data AgentServer = AgentServer { _serverName :: String
+                               , _serverInit :: (AgentContext -> Process ())
+                               , _serverChild :: (AgentContext -> Process ChildSpec)
+                               }

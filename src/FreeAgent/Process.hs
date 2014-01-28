@@ -12,6 +12,7 @@ module FreeAgent.Process
     ( module Control.Distributed.Process
     , module FreeAgent.Process
     , NFSerializable
+    , ChildSpec
     )
 where
 
@@ -33,6 +34,7 @@ import           Control.Distributed.Process.Serializable              (Serializ
 import qualified Control.Distributed.Process.Platform                  as Base (spawnLinkLocal)
 import qualified Control.Distributed.Process.Platform.UnsafePrimitives as NF
 import qualified Control.Distributed.Process.Platform.ManagedProcess.UnsafeClient   as Managed
+import           Control.Distributed.Process.Platform.Supervisor (ChildSpec)
 import           Control.Monad.Base                                    (MonadBase(..))
 import           Control.Monad.Trans.Control                           (MonadBaseControl(..))
 import           Control.Monad.Trans.Resource                          (MonadThrow(..), MonadUnsafeIO(..))

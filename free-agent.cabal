@@ -17,6 +17,7 @@ library
                    , FreeAgent.Process
                    , FreeAgent.Process.ManagedAgent
                    , FreeAgent.Core
+                   , FreeAgent.Peer
                    , FreeAgent.Action
                    , FreeAgent.Executive
                    , FreeAgent.Plugins.Nagios

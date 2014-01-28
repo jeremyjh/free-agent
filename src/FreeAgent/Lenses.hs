@@ -27,6 +27,7 @@ makeFields ''Wrapped
 makeFields ''PluginDef
 makeFields ''ResultSummary
 makeFields ''Package
+makeFields ''AgentServer
 
 -- | Use a lens to view a portion of AgentContext
 viewConfig :: (ContextReader m) => Getting a AgentContext a -> m a
