@@ -10,6 +10,7 @@ module FreeAgent.Core
     , definePlugin
     , registerPlugins
     , addPlugin
+    , peerServer
     ) where
 
 import           FreeAgent.Action                 (registerPluginMaps)
