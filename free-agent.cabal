@@ -17,9 +17,10 @@ library
                    , FreeAgent.Process
                    , FreeAgent.Process.ManagedAgent
                    , FreeAgent.Core
-                   , FreeAgent.Peer
+                   , FreeAgent.Server
+                   , FreeAgent.Server.Peer
+                   , FreeAgent.Server.Executive
                    , FreeAgent.Action
-                   , FreeAgent.Executive
                    , FreeAgent.Plugins.Nagios
                    , Control.Monad.Logger.Quote
 

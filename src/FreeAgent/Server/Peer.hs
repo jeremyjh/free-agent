@@ -11,13 +11,12 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 
-module FreeAgent.Peer where
+module FreeAgent.Server.Peer where
 
 import           AgentPrelude
 import           FreeAgent.Lenses
 import           FreeAgent.Core
 import           FreeAgent.Process
-import qualified FreeAgent.Executive as Exec (execServer)
 import           FreeAgent.Process.ManagedAgent
 
 import           Data.Binary
@@ -83,7 +82,7 @@ peerServer = AgentServer "agent:peer" init child
     child ctxt = do
        initChild <- toChildStart $ init ctxt
 
-       return $ ChildSpec {
+       return ChildSpec {
              childKey     = ""
            , childType    = Worker
            , childRestart = Permanent
@@ -91,11 +90,6 @@ peerServer = AgentServer "agent:peer" init child
            , childStart   = initChild
            , childRegName = Just $ LocalName "agent:peer"
        }
-
--- because for some reason, runhaskell panics when I have a
--- {-# SOURCE -#} Executive in Core.hs
-execServer :: AgentServer
-execServer = Exec.execServer
 
 doDiscoverPeers :: PeerAgent ()
 doDiscoverPeers = undefined

@@ -12,7 +12,8 @@ import           FreeAgent.Action
 import           FreeAgent.Database
 import qualified FreeAgent.Database.KeySpace as KS
 import           FreeAgent.Plugins.Nagios as Nagios
-import           FreeAgent.Executive as Exec
+import           FreeAgent.Server.Executive as Exec
+import           FreeAgent.Server (runAgentServers)
 
 import           System.Process(system)
 import qualified Data.Set as Set
@@ -154,7 +155,7 @@ testAgent :: ((a -> Agent ()) -> Agent ()) -> IO a
 testAgent ma = do
     setup
     result <- newEmptyMVar
-    runAgent appConfig (ma (putMVar result))
+    runAgentServers appConfig (ma (putMVar result))
     threadDelay 2000 -- so we dont get open port errors
     takeMVar result
 

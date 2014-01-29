@@ -27,7 +27,6 @@ data AgentState a = AgentState AgentContext a
 -- and sends the supplied argument with (NF) syncCallChan
 callServer :: (MonadAgent m, NFSerializable a, NFSerializable b) => AgentServer -> a -> m b
 callServer server cmd = do
-    ctxt <- askContext
     pid <- startServer server
     syncCallChan pid cmd
 
@@ -35,8 +34,7 @@ callServer server cmd = do
 startServer :: (MonadAgent m) => AgentServer -> m ProcessId
 startServer (AgentServer sname sinit _) = do
     ctxt <- askContext
-    pid <- liftProcess $ whereisOrStart sname (sinit ctxt)
-    return pid
+    liftProcess $ whereisOrStart sname (sinit ctxt)
 
 initState :: AgentContext -> a -> Process (InitResult (AgentState a))
 initState ctxt state' = return $ InitOk (AgentState ctxt state') Infinity
@@ -67,7 +65,7 @@ agentCastHandler :: (NFSerializable a)
                   -> Process (ProcessAction (AgentState s) )
 agentCastHandler f s c = withStateAgent s (f c) >>= continue
   where
-    withStateAgent (AgentState ctxt state') ma = do
+    withStateAgent (AgentState ctxt state') ma =
         withAgent ctxt $ do
             state'' <- execStateT ma state'
             return $ AgentState ctxt state''

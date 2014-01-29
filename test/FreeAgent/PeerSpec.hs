@@ -5,6 +5,8 @@ import           AgentPrelude
 import           FreeAgent.Core
 import           FreeAgent.Process
 import           FreeAgent.Lenses
+import           FreeAgent.Server (runAgentServers)
+import           FreeAgent.Server.Peer (peerServer)
 import           AppConfig(appConfig)
 
 import           Control.Concurrent.MVar.Lifted
@@ -35,6 +37,6 @@ spec =
 testAgent :: ((a -> Agent ()) -> Agent ()) -> IO a
 testAgent ma = do
     result <- newEmptyMVar
-    runAgent appConfig (ma (putMVar result))
+    runAgentServers appConfig (ma (putMVar result))
     threadDelay 2000 -- so we dont get open port errors
     takeMVar result

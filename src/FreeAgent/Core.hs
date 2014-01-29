@@ -10,13 +10,11 @@ module FreeAgent.Core
     , definePlugin
     , registerPlugins
     , addPlugin
-    , peerServer
     ) where
 
 import           FreeAgent.Action                 (registerPluginMaps)
 import           FreeAgent.Database
 import           FreeAgent.Lenses
-import {-# SOURCE #-} FreeAgent.Peer (peerServer, execServer)
 import           AgentPrelude
 
 import           Control.Exception
@@ -28,8 +26,6 @@ import qualified Data.Map                         as Map
 import           FreeAgent.Process (spawnLocal)
 import           Control.Distributed.Process.Node ( newLocalNode, runProcess
                                                   , initRemoteTable )
-import           Control.Distributed.Process.Platform.Supervisor
-import Control.Concurrent.Lifted (threadDelay)
 import           Network.Transport                (closeTransport)
 import           Network.Transport.TCP
 
@@ -54,17 +50,11 @@ runAgent ctxt ma = do
                       & processNode .~ node
 
     let proc   = runAgentLoggingT (ctxt^.agentConfig.debugLogCount) $
-                    runReaderT (unAgent ma) $ ctxt'
+                    runReaderT (unAgent ma) ctxt'
 
-    runProcess node $ (startSuper ctxt') >> proc
+    runProcess node proc
     closeTransport tcp
     closeAgentDB dbChan
-  where
-    startSuper ctxt' = do
-        cspecs <- sequence $ fmap childFrom [peerServer, execServer]
-        void $ start restartOne cspecs
-        threadDelay 10000
-      where childFrom (AgentServer _ _ child) = child ctxt'
 
 -- | Used to embed Agent code in the Process monad
 withAgent :: AgentContext -> Agent a -> Process a

@@ -323,6 +323,6 @@ deriveSerializers ''Schedule
 
 
 data AgentServer = AgentServer { _serverName :: String
-                               , _serverInit :: (AgentContext -> Process ())
-                               , _serverChild :: (AgentContext -> Process ChildSpec)
+                               , _serverinitProc :: AgentContext -> Process ()
+                               , _serverchildSpec :: AgentContext -> Process ChildSpec
                                }

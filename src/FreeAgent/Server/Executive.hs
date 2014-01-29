@@ -12,7 +12,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 
 
-module FreeAgent.Executive where
+module FreeAgent.Server.Executive where
 
 import           FreeAgent.Action
 import           FreeAgent.Core                                      (withAgent)
@@ -119,7 +119,7 @@ execServer = AgentServer "agent:executive" init child
     child ctxt = do
         initChild <- toChildStart $ init ctxt
 
-        return $ ChildSpec {
+        return ChildSpec {
               childKey     = ""
             , childType    = Worker
             , childRestart = Permanent
@@ -182,6 +182,7 @@ doExec act =
         return result
     notifyListeners result = do
         listeners' <- use listeners
+        [qdebug| Checking match for #{length listeners'} listeners |]
         forM_ listeners' $ \listener ->
             let (matched,pid) = case listener of
                    ActionMatching afilter apid ->
