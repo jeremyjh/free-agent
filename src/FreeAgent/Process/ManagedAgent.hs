@@ -1,5 +1,9 @@
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module FreeAgent.Process.ManagedAgent
     ( module FreeAgent.Process.ManagedAgent
     , module Managed
@@ -7,6 +11,7 @@ module FreeAgent.Process.ManagedAgent
 
 where
 
+import           AgentPrelude
 import           FreeAgent.Core                                      (spawnAgent, withAgent)
 import           FreeAgent.Lenses
 import           FreeAgent.Process
@@ -17,18 +22,13 @@ import           Control.Concurrent.Lifted                           (threadDela
 import           Control.Distributed.Process.Platform.ManagedProcess as Managed
                                                                     hiding (cast, call, syncCallChan)
 
-import           Control.Distributed.Process.Platform               (whereisOrStart,linkOnFailure)
+import           Control.Distributed.Process.Platform               (whereisOrStart,linkOnFailure, Addressable(..))
 import           Control.Distributed.Process.Platform.Time          (Delay(..))
 
 data AgentState a = AgentState AgentContext a
 
-
--- | starts the defined server process if it is not already running
--- and sends the supplied argument with (NF) syncCallChan
-callServer :: (MonadAgent m, NFSerializable a, NFSerializable b) => AgentServer -> a -> m b
-callServer server cmd = do
-    pid <- startServer server
-    syncCallChan pid cmd
+instance Addressable AgentServer where
+    resolve (AgentServer sname _ _) = whereis sname
 
 -- | starts the defined server process if it is not already running
 startServer :: (MonadAgent m) => AgentServer -> m ProcessId
@@ -59,7 +59,7 @@ agentAsyncCallHandler f s p c = spawnStateAgent s p (f c) >> continue s
 -- | wrapper for commands that will handle a cast and mutate state -
 -- the updated StateT environment will provide the state value to
 -- 'continue'
-agentCastHandler :: (NFSerializable a)
+agentCastHandler :: (NFSerializable a, Show s)
                   => (a -> (StateT s Agent) ())
                   -> AgentState s -> a
                   -> Process (ProcessAction (AgentState s) )

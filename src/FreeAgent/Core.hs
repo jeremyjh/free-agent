@@ -1,6 +1,8 @@
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module FreeAgent.Core
     ( runAgent
@@ -12,10 +14,13 @@ module FreeAgent.Core
     , addPlugin
     ) where
 
+import           AgentPrelude
 import           FreeAgent.Action                 (registerPluginMaps)
 import           FreeAgent.Database
 import           FreeAgent.Lenses
-import           AgentPrelude
+import           FreeAgent.Process
+    ( spawnLocal, receiveWait, match
+    , sendChan, SendPort, reregister)
 
 import           Control.Exception
 import           Control.Monad.Reader             (runReaderT)
@@ -23,13 +28,11 @@ import           Control.Monad.Writer             (execWriter, tell)
 import           Data.Dynamic                     (fromDynamic, toDyn)
 import qualified Data.Map                         as Map
 
-import           FreeAgent.Process (spawnLocal)
+import           Control.Concurrent.Lifted (threadDelay)
 import           Control.Distributed.Process.Node ( newLocalNode, runProcess
                                                   , initRemoteTable )
 import           Network.Transport                (closeTransport)
 import           Network.Transport.TCP
-
-
 
 
 -- | Execute the agent - main entry point
@@ -52,9 +55,28 @@ runAgent ctxt ma = do
     let proc   = runAgentLoggingT (ctxt^.agentConfig.debugLogCount) $
                     runReaderT (unAgent ma) ctxt'
 
-    runProcess node proc
+    runProcess node $ initLogger >> proc
     closeTransport tcp
     closeAgentDB dbChan
+  where
+   -- overrides default Process logger to use Agent's logging framework
+   initLogger = do
+       pid <- spawnLocal logger
+       reregister "logger" pid
+       threadDelay 10000
+     where
+       logger =
+         receiveWait
+           [ match $ \((time, pid, string) ::(String, ProcessId, String)) -> do
+               withAgent ctxt $ [qinfo|#{time} #{pid}: #{string} |]
+               logger
+           , match $ \((time, string) :: (String, String)) -> do
+               -- this is a 'trace' message from the local node tracer
+               withAgent ctxt $ [qdebug|#{time}: #{string} |]
+               logger
+           , match $ \(ch :: SendPort ()) -> -- a shutdown request
+               sendChan ch ()
+           ]
 
 -- | Used to embed Agent code in the Process monad
 withAgent :: AgentContext -> Agent a -> Process a

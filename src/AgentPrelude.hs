@@ -26,6 +26,7 @@ module AgentPrelude
     , fqName
     , qdebug, qinfo, qwarn, qerror
     , logDebug, logInfo, logWarn, logError
+    , forceMaybeMsg
     ) where
 
 import           ClassyPrelude                 hiding (undefined)
@@ -47,6 +48,7 @@ import           Language.Haskell.TH           (Dec, Name, Q)
 import           Language.Haskell.TH.Lib       (conT)
 import           System.Locale                 (defaultTimeLocale)
 
+import           Data.Maybe.Utils (forceMaybeMsg)
 import           Database.LevelDB.Higher.Store (Version, deriveStorableVersion)
 import           Data.UUID                     (toASCIIBytes, fromASCIIBytes, UUID)
 import           FileLocation                  (dbg, debug, err)

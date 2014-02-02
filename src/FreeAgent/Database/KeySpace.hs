@@ -27,3 +27,6 @@ packages = "packages"
 
 packagesAp :: KeySpacer
 packagesAp = append $ agentAp packages
+
+peer :: KeySpace
+peer = agentAp "peer"

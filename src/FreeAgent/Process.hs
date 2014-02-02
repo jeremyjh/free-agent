@@ -39,10 +39,6 @@ import           Control.Monad.Base                                    (MonadBas
 import           Control.Monad.Trans.Control                           (MonadBaseControl(..))
 import           Control.Monad.Trans.Resource                          (MonadThrow(..), MonadUnsafeIO(..))
 
-import           Data.ByteString.Lazy
-import           Data.Binary
-
-
 -- instances required under ResourceT
 deriving instance MonadThrow Process
 deriving instance MonadUnsafeIO Process
@@ -136,7 +132,3 @@ cast pid = liftProcess . Managed.cast pid
 -- | Call to a managed process server - this is the "unsafe" version
 call :: (MonadProcess m, NFSerializable a, NFSerializable b) => ProcessId -> a -> m b
 call pid = liftProcess . Managed.call pid
-
-doSer :: ProcessId -> ByteString
-doSer = encode
-

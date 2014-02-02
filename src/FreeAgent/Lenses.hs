@@ -19,7 +19,7 @@ import           AgentPrelude
 import           FreeAgent.Types
 
 import           Control.Lens      (Getting, makeFields, use, view, (&), (.~),
-                                    (^.), _1, _2, set)
+                                    (^.), _1, _2, set, to)
 
 makeFields ''AgentContext
 makeFields ''AgentConfig

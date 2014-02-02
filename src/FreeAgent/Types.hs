@@ -53,6 +53,7 @@ import           Control.Monad.Logger               (LogLevel (..), LoggingT,
                                                      runStdoutLoggingT,
                                                      withChannelLogger)
 import           Control.Monad.Trans.Control
+import Control.Monad.State (StateT)
 import           Data.Default                       (Default (..))
 import           Data.SafeCopy                      (base, deriveSafeCopy)
 import qualified Data.Serialize                     as Cereal (Get,
@@ -189,6 +190,7 @@ data AgentConfig
                  , _configMinLogLevel    :: !LogLevel
                  , _configContexts       :: Set Context
                  , _configZones          :: Set Zone
+                 , _configPeerNodeSeeds  :: [String]
                  }
 
 -- | Each agent belongs to one or more contexts - every 'Package' specifies
@@ -215,6 +217,7 @@ instance Default AgentConfig where
     def = AgentConfig "./db" "127.0.0.1" "3546" mempty 10 LevelWarn
             (Set.fromList [Context "default"])
             (Set.fromList [Zone "default"])
+            []
 
 instance Default AgentContext where
     def = AgentContext mempty mempty def
@@ -229,6 +232,10 @@ class (Functor m, Applicative m, Monad m)
 instance (Functor m, Applicative m,Monad m)
          => ContextReader (ReaderT AgentContext m) where
     askContext = ask
+
+instance (ContextReader m)
+      => ContextReader (StateT a m) where
+    askContext = lift askContext
 
 -- Agent Monad
 

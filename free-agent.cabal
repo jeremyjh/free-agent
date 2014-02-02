@@ -41,7 +41,7 @@ library
                    , data-default
                    , distributed-process
                    , distributed-process-platform
-                   --, distributed-process-p2p
+                   , distributed-process-p2p
                    , network-transport-tcp
                    , network-transport
                    , resourcet

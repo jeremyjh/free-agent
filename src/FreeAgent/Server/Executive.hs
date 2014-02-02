@@ -65,23 +65,23 @@ instance NFData ExecutiveCommand where
 -- API
 -- -----------------------------
 registerAction :: (MonadAgent m) => Action -> m ()
-registerAction = callServer execServer . RegisterAction
+registerAction = syncCallChan execServer . RegisterAction
 
 executeRegistered :: (MonadAgent m) => Key -> m EResult
-executeRegistered = callServer execServer . ExecuteRegistered
+executeRegistered = syncCallChan execServer . ExecuteRegistered
 
 executeAction :: (MonadAgent m) => Action -> m EResult
-executeAction = callServer execServer . ExecuteAction
+executeAction = syncCallChan execServer . ExecuteAction
 
 -- | Send / register a package and optional list of Actions to register
 -- to each context leader defined in the package
 deliverPackage :: (MonadAgent m) => Package -> m [EResult]
-deliverPackage p = callServer execServer $ DeliverPackage p
+deliverPackage p = syncCallChan execServer $ DeliverPackage p
 
 -- | Remove a package definition from the context leader(s). Does
 -- not unregister Actions or remove history.
 removePackage :: (MonadAgent m) => UUID -> m ()
-removePackage = callServer execServer . RemovePackage
+removePackage = syncCallChan execServer . RemovePackage
 
 -- -----------------------------
 -- Implementation
@@ -129,10 +129,6 @@ execServer = AgentServer "agent:executive" init child
         }
 
 type ExecAgent a = StateT ExecState Agent a
-
-instance (ContextReader m)
-      => ContextReader (StateT ExecState m) where
-    askContext = lift askContext
 
 -- ExecutiveCommand realizations
 doRegisterAction ::  Action -> ExecAgent ()
