@@ -126,9 +126,11 @@ whereis :: (MonadProcess m) => String -> m (Maybe ProcessId)
 whereis = liftProcess . Base.whereis
 
 -- | Cast to a managed process server - this is the "unsafe" version
-cast :: (MonadProcess m, NFSerializable a) => ProcessId -> a -> m ()
+cast :: (Addressable s, MonadProcess m, NFSerializable a)
+     => s -> a -> m ()
 cast pid = liftProcess . Managed.cast pid
 
 -- | Call to a managed process server - this is the "unsafe" version
-call :: (MonadProcess m, NFSerializable a, NFSerializable b) => ProcessId -> a -> m b
+call :: (Addressable s, MonadProcess m
+        ,NFSerializable a, NFSerializable b) => s -> a -> m b
 call pid = liftProcess . Managed.call pid

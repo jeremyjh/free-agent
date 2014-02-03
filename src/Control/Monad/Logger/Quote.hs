@@ -77,7 +77,9 @@ qlog doSquish level =
         interpolated <- shakespeareFromString rs { justVarInterpolation = True } $ squishIf s
         return (mlog `AppE` interpolated)
     }
-  where squishIf s' = if doSquish then squish s' else s'
+  where squishIf s'
+          | doSquish = squish s'
+          | otherwise = s'
 
 -- replace consecutive spaces with a single space
 -- replace tab, newline with a space

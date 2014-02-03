@@ -7,6 +7,10 @@
 module FreeAgent.Process.ManagedAgent
     ( module FreeAgent.Process.ManagedAgent
     , module Managed
+    , module Supervisor
+    , Delay(..)
+    , ChildSpec(..)
+    , milliSeconds
     )
 
 where
@@ -16,14 +20,15 @@ import           FreeAgent.Core                                      (spawnAgent
 import           FreeAgent.Lenses
 import           FreeAgent.Process
 
-import           Control.Monad.State                                 (StateT, evalStateT, execStateT)
-
+import           Control.Monad.State                                 (StateT, evalStateT
+                                                                     , execStateT, runStateT)
 import           Control.Concurrent.Lifted                           (threadDelay)
 import           Control.Distributed.Process.Platform.ManagedProcess as Managed
                                                                     hiding (cast, call, syncCallChan)
 
 import           Control.Distributed.Process.Platform               (whereisOrStart,linkOnFailure, Addressable(..))
-import           Control.Distributed.Process.Platform.Time          (Delay(..))
+import           Control.Distributed.Process.Platform.Supervisor    as Supervisor
+import           Control.Distributed.Process.Platform.Time          (Delay(..), milliSeconds)
 
 data AgentState a = AgentState AgentContext a
 
@@ -38,6 +43,19 @@ startServer (AgentServer sname sinit _) = do
 
 initState :: AgentContext -> a -> Process (InitResult (AgentState a))
 initState ctxt state' = return $ InitOk (AgentState ctxt state') Infinity
+
+-- | handle calls that may mutate the State environment
+agentCallHandler :: (NFSerializable a, NFSerializable b)
+                  => (a -> (StateT s Agent) b)
+                  -> AgentState s -> SendPort b -> a
+                  -> Process (ProcessAction (AgentState s) )
+agentCallHandler f s p c = agentHandler s p (f c) >>= continue
+  where
+    agentHandler (AgentState ctxt state') replyCh ma =
+        withAgent ctxt $ do
+            (result, newState) <- runStateT ma state'
+            sendChan replyCh result
+            return $ AgentState ctxt newState
 
 -- | handle calls that do not mutate state out of band in stateful process
 agentAsyncCallHandler :: (NFSerializable a, NFSerializable b)
@@ -67,5 +85,5 @@ agentCastHandler f s c = withStateAgent s (f c) >>= continue
   where
     withStateAgent (AgentState ctxt state') ma =
         withAgent ctxt $ do
-            state'' <- execStateT ma state'
-            return $ AgentState ctxt state''
+            newState <- execStateT ma state'
+            return $ AgentState ctxt newState

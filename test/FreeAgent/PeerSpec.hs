@@ -8,6 +8,10 @@ import           FreeAgent.Process
 import           FreeAgent.Lenses
 import           FreeAgent.Server (runAgentServers)
 import           FreeAgent.Server.Peer
+import           FreeAgent.Server.Executive (execServer)
+
+import qualified Data.Set as Set
+
 
 import           Control.Concurrent.MVar.Lifted
 import           Control.Concurrent.Lifted
@@ -32,7 +36,7 @@ spec =
                     result $ throw exception
             `shouldReturn` True
 
-        it "can connect to peers" $ do
+        it "can find services offered on peers" $ do
             testAgent $ \result -> do
                 catchAny $ do
                     fork $ liftIO $
@@ -43,14 +47,25 @@ spec =
                             "waithere" <- expect :: Agent String
                             return ()
 
+                    fork $ liftIO $
+                        runAgentServers appConfigTX $ do
+                            Just peerTX <- whereis $ peerServer^.name
+                            threadDelay 1000000
+                            cast peerTX DiscoverPeers
+                            "waithere" <- expect :: Agent String
+                            return ()
+
                     threadDelay 1500000
                     Just pid <- whereis $ peerServer^.name
                     count :: Int <- syncCallChan pid QueryPeerCount
 
-                    result count
+                    peers <- queryPeerServers execServer (Set.fromList [def] )
+                                                         (Set.fromList [Zone "TX"] )
+
+                    result (count, length peers)
                 $ \exception ->
                     result $ throw exception
-            `shouldReturn` 1
+            `shouldReturn` (2, 1)
 
 -- helper for running agent and getting results out of
 -- the Process through partially applied putMVar
@@ -77,6 +92,17 @@ appConfig2 = (
     ) & agentConfig.dbPath .~ "/tmp/leveltest2" -- override Agent config values here!
       & agentConfig.nodePort .~ "9092"
       & agentConfig.peerNodeSeeds .~ ["127.0.0.1:3546"]
+      {-& agentConfig.minLogLevel .~ LevelDebug-}
+
+appConfigTX :: AgentContext
+appConfigTX = (
+    registerPlugins $ do
+        addPlugin $ testDef def
+        -- add more plugins here!
+    ) & agentConfig.dbPath .~ "/tmp/fa-test-tx" -- override Agent config values here!
+      & agentConfig.nodePort .~ "9093"
+      & agentConfig.peerNodeSeeds .~ ["127.0.0.1:3546"]
+      & agentConfig.zones .~ Set.fromList [def, Zone "TX"]
       {-& agentConfig.minLogLevel .~ LevelDebug-}
 
 testDef :: AgentConfig -> PluginDef

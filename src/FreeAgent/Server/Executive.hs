@@ -19,6 +19,7 @@ import           FreeAgent.Core                                      (withAgent)
 import           FreeAgent.Database
 import qualified FreeAgent.Database.KeySpace                         as KS
 import           FreeAgent.Lenses
+import qualified FreeAgent.Server.Peer                               as Peer
 import           FreeAgent.Process.ManagedAgent
 import           AgentPrelude
 
@@ -29,10 +30,6 @@ import qualified Data.Set                                            as Set
 import           Data.Time.Clock                                     (getCurrentTime)
 
 import           FreeAgent.Process                  as Process
-import           Control.Distributed.Process.Platform.Supervisor
-import           Control.Distributed.Process.Platform.Time
-       (Delay(..), milliSeconds)
-
 
 -- -----------------------------
 -- Types
@@ -64,23 +61,23 @@ instance NFData ExecutiveCommand where
 -- -----------------------------
 -- API
 -- -----------------------------
-registerAction :: (MonadAgent m) => Action -> m ()
+registerAction :: (MonadProcess m) => Action -> m ()
 registerAction = syncCallChan execServer . RegisterAction
 
-executeRegistered :: (MonadAgent m) => Key -> m EResult
+executeRegistered :: (MonadProcess m) => Key -> m EResult
 executeRegistered = syncCallChan execServer . ExecuteRegistered
 
-executeAction :: (MonadAgent m) => Action -> m EResult
+executeAction :: (MonadProcess m) => Action -> m EResult
 executeAction = syncCallChan execServer . ExecuteAction
 
 -- | Send / register a package and optional list of Actions to register
 -- to each context leader defined in the package
-deliverPackage :: (MonadAgent m) => Package -> m [EResult]
+deliverPackage :: (MonadProcess m) => Package -> m [EResult]
 deliverPackage p = syncCallChan execServer $ DeliverPackage p
 
 -- | Remove a package definition from the context leader(s). Does
 -- not unregister Actions or remove history.
-removePackage :: (MonadAgent m) => UUID -> m ()
+removePackage :: (MonadProcess m) => UUID -> m ()
 removePackage = syncCallChan execServer . RemovePackage
 
 -- -----------------------------
@@ -89,11 +86,13 @@ removePackage = syncCallChan execServer . RemovePackage
 
 
 execServer :: AgentServer
-execServer = AgentServer "agent:executive" init child
+execServer = AgentServer sname init child
   where
+    sname = "agent:executive"
     init ctxt = do
         listeners' <- withAgent ctxt $ join $ viewConfig listeners
         let state' = ExecState (Map.fromList []) listeners'
+        Peer.registerServer execServer
         serve state' (initState ctxt) executiveProcess
       where
         executiveProcess = defaultProcess {
@@ -125,7 +124,7 @@ execServer = AgentServer "agent:executive" init child
             , childRestart = Permanent
             , childStop    = TerminateTimeout (Delay $ milliSeconds 10)
             , childStart   = initChild
-            , childRegName = Just $ LocalName "agent:executive"
+            , childRegName = Just $ LocalName sname
         }
 
 type ExecAgent a = StateT ExecState Agent a
@@ -195,16 +194,14 @@ doExec act =
 doDeliverPackage :: Package -> ExecAgent [EResult]
 doDeliverPackage package = do
     [qdebug|Delivering package: #{package}|]
-    doLocal <- (&&) <$> localContext <*> localZone
-    if doLocal then registerIt >>= storeIt >>= scheduleIt
-               else return [] --TODO: implement routing
+    (&&) <$> localContext <*> localZone >>= deliverLocal
   where
-    localContext :: ExecAgent Bool
+    deliverLocal True = registerIt >>= storeIt >>= scheduleIt
+    deliverLocal False = return []
     localContext = do
         supported <- viewConfig (agentConfig.contexts)
         let found = Set.intersection (package^.contexts) supported
         return $ not $ Set.null found
-    localZone :: ExecAgent Bool
     localZone = do
         supported <- viewConfig (agentConfig.zones)
         let found = Set.intersection (package^.zones) supported

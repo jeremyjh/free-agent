@@ -197,10 +197,14 @@ data AgentConfig
 -- the Context(s) in which it will execute
 data Context = Context !Text deriving (Show, Eq, Ord, Typeable, Generic)
 
+instance Default Context where def = Context "default"
+
 -- | Each agent belongs to one or more Zones - functionally this is the
 -- similar to a Context but it is intended to indicate geographic or
 -- network location (e.g. Zone "BehindFirewall", Zone "DMZ", Zone "Public")
 data Zone = Zone !Text deriving (Show, Eq, Ord, Typeable, Generic)
+
+instance Default Zone where def = Zone "default"
 
 -- | AgentContext may be initialized during startup but is more
 -- dynamic than config and may change and/or provide communications

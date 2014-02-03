@@ -1,2 +1,2 @@
 #!/bin/bash
-LD_LIBRARY_PATH="/usr/local/lib" runhaskell -isrc -idist/build -itest $1
+LD_LIBRARY_PATH="/usr/local/lib" runhaskell -isrc -itest $1
