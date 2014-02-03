@@ -21,6 +21,7 @@ import qualified FreeAgent.Database.KeySpace as KS
 import           FreeAgent.Process.ManagedAgent
 
 import           Data.Binary
+import qualified Data.Set as Set
 
 import           Control.Distributed.Process.Platform.Supervisor
 import           Control.Distributed.Process.Platform.Time
@@ -38,12 +39,15 @@ data Peer = Peer { _peerUuid      :: UUID
                  , _peerProcessId :: !ProcessId
                  , _peerContexts  :: Set Context
                  , _peerZones     :: Set Zone
-                 } deriving (Show, Eq, Ord, Typeable, Generic)
+                 } deriving (Show, Eq, Typeable, Generic)
 makeFields ''Peer
 instance Binary Peer
 instance NFData Peer where
 
-data PeerState = PeerState [Peer] deriving (Show)
+instance Ord Peer where
+    a `compare` b = (a^.uuid) `compare` (b^.uuid)
+
+data PeerState = PeerState (Set Peer) deriving (Show)
 
 type PeerAgent = StateT PeerState Agent
 
@@ -67,7 +71,7 @@ peerServer :: AgentServer
 peerServer = AgentServer "agent:peer" init child
   where
     init ctxt = do
-        let state' = PeerState []
+        let state' = PeerState mempty
         serve state' initPeer peerProcess
       where
         initPeer state' = do
@@ -131,13 +135,18 @@ doDiscoverPeers = do
     self <- localPeer
     forM_ pids $ \pid ->
         when ((self^.processId) /= pid) $ do
-            [qdebug| Sending self: #{self} to peer: #{pid} |]
+            [qdebug| Sending self: #{self} To peer: #{pid} |]
             cast pid $ RegisterPeer self
 
 doRegisterPeer ::  Peer -> Bool -> PeerAgent ()
 doRegisterPeer peer respond = do
     [qdebug| Received Registration for #{peer}|]
     (PeerState peers) <- State.get
-    State.put $ PeerState (peer : peers)
+    State.put $ PeerState (update peers)
     self <- localPeer
-    when respond $ cast (peer^.processId) (RespondRegisterPeer self)
+    when respond $ do
+        [qdebug| Sending self: #{self} To peer: #{_peerProcessId self} |]
+        cast (peer^.processId) (RespondRegisterPeer self)
+  where update peers
+            | Set.member peer peers = peers
+            | otherwise = Set.insert peer peers

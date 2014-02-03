@@ -25,6 +25,7 @@ module AgentPrelude
     , deriveSerializers
     , fqName
     , qdebug, qinfo, qwarn, qerror
+    , qdebugNS
     , logDebug, logInfo, logWarn, logError
     , forceMaybeMsg
     ) where
@@ -34,7 +35,7 @@ import qualified Prelude                       as P
 
 import           Control.DeepSeq.TH            (deriveNFData)
 import           Control.Monad.Logger          (logDebug, logInfo, logWarn, logError)
-import           Control.Monad.Logger.Quote    (qdebug, qinfo, qwarn, qerror)
+import           Control.Monad.Logger.Quote    (qdebug, qinfo, qwarn, qerror, qdebugNS)
 import           Data.Binary                   as Binary (Binary (..))
 import qualified Data.ByteString.Char8         as BS
 import           Data.Default                  (def)

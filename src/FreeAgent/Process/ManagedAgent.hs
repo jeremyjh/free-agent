@@ -51,7 +51,7 @@ agentAsyncCallHandler f s p c = spawnStateAgent s p (f c) >> continue s
             threadDelay 1000 -- so we have time to setup a link in parent
             r <- evalStateT ma state'
             sendChan port r
-        -- | TODO: This will prevent the client call from hanging forever
+        -- TODO: This will prevent the client call from hanging forever
         -- on an exception/crash but it would be better for executive to monitor child process
         -- and send an exit to the sendPortProcessId
         liftProcess $ linkOnFailure pid
