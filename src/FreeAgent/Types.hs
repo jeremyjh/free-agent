@@ -262,7 +262,7 @@ instance MonadLogger (Agent) where
         (_configMinLogLevel . _contextAgentConfig) <$> askContext >>= doLog
       where doLog minlev
               | level >= minlev = runStdoutLoggingT $ monadLoggerLog a b level d
-              | otherwise = Agent $ lift $ monadLoggerLog a b LevelDebug d
+              | otherwise = return ()
 
 runAgentLoggingT :: (MonadIO m, MonadBaseControl IO m) => Int -> LoggingT m a -> m a
 runAgentLoggingT debugCount = runStdoutLoggingT . withChannelLogger debugCount

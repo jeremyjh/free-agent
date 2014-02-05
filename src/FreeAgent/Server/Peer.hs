@@ -176,7 +176,7 @@ doRegisterServer sname pid =
     State.modify addServer >> cast peerServer DiscoverPeers
   where
     addServer (PeerState self peers) =
-        PeerState (self & servers .~ (Set.insert sref (self^.servers))) peers
+        PeerState (self & servers .~ Set.insert sref (self^.servers)) peers
     sref = ServerRef sname pid
 
 doRegisterPeer ::  Peer -> Bool -> PeerAgent ()

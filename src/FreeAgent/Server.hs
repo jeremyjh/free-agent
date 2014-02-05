@@ -20,7 +20,7 @@ import Control.Concurrent.Lifted (threadDelay)
 
 -- | Same as 'runAgent' but first starts core server processes
 runAgentServers :: AgentContext -> Agent () -> IO ()
-runAgentServers ctxt ma = runAgent ctxt $ startSuper coreServers  >> ma
+runAgentServers ctxt ma = runAgent ctxt $ startSuper coreServers >> ma
 
 -- | Start a supervisor as RestartOne with a list of AgentServer definitions
 startSuper ::  [AgentServer] -> Agent ()

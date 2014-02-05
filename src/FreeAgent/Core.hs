@@ -29,41 +29,47 @@ import           Data.Dynamic                     (fromDynamic, toDyn)
 import qualified Data.Map                         as Map
 
 import           Control.Concurrent.Lifted (threadDelay)
+import           Control.Distributed.Process      (say, DiedReason(..))
 import           Control.Distributed.Process.Node ( newLocalNode, runProcess
                                                   , initRemoteTable )
+import           Control.Distributed.Process.Management
 import           Network.Transport                (closeTransport)
 import           Network.Transport.TCP
 
 
+import Control.Monad.Logger (runStdoutLoggingT)
 -- | Execute the agent - main entry point
 runAgent :: AgentContext -> Agent () -> IO ()
-runAgent ctxt ma = do
-    registerPluginMaps (ctxt^.actionMap, ctxt^.resultMap)
-    (_, dbChan) <- initAgentDB ctxt
-    eithertcp <- createTransport (ctxt^.agentConfig.nodeHost)
-                                 (ctxt^.agentConfig.nodePort)
-                                 defaultTCPParameters
-    (node, tcp) <- case eithertcp of
-        Right tcp -> do
-            node <- newLocalNode tcp initRemoteTable
-            return (node, tcp)
-        Left msg -> throw msg
+runAgent ctxt ma =
+    catchAny
+          ( do registerPluginMaps (ctxt^.actionMap, ctxt^.resultMap)
+               (_, dbChan) <- initAgentDB ctxt
+               eithertcp <- createTransport (ctxt^.agentConfig.nodeHost)
+                                            (ctxt^.agentConfig.nodePort)
+                                            defaultTCPParameters
+               (node, tcp) <- case eithertcp of
+                   Right tcp -> do
+                       node <- newLocalNode tcp initRemoteTable
+                       return (node, tcp)
+                   Left msg -> throw msg
 
-    let ctxt'  = ctxt & agentDBChan .~ dbChan
-                      & processNode .~ node
+               let ctxt'  = ctxt & agentDBChan .~ dbChan
+                                 & processNode .~ node
+               let proc   = runStdoutLoggingT $ runReaderT (unAgent ma) ctxt'
 
-    let proc   = runAgentLoggingT (ctxt^.agentConfig.debugLogCount) $
-                    runReaderT (unAgent ma) ctxt'
+               runProcess node $ initLogger >> globalMonitor >> proc
+               closeTransport tcp
+               closeAgentDB dbChan )
 
-    runProcess node $ initLogger >> proc
-    closeTransport tcp
-    closeAgentDB dbChan
+        ( \exception -> do
+            putStrLn $ "Exception in runAgent: " ++ tshow exception
+            return () )
   where
    -- overrides default Process logger to use Agent's logging framework
-   initLogger = do
-       pid <- spawnLocal logger
-       reregister "logger" pid
-       threadDelay 10000
+    initLogger = do
+        pid <- spawnLocal logger
+        reregister "logger" pid
+        threadDelay 10000
      where
        logger =
          receiveWait
@@ -81,8 +87,10 @@ runAgent ctxt ma = do
 -- | Used to embed Agent code in the Process monad
 withAgent :: AgentContext -> Agent a -> Process a
 withAgent ctxt ma =
-    runAgentLoggingT (ctxt^.agentConfig.debugLogCount) $
-        runReaderT (unAgent ma) ctxt
+    catchAny (runStdoutLoggingT $ runReaderT (unAgent ma) ctxt)
+             $ \exception -> do
+                 putStrLn $ "Exception in withAgent: " ++ tshow exception
+                 throw exception
 
 -- | Spawn a new process with an Agent Context and throwing
 -- away the result
@@ -133,8 +141,23 @@ definePlugin :: (Typeable a)
              -> ActionsWriter
              -> PluginDef
 definePlugin pname pcontext listeners' pwriter
-  = PluginDef { _plugindefName = pname
-              , _plugindefContext = toDyn pcontext
-              , _plugindefActions = execWriter pwriter
-              , _plugindefListeners = listeners'
-              }
+  = PluginDef pname (toDyn pcontext) (execWriter pwriter) listeners'
+
+globalMonitor :: Process ()
+globalMonitor = do
+    let initState = [] :: [MxEvent]
+    void $ mxAgent (MxAgentId "lifecycle-listener-agent") initState [
+        mxSink $ \ev -> do
+           let act =
+                 case ev of
+                 -- TODO: need to promote ERROR logs so they come out in
+                 -- LevelError
+                   (MxProcessDied pid (DiedException msg)) -> liftMX $ say $ debug $ "[Error] " ++ show pid ++  " DiedException: " ++ msg
+                   (MxProcessDied pid DiedDisconnect) -> liftMX $ say $ show pid ++ " DiedDisconnect"
+                   (MxNodeDied nodeId (DiedException msg)) -> liftMX $ say $ debug $ "[Error] " ++ show nodeId ++  " DiedException: " ++ msg
+                   (MxNodeDied nodeId DiedDisconnect) -> liftMX $ say $ show nodeId ++ " DiedDisconnect"
+                   _                   -> return ()
+           act >> mxReady ]
+    threadDelay 10000
+
+

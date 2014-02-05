@@ -42,21 +42,21 @@ spec =
                 catchAny $ do
                     fork $ liftIO $
                         runAgentServers appConfig2 $ do
-                            Just peer2 <- whereis $ peerServer^.name
-                            threadDelay 1000000
-                            cast peer2 DiscoverPeers
-                            "waithere" <- expect :: Agent String
-                            return ()
+                                Just peer2 <- whereis $ peerServer^.name
+                                threadDelay 1200000
+                                cast peer2 DiscoverPeers
+                                "waithere" <- expect :: Agent String
+                                return ()
 
                     fork $ liftIO $
                         runAgentServers appConfigTX $ do
                             Just peerTX <- whereis $ peerServer^.name
-                            threadDelay 1000000
+                            threadDelay 1200000
                             cast peerTX DiscoverPeers
                             "waithere" <- expect :: Agent String
                             return ()
 
-                    threadDelay 1500000
+                    threadDelay 2000000
                     Just pid <- whereis $ peerServer^.name
                     count :: Int <- syncCallChan pid QueryPeerCount
 
@@ -93,7 +93,7 @@ appConfig2 = (
     ) & agentConfig.dbPath .~ "/tmp/leveltest2" -- override Agent config values here!
       & agentConfig.nodePort .~ "9092"
       & agentConfig.peerNodeSeeds .~ ["127.0.0.1:3546"]
-      {-& agentConfig.minLogLevel .~ LevelDebug-}
+      {-& agentConfig.minLogLevel .~ LevelInfo-}
 
 appConfigTX :: AgentContext
 appConfigTX = (
