@@ -8,6 +8,7 @@ module FreeAgent.Process.ManagedAgent
     ( module FreeAgent.Process.ManagedAgent
     , module Managed
     , module Supervisor
+    , Addressable(..)
     , Delay(..)
     , ChildSpec(..)
     , milliSeconds

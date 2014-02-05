@@ -33,11 +33,19 @@ import           Data.UUID.V1 (nextUUID)
 -- Types
 -- ---------------------------
 
+data ServerRef = ServerRef String ProcessId
+                 deriving (Show, Eq, Generic)
+
+instance Ord ServerRef where
+    ServerRef a _ `compare` ServerRef b _ = a `compare` b
+
+instance Binary ServerRef
+
 data Peer = Peer { _peerUuid      :: UUID
                  , _peerProcessId :: !ProcessId
                  , _peerContexts  :: Set Context
                  , _peerZones     :: Set Zone
-                 , _peerServers  :: Set String
+                 , _peerServers  :: Set ServerRef
                  } deriving (Show, Eq, Typeable, Generic)
 makeFields ''Peer
 instance Binary Peer
@@ -45,6 +53,10 @@ instance NFData Peer where
 
 instance Ord Peer where
     a `compare` b = (a^.uuid) `compare` (b^.uuid)
+
+
+instance Addressable Peer where
+    resolve peer = return $ Just $ peer^.processId
 
 data PeerState = PeerState Peer (Set Peer) deriving (Show)
 
@@ -54,7 +66,7 @@ data PeerCommand = DiscoverPeers
                    | QueryPeerCount
                    | RegisterPeer Peer
                    | RespondRegisterPeer Peer
-                   | RegisterServer String
+                   | RegisterServer String ProcessId
                    | QueryPeerServers String (Set Context) (Set Zone)
     deriving (Typeable, Generic)
 
@@ -66,8 +78,9 @@ instance NFData PeerCommand
 -- ---------------------------
 
 -- | Advertise a Server on the local peer
-registerServer :: (MonadProcess m) => AgentServer -> m ()
-registerServer s =  cast peerServer $ RegisterServer (s^.name)
+registerServer :: (MonadProcess m)
+               => AgentServer -> ProcessId -> m ()
+registerServer s pid = cast peerServer $ RegisterServer (s^.name) pid
 
 -- | Get a list of Peers (from local Peer's cache)
 -- which have the requested Server registered
@@ -101,7 +114,7 @@ peerServer = AgentServer sname init child
                     DiscoverPeers -> doDiscoverPeers
                     RegisterPeer peer -> doRegisterPeer peer True
                     RespondRegisterPeer peer -> doRegisterPeer peer False
-                    RegisterServer name' -> doRegisterServer name'
+                    RegisterServer name' pid -> doRegisterServer name' pid
                     _ -> $(err "illegal pattern match")
 
             , handleRpcChan $ \
@@ -149,21 +162,22 @@ initSelf = do
 
 doDiscoverPeers :: PeerAgent ()
 doDiscoverPeers = do
-    seeds <- viewConfig $ agentConfig.peerNodeSeeds
-    [qdebug| Attempting to connect to peer seeds: #{seeds} |]
     pids <- liftProcess $ getCapable $ peerServer^.name
-    [qdebug| Found agent:peer services: #{pids} |]
+    [qdebug| DiscoverPeers found agent:peer services: #{pids} |]
     (PeerState self _) <- State.get
     forM_ pids $ \pid ->
         when ((self^.processId) /= pid) $ do
             [qdebug| Sending self: #{self} To peer: #{pid} |]
             cast pid $ RegisterPeer self
 
-doRegisterServer :: (MonadState PeerState m) => String -> m ()
-doRegisterServer sname = State.modify addServer
+doRegisterServer :: String -> ProcessId -> PeerAgent ()
+doRegisterServer sname pid =
+    -- re-broadcast self when we add a new server
+    State.modify addServer >> cast peerServer DiscoverPeers
   where
     addServer (PeerState self peers) =
-        PeerState (self & servers .~ (Set.insert sname (self^.servers))) peers
+        PeerState (self & servers .~ (Set.insert sref (self^.servers))) peers
+    sref = ServerRef sname pid
 
 doRegisterPeer ::  Peer -> Bool -> PeerAgent ()
 doRegisterPeer peer respond = do
@@ -174,8 +188,9 @@ doRegisterPeer peer respond = do
         [qdebug| Sending self: #{self} To peer: #{_peerProcessId self} |]
         cast (peer^.processId) (RespondRegisterPeer self)
   where peerList (PeerState self peers)
-            | Set.member peer peers = PeerState self peers
+            | Set.member peer peers = PeerState self replace
             | otherwise = PeerState self $ Set.insert peer peers
+          where replace = Set.insert peer (Set.delete peer peers)
 
 doQueryPeerServers :: MonadState PeerState m
                   => String -> Set Context -> Set Zone -> m (Set Peer)
@@ -187,8 +202,8 @@ doQueryPeerServers fname fcontexts fzones = do
                                                            matchingZones)
                                          matchingService
       where
-        matchingContexts = intersectOn contexts (debug fcontexts)
+        matchingContexts = intersectOn contexts fcontexts
         matchingZones = intersectOn zones fzones
-        matchingService = intersectOn servers (Set.fromList [fname])
+        matchingService = intersectOn servers (Set.fromList [ServerRef fname undefined])
         intersectOn lens set' =
             Set.filter (\p -> Set.intersection (p^.lens) set' /= Set.empty) peers

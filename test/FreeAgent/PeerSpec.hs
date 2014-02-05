@@ -3,6 +3,7 @@
 module FreeAgent.PeerSpec (main, spec) where
 
 import           AgentPrelude
+import qualified Prelude as P
 import           FreeAgent.Core
 import           FreeAgent.Process
 import           FreeAgent.Lenses

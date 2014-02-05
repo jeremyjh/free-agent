@@ -92,9 +92,12 @@ execServer = AgentServer sname init child
     init ctxt = do
         listeners' <- withAgent ctxt $ join $ viewConfig listeners
         let state' = ExecState (Map.fromList []) listeners'
-        Peer.registerServer execServer
-        serve state' (initState ctxt) executiveProcess
+        serve state' initExec executiveProcess
       where
+        initExec state' = do
+            pid <- getSelfPid
+            Peer.registerServer execServer pid
+            return $ InitOk (AgentState ctxt state') Infinity
         executiveProcess = defaultProcess {
             apiHandlers =
             [ handleRpcChan $ agentAsyncCallHandler $
