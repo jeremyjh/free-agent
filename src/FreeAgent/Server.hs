@@ -15,7 +15,6 @@ import FreeAgent.Server.Executive (execServer)
 import FreeAgent.Server.Peer (peerServer)
 
 import Control.Distributed.Process.Platform.Supervisor
-import Control.Concurrent.Lifted (threadDelay)
 
 
 -- | Same as 'runAgent' but first starts core server processes
@@ -29,7 +28,7 @@ startSuper servers = do
     liftProcess $ do
         cspecs <- sequence $ fmap (childFrom ctxt) servers
         void $ start restartOne cspecs
-    threadDelay 10000
+    forM_ servers $ \s -> waitRegistration $ s^.name
   where childFrom ctxt (AgentServer _ _ child) = child ctxt
 
 -- | Servers that are required for most use cases

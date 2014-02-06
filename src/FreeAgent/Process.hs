@@ -38,6 +38,7 @@ import           Control.Distributed.Process.Platform.Supervisor (ChildSpec)
 import           Control.Monad.Base                                    (MonadBase(..))
 import           Control.Monad.Trans.Control                           (MonadBaseControl(..))
 import           Control.Monad.Trans.Resource                          (MonadThrow(..), MonadUnsafeIO(..))
+import Control.Concurrent.Lifted (threadDelay)
 
 -- instances required under ResourceT
 deriving instance MonadThrow Process
@@ -134,3 +135,7 @@ cast pid = liftProcess . Managed.cast pid
 call :: (Addressable s, MonadProcess m
         ,NFSerializable a, NFSerializable b) => s -> a -> m b
 call pid = liftProcess . Managed.call pid
+
+waitRegistration :: MonadProcess m => String -> m ProcessId
+waitRegistration sname = loop
+  where loop = whereis sname >>= maybe (threadDelay 1000 >> loop) return

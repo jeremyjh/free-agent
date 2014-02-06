@@ -43,7 +43,6 @@ spec =
                     fork $ liftIO $
                         runAgentServers appConfig2 $ do
                                 Just peer2 <- whereis $ peerServer^.name
-                                threadDelay 1200000
                                 cast peer2 DiscoverPeers
                                 "waithere" <- expect :: Agent String
                                 return ()
@@ -51,12 +50,11 @@ spec =
                     fork $ liftIO $
                         runAgentServers appConfigTX $ do
                             Just peerTX <- whereis $ peerServer^.name
-                            threadDelay 1200000
                             cast peerTX DiscoverPeers
                             "waithere" <- expect :: Agent String
                             return ()
 
-                    threadDelay 2000000
+                    threadDelay 1000000 -- wait for peers to get registered
                     Just pid <- whereis $ peerServer^.name
                     count :: Int <- syncCallChan pid QueryPeerCount
 
