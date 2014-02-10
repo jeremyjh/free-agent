@@ -37,17 +37,17 @@ import           Control.DeepSeq.TH            (deriveNFData)
 import           Control.Monad.Logger          (logDebug, logInfo, logWarn, logError)
 import           Control.Monad.Logger.Quote    (qdebug, qinfo, qwarn, qerror, qdebugNS)
 import           Data.Binary                   as Binary (Binary (..))
+import qualified Data.Binary                   as Binary
+import qualified Data.Serialize                as Cereal
 import qualified Data.ByteString.Char8         as BS
 import           Data.Default                  (def)
 import qualified Data.Text                     as Text
 import qualified Data.Text.Encoding            as Text (decodeUtf8, encodeUtf8)
-import           Data.Time                     (UTCTime)
-import           Data.Time.Format              (formatTime, parseTime)
+import           Data.Time                     (UTCTime(..),Day(..))
 import           Data.Typeable
 import           GHC.Generics                  (Generic)
 import           Language.Haskell.TH           (Dec, Name, Q)
 import           Language.Haskell.TH.Lib       (conT)
-import           System.Locale                 (defaultTimeLocale)
 
 import           Data.Maybe.Utils (forceMaybeMsg)
 import           Database.LevelDB.Higher.Store (Version, deriveStorableVersion)
@@ -87,13 +87,27 @@ instance ConvertByteString UUID where
     toBytes = toASCIIBytes
     fromBytes uuid = fromMaybe  (error "invalid UUUID Bytes") (fromASCIIBytes uuid)
 
+instance Binary UTCTime where
+ put (UTCTime (ModifiedJulianDay d) t) = do
+        put d
+        put (toRational t)
+ get = do
+        d <- get
+        t <- get
+        return $ UTCTime (ModifiedJulianDay d) (fromRational t)
+
+instance Cereal.Serialize UTCTime where
+ put (UTCTime (ModifiedJulianDay d) t) = do
+        Cereal.put d
+        Cereal.put (toRational t)
+ get = do
+        d <- Cereal.get
+        t <- Cereal.get
+        return $ UTCTime (ModifiedJulianDay d) (fromRational t)
+
 instance ConvertByteString UTCTime where
-    toBytes = BS.pack . formatTime defaultTimeLocale "%s%q"
-    fromBytes bs =
-        case parseTime defaultTimeLocale "%s%q" $ BS.unpack bs of
-            Nothing -> error $
-                "Failed to parse UTCTime: " ++ (BS.unpack bs)
-            Just t -> t
+    toBytes = Cereal.encode
+    fromBytes bs = let (Right time) = Cereal.decode bs in time
 
 -- | TemplateHaskell function to generate required serializers and related
 -- instances for Actions/Results.

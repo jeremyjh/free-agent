@@ -27,7 +27,7 @@ import           Data.Dynamic
 import           Control.Exception
 
 import qualified Data.Binary as Binary
-
+import qualified Data.Serialize as Cereal
 
 main :: IO ()
 main = hspec spec
@@ -50,7 +50,6 @@ spec = do
                 catchAny $ do
                     registerAction $ Action checkTCP
                     (Right nr) <- executeRegistered $ key checkTCP
-                    let Just (NagiosResult _ OK) = extract nr
                     threadDelay 10000
                     -- confirm results were written
                     items <- agentDb $ withKeySpace "agent:actions:localhost:53" $ do

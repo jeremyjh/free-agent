@@ -58,6 +58,14 @@ instance Ord Peer where
 instance Addressable Peer where
     resolve peer = return $ Just $ peer^.processId
 
+instance Addressable (Peer, AgentServer) where
+    resolve (peer,server) = do --TODO: resolve (nodeid,sname)
+        whereisRemoteAsync nodeid sname
+        WhereIsReply _ mpid <- expect
+        return mpid
+      where sname = server^.name
+            nodeid = processNodeId $ peer^.processId
+
 data PeerState = PeerState Peer (Set Peer) deriving (Show)
 
 type PeerAgent = StateT PeerState Agent
@@ -85,9 +93,14 @@ registerServer s pid = cast peerServer $ RegisterServer (s^.name) pid
 -- | Get a list of Peers (from local Peer's cache)
 -- which have the requested Server registered
 -- Contexts and Zones
-queryPeerServers :: MonadAgent m
+queryPeerServers :: MonadProcess m
                 => AgentServer -> Set Context -> Set Zone -> m (Set Peer)
 queryPeerServers s c z = syncCallChan peerServer $ QueryPeerServers (s^.name) c z
+
+-- | Returns the number of Peer Agent processes this node is connected to
+queryPeerCount :: MonadProcess m => m Int
+queryPeerCount = syncCallChan peerServer QueryPeerCount
+
 
 -- ---------------------------
 -- Implementation

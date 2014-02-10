@@ -158,11 +158,11 @@ doExecuteRegistered k = do
             doExec a
         Left (ParseFail msg) -> do
             [qwarn| Unable to retrieve action key: #{k} - #{msg}|]
-            undefined
+            error msg
         Left (NotFound _) -> do
             [qwarn| Unable to retrieve action key: #{k}
                             not found in database. |]
-            undefined
+            error "Action not found in database."
 
 doExec :: Action -> ExecAgent EResult
 doExec act =
@@ -200,7 +200,16 @@ doDeliverPackage package = do
     (&&) <$> localContext <*> localZone >>= deliverLocal
   where
     deliverLocal True = registerIt >>= storeIt >>= scheduleIt
-    deliverLocal False = return []
+    deliverLocal False = deliverRemote
+    deliverRemote =
+        Peer.queryPeerServers execServer (package^.contexts)
+                                         (package^.zones)
+        >>= foundRemote
+      where foundRemote peers
+                | peers == Set.empty = return []
+                | otherwise = let peer:_ = Set.toList peers in
+                    syncCallChan (peer, execServer) (DeliverPackage package)
+
     localContext = do
         supported <- viewConfig (agentConfig.contexts)
         let found = Set.intersection (package^.contexts) supported

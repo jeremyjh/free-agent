@@ -42,7 +42,6 @@ import           Data.Typeable                      (cast)
 
 import           Control.Concurrent.Chan.Lifted     (Chan)
 import           Control.DeepSeq                    (NFData (..))
-import           Control.DeepSeq.TH                 (deriveNFData)
 import           FreeAgent.Process (MonadProcess(..), Process
                                                     ,ProcessId, NFSerializable
                                                     ,ChildSpec)
@@ -55,9 +54,6 @@ import           Control.Monad.Logger               (LogLevel (..), LoggingT,
 import           Control.Monad.Trans.Control
 import Control.Monad.State (StateT)
 import           Data.Default                       (Default (..))
-import           Data.SafeCopy                      (base, deriveSafeCopy)
-import qualified Data.Serialize                     as Cereal (Get,
-                                                               Serialize (..))
 import qualified Data.Set                           as Set
 import           Data.UUID                          (UUID)
 import           Database.LevelDB.Higher            (FetchFail (..), Key,
@@ -80,20 +76,6 @@ data Wrapped
             , _wrappedValue      :: ByteString
             } deriving (Show, Eq, Typeable, Generic)
 
-instance Binary Wrapped where
-
--- we cannot use safeGet/safePut with decodeAction' presently
--- so we can't use deriveSerializable
-instance Cereal.Serialize Wrapped where
-        put (Wrapped x1 x2 x3) = do
-            Cereal.put x1
-            Cereal.put x2
-            Cereal.put x3
-        get = do
-            x1 <- Cereal.get
-            x2 <- Cereal.get
-            x3 <- Cereal.get
-            return (Wrapped x1 x2 x3)
 
 instance Stashable Wrapped where
     key = _wrappedWrappedKey
@@ -296,17 +278,6 @@ data ResultSummary
                   , _resultResultOf  :: Action
                   } deriving (Show, Typeable, Generic)
 
-instance Cereal.Serialize UTCTime where
-    get = do
-        stime <- Cereal.get :: Cereal.Get ByteString
-        return $ fromBytes stime
-    put = Cereal.put . toBytes
-
-instance Binary UTCTime where
-    get = do
-        stime <- get :: Get ByteString
-        return $ fromBytes stime
-    put = put . toBytes
 
 -- Scheduling
 data Schedule = Now | Later
@@ -325,15 +296,13 @@ data Package = Package {
 
 data ActionHistory = ActionHistory deriving (Show, Eq, Typeable, Generic)
 
-deriveStorable ''UUID
-deriveSerializers ''Context
-deriveSerializers ''Zone
-deriveSafeCopy 1 'base ''Wrapped
-deriveNFData ''Wrapped
-deriveSerializers ''Schedule
-
-
 data AgentServer = AgentServer { _serverName :: String
                                , _serverinitProc :: AgentContext -> Process ()
                                , _serverchildSpec :: AgentContext -> Process ChildSpec
                                }
+
+deriveStorable ''UUID
+deriveSerializers ''Context
+deriveSerializers ''Zone
+deriveSerializers ''Wrapped
+deriveSerializers ''Schedule

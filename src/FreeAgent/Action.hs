@@ -48,36 +48,44 @@ deriveSerializers ''ResultSummary
 instance Binary Action where
     put (Action a) = Binary.put $ wrap a
     get = do
-        wrapped <- getWrappedBinary
+        wrapped <- Binary.get
         return $ decodeAction' (fst readPluginMaps) wrapped
 
 instance Serialize Action where
-    put (Action a) = Cereal.put $ wrap a
-    get = do
-        wrapped <- getWrappedCereal
-        return $ decodeAction' (fst readPluginMaps) wrapped
+    put = safePut
+    get = safeGet
 
 instance SafeCopy Action where
-    putCopy (Action a) = putCopy a
+    version = 1
+    kind = base
+    errorTypeName _ = "FreeAgent.Type.Action"
+    putCopy (Action a) = contain $ safePut $ wrap a
+    getCopy = contain $ do
+        wrapped <- safeGet
+        return $ decodeAction' (fst readPluginMaps) wrapped
 
 instance Stashable Action where
     key (Action a) = key a
-
 
 -- same as Action - we need Result serialization instances here
 instance Binary Result where
     put (Result a) = Binary.put $ wrap a
     get = do
-        wrapped <- getWrappedBinary
+        wrapped <- Binary.get
         return $ decodeResult' (snd readPluginMaps) wrapped
 
 instance Serialize Result where
-    put (Result a) = Cereal.put $ wrap a
-    get = do
-        wrapped <- getWrappedCereal
-        return $ decodeResult' (snd readPluginMaps) wrapped
+    put = safePut
+    get = safeGet
 
 instance SafeCopy Result where
+    version = 1
+    kind = base
+    errorTypeName _ = "FreeAgent.Types.Result"
+    putCopy (Result r) = contain $ safePut (wrap r)
+    getCopy = contain $ do
+        wrapped <- safeGet
+        return $ decodeResult' (snd readPluginMaps) wrapped
 
 instance Resulting Result where
     extract (Result a) = cast a
@@ -114,23 +122,15 @@ deleteAction = withActionKS . delete
 -- | Fix the keyspace to 'withActionKS' and decodes each
 -- result using 'decodeAction'.
 --
-scanActions :: MonadLevelDB m => AgentContext -> Key -> m [FetchAction]
-scanActions ctxt prefix = withActionKS $
-    let pm = ctxt^.actionMap
-        decoder = decodeAction pm in
-    scan prefix queryList { scanMap = decoder . snd }
+scanActions :: MonadLevelDB m => Key -> m [FetchAction]
+scanActions prefix = withActionKS $
+    scan prefix queryList { scanMap = decodeAction . snd }
 
--- | Decode a Cerealized Wrapped Action - unlike the decode implementation
--- for 'Action' this function will not throw an exception on parse or lookup failures
-decodeAction :: ActionMap -> ByteString -> FetchAction
-decodeAction pluginMap bs =
+decodeAction :: ByteString -> FetchAction
+decodeAction bs =
     case Cereal.decode bs of
         Left s -> Left $ ParseFail s
-        Right wrapped ->
-            case Map.lookup (wrapped^.typeName) pluginMap of
-                Just uw -> uw wrapped
-                Nothing -> Left $ ParseFail $ "Type Name: " ++ BS.unpack (wrapped^.typeName)
-                            ++ " not matched! Is your plugin registered?"
+        Right a -> Right a
 
 -- | Save a serializable type with an instance for Stash
 -- which provides the key - returns the same input.
@@ -190,15 +190,14 @@ decodeAction' pluginMap wrapped =
 registerPluginMaps :: (MonadBase IO m) => PluginMaps -> m ()
 registerPluginMaps = writeIORef globalPluginMaps
 
---TODO move this to Action module
 globalPluginMaps :: IORef PluginMaps
 globalPluginMaps = unsafePerformIO $ newIORef (Map.fromList [], Map.fromList [])
 {-# NOINLINE globalPluginMaps #-}
 
--- Yes...we are unsafe. This is necessary to transparently deserialize
--- Actions defined in Plugins which are registered at runtime. There are workarounds for
+-- Yes...this is not transparent. This is necessary to deserialize
+-- Actions and Results defined in Plugins. There are workarounds for
 -- most cases but to receive an Action in a Cloud Haskell 'expect' we must be
--- able to deserialize it directly.
+-- able to deserialize in a pure Binary getter.
 readPluginMaps :: PluginMaps
 readPluginMaps = unsafePerformIO $ readIORef globalPluginMaps
 {-# NOINLINE readPluginMaps #-}
@@ -215,20 +214,6 @@ decodeResult' pluginMap wrapped =
             Left _ -> error "Unknown error deserializing wrapper"
         Nothing -> error $ "Type Name: " ++ BS.unpack (wrapped^.typeName)
                     ++ " not matched! Is your plugin registered?"
-
-getWrappedBinary :: Binary.Get Wrapped
-getWrappedBinary = do
-        wk <- Binary.get
-        wt  <- Binary.get
-        wv <- Binary.get
-        return (Wrapped wk wt wv)
-
-getWrappedCereal :: Cereal.Get Wrapped
-getWrappedCereal = do
-        wk <- Cereal.get
-        wt  <- Cereal.get
-        wv <- Cereal.get
-        return (Wrapped wk wt wv)
 
 deriveSerializers ''Package
 instance Stashable Package where

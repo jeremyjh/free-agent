@@ -21,6 +21,7 @@ import           AppConfig(appConfig)
 import           Control.Concurrent (threadDelay)
 
 import qualified Data.Binary as Binary
+import qualified Data.Serialize as Cereal
 
 --debug
 import           Debug.Trace
@@ -60,7 +61,7 @@ spec = do
                     `shouldReturn` ()
                 it "will fail to deserialize if data is not a valid Serialized" $ do
                     (Left (ParseFail msg)) <- withConfig $ agentDb $ fetchAction "somekey"
-                    take 25 msg `shouldBe` "too few bytes\nFrom:\tdeman"
+                    take 25 msg `shouldBe` "Failed reading: safecopy:"
             describe "supports batch operations such that" $ do
                 it "can stashAction in a batch" $ do
                     runCreateLevelDB testDB "stashActionbatch" $ do
@@ -81,7 +82,7 @@ spec = do
                             stashAction $ Action checkTCP
                             stashAction $ Action checkTCP {_commandHost = "check2"}
                             stashAction $ Action checkTCP {_commandHost = "check3"}
-                            scanActions ctxt "check"
+                            scanActions "check"
                     `shouldReturn` [ (Right $ Action checkTCP{_commandHost="check2"} )
                                    , (Right $ Action checkTCP{_commandHost="check3"}) ]
         it "can be matched" $ do

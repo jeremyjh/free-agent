@@ -7,6 +7,3 @@ Executive:
 
 Plugins:
 	* create NagiosAlerts
-
-Contexts / Zones : 
-* Dispatch Actions to Agents based on Domain/Zone they need to execute in
