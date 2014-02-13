@@ -12,6 +12,7 @@ module FreeAgent.Core
     , definePlugin
     , registerPlugins
     , addPlugin
+    , appendRemoteTable
     ) where
 
 import           AgentPrelude
@@ -20,7 +21,8 @@ import           FreeAgent.Database
 import           FreeAgent.Lenses
 import           FreeAgent.Process
     ( spawnLocal, receiveWait, match
-    , sendChan, SendPort, reregister)
+    , sendChan, SendPort, reregister
+    , say, DiedReason(..), RemoteTable)
 
 import           Control.Exception
 import           Control.Monad.Reader             (runReaderT)
@@ -29,9 +31,7 @@ import           Data.Dynamic                     (fromDynamic, toDyn)
 import qualified Data.Map                         as Map
 
 import           Control.Concurrent.Lifted (threadDelay)
-import           Control.Distributed.Process      (say, DiedReason(..))
-import           Control.Distributed.Process.Node ( newLocalNode, runProcess
-                                                  , initRemoteTable )
+import           Control.Distributed.Process.Node (newLocalNode, runProcess)
 import           Control.Distributed.Process.Management
 import           Network.Transport                (closeTransport)
 import           Network.Transport.TCP
@@ -49,7 +49,7 @@ runAgent ctxt ma =
                                             defaultTCPParameters
                (node, tcp) <- case eithertcp of
                    Right tcp -> do
-                       node <- newLocalNode tcp initRemoteTable
+                       node <- newLocalNode tcp $ ctxt^.remoteTable
                        return (node, tcp)
                    Left msg -> throw msg
 
@@ -160,4 +160,8 @@ globalMonitor = do
            act >> mxReady ]
     threadDelay 10000
 
-
+-- | Add a module's __remotetable to the RemoteTable that will
+-- be used to activate the node
+appendRemoteTable :: (RemoteTable -> RemoteTable) -> AgentContext -> AgentContext
+appendRemoteTable table ctxt =
+    ctxt & remoteTable .~ table (ctxt^.remoteTable)

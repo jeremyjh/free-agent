@@ -25,7 +25,7 @@ import           Data.Binary
 import qualified Data.Set as Set
 
 import           Control.Monad.State                            as State (StateT, modify, get, MonadState)
-import           Control.Distributed.Backend.P2P(getCapable, startPeerController,makeNodeId)
+import           Control.Distributed.Backend.P2P(getCapable, peerController,makeNodeId)
 import           Data.UUID.V1 (nextUUID)
 
 
@@ -117,7 +117,7 @@ peerServer = AgentServer sname init child
         initPeer _ = do
             localPeer <- withAgent ctxt initSelf
             let state'' = PeerState localPeer mempty
-            startPeerController $ makeNodeId <$> (ctxt^.agentConfig.peerNodeSeeds)
+            void $ spawnLocal $ peerController $ makeNodeId <$> (ctxt^.agentConfig.peerNodeSeeds)
             return $ InitOk (AgentState ctxt state'') Infinity
         peerProcess = defaultProcess {
             apiHandlers =

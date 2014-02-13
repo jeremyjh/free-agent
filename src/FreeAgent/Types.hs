@@ -44,8 +44,8 @@ import           Control.Concurrent.Chan.Lifted     (Chan)
 import           Control.DeepSeq                    (NFData (..))
 import           FreeAgent.Process (MonadProcess(..), Process
                                                     ,ProcessId, NFSerializable
-                                                    ,ChildSpec)
-import           Control.Distributed.Process.Node   (LocalNode)
+                                                    ,ChildSpec, RemoteTable)
+import           Control.Distributed.Process.Node   (LocalNode, initRemoteTable)
 import           Control.Monad.Base                 (MonadBase)
 import           Control.Monad.Logger               (LogLevel (..), LoggingT,
                                                      MonadLogger (..),
@@ -105,9 +105,10 @@ class (NFSerializable a, Stashable a) => Resulting a where
     extract :: (Typeable b) => a -> Maybe b
     -- | provide a 'ResultSummary'
     summary :: a -> ResultSummary
-    matchResult :: (Typeable b) => (b -> Bool) -> a -> Bool
+    -- | Create a generalized ResultMatcher function - see 'Core.resultMatcher'
+    matchR :: (Typeable b) => (b -> Bool) -> a -> Bool
 
-    matchResult f a =
+    matchR f a =
         case cast a of
             Just a' -> f a'
             Nothing -> False
@@ -151,6 +152,7 @@ type ResultMatcher = (Result -> Bool)
 
 data Listener = ActionMatching ActionMatcher ProcessId
               | ResultMatching ActionMatcher ResultMatcher ProcessId
+              deriving (Typeable)
 
 data DBMessage = Perform (AgentDB ()) | Terminate
 
@@ -197,6 +199,7 @@ data AgentContext
                  , _contextAgentDBChan     :: Chan DBMessage
                  , _contextListeners       :: Agent [Listener]
                  , _contextProcessNode     :: LocalNode
+                 , _contextRemoteTable     :: RemoteTable
                  }
 
 instance Default AgentConfig where
@@ -210,6 +213,7 @@ instance Default AgentContext where
             (error "agentDB chan not initialized!")
             (return [])
             (error "process node not initialized!")
+            initRemoteTable
 
 class (Functor m, Applicative m, Monad m)
       => ContextReader m where
@@ -264,9 +268,10 @@ data RunStatus a = Either Text a
 class (NFSerializable a, NFSerializable b, Stashable a, Stashable b, Resulting b)
      => Runnable a b | a -> b where
     exec :: (MonadAgent m) => a -> m (Either Text b)
-    matchAction :: (Typeable c) => (c -> Bool) -> a -> Bool
+    -- | Create a generalized ActionMatcher function - see 'Core.actionMatcher'
+    matchA :: (Typeable c) => (c -> Bool) -> a -> Bool
 
-    matchAction f a =
+    matchA f a =
         case cast a of
             Just a' -> f a'
             Nothing -> False

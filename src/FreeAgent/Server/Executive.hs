@@ -24,6 +24,7 @@ import           FreeAgent.Process.ManagedAgent
 import           AgentPrelude
 
 import           Control.Monad.State                                 (StateT)
+import           Control.Distributed.Static                          (unclosure)
 import           Data.Binary
 import qualified Data.Map.Strict                                     as Map
 import qualified Data.Set                                            as Set
@@ -54,6 +55,7 @@ data ExecutiveCommand = RegisterAction Action
                       | RemovePackage UUID
                       {-| QueryActionHistory (ScanQuery ActionHistory [ActionHistory])-}
                       | TerminateExecutive
+                      | AddListener (Closure Listener)
                       deriving (Typeable, Generic)
 instance Binary ExecutiveCommand where
 instance NFData ExecutiveCommand where
@@ -75,10 +77,33 @@ executeAction = syncCallChan execServer . ExecuteAction
 deliverPackage :: (MonadProcess m) => Package -> m [EResult]
 deliverPackage p = syncCallChan execServer $ DeliverPackage p
 
+
 -- | Remove a package definition from the context leader(s). Does
 -- not unregister Actions or remove history.
 removePackage :: (MonadProcess m) => UUID -> m ()
 removePackage = syncCallChan execServer . RemovePackage
+
+addRemoteListener :: (Addressable a, MonadProcess m)
+                  => a -> Closure Listener
+                  -> m ()
+addRemoteListener target = cast target . AddListener
+
+-- | Used with 'addRemoteListener' - defines a 'Listener' that will
+-- receive a 'Result' for each 'Action' executed that matches the typed predicate
+-- argument. Only predicates for Actions in which the underlying concrete type
+-- matches will be evaluated.
+matchAction :: (Runnable a b) => (a -> Bool) -> ProcessId -> Listener
+matchAction af pid = ActionMatching (matchA af) pid
+
+-- | Used with 'addRemoteListener' - defines a 'Listener' that will
+-- receive a 'Result' for each 'Action' executed where both the Action and Result
+-- match the predicate arguments.
+-- If you need the 'ActionMatcher' predicate to have access to the underlying
+-- concrete type, then pass the typed predicate to 'matchA' to make an
+-- 'ActionMatcher'.
+matchResult :: (Resulting b)
+            => ActionMatcher -> (b -> Bool) -> ProcessId -> Listener
+matchResult af rf pid = ResultMatching af (matchR rf) pid
 
 -- -----------------------------
 -- Implementation
@@ -98,6 +123,7 @@ execServer = AgentServer sname init child
             pid <- getSelfPid
             Peer.registerServer execServer pid
             return $ InitOk (AgentState ctxt state') Infinity
+
         executiveProcess = defaultProcess {
             apiHandlers =
             [ handleRpcChan $ agentAsyncCallHandler $
@@ -110,6 +136,13 @@ execServer = AgentServer sname init child
                 \(DeliverPackage pkg) -> doDeliverPackage pkg
 
             , handleRpcChan $ agentAsyncCallHandler $ \cmd -> perform cmd
+
+            , handleCast $ agentCastHandler $ \ (AddListener cl) -> do
+                rt <- viewConfig remoteTable
+                case unclosure rt cl of
+                    Left msg -> [qwarn|AddListener failed! Could not evaluate
+                                     new listener closure: #{msg}|]
+                    Right listener -> listeners %= (:) listener
             ]
 
         } where

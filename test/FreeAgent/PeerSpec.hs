@@ -25,6 +25,10 @@ import           Control.Exception
 import           Test.Hspec
 import           FreeAgent
 
+matchRemoteHostName :: ProcessId -> Listener
+matchRemoteHostName pid = matchAction (\c -> _checktcpHost c == "localhost") pid
+remotable ['matchRemoteHostName]
+
 main :: IO ()
 main = hspec spec
 
@@ -42,8 +46,11 @@ spec =
             `shouldReturn` True
 
         it "can find services offered on peers" $ do
+        -- one giant mega-spec b/c there is so much overhead in spinning up
+        -- the peer swarm
             testAgent $ \result -> do
                 catchAny $ do
+                    -- create a couple "remotes"
                     fork $ liftIO $
                         runAgentServers appConfig2 $ do
                                 Just peer2 <- whereis $ peerServer^.name
@@ -58,23 +65,37 @@ spec =
                             "waithere" <- expect :: Agent String
                             return ()
 
-                    threadDelay 500000
+                    threadDelay 500000 -- wait for the swarm to stabilize
 
+                    -- it "can count peers"
                     count <- queryPeerCount
 
+                    -- it "can query for a Set of matching Peers"
                     peers <- queryPeerServers execServer (Set.fromList [def] )
                                                          (Set.fromList [Zone "TX"] )
+
+                    -- it "can register remote listeners"
+                    let tx:_ = Set.toList peers
+                    pid <- getSelfPid
+                    let matcher = $(mkClosure 'matchRemoteHostName) pid
+                    addRemoteListener (tx, execServer) matcher
+                    threadDelay 10000
 
                     package <- set actions [Action checkTCP] <$> defaultPackage
                                     & fmap (set zones $ Set.fromList [Zone "TX"])
 
+                    -- it "can route a package to a remote Node"
                     (Right res):_<- deliverPackage package
+
+                    nr <- expect :: Agent Result
+                    let Just (NagiosResult _ status) = extract nr
+
                     let aname = res ^.to summary.resultOf.to key
 
-                    result (count, length peers,aname )
+                    result (count, length peers,aname, status)
                 $ \exception ->
                     result $ throw exception
-            `shouldReturn` (2, 1, "localhost")
+            `shouldReturn` (2, 1, "localhost", OK)
 
 
 -- helper for running agent and getting results out of
@@ -87,7 +108,7 @@ testAgent ma = do
     takeMVar result
 
 appConfig :: AgentContext
-appConfig = Config.appConfig
+appConfig = Config.appConfig & appendRemoteTable __remoteTable
       {-& agentConfig.minLogLevel .~ LevelDebug-}
 
 appConfig2 :: AgentContext

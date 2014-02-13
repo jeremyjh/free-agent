@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module FreeAgent.ExecutiveSpec (main, spec) where
 
@@ -21,6 +22,7 @@ import qualified Data.Set as Set
 import           Control.Concurrent.Lifted
 import           FreeAgent.Process as Process
 import           Control.Distributed.Process.Node
+import Control.Distributed.Process.Closure (mkClosure)
 import           Network.Transport.TCP
 import           Data.Dynamic
 
@@ -28,6 +30,10 @@ import           Control.Exception
 
 import qualified Data.Binary as Binary
 import qualified Data.Serialize as Cereal
+
+matchRemoteHostName :: ProcessId -> Listener
+matchRemoteHostName pid = matchAction (\c -> _checktcpHost c == "localhost") pid
+remotable ['matchRemoteHostName]
 
 main :: IO ()
 main = hspec spec
@@ -88,6 +94,21 @@ spec = do
                 $ \exception ->
                     result $ throw exception
             `shouldReturn` (3,3)
+
+        it "can subscribe listeners at runtime" $ do
+            testAgent $ \result -> do
+                catchAny $ do
+                    pid <- getSelfPid
+                    let matcher = $(mkClosure 'matchRemoteHostName) pid
+                    addRemoteListener execServer matcher
+                    threadDelay 10000
+                    executeAction $ Action checkTCP
+                    nr <- expect :: Agent Result
+                    let Just (NagiosResult _ status) = extract nr
+                    result status
+                $ \exception ->
+                    result $ throw exception
+            `shouldReturn` OK
 
         it "can deliver and remove a basic package" $ do
             testAgent $ \result -> do
@@ -173,26 +194,13 @@ setup = void $ system ("rm -rf " ++ appConfig^.agentConfig.dbPath)
 
 checkTCP = CheckTCP  "localhost" 53
 
--- use a local config here because we are wiring up our own test listener
-appConfig :: AgentContext
-appConfig = (
-    registerPlugins $ do
-        addPlugin $ Nagios.pluginDef def {
-            -- override default plugin-specific config
-            _nagiosPluginsPath = "/usr/lib/nagios/plugins"
-        }
-        addPlugin $ testDef def
-        -- add more plugins here!
-    ) & agentConfig.dbPath .~ "/tmp/leveltest" -- override Agent config values here!
-      {-& agentConfig.minLogLevel .~ LevelDebug-}
 
 
 testActionListener :: Agent [Listener]
 testActionListener = do
     apid <- liftProcess $ spawnLocal $ loop (0::Int)
     Process.register "ExecSpecActionListener" apid
-    return [ActionMatching (matchAction (\c -> _checktcpHost c == "localhost"))
-                           apid]
+    return [matchAction (\c -> _checktcpHost c == "localhost") apid]
   where
     loop count = do
         receiveWait
@@ -206,9 +214,10 @@ testResultListener :: Agent [Listener]
 testResultListener = do
     rpid <- liftProcess $ spawnLocal $ loop (0::Int)
     Process.register "ExecSpecResultListener" rpid
-    return [ResultMatching (const True)
-                           (matchResult (\ (NagiosResult _ r) -> r == OK))
-                           rpid]
+    return [matchResult (const True)
+                        (\ (NagiosResult _ r) -> r == OK)
+                        rpid
+           ]
   where
     loop count = do
         receiveWait
@@ -218,8 +227,25 @@ testResultListener = do
                   send pid count
             ]
 
+
+
 testDef :: NagiosConfig -> PluginDef
 testDef conf = definePlugin "ExecSpec"
                             conf
                             ((++) <$> testActionListener <*> testResultListener)
                             (return ())
+
+
+-- use a local config here because we are wiring up our own test listener
+appConfig :: AgentContext
+appConfig = (
+    registerPlugins $ do
+        addPlugin $ Nagios.pluginDef def {
+            -- override default plugin-specific config
+            _nagiosPluginsPath = "/usr/lib/nagios/plugins"
+        }
+        addPlugin $ testDef def
+        -- add more plugins here!
+    ) & agentConfig.dbPath .~ "/tmp/leveltest" -- override Agent config values here!
+      & appendRemoteTable __remoteTable
+      {-& agentConfig.minLogLevel .~ LevelDebug-}

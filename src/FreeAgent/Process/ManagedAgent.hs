@@ -78,10 +78,10 @@ agentAsyncCallHandler f s p c = spawnStateAgent s p (f c) >> continue s
 -- | wrapper for commands that will handle a cast and mutate state -
 -- the updated StateT environment will provide the state value to
 -- 'continue'
-agentCastHandler :: (NFSerializable a, Show s)
-                  => (a -> (StateT s Agent) ())
-                  -> AgentState s -> a
-                  -> Process (ProcessAction (AgentState s) )
+agentCastHandler :: (NFSerializable a)
+                 => (a -> (StateT s Agent) ())
+                 -> AgentState s -> a
+                 -> Process (ProcessAction (AgentState s) )
 agentCastHandler f s c = withStateAgent s (f c) >>= continue
   where
     withStateAgent (AgentState ctxt state') ma =

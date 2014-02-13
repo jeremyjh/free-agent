@@ -10,6 +10,7 @@
 -- functions
 module FreeAgent.Process
     ( module Control.Distributed.Process
+    , module Control.Distributed.Process.Closure
     , module FreeAgent.Process
     , NFSerializable
     , ChildSpec
@@ -21,6 +22,7 @@ import           Control.Monad.Trans                                   (lift, Mo
 import           Control.Monad.RWS                                     (RWST, Monoid)
 import           Control.Monad.State                                   (StateT, mapStateT)
 
+import           Control.Concurrent.Lifted                             (threadDelay)
 import           Control.Distributed.Process                           hiding
                                                                         (expect, expectTimeout, getSelfPid,
                                                                         nsend, register,
@@ -28,6 +30,7 @@ import           Control.Distributed.Process                           hiding
                                                                         call,
                                                                         whereis, sendChan)
 import qualified Control.Distributed.Process                           as Base
+import           Control.Distributed.Process.Closure                   (mkClosure, remotable)
 import           Control.Distributed.Process.Internal.Types            (Process(..), LocalProcess(..))
 import           Control.Distributed.Process.Platform                  (NFSerializable, Addressable)
 import           Control.Distributed.Process.Serializable              (Serializable)
@@ -38,7 +41,6 @@ import           Control.Distributed.Process.Platform.Supervisor (ChildSpec)
 import           Control.Monad.Base                                    (MonadBase(..))
 import           Control.Monad.Trans.Control                           (MonadBaseControl(..))
 import           Control.Monad.Trans.Resource                          (MonadThrow(..), MonadUnsafeIO(..))
-import Control.Concurrent.Lifted (threadDelay)
 
 -- instances required under ResourceT
 deriving instance MonadThrow Process

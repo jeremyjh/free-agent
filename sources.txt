@@ -7,4 +7,3 @@ https://github.com/haskell-distributed/network-transport-tcp development
 https://github.com/haskell-distributed/rank1dynamic development
 https://github.com/haskell-distributed/distributed-static development
 https://github.com/kazu-yamamoto/logger master
-/home/jeremy/Dropbox/repos/distributed-process-p2p
