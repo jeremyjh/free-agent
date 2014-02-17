@@ -24,7 +24,7 @@ import           FreeAgent.Process.ManagedAgent
 import           Data.Binary
 import qualified Data.Set as Set
 
-import           Control.Monad.State                            as State (StateT, modify, get, MonadState)
+import           Control.Monad.State                            as State (StateT, MonadState)
 import           Control.Distributed.Backend.P2P(getCapable, peerController,makeNodeId)
 import           Data.UUID.V1 (nextUUID)
 
@@ -66,7 +66,11 @@ instance Addressable (Peer, AgentServer) where
       where sname = server^.name
             nodeid = processNodeId $ peer^.processId
 
-data PeerState = PeerState Peer (Set Peer) deriving (Show)
+declareLenses [d|
+    data PeerState = PeerState { self :: Peer
+                               , friends :: (Set Peer)
+                               } deriving (Show)
+              |]
 
 type PeerAgent = StateT PeerState Agent
 
@@ -169,46 +173,42 @@ initSelf = do
     pid <- getSelfPid
     ctxts <- viewConfig $ agentConfig.contexts
     zs <- viewConfig $ agentConfig.zones
-    let self = Peer uid pid ctxts zs Set.empty
-    [qdebug| Peer initialized self: #{self}|]
-    return self
+    let self' = Peer uid pid ctxts zs Set.empty
+    [qdebug| Peer initialized self: #{self'}|]
+    return self'
 
 doDiscoverPeers :: PeerAgent ()
 doDiscoverPeers = do
     pids <- liftProcess $ getCapable $ peerServer^.name
     [qdebug| DiscoverPeers found agent:peer services: #{pids} |]
-    (PeerState self _) <- State.get
+    self' <- use self
     forM_ pids $ \pid ->
-        when ((self^.processId) /= pid) $ do
-            [qdebug| Sending self: #{self} To peer: #{pid} |]
-            cast pid $ RegisterPeer self
+        when ((self'^.processId) /= pid) $ do
+            [qdebug| Sending self: #{self'} To peer: #{pid} |]
+            cast pid $ RegisterPeer self'
 
 doRegisterServer :: String -> ProcessId -> PeerAgent ()
 doRegisterServer sname pid =
     -- re-broadcast self when we add a new server
-    State.modify addServer >> cast peerServer DiscoverPeers
-  where
-    addServer (PeerState self peers) =
-        PeerState (self & servers .~ Set.insert sref (self^.servers)) peers
-    sref = ServerRef sname pid
+    self.servers %= Set.insert sref >> cast peerServer DiscoverPeers
+  where sref = ServerRef sname pid
 
 doRegisterPeer ::  Peer -> Bool -> PeerAgent ()
 doRegisterPeer peer respond = do
     [qdebug| Received Registration for #{peer}|]
-    modify peerList
-    (PeerState self _) <- State.get
+    friends %= updateFriends
+    self' <- use self
     when respond $ do
-        [qdebug| Sending self: #{self} To peer: #{_peerProcessId self} |]
-        cast (peer^.processId) (RespondRegisterPeer self)
-  where peerList (PeerState self peers)
-            | Set.member peer peers = PeerState self replace
-            | otherwise = PeerState self $ Set.insert peer peers
-          where replace = Set.insert peer (Set.delete peer peers)
+        [qdebug| Sending self: #{self'} To peer: #{_peerProcessId self'} |]
+        cast (peer^.processId) (RespondRegisterPeer self')
+  where updateFriends peers
+            | Set.member peer peers = Set.insert peer (Set.delete peer peers)
+            | otherwise = Set.insert peer peers
 
 doQueryPeerServers :: MonadState PeerState m
                   => String -> Set Context -> Set Zone -> m (Set Peer)
 doQueryPeerServers fname fcontexts fzones = do
-    (PeerState _ peers) <- State.get
+    peers <- use friends
     return $ matchingAll peers
   where
     matchingAll peers = Set.intersection (Set.intersection matchingContexts

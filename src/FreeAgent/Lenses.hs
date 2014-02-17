@@ -18,7 +18,8 @@ where
 import           AgentPrelude
 import           FreeAgent.Types
 
-import           Control.Lens      (Getting, makeFields, use, view, (&), (.~),
+import           Control.Lens      (makeFields, makeLenses, declareLenses
+                                   ,Getting, use, view, (&), (.~),
                                     (^.), _1, _2, set, to, _Right, (%=))
 
 makeFields ''AgentContext
