@@ -12,7 +12,18 @@
 {-# LANGUAGE QuasiQuotes #-}
 
 
-module FreeAgent.Server.Executive where
+module FreeAgent.Server.Executive
+    ( execServer
+    , registerAction
+    , executeRegistered
+    , executeAction
+    , deliverPackage
+    , removePackage
+    , addRemoteListener
+    , matchAction
+    , matchResult
+    )
+where
 
 import           FreeAgent.Action
 import           FreeAgent.Core                                      (withAgent)
@@ -93,7 +104,7 @@ addRemoteListener target = cast target . AddListener
 -- argument. Only predicates for Actions in which the underlying concrete type
 -- matches will be evaluated.
 matchAction :: (Runnable a b) => (a -> Bool) -> ProcessId -> Listener
-matchAction af pid = ActionMatching (matchA af) pid
+matchAction af = ActionMatching (matchA af)
 
 -- | Used with 'addRemoteListener' - defines a 'Listener' that will
 -- receive a 'Result' for each 'Action' executed where both the Action and Result
@@ -103,7 +114,7 @@ matchAction af pid = ActionMatching (matchA af) pid
 -- 'ActionMatcher'.
 matchResult :: (Resulting b)
             => ActionMatcher -> (b -> Bool) -> ProcessId -> Listener
-matchResult af rf pid = ResultMatching af (matchR rf) pid
+matchResult af rf = ResultMatching af (matchR rf)
 
 -- -----------------------------
 -- Implementation

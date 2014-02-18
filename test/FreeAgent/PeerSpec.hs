@@ -53,15 +53,11 @@ spec =
                     -- create a couple "remotes"
                     fork $ liftIO $
                         runAgentServers appConfig2 $ do
-                                Just peer2 <- whereis $ peerServer^.name
-                                cast peer2 DiscoverPeers
                                 "waithere" <- expect :: Agent String
                                 return ()
 
                     fork $ liftIO $
                         runAgentServers appConfigTX $ do
-                            Just peerTX <- whereis $ peerServer^.name
-                            cast peerTX DiscoverPeers
                             "waithere" <- expect :: Agent String
                             return ()
 

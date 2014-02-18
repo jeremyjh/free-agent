@@ -11,7 +11,14 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 
-module FreeAgent.Server.Peer where
+module FreeAgent.Server.Peer
+    ( peerServer
+    , registerServer
+    , queryPeerServers
+    , queryPeerCount
+    )
+
+where
 
 import           AgentPrelude
 import           FreeAgent.Lenses
@@ -41,11 +48,11 @@ instance Ord ServerRef where
 
 instance Binary ServerRef
 
-data Peer = Peer { _peerUuid      :: UUID
-                 , _peerProcessId :: !ProcessId
-                 , _peerContexts  :: Set Context
-                 , _peerZones     :: Set Zone
-                 , _peerServers  :: Set ServerRef
+data Peer = Peer { peerUuid      :: UUID
+                 , peerProcessId :: !ProcessId
+                 , peerContexts  :: Set Context
+                 , peerZones     :: Set Zone
+                 , peerServers  :: Set ServerRef
                  } deriving (Show, Eq, Typeable, Generic)
 makeFields ''Peer
 instance Binary Peer
@@ -68,7 +75,7 @@ instance Addressable (Peer, AgentServer) where
 
 declareLenses [d|
     data PeerState = PeerState { self :: Peer
-                               , friends :: (Set Peer)
+                               , friends :: Set Peer
                                } deriving (Show)
               |]
 
@@ -89,6 +96,7 @@ instance NFData PeerCommand
 -- API
 -- ---------------------------
 
+{-discoverPeers :: (MonadProcess m) => m ()-}
 -- | Advertise a Server on the local peer
 registerServer :: (MonadProcess m)
                => AgentServer -> ProcessId -> m ()
@@ -122,6 +130,7 @@ peerServer = AgentServer sname init child
             localPeer <- withAgent ctxt initSelf
             let state'' = PeerState localPeer mempty
             void $ spawnLocal $ peerController $ makeNodeId <$> (ctxt^.agentConfig.peerNodeSeeds)
+            pid <- getSelfPid; cast pid DiscoverPeers
             return $ InitOk (AgentState ctxt state'') Infinity
         peerProcess = defaultProcess {
             apiHandlers =
@@ -199,7 +208,7 @@ doRegisterPeer peer respond = do
     friends %= updateFriends
     self' <- use self
     when respond $ do
-        [qdebug| Sending self: #{self'} To peer: #{_peerProcessId self'} |]
+        [qdebug| Sending self: #{self'} To peer: #{peerProcessId self'} |]
         cast (peer^.processId) (RespondRegisterPeer self')
   where updateFriends peers
             | Set.member peer peers = Set.insert peer (Set.delete peer peers)
