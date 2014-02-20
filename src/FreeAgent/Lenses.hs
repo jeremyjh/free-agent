@@ -22,13 +22,14 @@ import           Control.Lens      (makeFields, declareFields, declareLenses
                                    ,Getting, use, view, (&), (.~),
                                     (^.), _1, _2, set, to, _Right, (%=))
 
+
 makeFields ''AgentContext
 makeFields ''AgentConfig
 makeFields ''Wrapped
 makeFields ''PluginDef
 makeFields ''ResultSummary
-makeFields ''Package
 makeFields ''AgentServer
+makeFields ''Peer
 
 -- | Use a lens to view a portion of AgentContext
 viewConfig :: (ContextReader m) => Getting a AgentContext a -> m a

@@ -74,14 +74,12 @@ spec =
                     let tx:_ = Set.toList peers
                     pid <- getSelfPid
                     let matcher = $(mkClosure 'matchRemoteHostName) pid
-                    addRemoteListener (tx, execServer) matcher
+                    addListener (Remote tx) matcher
                     threadDelay 10000
 
-                    package <- set actions [Action checkTCP] <$> defaultPackage
-                                    & fmap (set zones $ Set.fromList [Zone "TX"])
-
-                    -- it "can route a package to a remote Node"
-                    (Right res):_<- deliverPackage package
+                    -- it "can route an action to a remote Node"
+                    Right res <- executeAction (Route [def] [Zone "TX"])
+                                               checkTCP
 
                     nr <- expect :: Agent Result
                     let Just (NagiosResult _ status) = extract nr
@@ -91,7 +89,7 @@ spec =
                     result (count, length peers,aname, status)
                 $ \exception ->
                     result $ throw exception
-            `shouldReturn` (2, 1, "localhost", OK)
+            `shouldReturn` (3, 1, "localhost", OK)
 
 
 -- helper for running agent and getting results out of

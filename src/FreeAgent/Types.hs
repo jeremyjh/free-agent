@@ -183,6 +183,8 @@ data Context = Context !Text deriving (Show, Eq, Ord, Typeable, Generic)
 
 instance Default Context where def = Context "default"
 
+instance Default (Set Context) where def = Set.fromList [def]
+
 -- | Each agent belongs to one or more Zones - functionally this is the
 -- similar to a Context but it is intended to indicate geographic or
 -- network location (e.g. Zone "BehindFirewall", Zone "DMZ", Zone "Public")
@@ -288,23 +290,37 @@ data ResultSummary
 data Schedule = Now | Later
     deriving (Show, Eq, Typeable, Generic)
 
-data Package = Package {
-      _packageUuid :: UUID
-    , _packageContexts :: Set Context
-    , _packageZones :: Set Zone
-    , _packageActions :: [Action]
-    , _packageActionKeys :: [Key]
-    , _packageMeta :: [(Text, Text)]
-    , _packageSchedule :: Schedule
-} deriving (Show, Eq, Typeable, Generic)
-
-
 data ActionHistory = ActionHistory deriving (Show, Eq, Typeable, Generic)
 
 data AgentServer = AgentServer { _serverName :: String
                                , _serverinitProc :: AgentContext -> Process ()
                                , _serverchildSpec :: AgentContext -> Process ChildSpec
                                }
+
+data ServerRef = ServerRef String ProcessId
+                 deriving (Show, Eq, Generic)
+
+instance Ord ServerRef where
+    ServerRef a _ `compare` ServerRef b _ = a `compare` b
+
+instance Binary ServerRef
+
+
+data Peer = Peer { _peerUuid      :: UUID
+                 , _peerProcessId :: !ProcessId
+                 , _peerContexts  :: Set Context
+                 , _peerZones     :: Set Zone
+                 , _peerServers   :: Set ServerRef
+                 } deriving (Show, Eq, Typeable, Generic)
+instance Binary Peer
+instance NFData Peer
+
+instance Ord Peer where
+    a `compare` b = (_peerUuid a) `compare` (_peerUuid b)
+
+data Target =   Local
+              | Remote Peer
+              | Route [Context] [Zone]
 
 deriveStorable ''UUID
 deriveSerializers ''Context

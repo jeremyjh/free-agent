@@ -10,6 +10,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module FreeAgent.Server.Peer
     ( peerServer
@@ -40,26 +41,6 @@ import           Data.UUID.V1 (nextUUID)
 -- Types
 -- ---------------------------
 
-data ServerRef = ServerRef String ProcessId
-                 deriving (Show, Eq, Generic)
-
-instance Ord ServerRef where
-    ServerRef a _ `compare` ServerRef b _ = a `compare` b
-
-instance Binary ServerRef
-
-data Peer = Peer { peerUuid      :: UUID
-                 , peerProcessId :: !ProcessId
-                 , peerContexts  :: Set Context
-                 , peerZones     :: Set Zone
-                 , peerServers  :: Set ServerRef
-                 } deriving (Show, Eq, Typeable, Generic)
-makeFields ''Peer
-instance Binary Peer
-instance NFData Peer where
-
-instance Ord Peer where
-    a `compare` b = (a^.uuid) `compare` (b^.uuid)
 
 
 instance Addressable Peer where
@@ -128,7 +109,7 @@ peerServer = AgentServer sname init child
       where
         initPeer _ = do
             localPeer <- withAgent ctxt initSelf
-            let state'' = PeerState localPeer mempty
+            let state'' = PeerState localPeer (Set.fromList [localPeer])
             void $ spawnLocal $ peerController $ makeNodeId <$> (ctxt^.agentConfig.peerNodeSeeds)
             pid <- getSelfPid; cast pid DiscoverPeers
             return $ InitOk (AgentState ctxt state'') Infinity
@@ -197,9 +178,12 @@ doDiscoverPeers = do
             cast pid $ RegisterPeer self'
 
 doRegisterServer :: String -> ProcessId -> PeerAgent ()
-doRegisterServer sname pid =
+doRegisterServer sname pid = do
+    [qdebug| Registering local AgentServer #{sname}|]
+    self.servers %= Set.insert sref
+    use self >>= flip doRegisterPeer False
     -- re-broadcast self when we add a new server
-    self.servers %= Set.insert sref >> cast peerServer DiscoverPeers
+    cast peerServer DiscoverPeers
   where sref = ServerRef sname pid
 
 doRegisterPeer ::  Peer -> Bool -> PeerAgent ()
@@ -208,7 +192,7 @@ doRegisterPeer peer respond = do
     friends %= updateFriends
     self' <- use self
     when respond $ do
-        [qdebug| Sending self: #{self'} To peer: #{peerProcessId self'} |]
+        [qdebug| Sending self: #{self'} To peer: #{_peerProcessId self'} |]
         cast (peer^.processId) (RespondRegisterPeer self')
   where updateFriends peers
             | Set.member peer peers = Set.insert peer (Set.delete peer peers)

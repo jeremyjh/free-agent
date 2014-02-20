@@ -17,9 +17,7 @@ module FreeAgent.Server.Executive
     , registerAction
     , executeRegistered
     , executeAction
-    , deliverPackage
-    , removePackage
-    , addRemoteListener
+    , addListener
     , matchAction
     , matchResult
     )
@@ -34,12 +32,13 @@ import qualified FreeAgent.Server.Peer                               as Peer
 import           FreeAgent.Process.ManagedAgent
 import           AgentPrelude
 
+import           Data.Either.Utils(forceEither)
 import           Control.Monad.State                                 (StateT)
+import           Control.Monad.Trans.Either
 import           Control.Distributed.Static                          (unclosure)
 import           Data.Binary
 import qualified Data.Map.Strict                                     as Map
 import qualified Data.Set                                            as Set
-import           Data.Time.Clock                                     (getCurrentTime)
 
 import           FreeAgent.Process                  as Process
 
@@ -54,6 +53,7 @@ data ExecState
               } deriving (Typeable, Generic)
 makeFields ''ExecState
 
+
 -- -----------------------------
 -- Types
 -- -----------------------------
@@ -62,51 +62,53 @@ data ExecutiveCommand = RegisterAction Action
                       | UnregisterAction Key
 		              | ExecuteAction Action
 		              | ExecuteRegistered Key
-                      | DeliverPackage Package
-                      | RemovePackage UUID
                       {-| QueryActionHistory (ScanQuery ActionHistory [ActionHistory])-}
                       | TerminateExecutive
                       | AddListener (Closure Listener)
-                      deriving (Typeable, Generic)
+                      deriving (Show, Typeable, Generic)
 instance Binary ExecutiveCommand where
 instance NFData ExecutiveCommand where
 
 -- -----------------------------
 -- API
 -- -----------------------------
-registerAction :: (MonadProcess m) => Action -> m ()
-registerAction = syncCallChan execServer . RegisterAction
+registerAction :: (MonadAgent m, Actionable a b) => Target -> a -> m ()
+registerAction target =
+    fmap forceEither . callExecutive target . RegisterAction . toAction
 
-executeRegistered :: (MonadProcess m) => Key -> m EResult
-executeRegistered = syncCallChan execServer . ExecuteRegistered
+executeRegistered :: (MonadAgent m) => Target -> Key -> m EResult
+executeRegistered target key' = do
+    sendok <- callExecutive target $ ExecuteRegistered key'
+    return $ case sendok of
+        Left msg -> Left msg
+        Right eresult -> eresult
 
-executeAction :: (MonadProcess m) => Action -> m EResult
-executeAction = syncCallChan execServer . ExecuteAction
+executeAction :: (MonadAgent m, Actionable a b) => Target -> a -> m EResult
+executeAction target action' = do
+    sendok <- callExecutive target $ ExecuteAction (toAction action')
+    return $ case sendok of
+        Left msg -> Left msg
+        Right eresult -> eresult
 
--- | Send / register a package and optional list of Actions to register
--- to each context leader defined in the package
-deliverPackage :: (MonadProcess m) => Package -> m [EResult]
-deliverPackage p = syncCallChan execServer $ DeliverPackage p
+addListener :: (MonadProcess m)
+            => Target -> Closure Listener -> m ()
+addListener Local = cast execServer . AddListener
+addListener (Remote peer) = cast (peer, execServer) . AddListener
+{-addListener route@(Intersect _ _) = cast ((forceEither (resolveRoute route)),execServer) . AddListener-}
 
+{-routedAction :: (Actionable a b)-}
+             {-=> a -> Set Context -> Set Zone -> Action-}
+{-routedAction action' scontexts szones =-}
+    {-Action $ RoutedAction (toAction action') scontexts szones-}
 
--- | Remove a package definition from the context leader(s). Does
--- not unregister Actions or remove history.
-removePackage :: (MonadProcess m) => UUID -> m ()
-removePackage = syncCallChan execServer . RemovePackage
-
-addRemoteListener :: (Addressable a, MonadProcess m)
-                  => a -> Closure Listener
-                  -> m ()
-addRemoteListener target = cast target . AddListener
-
--- | Used with 'addRemoteListener' - defines a 'Listener' that will
+-- | Used with 'addListener' - defines a 'Listener' that will
 -- receive a 'Result' for each 'Action' executed that matches the typed predicate
 -- argument. Only predicates for Actions in which the underlying concrete type
 -- matches will be evaluated.
 matchAction :: (Runnable a b) => (a -> Bool) -> ProcessId -> Listener
 matchAction af = ActionMatching (matchA af)
 
--- | Used with 'addRemoteListener' - defines a 'Listener' that will
+-- | Used with 'addListener' - defines a 'Listener' that will
 -- receive a 'Result' for each 'Action' executed where both the Action and Result
 -- match the predicate arguments.
 -- If you need the 'ActionMatcher' predicate to have access to the underlying
@@ -143,9 +145,6 @@ execServer = AgentServer sname init child
                       ExecuteRegistered k -> doExecuteRegistered k
                       _ -> $(err "illegal pattern match")
 
-            , handleRpcChan $ agentAsyncCallHandler $
-                \(DeliverPackage pkg) -> doDeliverPackage pkg
-
             , handleRpcChan $ agentAsyncCallHandler $ \cmd -> perform cmd
 
             , handleCast $ agentCastHandler $ \ (AddListener cl) -> do
@@ -159,7 +158,6 @@ execServer = AgentServer sname init child
         } where
             perform (RegisterAction a)  = doRegisterAction a
             perform (UnregisterAction k) = doUnRegisterAction k
-            perform (RemovePackage u) = doRemovePackage u
             perform _ = $(err "illegal pattern match")
 
     child ctxt = do
@@ -173,6 +171,27 @@ execServer = AgentServer sname init child
             , childStart   = initChild
             , childRegName = Just $ LocalName sname
         }
+
+callExecutive :: (NFSerializable a, MonadAgent m)
+            => Target -> ExecutiveCommand -> m (Either Text a)
+callExecutive Local command = Right <$> syncCallChan execServer command
+callExecutive (Remote peer) command = Right <$> syncCallChan (peer, execServer) command
+callExecutive route@(Route _ _) command = runEitherT $ do
+    peer <- resolveRoute route
+    syncCallChan (peer, execServer) command
+
+resolveRoute :: (MonadAgent m) => Target -> EitherT Text m Peer
+resolveRoute (Route contexts' zones') = do
+    peers <- lift $ Peer.queryPeerServers execServer
+                                          (Set.fromList contexts')
+                                          (Set.fromList zones')
+    foundPeer peers
+  where foundPeer peers
+            | peers == Set.empty = do
+                [qwarn| Could not resolve a Route
+                        with Context: #{contexts'} and Zone: #{zones'}|]
+                left "Could not find a suitable Peer."
+            | otherwise = let peer:_ = Set.toList peers in right peer
 
 type ExecAgent a = StateT ExecState Agent a
 
@@ -236,57 +255,3 @@ doExec act =
                 send pid result
         return result
     timestampKey = toBytes . view timestamp . summary
-
--- | Register and schedule a list of Actions
-doDeliverPackage :: Package -> ExecAgent [EResult]
-doDeliverPackage package = do
-    [qdebug|Delivering package: #{package}|]
-    (&&) <$> localContext <*> localZone >>= deliverLocal
-  where
-    deliverLocal True = registerIt >>= storeIt >>= scheduleIt
-    deliverLocal False = deliverRemote
-    deliverRemote =
-        Peer.queryPeerServers execServer (package^.contexts)
-                                         (package^.zones)
-        >>= foundRemote
-      where foundRemote peers
-                | peers == Set.empty = return []
-                | otherwise = let peer:_ = Set.toList peers in
-                    syncCallChan (peer, execServer) (DeliverPackage package)
-
-    localContext = do
-        supported <- viewConfig (agentConfig.contexts)
-        let found = Set.intersection (package^.contexts) supported
-        return $ not $ Set.null found
-    localZone = do
-        supported <- viewConfig (agentConfig.zones)
-        let found = Set.intersection (package^.zones) supported
-        return $ not $ Set.null found
-    registerIt = do
-        keys <- forM (package^.actions) $ \act -> do
-            doRegisterAction act
-            return $ key act
-        return $ package & actionKeys .~ (keys ++ (package^.actionKeys))
-                         & actions .~ []
-    storeIt = agentDb . withKeySpace KS.packages . stash
-    scheduleIt pkg =
-        case pkg^.schedule of
-            Now -> do
-                -- execute all actions
-                -- TODO: execute concurrently w/ Platform.Asnc
-                results <- forM (pkg^.actionKeys) $ \akey ->
-                    doExecuteRegistered akey
-
-                -- record package execution history
-                time <- liftIO getCurrentTime
-                agentDb . withKeySpace (KS.packagesAp $ key pkg) $
-                    store (toBytes time) pkg
-
-                return results
-
-            _ -> return [] --TODO: add to scheduler
-
-doRemovePackage :: UUID -> ExecAgent ()
-doRemovePackage uid = do
-    [qdebug|Unregistering package: #{uid}|]
-    agentDb . withKeySpace KS.packages . delete $ toBytes uid

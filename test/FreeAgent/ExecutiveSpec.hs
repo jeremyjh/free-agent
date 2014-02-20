@@ -54,8 +54,8 @@ spec = do
         it "can execute a registered action" $ do
             testAgent $ \result -> do
                 catchAny $ do
-                    registerAction $ Action checkTCP
-                    (Right nr) <- executeRegistered $ key checkTCP
+                    registerAction Local checkTCP
+                    (Right nr) <- executeRegistered Local $ key checkTCP
                     threadDelay 10000
                     -- confirm results were written
                     items <- agentDb $ withKeySpace "agent:actions:localhost:53" $ do
@@ -68,7 +68,7 @@ spec = do
         it "can execute a supplied action" $ do
             testAgent $ \result -> do
                 catchAny $ do
-                    (Right nr) <- executeAction $ Action checkTCP
+                    (Right nr) <- executeAction Local checkTCP
                     let Just (NagiosResult _ OK) = extract nr
                     -- confirm results were written
                     items <- agentDb $ withKeySpace "agent:actions:localhost:53" $ do
@@ -83,7 +83,7 @@ spec = do
                 catchAny $ do
                     -- generate some results to hear about
                     forM_ [0..2] $ \_ ->
-                        executeAction $ Action checkTCP
+                        executeAction Local checkTCP
                     -- make sure he's been listening
                     pid <- getSelfPid
                     nsend "ExecSpecActionListener" ("ask-result-count" :: String, pid)
@@ -100,9 +100,9 @@ spec = do
                 catchAny $ do
                     pid <- getSelfPid
                     let matcher = $(mkClosure 'matchRemoteHostName) pid
-                    addRemoteListener execServer matcher
+                    addListener Local matcher
                     threadDelay 10000
-                    executeAction $ Action checkTCP
+                    executeAction Local checkTCP
                     nr <- expect :: Agent Result
                     let Just (NagiosResult _ status) = extract nr
                     result status
@@ -110,74 +110,35 @@ spec = do
                     result $ throw exception
             `shouldReturn` OK
 
-        it "can deliver and remove a basic package" $ do
-            testAgent $ \result -> do
+        it "it won't deliver a routed Action for an unknown context or zone" $ do
+            testAgentNL $ \result -> do
                 catchAny $ do
-                    package <- set actions [Action checkTCP] <$> defaultPackage
-                    results <- deliverPackage package
+                    Left msg <- executeAction (Route [Context "unkown"] [def])
+                                            checkTCP
 
-                    -- confirm package was added
-                    (Just _) <- agentDb $ withKeySpace KS.packages $
-                        get $ key package
+                    Left msg' <- executeAction (Route [def] [Zone "unkown"])
+                                            checkTCP
 
-                    -- confirm results were written
-                    resultsAdded <- agentDb $
-                        withKeySpace "agent:actions:localhost:53" $ do
-                            length <$> scan "" queryItems
 
-                    -- confirm history was added
-                    historyAdded <- agentDb $
-                        withKeySpace ("agent:packages:" ++ key package) $ do
-                            length <$> scan "" queryItems
-
-                    -- now test remove
-                    removePackage $ package^.uuid
-
-                    Nothing <- agentDb $ withKeySpace KS.packages $ do
-                        get $ key package
-
-                    result $ (length results, resultsAdded, historyAdded)
-                $ \exception ->
-                    result $ throw exception
-            `shouldReturn` (1,1,1)
-
-        it "it won't deliver a package for an unknown context or zone" $ do
-            testAgent $ \result -> do
-                catchAny $ do
-                    let unknownContext = Set.fromList [Context "unknown"]
-                    package <- set actions [Action checkTCP] <$> defaultPackage
-                                   & fmap (set contexts unknownContext)
-
-                    results <- deliverPackage package
-
-                    -- confirm package was not added
-                    Nothing <- agentDb $ withKeySpace KS.packages $
-                        get $ key package
-
-                    let unknownZone = Set.fromList [Zone "unknown"]
-                    package' <- set actions [Action checkTCP] <$> defaultPackage
-                                    & fmap (set zones unknownZone)
-
-                    deliverPackage package'
-
-                    -- confirm package was not added
-                    Nothing <- agentDb $ withKeySpace KS.packages $
-                        get $ key package'
-
-                    result $ True
+                    result $ msg == msg'-- no exceptions
                 $ \exception ->
                     result $ throw exception
             `shouldReturn` True
 
+
 -- helper for running agent and getting results out of
 -- the Process through partially applied putMVar
-testAgent :: ((a -> Agent ()) -> Agent ()) -> IO a
-testAgent ma = do
+testAgentConfig :: AgentContext -> ((a -> Agent ()) -> Agent ()) -> IO a
+testAgentConfig ctxt ma = do
     setup
     result <- newEmptyMVar
-    runAgentServers appConfig (ma (putMVar result))
+    runAgentServers ctxt (ma (putMVar result))
     threadDelay 2000 -- so we dont get open port errors
     takeMVar result
+
+testAgent ma = testAgentConfig appConfig ma
+
+testAgentNL ma = testAgentConfig appConfigNL ma
 
 
 -- for testing - useful to throw an exception if we "never" get the value we're expecting
@@ -248,4 +209,5 @@ appConfig = (
         -- add more plugins here!
     ) & agentConfig.dbPath .~ "/tmp/leveltest" -- override Agent config values here!
       & appendRemoteTable __remoteTable
-      {-& agentConfig.minLogLevel .~ LevelDebug-}
+
+appConfigNL = appConfig & agentConfig.minLogLevel .~ LevelOther ""

@@ -34,8 +34,9 @@ import           ClassyPrelude                 hiding (undefined)
 import qualified Prelude                       as P
 
 import           Control.DeepSeq.TH            (deriveNFData)
-import           Control.Monad.Logger          (logDebug, logInfo, logWarn, logError)
+import           Control.Monad.Logger          (MonadLogger(..), logDebug, logInfo, logWarn, logError)
 import           Control.Monad.Logger.Quote    (qdebug, qinfo, qwarn, qerror, qdebugNS)
+import           Control.Monad.Trans.Either    (EitherT)
 import           Data.Binary                   as Binary (Binary (..))
 import qualified Data.Binary                   as Binary
 import qualified Data.Serialize                as Cereal
@@ -53,6 +54,9 @@ import           Data.Maybe.Utils (forceMaybeMsg)
 import           Database.LevelDB.Higher.Store (Version, deriveStorableVersion)
 import           Data.UUID                     (toASCIIBytes, fromASCIIBytes, UUID)
 import           FileLocation                  (dbg, debug, err)
+
+instance MonadLogger m => MonadLogger (EitherT e m) where
+    monadLoggerLog a b c d = lift $ monadLoggerLog a b c d
 
 showStr :: (Show a) => a -> String
 showStr = P.show

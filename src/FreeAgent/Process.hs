@@ -40,6 +40,7 @@ import qualified Control.Distributed.Process.Platform.ManagedProcess.UnsafeClien
 import           Control.Distributed.Process.Platform.Supervisor (ChildSpec)
 import           Control.Monad.Base                                    (MonadBase(..))
 import           Control.Monad.Trans.Control                           (MonadBaseControl(..))
+import           Control.Monad.Trans.Either                            (EitherT, mapEitherT)
 import           Control.Monad.Trans.Resource                          (MonadThrow(..), MonadUnsafeIO(..))
 
 -- instances required under ResourceT
@@ -76,6 +77,17 @@ instance (Monad m, MonadProcess m) => MonadProcess (StateT s m) where
             b <- mapProcess f (return a)
             return (b, s)
 
+instance MonadProcess m => MonadProcess (EitherT e m) where
+    liftProcess = lift . liftProcess
+    mapProcess f ma = -- TODO: test this
+        flip mapEitherT ma $
+        \ma' -> do
+            ea <- ma'
+            case ea of
+                Left e -> return $ Left e
+                Right a -> do
+                    b <- mapProcess f (return a)
+                    return $ Right b
 
 -- example transformer implementation
 instance (Monoid w, Monad m, MonadProcess m) => MonadProcess (RWST r w s m) where

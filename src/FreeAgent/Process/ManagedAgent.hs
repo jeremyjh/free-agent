@@ -25,7 +25,7 @@ import           Control.Monad.State                                 (StateT, ev
                                                                      , execStateT, runStateT)
 import           Control.Concurrent.Lifted                           (threadDelay)
 import           Control.Distributed.Process.Platform.ManagedProcess as Managed
-                                                                    hiding (cast, call, syncCallChan)
+                                                                    hiding (cast, call, syncCallChan, action)
 
 import           Control.Distributed.Process.Platform               (whereisOrStart,linkOnFailure, Addressable(..))
 import           Control.Distributed.Process.Platform.Supervisor    as Supervisor

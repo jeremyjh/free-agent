@@ -12,10 +12,10 @@
 
 module FreeAgent.Action
     ( fetchAction, scanActions, decodeAction, stashAction, stash
+    , toAction
     , deleteAction
     , register, actionType
     , registerPluginMaps
-    , defaultPackage
     )
 where
 
@@ -29,14 +29,12 @@ import qualified Data.Binary                 as Binary
 import qualified Data.ByteString.Char8       as BS
 import           Data.Dynamic                (cast)
 import qualified Data.Map                    as Map
-import qualified Data.Set                    as Set
 import qualified Prelude                     as P
 import           System.IO.Unsafe            (unsafePerformIO)
 
 import           Data.SafeCopy
 import           Data.Serialize              (Serialize)
 import qualified Data.Serialize              as Cereal
-import           Data.UUID.V1 (nextUUID)
 import           Database.LevelDB.Higher
 
 -- Serialization instances for Action are all this module as they require specialized
@@ -132,6 +130,13 @@ decodeAction bs =
         Left s -> Left $ ParseFail s
         Right a -> Right a
 
+-- | Wrap a concrete action in existential unless it is already an Action
+toAction :: (Actionable a b) => a -> Action
+toAction act =
+    case cast act of
+        Just alreadyAction -> alreadyAction
+        Nothing -> Action act
+
 -- | Save a serializable type with an instance for Stash
 -- which provides the key - returns the same input.
 stash :: (MonadLevelDB m, Stashable a)
@@ -214,19 +219,3 @@ decodeResult' pluginMap wrapped =
             Left _ -> error "Unknown error deserializing wrapper"
         Nothing -> error $ "Type Name: " ++ BS.unpack (wrapped^.typeName)
                     ++ " not matched! Is your plugin registered?"
-
-deriveSerializers ''Package
-instance Stashable Package where
-    key p = toBytes $ _packageUuid p
-
--- | initialize a default Package with a new UUID
-defaultPackage :: (MonadIO m) => m Package
-defaultPackage = do
-    (Just newid) <- liftIO nextUUID
-    return $ Package newid
-                     (Set.fromList [Context "default"])
-                     (Set.fromList [Zone "default"])
-                     []
-                     []
-                     []
-                     Now
