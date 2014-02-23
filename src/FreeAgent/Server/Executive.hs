@@ -90,16 +90,13 @@ executeAction target action' = do
         Left msg -> Left msg
         Right eresult -> eresult
 
-addListener :: (MonadProcess m)
+addListener :: (MonadAgent m)
             => Target -> Closure Listener -> m ()
-addListener Local = cast execServer . AddListener
-addListener (Remote peer) = cast (peer, execServer) . AddListener
-{-addListener route@(Intersect _ _) = cast ((forceEither (resolveRoute route)),execServer) . AddListener-}
-
-{-routedAction :: (Actionable a b)-}
-             {-=> a -> Set Context -> Set Zone -> Action-}
-{-routedAction action' scontexts szones =-}
-    {-Action $ RoutedAction (toAction action') scontexts szones-}
+addListener Local cl = cast execServer (AddListener cl)
+addListener (Remote peer) cl = cast (peer, execServer) (AddListener cl)
+addListener (Route contexts' zones') cl = do
+    Right peer <- runEitherT $ resolveRoute contexts' zones'
+    cast (peer,execServer) (AddListener cl)
 
 -- | Used with 'addListener' - defines a 'Listener' that will
 -- receive a 'Result' for each 'Action' executed that matches the typed predicate
@@ -176,12 +173,12 @@ callExecutive :: (NFSerializable a, MonadAgent m)
             => Target -> ExecutiveCommand -> m (Either Text a)
 callExecutive Local command = Right <$> syncCallChan execServer command
 callExecutive (Remote peer) command = Right <$> syncCallChan (peer, execServer) command
-callExecutive route@(Route _ _) command = runEitherT $ do
-    peer <- resolveRoute route
+callExecutive (Route contexts' zones') command = runEitherT $ do
+    peer <- resolveRoute contexts' zones'
     syncCallChan (peer, execServer) command
 
-resolveRoute :: (MonadAgent m) => Target -> EitherT Text m Peer
-resolveRoute (Route contexts' zones') = do
+resolveRoute :: (MonadAgent m) => [Context] -> [Zone]-> EitherT Text m Peer
+resolveRoute contexts' zones' = do
     peers <- lift $ Peer.queryPeerServers execServer
                                           (Set.fromList contexts')
                                           (Set.fromList zones')

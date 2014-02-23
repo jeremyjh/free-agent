@@ -23,12 +23,12 @@ runAgentServers ctxt ma = runAgent ctxt $ startSuper coreServers >> ma
 
 -- | Start a supervisor as RestartOne with a list of AgentServer definitions
 startSuper ::  [AgentServer] -> Agent ()
-startSuper servers = do
+startSuper servers' = do
     ctxt <- askContext
     liftProcess $ do
-        cspecs <- sequence $ fmap (childFrom ctxt) servers
+        cspecs <- sequence $ fmap (childFrom ctxt) servers'
         void $ start restartOne cspecs
-    forM_ servers $ \s -> waitRegistration $ s^.name
+    forM_ servers' $ \s -> waitRegistration $ s^.name
   where childFrom ctxt (AgentServer _ _ child) = child ctxt
 
 -- | Servers that are required for most use cases
