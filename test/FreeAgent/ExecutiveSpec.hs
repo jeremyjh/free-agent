@@ -65,6 +65,18 @@ spec = do
                     result $ throw exception
             `shouldReturn` 1
 
+        it "will fail to execute a non-registered action" $ do
+            testAgentNL $ \result -> do
+                catchAny $ do
+                    Right () <- unregisterAction Local (key checkTCP)
+                    (Left msg) <- executeRegistered Local $ key checkTCP
+                    threadDelay 10000
+                    -- confirm results were written
+                    result msg
+                $ \exception ->
+                    result $ throw exception
+            `shouldReturn` "Action not found in database."
+
         it "can execute a supplied action" $ do
             testAgent $ \result -> do
                 catchAny $ do

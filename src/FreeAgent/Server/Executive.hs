@@ -15,6 +15,7 @@
 module FreeAgent.Server.Executive
     ( execServer
     , registerAction
+    , unregisterAction
     , executeRegistered
     , executeAction
     , addListener
@@ -32,9 +33,8 @@ import qualified FreeAgent.Server.Peer                               as Peer
 import           FreeAgent.Process.ManagedAgent
 import           AgentPrelude
 
-import           Data.Either.Utils(forceEither)
+import           Control.Error                                       hiding (err)
 import           Control.Monad.State                                 (StateT)
-import           Control.Monad.Trans.Either
 import           Control.Distributed.Static                          (unclosure)
 import           Data.Binary
 import qualified Data.Map.Strict                                     as Map
@@ -72,30 +72,29 @@ instance NFData ExecutiveCommand where
 -- -----------------------------
 -- API
 -- -----------------------------
-registerAction :: (MonadAgent m, Actionable a b) => Target -> a -> m ()
-registerAction target =
-    fmap forceEither . callExecutive target . RegisterAction . toAction
+registerAction :: (MonadAgent m, Actionable a b) => Target -> a -> m (Either Text ())
+registerAction target action' = do
+    callExecutive target $ RegisterAction (toAction action')
+
+unregisterAction :: (MonadAgent m) => Target -> Key -> m (Either Text ())
+unregisterAction target key' = callExecutive target $ UnregisterAction key'
 
 executeRegistered :: (MonadAgent m) => Target -> Key -> m EResult
 executeRegistered target key' = do
-    sendok <- callExecutive target $ ExecuteRegistered key'
-    return $ case sendok of
-        Left msg -> Left msg
-        Right eresult -> eresult
+    callExecutive target $ ExecuteRegistered key'
 
 executeAction :: (MonadAgent m, Actionable a b) => Target -> a -> m EResult
 executeAction target action' = do
-    sendok <- callExecutive target $ ExecuteAction (toAction action')
-    return $ case sendok of
-        Left msg -> Left msg
-        Right eresult -> eresult
+    callExecutive target $ ExecuteAction (toAction action')
 
+-- | Asynchronously subscribe to a local or remote Executive service
+-- Throws an exception if a Route is supplied which cannot be resolved
 addListener :: (MonadAgent m)
             => Target -> Closure Listener -> m ()
 addListener Local cl = cast execServer (AddListener cl)
 addListener (Remote peer) cl = cast (peer, execServer) (AddListener cl)
 addListener (Route contexts' zones') cl = do
-    Right peer <- runEitherT $ resolveRoute contexts' zones'
+    peer <- forceEitherT $ resolveRoute contexts' zones'
     cast (peer,execServer) (AddListener cl)
 
 -- | Used with 'addListener' - defines a 'Listener' that will
@@ -136,13 +135,13 @@ execServer = AgentServer sname init child
 
         executiveProcess = defaultProcess {
             apiHandlers =
-            [ handleRpcChan $ agentAsyncCallHandler $
+            [ handleRpcChan $ agentAsyncCallHandlerE $
                   \cmd -> case cmd of
                       ExecuteAction act -> doExecuteAction act
                       ExecuteRegistered k -> doExecuteRegistered k
                       _ -> $(err "illegal pattern match")
 
-            , handleRpcChan $ agentAsyncCallHandler $ \cmd -> perform cmd
+            , handleRpcChan $ agentAsyncCallHandlerE $ \cmd -> perform cmd
 
             , handleCast $ agentCastHandler $ \ (AddListener cl) -> do
                 rt <- viewConfig remoteTable
@@ -171,13 +170,13 @@ execServer = AgentServer sname init child
 
 callExecutive :: (NFSerializable a, MonadAgent m)
             => Target -> ExecutiveCommand -> m (Either Text a)
-callExecutive Local command = Right <$> syncCallChan execServer command
-callExecutive (Remote peer) command = Right <$> syncCallChan (peer, execServer) command
+callExecutive Local command = syncCallChan execServer command
+callExecutive (Remote peer) command = syncCallChan (peer, execServer) command
 callExecutive (Route contexts' zones') command = runEitherT $ do
     peer <- resolveRoute contexts' zones'
-    syncCallChan (peer, execServer) command
+    syncCallChan (peer, execServer) command >>= hoistEither
 
-resolveRoute :: (MonadAgent m) => [Context] -> [Zone]-> EitherT Text m Peer
+resolveRoute :: (MonadAgent m) => [Context] -> [Zone] -> EitherT Text m Peer
 resolveRoute contexts' zones' = do
     peers <- lift $ Peer.queryPeerServers execServer
                                           (Set.fromList contexts')
@@ -190,7 +189,7 @@ resolveRoute contexts' zones' = do
                 left "Could not find a suitable Peer."
             | otherwise = let peer:_ = Set.toList peers in right peer
 
-type ExecAgent a = StateT ExecState Agent a
+type ExecAgent a = EitherT Text (StateT ExecState Agent) a
 
 -- ExecutiveCommand realizations
 doRegisterAction ::  Action -> ExecAgent ()
@@ -198,17 +197,18 @@ doRegisterAction act = do
     [qdebug|Registering action: #{act}|]
     void . agentDb $ stashAction act
 
+
 doUnRegisterAction :: Key -> ExecAgent ()
 doUnRegisterAction k = do
     [qdebug|Unregistering action key: #{k}|]
     agentDb $ deleteAction k
 
-doExecuteAction :: Action -> ExecAgent EResult
+doExecuteAction :: Action -> ExecAgent Result
 doExecuteAction act = do
     [qdebug|Executing action: #{act}|]
     doExec act
 
-doExecuteRegistered :: Key -> ExecAgent EResult
+doExecuteRegistered :: Key -> ExecAgent Result
 doExecuteRegistered k = do
     [qdebug|Executing action key: #{k}|]
     act <- agentDb $ fetchAction k
@@ -218,15 +218,18 @@ doExecuteRegistered k = do
             doExec a
         Left (ParseFail msg) -> do
             [qwarn| Unable to retrieve action key: #{k} - #{msg}|]
-            error msg
+            left $ toT msg
         Left (NotFound _) -> do
             [qwarn| Unable to retrieve action key: #{k}
                             not found in database. |]
-            error "Action not found in database."
+            left "Action not found in database."
 
-doExec :: Action -> ExecAgent EResult
+instance ContextReader m => ContextReader (EitherT e m) where
+    askContext = lift askContext
+
+doExec :: Action -> ExecAgent Result
 doExec act =
-    exec act >>= processResult
+    exec act >>= processResult >>= hoistEither
   where
     processResult (Left msg) = do
             [qwarn| Execution of action: #{key act} has failed

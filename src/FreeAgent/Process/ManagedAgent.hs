@@ -26,6 +26,7 @@ import           Control.Monad.State                                 (StateT, ev
 import           Control.Concurrent.Lifted                           (threadDelay)
 import           Control.Distributed.Process.Platform.ManagedProcess as Managed
                                                                     hiding (cast, call, syncCallChan, action)
+import           Control.Error                                       (EitherT, runEitherT)
 
 import           Control.Distributed.Process.Platform               (whereisOrStart,linkOnFailure, Addressable(..))
 import           Control.Distributed.Process.Platform.Supervisor    as Supervisor
@@ -58,6 +59,21 @@ agentCallHandler f s p c = agentHandler s p (f c) >>= continue
             sendChan replyCh result
             return $ AgentState ctxt newState
 
+-- | handle calls that may mutate the State environment in
+-- an EitherT monad
+agentCallHandlerE :: (NFSerializable a, NFSerializable b, NFSerializable e)
+                  => (a -> (EitherT e (StateT s Agent)) b)
+                  -> AgentState s -> SendPort (Either e b) -> a
+                  -> Process (ProcessAction (AgentState s) )
+agentCallHandlerE f s p c = agentHandler s p (f c) >>= continue
+  where
+    agentHandler (AgentState ctxt state') replyCh ma =
+        withAgent ctxt $ do
+            (result, newState) <- runStateT (runEitherT ma) state'
+            sendChan replyCh result
+            return $ AgentState ctxt newState
+
+
 -- | handle calls that do not mutate state out of band in stateful process
 agentAsyncCallHandler :: (NFSerializable a, NFSerializable b)
                   => (a -> (StateT s Agent) b)
@@ -69,6 +85,24 @@ agentAsyncCallHandler f s p c = spawnStateAgent s p (f c) >> continue s
         pid <- spawnAgent ctxt $ do
             threadDelay 1000 -- so we have time to setup a link in parent
             r <- evalStateT ma state'
+            sendChan port r
+        -- TODO: This will prevent the client call from hanging forever
+        -- on an exception/crash but it would be better for executive to monitor child process
+        -- and send an exit to the sendPortProcessId
+        liftProcess $ linkOnFailure pid
+
+-- | handle calls that do not mutate state out of band in stateful process
+-- in an EitherT monad
+agentAsyncCallHandlerE :: (NFSerializable a, NFSerializable b, NFSerializable e)
+                  => (a -> (EitherT e (StateT s Agent)) b)
+                  -> AgentState s -> SendPort (Either e b) -> a
+                  -> Process (ProcessAction (AgentState s) )
+agentAsyncCallHandlerE f s p c = spawnStateAgent s p (f c) >> continue s
+  where
+    spawnStateAgent (AgentState ctxt state') port ma = do
+        pid <- spawnAgent ctxt $ do
+            threadDelay 1000 -- so we have time to setup a link in parent
+            r <- evalStateT (runEitherT ma) state'
             sendChan port r
         -- TODO: This will prevent the client call from hanging forever
         -- on an exception/crash but it would be better for executive to monitor child process

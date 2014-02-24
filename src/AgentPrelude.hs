@@ -28,6 +28,7 @@ module AgentPrelude
     , qdebugNS
     , logDebug, logInfo, logWarn, logError
     , forceMaybeMsg
+    , forceEither, forceEitherT
     ) where
 
 import           ClassyPrelude                 hiding (undefined)
@@ -36,7 +37,7 @@ import qualified Prelude                       as P
 import           Control.DeepSeq.TH            (deriveNFData)
 import           Control.Monad.Logger          (MonadLogger(..), logDebug, logInfo, logWarn, logError)
 import           Control.Monad.Logger.Quote    (qdebug, qinfo, qwarn, qerror, qdebugNS)
-import           Control.Monad.Trans.Either    (EitherT)
+import           Control.Monad.Trans.Either    (runEitherT, EitherT)
 import           Data.Binary                   as Binary (Binary (..))
 import qualified Data.Binary                   as Binary
 import qualified Data.Serialize                as Cereal
@@ -51,6 +52,7 @@ import           Language.Haskell.TH           (Dec, Name, Q)
 import           Language.Haskell.TH.Lib       (conT)
 
 import           Data.Maybe.Utils (forceMaybeMsg)
+import           Data.Either.Utils (forceEither)
 import           Database.LevelDB.Higher.Store (Version, deriveStorableVersion)
 import           Data.UUID                     (toASCIIBytes, fromASCIIBytes, UUID)
 import           FileLocation                  (dbg, debug, err)
@@ -135,3 +137,7 @@ fqName typee =  modName ++ "." ++ name
   where
     name = BS.pack . P.show $ typeOf typee
     modName = BS.pack . tyConModule . typeRepTyCon $ typeOf typee
+
+forceEitherT :: (Show e, Monad m) => EitherT e m a -> m a
+forceEitherT ema = runEitherT ema >>= return . forceEither
+
