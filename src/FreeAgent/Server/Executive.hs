@@ -228,26 +228,25 @@ doExecuteRegistered k = do
     doExec action'
 
 doExec :: Action -> ExecAgent Result
-doExec act = do
-    result <- exec act >>= convEitherT
+doExec action' = do
+    result <- exec action' >>= convEitherT
     storeResult result >>= notifyListeners
   where
     storeResult result = do
         [qdebug| Storing result: #{result}|]
-        asyncAgentDb $ withKeySpace (KS.actionsAp $ key act) $
+        asyncAgentDb $ withKeySpace (KS.actionsAp $ key action') $
             store (timestampKey result) result
         return result
     notifyListeners result = do
-        listeners' <- use listeners
+        listeners' <- uses listeners ((filter fst) . (map exMatch))
         [qdebug| Checking match for #{length listeners'} listeners |]
-        forM_ listeners' $ \listener ->
-            let (matched,pid) = case listener of
-                   ActionMatching afilter apid ->
-                            (afilter act, apid)
-                   ResultMatching afilter rfilter apid ->
-                            (afilter act && rfilter result, apid) in
-            when matched $ do
-                [qdebug|Sending Result: #{result} To: #{pid}|]
-                send pid result
+        forM_ listeners' $ \(_,pid) -> do
+            [qdebug|Sending Result: #{result} To: #{pid}|]
+            send pid result
         return result
+      where
+        exMatch (ActionMatching afilter pid) =
+            (afilter action', pid)
+        exMatch (ResultMatching afilter rfilter pid) =
+            (afilter action' && rfilter result, pid)
     timestampKey = toBytes . view timestamp . summary
