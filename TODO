@@ -1,5 +1,7 @@
+Managed Agent:
+ * refactor common code in agent handlers
+
 Executive:
- * see if we can move logging entirely to agentCallHandler
  * handle commands: 
 	* query execute action history
 	* query event history 
