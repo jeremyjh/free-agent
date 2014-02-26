@@ -68,7 +68,7 @@ data PeerCommand = DiscoverPeers
                    | RespondRegisterPeer Peer
                    | RegisterServer String ProcessId
                    | QueryPeerServers String (Set Context) (Set Zone)
-    deriving (Typeable, Generic)
+    deriving (Show, Typeable, Generic)
 
 instance Binary PeerCommand
 instance NFData PeerCommand

@@ -10,6 +10,8 @@
 {-# LANGUAGE ScopedTypeVariables    #-}
 {-# LANGUAGE TemplateHaskell        #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE BangPatterns #-}
 
 
 module FreeAgent.Server.Executive
@@ -21,6 +23,7 @@ module FreeAgent.Server.Executive
     , addListener
     , matchAction
     , matchResult
+    , ExecFail(..)
     )
 where
 
@@ -33,9 +36,10 @@ import qualified FreeAgent.Server.Peer                               as Peer
 import           FreeAgent.Process.ManagedAgent
 import           AgentPrelude
 
+import           Control.DeepSeq.TH                                  (deriveNFData)
+import           Control.Distributed.Static                          (unclosure)
 import           Control.Error                                       hiding (err)
 import           Control.Monad.State                                 (StateT)
-import           Control.Distributed.Static                          (unclosure)
 import           Data.Binary
 import qualified Data.Map.Strict                                     as Map
 import qualified Data.Set                                            as Set
@@ -53,6 +57,19 @@ data ExecState
               } deriving (Typeable, Generic)
 makeFields ''ExecState
 
+data ExecFail = RoutingFailed
+              | EFetchFailed !FetchFail
+              | ActionFailed !Text
+              | DBException !Text
+              deriving (Show, Eq, Typeable, Generic)
+instance Binary ExecFail
+deriveNFData ''ExecFail
+
+instance Convertible FetchFail ExecFail where
+    convert = EFetchFailed
+
+instance Convertible Text ExecFail where
+    convert = ActionFailed
 
 -- -----------------------------
 -- Types
@@ -72,19 +89,23 @@ instance NFData ExecutiveCommand where
 -- -----------------------------
 -- API
 -- -----------------------------
-registerAction :: (MonadAgent m, Actionable a b) => Target -> a -> m (Either Text ())
-registerAction target action' = do
+registerAction :: (MonadAgent m, Actionable a b)
+               => Target -> a -> m (Either ExecFail ())
+registerAction target action' =
     callExecutive target $ RegisterAction (toAction action')
 
-unregisterAction :: (MonadAgent m) => Target -> Key -> m (Either Text ())
-unregisterAction target key' = callExecutive target $ UnregisterAction key'
+unregisterAction :: (MonadAgent m) => Target -> Key -> m (Either ExecFail ())
+unregisterAction target key' =
+    callExecutive target $ UnregisterAction key'
 
-executeRegistered :: (MonadAgent m) => Target -> Key -> m EResult
-executeRegistered target key' = do
+executeRegistered :: (MonadAgent m)
+                  => Target -> Key -> m (Either ExecFail Result)
+executeRegistered target key' =
     callExecutive target $ ExecuteRegistered key'
 
-executeAction :: (MonadAgent m, Actionable a b) => Target -> a -> m EResult
-executeAction target action' = do
+executeAction :: (MonadAgent m, Actionable a b)
+              => Target -> a -> m (Either ExecFail Result)
+executeAction target action' =
     callExecutive target $ ExecuteAction (toAction action')
 
 -- | Asynchronously subscribe to a local or remote Executive service
@@ -118,7 +139,6 @@ matchResult af rf = ResultMatching af (matchR rf)
 -- Implementation
 -- -----------------------------
 
-
 execServer :: AgentServer
 execServer = AgentServer sname init child
   where
@@ -135,13 +155,13 @@ execServer = AgentServer sname init child
 
         executiveProcess = defaultProcess {
             apiHandlers =
-            [ handleRpcChan $ agentAsyncCallHandlerE $
+            [ handleRpcChan $ agentAsyncCallHandlerET $
                   \cmd -> case cmd of
                       ExecuteAction act -> doExecuteAction act
                       ExecuteRegistered k -> doExecuteRegistered k
                       _ -> $(err "illegal pattern match")
 
-            , handleRpcChan $ agentAsyncCallHandlerE $ \cmd -> perform cmd
+            , handleRpcChan $ agentAsyncCallHandlerET $ \cmd -> doRegistration cmd
 
             , handleCast $ agentCastHandler $ \ (AddListener cl) -> do
                 rt <- viewConfig remoteTable
@@ -151,10 +171,7 @@ execServer = AgentServer sname init child
                     Right listener -> listeners %= (:) listener
             ]
 
-        } where
-            perform (RegisterAction a)  = doRegisterAction a
-            perform (UnregisterAction k) = doUnRegisterAction k
-            perform _ = $(err "illegal pattern match")
+        }
 
     child ctxt = do
         initChild <- toChildStart $ init ctxt
@@ -169,14 +186,14 @@ execServer = AgentServer sname init child
         }
 
 callExecutive :: (NFSerializable a, MonadAgent m)
-            => Target -> ExecutiveCommand -> m (Either Text a)
+            => Target -> ExecutiveCommand -> m (Either ExecFail a)
 callExecutive Local command = syncCallChan execServer command
 callExecutive (Remote peer) command = syncCallChan (peer, execServer) command
 callExecutive (Route contexts' zones') command = runEitherT $ do
     peer <- resolveRoute contexts' zones'
     syncCallChan (peer, execServer) command >>= hoistEither
 
-resolveRoute :: (MonadAgent m) => [Context] -> [Zone] -> EitherT Text m Peer
+resolveRoute :: (MonadAgent m) => [Context] -> [Zone] -> EitherT ExecFail m Peer
 resolveRoute contexts' zones' = do
     peers <- lift $ Peer.queryPeerServers execServer
                                           (Set.fromList contexts')
@@ -186,56 +203,35 @@ resolveRoute contexts' zones' = do
             | peers == Set.empty = do
                 [qwarn| Could not resolve a Route
                         with Context: #{contexts'} and Zone: #{zones'}|]
-                left "Could not find a suitable Peer."
+                left RoutingFailed
             | otherwise = let peer:_ = Set.toList peers in right peer
 
-type ExecAgent a = EitherT Text (StateT ExecState Agent) a
+type ExecAgent a = EitherT ExecFail (StateT ExecState Agent) a
 
--- ExecutiveCommand realizations
-doRegisterAction ::  Action -> ExecAgent ()
-doRegisterAction act = do
-    [qdebug|Registering action: #{act}|]
-    void . agentDb $ stashAction act
+-- -----------------------------
+-- Executive command realizations
+-- -----------------------------
 
-
-doUnRegisterAction :: Key -> ExecAgent ()
-doUnRegisterAction k = do
-    [qdebug|Unregistering action key: #{k}|]
-    agentDb $ deleteAction k
+doRegistration :: ExecutiveCommand -> ExecAgent ()
+doRegistration (RegisterAction action')  =
+    void . agentDb $ stashAction action'
+doRegistration (UnregisterAction key') =
+    agentDb $ deleteAction key'
+doRegistration _ = $(err "illegal pattern match")
 
 doExecuteAction :: Action -> ExecAgent Result
-doExecuteAction act = do
-    [qdebug|Executing action: #{act}|]
-    doExec act
+doExecuteAction = doExec
 
 doExecuteRegistered :: Key -> ExecAgent Result
 doExecuteRegistered k = do
-    [qdebug|Executing action key: #{k}|]
-    act <- agentDb $ fetchAction k
-    case act of
-        Right a -> do
-            [qdebug|Executing action: #{a}|]
-            doExec a
-        Left (ParseFail msg) -> do
-            [qwarn| Unable to retrieve action key: #{k} - #{msg}|]
-            left $ toT msg
-        Left (NotFound _) -> do
-            [qwarn| Unable to retrieve action key: #{k}
-                            not found in database. |]
-            left "Action not found in database."
-
-instance ContextReader m => ContextReader (EitherT e m) where
-    askContext = lift askContext
+    action' <- agentDb (fetchAction k) >>= convEitherT
+    doExec action'
 
 doExec :: Action -> ExecAgent Result
-doExec act =
-    exec act >>= processResult >>= hoistEither
+doExec act = do
+    result <- exec act >>= convEitherT
+    storeResult result >>= notifyListeners
   where
-    processResult (Left msg) = do
-            [qwarn| Execution of action: #{key act} has failed
-            with message: #{msg} |]
-            return $ Left msg
-    processResult (Right r) = Right <$> (storeResult r >>= notifyListeners)
     storeResult result = do
         [qdebug| Storing result: #{result}|]
         asyncAgentDb $ withKeySpace (KS.actionsAp $ key act) $

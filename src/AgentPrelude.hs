@@ -5,6 +5,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -17,6 +18,8 @@ module AgentPrelude
     , showStr
     , FilePathS
     , debug, dbg, err
+    , convEither, convEitherT
+    , Convertible(..)
     , ConvertText(..)
     , ConvertByteString(..)
     , def
@@ -35,9 +38,9 @@ import           ClassyPrelude                 hiding (undefined)
 import qualified Prelude                       as P
 
 import           Control.DeepSeq.TH            (deriveNFData)
+import           Control.Error                 (runEitherT, EitherT, hoistEither)
 import           Control.Monad.Logger          (MonadLogger(..), logDebug, logInfo, logWarn, logError)
 import           Control.Monad.Logger.Quote    (qdebug, qinfo, qwarn, qerror, qdebugNS)
-import           Control.Monad.Trans.Either    (runEitherT, EitherT)
 import           Data.Binary                   as Binary (Binary (..))
 import qualified Data.Binary                   as Binary
 import qualified Data.Serialize                as Cereal
@@ -56,6 +59,9 @@ import           Data.Either.Utils (forceEither)
 import           Database.LevelDB.Higher.Store (Version, deriveStorableVersion)
 import           Data.UUID                     (toASCIIBytes, fromASCIIBytes, UUID)
 import           FileLocation                  (dbg, debug, err)
+
+class Convertible a b where
+    convert :: a -> b
 
 instance MonadLogger m => MonadLogger (EitherT e m) where
     monadLoggerLog a b c d = lift $ monadLoggerLog a b c d
@@ -141,3 +147,10 @@ fqName typee =  modName ++ "." ++ name
 forceEitherT :: (Show e, Monad m) => EitherT e m a -> m a
 forceEitherT ema = runEitherT ema >>= return . forceEither
 
+convEither :: Convertible e f => Either e a -> Either f a
+convEither (Right result) = Right result
+convEither (Left reason) = Left $ convert reason
+
+convEitherT :: (Convertible e f, Monad m)
+            => Either e a -> EitherT f m a
+convEitherT = hoistEither . convEither

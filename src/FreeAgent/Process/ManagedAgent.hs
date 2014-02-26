@@ -2,6 +2,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE QuasiQuotes #-}
+
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module FreeAgent.Process.ManagedAgent
@@ -47,7 +49,7 @@ initState :: AgentContext -> a -> Process (InitResult (AgentState a))
 initState ctxt state' = return $ InitOk (AgentState ctxt state') Infinity
 
 -- | handle calls that may mutate the State environment
-agentCallHandler :: (NFSerializable a, NFSerializable b)
+agentCallHandler :: (NFSerializable a, NFSerializable b, Show a)
                   => (a -> (StateT s Agent) b)
                   -> AgentState s -> SendPort b -> a
                   -> Process (ProcessAction (AgentState s) )
@@ -55,27 +57,37 @@ agentCallHandler f s p c = agentHandler s p (f c) >>= continue
   where
     agentHandler (AgentState ctxt state') replyCh ma =
         withAgent ctxt $ do
+            [qdebug| Processing command: #{c}|]
             (result, newState) <- runStateT ma state'
             sendChan replyCh result
             return $ AgentState ctxt newState
 
 -- | handle calls that may mutate the State environment in
 -- an EitherT monad
-agentCallHandlerE :: (NFSerializable a, NFSerializable b, NFSerializable e)
+agentCallHandlerET :: (NFSerializable a, NFSerializable b, NFSerializable e
+                     ,Show a, Show e)
                   => (a -> (EitherT e (StateT s Agent)) b)
-                  -> AgentState s -> SendPort (Either e b) -> a
-                  -> Process (ProcessAction (AgentState s) )
-agentCallHandlerE f s p c = agentHandler s p (f c) >>= continue
+                  -> AgentState s
+                  -> SendPort (Either e b)
+                  -> a -> Process (ProcessAction (AgentState s) )
+agentCallHandlerET f s p c = agentHandler s p (f c) >>= continue
   where
     agentHandler (AgentState ctxt state') replyCh ma =
         withAgent ctxt $ do
-            (result, newState) <- runStateT (runEitherT ma) state'
+            [qdebug| Processing command: #{c}|]
+            let ema = runEitherT ma >>= logEitherT
+            (result, newState) <- runStateT ema state'
             sendChan replyCh result
             return $ AgentState ctxt newState
+      where
+        logEitherT left'@(Left reason) = do
+            [qwarn| Processing for #{c} failed with reason: #{reason} |]
+            return left'
+        logEitherT right' = return right'
 
 
 -- | handle calls that do not mutate state out of band in stateful process
-agentAsyncCallHandler :: (NFSerializable a, NFSerializable b)
+agentAsyncCallHandler :: (NFSerializable a, NFSerializable b, Show a)
                   => (a -> (StateT s Agent) b)
                   -> AgentState s -> SendPort b -> a
                   -> Process (ProcessAction (AgentState s) )
@@ -83,6 +95,7 @@ agentAsyncCallHandler f s p c = spawnStateAgent s p (f c) >> continue s
   where
     spawnStateAgent (AgentState ctxt state') port ma = do
         pid <- spawnAgent ctxt $ do
+            [qdebug| Processing command: #{c}|]
             threadDelay 1000 -- so we have time to setup a link in parent
             r <- evalStateT ma state'
             sendChan port r
@@ -92,27 +105,35 @@ agentAsyncCallHandler f s p c = spawnStateAgent s p (f c) >> continue s
         liftProcess $ linkOnFailure pid
 
 -- | handle calls that do not mutate state out of band in stateful process
--- in an EitherT monad
-agentAsyncCallHandlerE :: (NFSerializable a, NFSerializable b, NFSerializable e)
-                  => (a -> (EitherT e (StateT s Agent)) b)
-                  -> AgentState s -> SendPort (Either e b) -> a
-                  -> Process (ProcessAction (AgentState s) )
-agentAsyncCallHandlerE f s p c = spawnStateAgent s p (f c) >> continue s
+-- in an EitherT monad - will log (Left reason) on failure
+agentAsyncCallHandlerET :: (NFSerializable a, NFSerializable b, NFSerializable e
+                          , Show a, Show e)
+                       => (a -> (EitherT e (StateT s Agent)) b)
+                       -> AgentState s
+                       -> SendPort (Either e b)
+                       -> a -> Process (ProcessAction (AgentState s) )
+agentAsyncCallHandlerET fn state'@(AgentState ctxt ustate) port command = do
+    pid <- spawnAgent ctxt $ do
+        [qdebug| Processing command: #{command}|]
+        threadDelay 1000 -- so we have time to setup a link in parent
+        let ema = runEitherT (fn command) >>= logEitherT
+        r <- evalStateT ema ustate
+        sendChan port r
+    -- TODO: This will prevent the client call from hanging forever
+    -- on an exception/crash but it would be better for executive to monitor child process
+    -- and send an exit to the sendPortProcessId
+    liftProcess $ linkOnFailure pid
+    continue state'
   where
-    spawnStateAgent (AgentState ctxt state') port ma = do
-        pid <- spawnAgent ctxt $ do
-            threadDelay 1000 -- so we have time to setup a link in parent
-            r <- evalStateT (runEitherT ma) state'
-            sendChan port r
-        -- TODO: This will prevent the client call from hanging forever
-        -- on an exception/crash but it would be better for executive to monitor child process
-        -- and send an exit to the sendPortProcessId
-        liftProcess $ linkOnFailure pid
+    logEitherT left'@(Left reason) = do
+        [qwarn| Processing for #{command} failed with reason: #{reason} |]
+        return left'
+    logEitherT right' = return right'
 
 -- | wrapper for commands that will handle a cast and mutate state -
 -- the updated StateT environment will provide the state value to
 -- 'continue'
-agentCastHandler :: (NFSerializable a)
+agentCastHandler :: (NFSerializable a, Show a)
                  => (a -> (StateT s Agent) ())
                  -> AgentState s -> a
                  -> Process (ProcessAction (AgentState s) )
@@ -120,5 +141,6 @@ agentCastHandler f s c = withStateAgent s (f c) >>= continue
   where
     withStateAgent (AgentState ctxt state') ma =
         withAgent ctxt $ do
+            [qdebug| Processing command: #{c}|]
             newState <- execStateT ma state'
             return $ AgentState ctxt newState

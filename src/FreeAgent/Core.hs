@@ -106,9 +106,9 @@ extractConfig configName = do
         Nothing ->
             error $ show $ configName ++ " not found! Did you register the plugin config?"
         Just dynconf ->
-            case fromDynamic dynconf of
-                Nothing -> error "fromDynamic failed for NagiosConfig!"
-                Just nagconf -> return nagconf
+            maybe (error "fromDynamic failed for NagiosConfig!")
+                  return
+                  (fromDynamic dynconf)
 
 registerPlugins :: PluginWriter -> AgentContext
 registerPlugins pw =

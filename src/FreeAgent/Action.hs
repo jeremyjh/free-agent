@@ -88,20 +88,14 @@ instance SafeCopy Result where
 instance Resulting Result where
     extract (Result a) = cast a
     summary (Result a) = summary a
-    matchR f (Result a)  =
-        case cast a of
-            Just a' -> f a'
-            Nothing -> False
+    matchR f (Result a)  = maybe False f (cast a)
 
 instance Runnable Action Result where
     exec (Action a) = do
         execR <- exec a
         return $ flip fmap execR $ \result ->
                 Result result
-    matchA f (Action a)  =
-        case cast a of
-            Just a' -> f a'
-            Nothing -> False
+    matchA f (Action a)  = maybe False f (cast a)
 
 instance Stashable Result where
     key (Result a) = key a
@@ -125,17 +119,11 @@ scanActions prefix = withActionKS $
     scan prefix queryList { scanMap = decodeAction . snd }
 
 decodeAction :: ByteString -> FetchAction
-decodeAction bs =
-    case Cereal.decode bs of
-        Left s -> Left $ ParseFail s
-        Right a -> Right a
+decodeAction bs = either (Left . ParseFail) Right (Cereal.decode bs)
 
 -- | Wrap a concrete action in existential unless it is already an Action
 toAction :: (Actionable a b) => a -> Action
-toAction act =
-    case cast act of
-        Just alreadyAction -> alreadyAction
-        Nothing -> Action act
+toAction act = fromMaybe (Action act) (cast act)
 
 -- | Save a serializable type with an instance for Stash
 -- which provides the key - returns the same input.

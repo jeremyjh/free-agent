@@ -69,13 +69,13 @@ spec = do
             testAgentNL $ \result -> do
                 catchAny $ do
                     Right () <- unregisterAction Local (key checkTCP)
-                    (Left msg) <- executeRegistered Local $ key checkTCP
+                    (Left (EFetchFailed (NotFound _))) <- executeRegistered Local $ key checkTCP
                     threadDelay 10000
                     -- confirm results were written
-                    result msg
+                    result True -- no match failure
                 $ \exception ->
                     result $ throw exception
-            `shouldReturn` "Action not found in database."
+            `shouldReturn` True
 
         it "can execute a supplied action" $ do
             testAgent $ \result -> do
@@ -125,14 +125,14 @@ spec = do
         it "it won't deliver a routed Action for an unknown context or zone" $ do
             testAgentNL $ \result -> do
                 catchAny $ do
-                    Left msg <- executeAction (Route [Context "unkown"] [def])
+                    Left RoutingFailed <- executeAction (Route [Context "unkown"] [def])
                                             checkTCP
 
-                    Left msg' <- executeAction (Route [def] [Zone "unkown"])
+                    Left RoutingFailed <- executeAction (Route [def] [Zone "unkown"])
                                             checkTCP
 
 
-                    result $ msg == msg'-- no exceptions
+                    result $ True -- no exceptions
                 $ \exception ->
                     result $ throw exception
             `shouldReturn` True
@@ -221,5 +221,6 @@ appConfig = (
         -- add more plugins here!
     ) & agentConfig.dbPath .~ "/tmp/leveltest" -- override Agent config values here!
       & appendRemoteTable __remoteTable
+      {-& agentConfig.minLogLevel .~ LevelDebug-}
 
 appConfigNL = appConfig & agentConfig.minLogLevel .~ LevelOther ""

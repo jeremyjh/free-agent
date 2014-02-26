@@ -42,6 +42,8 @@ import           Data.Typeable                      (cast)
 
 import           Control.Concurrent.Chan.Lifted     (Chan)
 import           Control.DeepSeq                    (NFData (..))
+import           Control.DeepSeq.TH                 (deriveNFData)
+import           Control.Error                      (EitherT)
 import           FreeAgent.Process (MonadProcess(..), Process
                                                     ,ProcessId, NFSerializable
                                                     ,ChildSpec, RemoteTable)
@@ -87,10 +89,7 @@ data Action = forall a b. (Actionable a b) => Action a
 deriving instance Typeable Action
 
 instance Eq Action where
-    (Action a) == (Action b) =
-        case cast b of
-            Just b' -> a == b'
-            Nothing -> False
+    (Action a) == (Action b) = maybe False (a ==) (cast b)
 
 instance P.Show Action where
     show (Action a) = "Action (" ++ P.show a ++ ")"
@@ -108,18 +107,13 @@ class (NFSerializable a, Stashable a) => Resulting a where
     -- | Create a generalized ResultMatcher function - see 'Core.resultMatcher'
     matchR :: (Typeable b) => (b -> Bool) -> a -> Bool
 
-    matchR f a =
-        case cast a of
-            Just a' -> f a'
-            Nothing -> False
+    matchR f a = maybe False f (cast a)
     extract = cast
 
 -- Result
 -- | Box for returning results from 'Action' exec.
 --
 data Result = forall a. (Resulting a, Show a) => Result a
-
-type EResult = Either Text Result
 
 instance Show Result where
     show (Result a) = show a
@@ -131,10 +125,6 @@ deriving instance Typeable Result
 
 instance NFData Result where
     rnf (Result a) = rnf a
-
-
-
-instance NFData FetchFail
 
 type FetchAction = Either FetchFail Action
 -- Unwrapper and registration types
@@ -229,6 +219,9 @@ instance (ContextReader m)
       => ContextReader (StateT a m) where
     askContext = lift askContext
 
+instance ContextReader m => ContextReader (EitherT e m) where
+    askContext = lift askContext
+
 -- Agent Monad
 
 type AgentDB m = LoggingT (LevelDBT IO) m
@@ -273,10 +266,7 @@ class (NFSerializable a, NFSerializable b, Stashable a, Stashable b, Resulting b
     -- | Create a generalized ActionMatcher function - see 'Core.actionMatcher'
     matchA :: (Typeable c) => (c -> Bool) -> a -> Bool
 
-    matchA f a =
-        case cast a of
-            Just a' -> f a'
-            Nothing -> False
+    matchA f a = maybe False f (cast a)
 
 
 data ResultSummary
@@ -316,7 +306,7 @@ instance Binary Peer
 instance NFData Peer
 
 instance Ord Peer where
-    a `compare` b = (_peerUuid a) `compare` (_peerUuid b)
+    a `compare` b = _peerUuid a `compare` _peerUuid b
 
 data Target =   Local
               | Remote Peer
@@ -327,3 +317,7 @@ deriveSerializers ''Context
 deriveSerializers ''Zone
 deriveSerializers ''Wrapped
 deriveSerializers ''Schedule
+
+deriving instance Generic FetchFail
+instance Binary FetchFail
+deriveNFData ''FetchFail

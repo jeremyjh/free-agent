@@ -38,9 +38,9 @@ import qualified Control.Distributed.Process.Platform                  as Base (
 import qualified Control.Distributed.Process.Platform.UnsafePrimitives as NF
 import qualified Control.Distributed.Process.Platform.ManagedProcess.UnsafeClient   as Managed
 import           Control.Distributed.Process.Platform.Supervisor (ChildSpec)
+import           Control.Error                                         (EitherT, mapEitherT)
 import           Control.Monad.Base                                    (MonadBase(..))
 import           Control.Monad.Trans.Control                           (MonadBaseControl(..))
-import           Control.Monad.Trans.Either                            (EitherT, mapEitherT)
 import           Control.Monad.Trans.Resource                          (MonadThrow(..), MonadUnsafeIO(..))
 
 -- instances required under ResourceT
