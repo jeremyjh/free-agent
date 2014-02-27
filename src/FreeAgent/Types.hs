@@ -257,12 +257,29 @@ instance MonadProcess Agent where
         mapLoggingT conf f' = lift . f' . runAgentLoggingT conf
 
 
-data RunStatus a = Either Text a
-    deriving (Show, Eq)
+
+-- | Failure modes for exec method of Runnable
+-- A failure should mean that the action could not
+-- complete execution - negative results of successful execution
+-- should be captured in the Resulting type
+data RunnableFail =
+                  -- | Action-specific general failure to exec
+                     GeneralFailure Text
+                  -- | An unhandled IOException message
+                  | RIOException Text
+                  -- | Could not execute due to missing (local) dependency
+                  -- (e.g. 'ruby' not found)
+                  | DependencyFailure Text
+                  -- | Could not execute due to unavailable network dependency
+                  -- (e.g. could not reach database server)
+                  | NetworkFailure Text
+                  -- | Dependency response unexpected
+                  | UnknownResponse Text
+    deriving (Show, Eq, Typeable, Generic)
 
 class (NFSerializable a, NFSerializable b, Stashable a, Stashable b, Resulting b)
      => Runnable a b | a -> b where
-    exec :: (MonadAgent m) => a -> m (Either Text b)
+    exec :: (MonadAgent m) => a -> m (Either RunnableFail b)
     -- | Create a generalized ActionMatcher function - see 'Core.actionMatcher'
     matchA :: (Typeable c) => (c -> Bool) -> a -> Bool
 
@@ -317,6 +334,7 @@ deriveSerializers ''Context
 deriveSerializers ''Zone
 deriveSerializers ''Wrapped
 deriveSerializers ''Schedule
+deriveSerializers ''RunnableFail
 
 deriving instance Generic FetchFail
 instance Binary FetchFail

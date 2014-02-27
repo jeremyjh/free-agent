@@ -68,8 +68,8 @@ deriveNFData ''ExecFail
 instance Convertible FetchFail ExecFail where
     convert = EFetchFailed
 
-instance Convertible Text ExecFail where
-    convert = ActionFailed
+instance Convertible RunnableFail ExecFail where
+    convert = ActionFailed . tshow
 
 -- -----------------------------
 -- Types

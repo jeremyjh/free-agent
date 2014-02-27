@@ -96,19 +96,19 @@ instance Runnable Command NagiosResult where
                     ExitSuccess   -> completeAs OK result
                     ExitFailure 1 -> completeAs Warning result
                     ExitFailure 2 -> completeAs Critical result
-                    ExitFailure i -> return $ Left $ tshow i ++ ": " ++ toT result )
+                    ExitFailure i -> return $
+                        Left $ UnknownResponse $ tshow i ++ ": " ++ toT result )
              (\ exception -> do
                 putStrLn $ "Command exec threw exception: " ++ tshow exception
-                return $ Left $ tshow exception )
+                return $ Left $ RIOException $ tshow exception )
       where
         makeArgs = ["-H", fromT $ cmd^.host, "-p", portS $ cmd^.port]
         portS (Just p) = showStr p
         portS Nothing = ""
-        completeAs :: (MonadProcess m, ContextReader m) => CommandResult -> String -> m (Either Text NagiosResult)
-        completeAs cmdres result
-          = do time <- liftIO getCurrentTime
-               let summ = ResultSummary time (toT result) (Action cmd)
-               return $ Right $ NagiosResult summ cmdres
+        completeAs cmdres result = do
+            time <- liftIO getCurrentTime
+            let summ = ResultSummary time (toT result) (Action cmd)
+            return $ Right $ NagiosResult summ cmdres
         commandPath = do
             nagconf <- extractConfig'
             let cmdPath = (nagconf^.pluginsPath) </> fromT (cmd^.shellCommand)
