@@ -10,4 +10,4 @@ and Github as 'higher-leveldb'.
 
 The purported goal presently: This project is intended to provide a library or framework for 
 developing independent but collaborating agents primarily for use cases in 
-distributed systems management. 
+distributed systems management and automation.
