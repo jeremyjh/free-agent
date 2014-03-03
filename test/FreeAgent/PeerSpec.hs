@@ -1,6 +1,8 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+
 module FreeAgent.PeerSpec (main, spec) where
 
 import           AgentPrelude
@@ -13,17 +15,14 @@ import           FreeAgent.Lenses
 import           FreeAgent.Plugins.Nagios as Nagios
 import           FreeAgent.Server (runAgentServers)
 import           FreeAgent.Server.Peer
-import           FreeAgent.Server.Executive (execServer)
 
 import qualified Data.Set as Set
 
 
-import           Control.Concurrent.MVar.Lifted
 import           Control.Concurrent.Lifted
 
 import           Control.Exception
 import           Test.Hspec
-import           FreeAgent
 
 matchRemoteHostName :: ProcessId -> Listener
 matchRemoteHostName pid = matchAction (\c -> _checktcpHost c == "localhost") pid
@@ -39,7 +38,7 @@ spec =
         it "is started by Core supervisor" $ do
             testAgent $ \result -> do
                 catchAny $ do
-                    Just pid <- whereis $ peerServer^.name
+                    Just _ <- whereis $ peerServer^.name
                     result True
                 $ \exception ->
                     result $ throw exception
@@ -51,12 +50,12 @@ spec =
             testAgent $ \result -> do
                 catchAny $ do
                     -- create a couple "remotes"
-                    fork $ liftIO $
+                    void $ fork $ liftIO $
                         runAgentServers appConfig2 $ do
                                 "waithere" <- expect :: Agent String
                                 return ()
 
-                    fork $ liftIO $
+                    void $ fork $ liftIO $
                         runAgentServers appConfigTX $ do
                             "waithere" <- expect :: Agent String
                             return ()
@@ -121,7 +120,7 @@ appConfigTX = appConfig
       {-& agentConfig.minLogLevel .~ LevelDebug-}
 
 testDef :: AgentConfig -> PluginDef
-testDef conf = definePlugin "PeerSpec"
+testDef _ = definePlugin "PeerSpec"
                             ()
                             (return [])
                             (return ())

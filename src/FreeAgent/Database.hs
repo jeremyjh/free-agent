@@ -26,8 +26,8 @@ import           Control.Concurrent.Chan.Lifted
 import           Control.Concurrent.Lifted      (ThreadId, forkOS)
 import           Control.Monad.Logger           (LoggingT (..),
                                                  runStdoutLoggingT)
-import           Database.LevelDB.Higher
-import           Database.LevelDB.Higher.Store
+import           Database.LevelDB.Higher hiding (deriveStorable)
+import           Database.LevelDB.Higher.Store hiding (deriveStorable)
 
 
 instance (ContextReader m) => ContextReader (LoggingT m)

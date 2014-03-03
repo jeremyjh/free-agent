@@ -18,7 +18,7 @@
 
 module FreeAgent.Types
  ( module FreeAgent.Types
- , Storeable, MonadLevelDB, Key, Value, KeySpace
+ , Storable, MonadLevelDB, Key, Value, KeySpace
  , MonadProcess
  , NFSerializable, Process, ProcessId
  , MonadBase
@@ -42,7 +42,6 @@ import           Data.Typeable                      (cast)
 
 import           Control.Concurrent.Chan.Lifted     (Chan)
 import           Control.DeepSeq                    (NFData (..))
-import           Control.DeepSeq.TH                 (deriveNFData)
 import           Control.Error                      (EitherT)
 import           FreeAgent.Process (MonadProcess(..), Process
                                                     ,ProcessId, NFSerializable
@@ -58,15 +57,18 @@ import Control.Monad.State (StateT)
 import           Data.Default                       (Default (..))
 import qualified Data.Set                           as Set
 import           Data.UUID                          (UUID)
-import           Database.LevelDB.Higher            (FetchFail (..), Key,
-                                                     KeySpace, LevelDBT,
-                                                     MonadLevelDB, Storeable,
-                                                     Value, deriveStorable)
+import           Data.SafeCopy (SafeCopy)
+import           Data.Serialize (Serialize)
+import           Database.LevelDB.Higher            (Key, KeySpace, LevelDBT
+                                                    ,MonadLevelDB
+                                                    ,Value)
 
+
+type Storable a = (SafeCopy a, Serialize a, Show a, Typeable a)
 
 -- | Types that can be serialized, stored and retrieved
 --
-class (Storeable a) => Stashable a where
+class (Storable a) => Stashable a where
     key :: a -> Key
 
 -- Wrapped
@@ -90,6 +92,9 @@ deriving instance Typeable Action
 
 instance Eq Action where
     (Action a) == (Action b) = maybe False (a ==) (cast b)
+
+instance Ord Action where
+    (Action a) `compare` (Action b) = key a `compare` key b
 
 instance P.Show Action where
     show (Action a) = "Action (" ++ P.show a ++ ")"
@@ -126,9 +131,9 @@ deriving instance Typeable Result
 instance NFData Result where
     rnf (Result a) = rnf a
 
-type FetchAction = Either FetchFail Action
+type FetchAction = Either String Action
 -- Unwrapper and registration types
-type Unwrapper a = (Wrapped -> Either FetchFail a)
+type Unwrapper a = (Wrapped -> Either String a)
 type ActionMap = Map ByteString (Unwrapper Action)
 type ResultMap = Map ByteString (Unwrapper Result)
 type PluginMaps = (ActionMap, ResultMap)
@@ -145,6 +150,16 @@ data Listener = ActionMatching ActionMatcher ProcessId
               deriving (Typeable)
 
 data DBMessage = Perform (AgentDB ()) | Terminate
+
+-- | Dynamic wrapper around an open 'AcidState' and a function
+-- which will close it - used with functions from
+-- 'FreeAgent.Database.AcidState'
+
+
+data StateHandles =
+    StateHandles { acState :: Dynamic
+                 , acClose :: () -> IO ()
+                 }
 
 data PluginDef
   = PluginDef { _plugindefName      :: !ByteString
@@ -192,6 +207,7 @@ data AgentContext
                  , _contextListeners       :: Agent [Listener]
                  , _contextProcessNode     :: LocalNode
                  , _contextRemoteTable     :: RemoteTable
+                 , _contextOpenStates      :: MVar (Map String StateHandles)
                  }
 
 instance Default AgentConfig where
@@ -206,6 +222,7 @@ instance Default AgentContext where
             (return [])
             (error "process node not initialized!")
             initRemoteTable
+            (error "states mvar not initialized! ")
 
 class (Functor m, Applicative m, Monad m)
       => ContextReader m where
@@ -335,7 +352,3 @@ deriveSerializers ''Zone
 deriveSerializers ''Wrapped
 deriveSerializers ''Schedule
 deriveSerializers ''RunnableFail
-
-deriving instance Generic FetchFail
-instance Binary FetchFail
-deriveNFData ''FetchFail

@@ -3,7 +3,6 @@ module FreeAgentSpec (main, spec) where
 
 import           AgentPrelude
 import           Test.Hspec
-import           FreeAgent
 
 main :: IO ()
 main = hspec spec

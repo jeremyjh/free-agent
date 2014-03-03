@@ -1,6 +1,9 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+{-# OPTIONS_GHC -fno-warn-type-defaults#-}
+
 
 module FreeAgent.ExecutiveSpec (main, spec) where
 
@@ -9,27 +12,17 @@ import           Test.Hspec
 import           AgentPrelude
 import           FreeAgent.Lenses
 import           FreeAgent.Core
-import           FreeAgent.Action
 import           FreeAgent.Database
-import qualified FreeAgent.Database.KeySpace as KS
 import           FreeAgent.Plugins.Nagios as Nagios
 import           FreeAgent.Server.Executive as Exec
 import           FreeAgent.Server (runAgentServers)
 
 import           System.Process(system)
-import qualified Data.Set as Set
 
 import           Control.Concurrent.Lifted
 import           FreeAgent.Process as Process
-import           Control.Distributed.Process.Node
-import Control.Distributed.Process.Closure (mkClosure)
-import           Network.Transport.TCP
-import           Data.Dynamic
 
-import           Control.Exception
-
-import qualified Data.Binary as Binary
-import qualified Data.Serialize as Cereal
+import Control.Exception (throw)
 
 matchRemoteHostName :: ProcessId -> Listener
 matchRemoteHostName pid = matchAction (\c -> _checktcpHost c == "localhost") pid
@@ -45,7 +38,7 @@ spec = do
         it "is started by Core supervisor" $ do
             testAgent $ \result -> do
                 catchAny $ do
-                    Just pid <- whereis $ execServer^.name
+                    Just _ <- whereis $ execServer^.name
                     result True
                 $ \exception ->
                     result $ throw exception
@@ -54,8 +47,8 @@ spec = do
         it "can execute a registered action" $ do
             testAgent $ \result -> do
                 catchAny $ do
-                    registerAction Local checkTCP
-                    (Right nr) <- executeRegistered Local $ key checkTCP
+                    Right _ <-registerAction Local checkTCP
+                    (Right _) <- executeRegistered Local $ key checkTCP
                     threadDelay 10000
                     -- confirm results were written
                     items <- agentDb $ withKeySpace "agent:actions:localhost:53" $ do
@@ -69,7 +62,7 @@ spec = do
             testAgentNL $ \result -> do
                 catchAny $ do
                     Right () <- unregisterAction Local (key checkTCP)
-                    (Left (EFetchFailed (NotFound _))) <- executeRegistered Local $ key checkTCP
+                    Left (ActionNotFound _) <- executeRegistered Local $ key checkTCP
                     threadDelay 10000
                     -- confirm results were written
                     result True -- no match failure
@@ -114,7 +107,7 @@ spec = do
                     let matcher = $(mkClosure 'matchRemoteHostName) pid
                     addListener Local matcher
                     threadDelay 10000
-                    executeAction Local checkTCP
+                    Right _ <- executeAction Local checkTCP
                     nr <- expect :: Agent Result
                     let Just (NagiosResult _ status) = extract nr
                     result status
@@ -177,7 +170,7 @@ testActionListener = do
   where
     loop count = do
         receiveWait
-            [ match $ \ (result :: Result) -> do
+            [ match $ \ (_ :: Result) -> do
                   loop $ count + 1
             , match $ \ ("ask-result-count" :: String, pid) ->
                   send pid count
@@ -194,7 +187,7 @@ testResultListener = do
   where
     loop count = do
         receiveWait
-            [ match $ \ (result :: Result) ->
+            [ match $ \ (_ :: Result) ->
                   loop $ count + 1
             , match $ \ ("ask-result-count" :: String, pid) ->
                   send pid count

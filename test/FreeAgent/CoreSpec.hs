@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 
 module FreeAgent.CoreSpec (main, spec) where
 
@@ -9,8 +10,6 @@ import           Test.Hspec
 
 import           FreeAgent.Lenses
 import           FreeAgent.Core
-import           FreeAgent.Action
-import           FreeAgent.Database
 import           FreeAgent.Plugins.Nagios
 
 import           AppConfig(appConfig)
@@ -18,15 +17,8 @@ import           AppConfig(appConfig)
 import           Control.Concurrent.Lifted
 import           FreeAgent.Process
 
-import           Control.Distributed.Process.Node
-import           Network.Transport.TCP
-
-import           Data.Dynamic
-
-import           Control.Monad.Reader
 import           Control.Exception
 
-import qualified Data.Binary as Binary
 
 main :: IO ()
 main = hspec spec
@@ -54,25 +46,12 @@ spec = do
                     result said
                 `shouldReturn` "I said: foo"
 
-            it "can read a wrapped Action from the DB and execute it" $ do
-                testAgent $ \result -> do
-                    catchAny $ do
-                        (Right action) <- agentDb $ do
-                            stashAction $ Action checkTCP
-                            fetchAction "localhost:53"
-                        (Right nr) <- exec action
-                        let Just (NagiosResult (ResultSummary _ rs _) OK) = extract nr
-                        result $ take 6 rs
-                    $ \exception ->
-                        result $ throw exception
-                `shouldReturn` "TCP OK"
-
             it "can send a result action to a listener as an existential type" $ do
                 testAgent $ \result -> do
                     catchAny $ do
                         (Right nr) <- exec $ Action checkTCP
                         parent <- getSelfPid
-                        child <-  spawnLocal $ do
+                        child <- spawnLocal $ do
                             wr <- texpect :: Agent Result
                             let Just (NagiosResult _ OK)= extract wr
                             send parent ("Got OK" :: Text)

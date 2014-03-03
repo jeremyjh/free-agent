@@ -54,11 +54,10 @@ instance Addressable (Peer, AgentServer) where
       where sname = server^.name
             nodeid = processNodeId $ peer^.processId
 
-declareLenses [d|
-    data PeerState = PeerState { self :: Peer
-                               , friends :: Set Peer
-                               } deriving (Show)
-              |]
+data PeerState = PeerState { _self :: Peer
+                           , _friends :: Set Peer
+                           } deriving (Show)
+makeLenses ''PeerState
 
 type PeerAgent = StateT PeerState Agent
 

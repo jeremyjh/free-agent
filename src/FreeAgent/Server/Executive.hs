@@ -12,6 +12,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 module FreeAgent.Server.Executive
@@ -24,71 +25,101 @@ module FreeAgent.Server.Executive
     , matchAction
     , matchResult
     , ExecFail(..)
+    , query, update
     )
 where
 
+import           AgentPrelude
 import           FreeAgent.Action
 import           FreeAgent.Core                                      (withAgent)
 import           FreeAgent.Database
+import           FreeAgent.Database.AcidState
 import qualified FreeAgent.Database.KeySpace                         as KS
 import           FreeAgent.Lenses
-import qualified FreeAgent.Server.Peer                               as Peer
+import           FreeAgent.Process                                   as Process
 import           FreeAgent.Process.ManagedAgent
-import           AgentPrelude
+import           qualified FreeAgent.Server.Peer                               as Peer
 
 import           Control.DeepSeq.TH                                  (deriveNFData)
-import           Control.Distributed.Static                          (unclosure)
-import           Control.Error                                       hiding (err)
 import           Control.Monad.State                                 (StateT)
 import           Data.Binary
 import qualified Data.Map.Strict                                     as Map
 import qualified Data.Set                                            as Set
 
-import           FreeAgent.Process                  as Process
+import           Control.Distributed.Static                          (unclosure)
+import           Control.Error                                       hiding (err)
+import           Data.Default                          (Default(..))
 
 -- -----------------------------
 -- Types
 -- -----------------------------
 type RunningActions = Map Key ProcessId
 
+data PersistExec
+  = PersistExec { _persistActions :: Map ByteString Action
+                } deriving (Show, Eq, Typeable)
+
+deriveStorable ''PersistExec
+makeFields ''PersistExec
+
+instance Default PersistExec where
+    def = PersistExec mempty
+
 data ExecState
   = ExecState { _stateRunning   :: !RunningActions
               , _stateListeners :: ![Listener]
+              , _stateAcid      :: !(AcidState PersistExec)
               } deriving (Typeable, Generic)
 makeFields ''ExecState
 
 data ExecFail = RoutingFailed
-              | EFetchFailed !FetchFail
+              | ActionNotFound Key
               | ActionFailed !Text
               | DBException !Text
               deriving (Show, Eq, Typeable, Generic)
+
 instance Binary ExecFail
 deriveNFData ''ExecFail
-
-instance Convertible FetchFail ExecFail where
-    convert = EFetchFailed
 
 instance Convertible RunnableFail ExecFail where
     convert = ActionFailed . tshow
 
--- -----------------------------
--- Types
--- -----------------------------
+data ExecutiveCommand =
+        RegisterAction Action
+      | UnregisterAction Key
+      | ExecuteAction Action
+      | ExecuteRegistered Key
+      {-| QueryActionHistory (ScanQuery ActionHistory [ActionHistory])-}
+      | TerminateExecutive
+      | AddListener (Closure Listener)
+      deriving (Show, Typeable, Generic)
 
-data ExecutiveCommand = RegisterAction Action
-                      | UnregisterAction Key
-		              | ExecuteAction Action
-		              | ExecuteRegistered Key
-                      {-| QueryActionHistory (ScanQuery ActionHistory [ActionHistory])-}
-                      | TerminateExecutive
-                      | AddListener (Closure Listener)
-                      deriving (Show, Typeable, Generic)
 instance Binary ExecutiveCommand where
 instance NFData ExecutiveCommand where
 
 -- -----------------------------
+-- Persistent state functions
+-- -----------------------------
+
+putAction :: Action -> Update PersistExec ()
+putAction action' =
+    actions %= Map.insert (key action') action'
+
+deleteAction :: Key -> Update PersistExec ()
+deleteAction key' =
+    actions %= Map.delete key'
+
+getAction :: Key -> Query PersistExec (Maybe Action)
+getAction key' = views actions (Map.lookup key')
+
+
+-- we have to make the splices near the top of the file
+$(makeAcidic ''PersistExec ['putAction, 'getAction, 'deleteAction])
+
+-- -----------------------------
 -- API
 -- -----------------------------
+
 registerAction :: (MonadAgent m, Actionable a b)
                => Target -> a -> m (Either ExecFail ())
 registerAction target action' =
@@ -145,7 +176,8 @@ execServer = AgentServer sname init child
     sname = "agent:executive"
     init ctxt = do
         listeners' <- withAgent ctxt $ join $ viewConfig listeners
-        let state' = ExecState (Map.fromList []) listeners'
+        Just acid' <- withAgent ctxt $ openOrGetDb "agent-executive" def def
+        let state' = ExecState (Map.fromList []) listeners' acid'
         serve state' initExec executiveProcess
       where
         initExec state' = do
@@ -214,17 +246,17 @@ type ExecAgent a = EitherT ExecFail (StateT ExecState Agent) a
 
 doRegistration :: ExecutiveCommand -> ExecAgent ()
 doRegistration (RegisterAction action')  =
-    void . agentDb $ stashAction action'
+    update (PutAction action')
 doRegistration (UnregisterAction key') =
-    agentDb $ deleteAction key'
+    update (DeleteAction key')
 doRegistration _ = $(err "illegal pattern match")
 
 doExecuteAction :: Action -> ExecAgent Result
 doExecuteAction = doExec
 
 doExecuteRegistered :: Key -> ExecAgent Result
-doExecuteRegistered k = do
-    action' <- agentDb (fetchAction k) >>= convEitherT
+doExecuteRegistered key' = do
+    action' <-  query (GetAction key') !? ActionNotFound key'
     doExec action'
 
 doExec :: Action -> ExecAgent Result
@@ -238,7 +270,7 @@ doExec action' = do
             store (timestampKey result) result
         return result
     notifyListeners result = do
-        listeners' <- uses listeners ((filter fst) . (map exMatch))
+        listeners' <- uses listeners (filter fst . map exMatch)
         [qdebug| Checking match for #{length listeners'} listeners |]
         forM_ listeners' $ \(_,pid) -> do
             [qdebug|Sending Result: #{result} To: #{pid}|]

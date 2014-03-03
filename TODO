@@ -1,26 +1,25 @@
-1.0: 
+0.2.0:
+
   Common/Core:
    * update distribute-process dependencies
    * switch logging to hslogger
    * update quasi-quotes to populate source from Loc
-  
-  Database
-  -- Don't like being tied to LevelDB except it makes sense to record
-     results in a database that supports compression
-  * Bang on the static linking a bit longer?
-  * Acid State?
-  * Results only through listener plugins
-  
-  Managed Agent:
-   * refactor common code in agent handlers
-  
+
   Executive:
    * handle commands: 
    * query execute action history
-   * query event history 
-  
+   * Execution/Result history plugin Server Contract pattern query event history 
+   * State persistence across process restart
+
+  Database
+  * AcidState for AgentDB
+  * Execution/Result history impl using LevelDb
+
   Scheduler:
     * code it
+
+  Managed Agent:
+   * refactor common code in agent handlers
   
   Command Line Interface
    * File Action Definitions (json/yaml)
@@ -28,21 +27,32 @@
   
   Actions: 
    * Composites / Wrappers:
-   * MetaAction (provides Metadata to ... Executive? more routing?)
-               * need extract on Runnable?
-          * CompositeAction - list of Actions to exec together
+     * CompositeAction - list of Actions to exec together
+
    * Core Action definitions:
       * Command (shell/createProcess) (pull out of Nagios)
-      * ScriptAction 
-      * HaskellScript (using hint?)
+  
+  Result Alerting
+  * Server Contract and implementation
+  * Result Alerting Rules
+  * Results LevelDB
+  * Results to relational database
+
+  Decisions
+  * Does Runnable get an "extract" method? This may be needed for MetaAction.
+
+  (maybe include)
+
+  Actions: 
+   * MetaAction (provides Metadata to ... Executive? more routing?)
+          * CompositeAction - list of Actions to exec together
+  
+1.0.0: 
+  REST Interface (as Server Contract)
+
+  ScriptAction 
+    * HaskellScript (using hint?)
   	* defined json in/out interface
           * ScriptAction type defines interpreter invocation (e.g. /usr/bin/ruby)
           * Manage list of defined ScriptAction types in AgentDB
           * Ruby implementation and examples
-  
-  Plugins:
-  * Result Alerting Rules
-  * Results LevelDB as a separate process
-  * Results to relational database
-  
-  REST Interface

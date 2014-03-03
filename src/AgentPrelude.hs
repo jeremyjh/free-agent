@@ -32,6 +32,8 @@ module AgentPrelude
     , logDebug, logInfo, logWarn, logError
     , forceMaybeMsg
     , forceEither, forceEitherT
+    , deriveStorable
+    , deriveStorableVersion
     ) where
 
 import           ClassyPrelude                 hiding (undefined)
@@ -56,7 +58,8 @@ import           Language.Haskell.TH.Lib       (conT)
 
 import           Data.Maybe.Utils (forceMaybeMsg)
 import           Data.Either.Utils (forceEither)
-import           Database.LevelDB.Higher.Store (Version, deriveStorableVersion)
+import           Data.SafeCopy
+       (Version, deriveSafeCopy, base, extension, safeGet, safePut)
 import           Data.UUID                     (toASCIIBytes, fromASCIIBytes, UUID)
 import           FileLocation                  (dbg, debug, err)
 
@@ -154,3 +157,30 @@ convEither (Left reason) = Left $ convert reason
 convEitherT :: (Convertible e f, Monad m)
             => Either e a -> EitherT f m a
 convEitherT = hoistEither . convEither
+
+-- | Template haskell function to create the Serialize and SafeCopy
+-- instances for a given type
+--
+-- > data MyData = MyData Int
+-- > deriveStorable ''MyData
+deriveStorable :: Name -> Q [Dec]
+deriveStorable = deriveStorableVersion 1
+
+-- | Template haskell function to create the Serialize and SafeCopy
+-- instances for a given type - use this one to specify a later version
+-- (also will require a migration instance - see SafeCopy docs for more info )
+--
+-- > data MyDataV1 = MyDataV1 Int
+-- > data MyData = MyData Int String
+-- > deriveStorable ''MyDataV1
+-- > deriveStorableVersion 2 ''MyData
+deriveStorableVersion :: Version a -> Name -> Q [Dec]
+deriveStorableVersion ver name = do
+    sc <- case ver of
+        1 -> deriveSafeCopy 1 'base name
+        _ -> deriveSafeCopy ver 'extension name
+    ss <- [d| instance Cereal.Serialize $(conT name) where
+                get = safeGet
+                put = safePut
+          |]
+    return $ sc ++ ss

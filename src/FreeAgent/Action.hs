@@ -11,16 +11,13 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module FreeAgent.Action
-    ( fetchAction, scanActions, decodeAction, stashAction, stash
-    , toAction
-    , deleteAction
+    ( toAction
     , register, actionType
     , registerPluginMaps
     )
 where
 
 import           AgentPrelude
-import qualified FreeAgent.Database.KeySpace as KS
 import           FreeAgent.Lenses
 
 import           Control.Monad.Writer        (tell)
@@ -35,7 +32,6 @@ import           System.IO.Unsafe            (unsafePerformIO)
 import           Data.SafeCopy
 import           Data.Serialize              (Serialize)
 import qualified Data.Serialize              as Cereal
-import           Database.LevelDB.Higher
 
 -- Serialization instances for Action are all this module as they require specialized
 -- and sensitive functions we want to keep encapsulated e.g. (readPluginMaps)
@@ -99,37 +95,10 @@ instance Runnable Action Result where
 
 instance Stashable Result where
     key (Result a) = key a
--- | Fix the type & keyspace to Action for fetch
-fetchAction :: MonadLevelDB m => Key -> m FetchAction
-fetchAction = withActionKS . fetch
-
--- | Fix the keyspace to Action for stash
-stashAction :: MonadLevelDB m => Action -> m Action
-stashAction = withActionKS . stash
-
--- | Fix the keyspace to Action for delete
-deleteAction :: MonadLevelDB m => Key -> m ()
-deleteAction = withActionKS . delete
-
--- | Fix the keyspace to 'withActionKS' and decodes each
--- result using 'decodeAction'.
---
-scanActions :: MonadLevelDB m => Key -> m [FetchAction]
-scanActions prefix = withActionKS $
-    scan prefix queryList { scanMap = decodeAction . snd }
-
-decodeAction :: ByteString -> FetchAction
-decodeAction bs = either (Left . ParseFail) Right (Cereal.decode bs)
 
 -- | Wrap a concrete action in existential unless it is already an Action
 toAction :: (Actionable a b) => a -> Action
 toAction act = fromMaybe (Action act) (cast act)
-
--- | Save a serializable type with an instance for Stash
--- which provides the key - returns the same input.
-stash :: (MonadLevelDB m, Stashable a)
-      => a -> m a
-stash s = do store (key s) s; return s
 
 -- | Use to register your Action types so they can be
 -- deserialized dynamically at runtime; invoke as:
@@ -141,7 +110,6 @@ register act = tell [( fqName act
                      , unWrapAction (unWrap :: Unwrapper a)
                      , fqName (undefined :: b)
                      , unwrapResult (unWrap :: Unwrapper b) )]
-
 
 -- | Used only to fix the type passed to 'register' - this should not
 -- ever be evaluated and will throw an error if it is
@@ -156,7 +124,7 @@ unWrapAction :: (Actionable a b)
 unWrapAction uw wrapped = Action <$> uw wrapped
 
 unwrapResult :: (Resulting b)
-             => Unwrapper b -> Wrapped -> Either FetchFail Result
+             => Unwrapper b -> Wrapped -> Either String Result
 unwrapResult uw wrapped = Result <$> uw wrapped
 
 -- Wrap a concrete type for stash or send where it
@@ -165,8 +133,8 @@ wrap :: (Stashable a) => a -> Wrapped
 wrap st = Wrapped (key st) (fqName st) (Cereal.encode st)
 
 -- | Unwrap a 'Wrapper' into a (known) concrete type
-unWrap :: (Stashable a) => Wrapped -> Either FetchFail a
-unWrap = decodeStore . _wrappedValue
+unWrap :: (Stashable a) => Wrapped -> Either String a
+unWrap = Cereal.decode . _wrappedValue
 
 --used in serialization instances - throws an exception since Binary decode is no maybe
 decodeAction' :: ActionMap -> Wrapped -> Action
@@ -174,8 +142,7 @@ decodeAction' pluginMap wrapped =
     case Map.lookup (wrapped^.typeName) pluginMap of
         Just f -> case f wrapped of
             Right act -> act
-            Left (ParseFail s) -> error $ "Error deserializing wrapper: " ++ s
-            Left _ -> error "Unknown error deserializing wrapper"
+            Left s -> error $ "Error deserializing wrapper: " ++ s
         Nothing -> error $ "Type Name: " ++ BS.unpack (wrapped^.typeName)
                     ++ " not matched! Is your plugin registered?"
 
@@ -195,15 +162,11 @@ readPluginMaps :: PluginMaps
 readPluginMaps = unsafePerformIO $ readIORef globalPluginMaps
 {-# NOINLINE readPluginMaps #-}
 
-withActionKS :: (MonadLevelDB m) => m a -> m a
-withActionKS = withKeySpace KS.actions
-
 decodeResult' :: ResultMap -> Wrapped -> Result
 decodeResult' pluginMap wrapped =
     case Map.lookup (wrapped^.typeName) pluginMap of
         Just f -> case f wrapped of
             Right act -> act
-            Left (ParseFail s) -> error $ "Error deserializing wrapper: " ++ s
-            Left _ -> error "Unknown error deserializing wrapper"
+            Left s -> error $ "Error deserializing wrapper: " ++ s
         Nothing -> error $ "Type Name: " ++ BS.unpack (wrapped^.typeName)
                     ++ " not matched! Is your plugin registered?"

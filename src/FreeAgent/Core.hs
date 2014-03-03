@@ -18,6 +18,7 @@ module FreeAgent.Core
 import           AgentPrelude
 import           FreeAgent.Action                 (registerPluginMaps)
 import           FreeAgent.Database
+import           FreeAgent.Database.AcidState (closeAllStates)
 import           FreeAgent.Lenses
 import           FreeAgent.Process
     ( spawnLocal, receiveWait, match
@@ -30,7 +31,7 @@ import           Control.Monad.Writer             (execWriter, tell)
 import           Data.Dynamic                     (fromDynamic, toDyn)
 import qualified Data.Map                         as Map
 
-import           Control.Concurrent.Lifted (threadDelay)
+import           Control.Concurrent.Lifted        (threadDelay)
 import           Control.Distributed.Process.Node (newLocalNode, runProcess)
 import           Control.Distributed.Process.Management
 import           Network.Transport                (closeTransport)
@@ -44,6 +45,7 @@ runAgent ctxt ma =
     catchAny
           ( do registerPluginMaps (ctxt^.actionMap, ctxt^.resultMap)
                (_, dbChan) <- initAgentDB ctxt
+               statesMV <- newMVar mempty
                eithertcp <- createTransport (ctxt^.agentConfig.nodeHost)
                                             (ctxt^.agentConfig.nodePort)
                                             defaultTCPParameters
@@ -55,11 +57,13 @@ runAgent ctxt ma =
 
                let ctxt'  = ctxt & agentDBChan .~ dbChan
                                  & processNode .~ node
+                                 & openStates .~ statesMV
                let proc   = runStdoutLoggingT $ runReaderT (unAgent ma) ctxt'
 
                runProcess node $ initLogger >> globalMonitor >> proc
                closeTransport tcp
-               closeAgentDB dbChan )
+               closeAgentDB dbChan
+               closeAllStates statesMV )
 
         ( \exception -> do
             putStrLn $ "Exception in runAgent: " ++ tshow exception

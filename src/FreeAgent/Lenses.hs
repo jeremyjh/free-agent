@@ -18,9 +18,14 @@ where
 import           AgentPrelude
 import           FreeAgent.Types
 
-import           Control.Lens      (makeFields, declareFields, declareLenses
-                                   ,Getting, use, uses, view, (&), (.~),
-                                    (^.), _1, _2, set, to, _Right, (%=))
+import Control.Lens
+       (makeFields, makeLenses, Getting, use, uses, view, views, (&),
+       (.~), (^.), _1, _2, set, to, _Right, (%=), Profunctor
+       , Getting, use, uses, view, views, (&), (.~),
+       (^.), _1, _2, set, to, _Right, (%=))
+
+import Control.Lens.Type (Overloading)
+import Control.Lens.Getter (Accessor)
 
 
 makeFields ''AgentContext
@@ -34,3 +39,6 @@ makeFields ''Peer
 -- | Use a lens to view a portion of AgentContext
 viewConfig :: (ContextReader m) => Getting a AgentContext a -> m a
 viewConfig lens = view lens <$> askContext
+
+viewsConfig :: (Profunctor p, ContextReader f) => Overloading p (->) (Accessor r) AgentContext AgentContext a a -> p a r -> f r
+viewsConfig lens f = views lens f <$> askContext
