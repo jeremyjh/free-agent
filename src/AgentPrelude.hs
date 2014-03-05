@@ -32,8 +32,8 @@ module AgentPrelude
     , logDebug, logInfo, logWarn, logError
     , forceMaybeMsg
     , forceEither, forceEitherT
-    , deriveStorable
-    , deriveStorableVersion
+    , deriveSafeStore
+    , deriveSafeStoreVersion
     ) where
 
 import           ClassyPrelude                 hiding (undefined)
@@ -136,7 +136,7 @@ deriveSerializers = deriveSerializersVersion 1
 -- for more details.
 deriveSerializersVersion :: Version a -> Name -> Q [Dec]
 deriveSerializersVersion ver name = do
-    sc <- deriveStorableVersion ver name
+    sc <- deriveSafeStoreVersion ver name
     bi <- [d| instance Binary $(conT name) where |]
     nf <- deriveNFData name
     return $ sc ++ bi ++ nf
@@ -162,9 +162,9 @@ convEitherT = hoistEither . convEither
 -- instances for a given type
 --
 -- > data MyData = MyData Int
--- > deriveStorable ''MyData
-deriveStorable :: Name -> Q [Dec]
-deriveStorable = deriveStorableVersion 1
+-- > deriveSafeStore ''MyData
+deriveSafeStore :: Name -> Q [Dec]
+deriveSafeStore = deriveSafeStoreVersion 1
 
 -- | Template haskell function to create the Serialize and SafeCopy
 -- instances for a given type - use this one to specify a later version
@@ -172,10 +172,10 @@ deriveStorable = deriveStorableVersion 1
 --
 -- > data MyDataV1 = MyDataV1 Int
 -- > data MyData = MyData Int String
--- > deriveStorable ''MyDataV1
--- > deriveStorableVersion 2 ''MyData
-deriveStorableVersion :: Version a -> Name -> Q [Dec]
-deriveStorableVersion ver name = do
+-- > deriveSafeStore ''MyDataV1
+-- > deriveSafeStoreVersion 2 ''MyData
+deriveSafeStoreVersion :: Version a -> Name -> Q [Dec]
+deriveSafeStoreVersion ver name = do
     sc <- case ver of
         1 -> deriveSafeCopy 1 'base name
         _ -> deriveSafeCopy ver 'extension name

@@ -18,7 +18,7 @@
 
 module FreeAgent.Types
  ( module FreeAgent.Types
- , Storable, MonadLevelDB, Key, Value, KeySpace
+ , MonadLevelDB, Key, Value, KeySpace
  , MonadProcess
  , NFSerializable, Process, ProcessId
  , MonadBase
@@ -64,11 +64,11 @@ import           Database.LevelDB.Higher            (Key, KeySpace, LevelDBT
                                                     ,Value)
 
 
-type Storable a = (SafeCopy a, Serialize a, Show a, Typeable a)
+type SafeStore a = (SafeCopy a, Serialize a, Show a, Typeable a)
 
 -- | Types that can be serialized, stored and retrieved
 --
-class (Storable a) => Stashable a where
+class (SafeStore a) => Stashable a where
     key :: a -> Key
 
 -- Wrapped
@@ -346,7 +346,7 @@ data Target =   Local
               | Remote Peer
               | Route [Context] [Zone]
 
-deriveStorable ''UUID
+deriveSafeStore ''UUID
 deriveSerializers ''Context
 deriveSerializers ''Zone
 deriveSerializers ''Wrapped

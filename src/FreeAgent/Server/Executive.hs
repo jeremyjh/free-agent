@@ -55,20 +55,20 @@ import           Data.Default                          (Default(..))
 -- -----------------------------
 type RunningActions = Map Key ProcessId
 
-data PersistExec
-  = PersistExec { _persistActions :: Map ByteString Action
+data ExecPersist
+  = ExecPersist { _persistActions :: Map ByteString Action
                 } deriving (Show, Eq, Typeable)
 
-deriveStorable ''PersistExec
-makeFields ''PersistExec
+deriveSafeStore ''ExecPersist
+makeFields ''ExecPersist
 
-instance Default PersistExec where
-    def = PersistExec mempty
+instance Default ExecPersist where
+    def = ExecPersist mempty
 
 data ExecState
   = ExecState { _stateRunning   :: !RunningActions
               , _stateListeners :: ![Listener]
-              , _stateAcid      :: !(AcidState PersistExec)
+              , _stateAcid      :: !(AcidState ExecPersist)
               } deriving (Typeable, Generic)
 makeFields ''ExecState
 
@@ -101,20 +101,20 @@ instance NFData ExecutiveCommand where
 -- Persistent state functions
 -- -----------------------------
 
-putAction :: Action -> Update PersistExec ()
+putAction :: Action -> Update ExecPersist ()
 putAction action' =
     actions %= Map.insert (key action') action'
 
-deleteAction :: Key -> Update PersistExec ()
+deleteAction :: Key -> Update ExecPersist ()
 deleteAction key' =
     actions %= Map.delete key'
 
-getAction :: Key -> Query PersistExec (Maybe Action)
+getAction :: Key -> Query ExecPersist (Maybe Action)
 getAction key' = views actions (Map.lookup key')
 
 
 -- we have to make the splices near the top of the file
-$(makeAcidic ''PersistExec ['putAction, 'getAction, 'deleteAction])
+$(makeAcidic ''ExecPersist ['putAction, 'getAction, 'deleteAction])
 
 -- -----------------------------
 -- API
