@@ -47,6 +47,8 @@ import           FreeAgent.Process (MonadProcess(..), Process
                                                     ,ProcessId, NFSerializable
                                                     ,ChildSpec, RemoteTable)
 import           Control.Distributed.Process.Node   (LocalNode, initRemoteTable)
+import           Control.Distributed.Process.Internal.Types (LocalProcessId)
+import Control.Distributed.Process (NodeId, Closure)
 import           Control.Monad.Base                 (MonadBase)
 import           Control.Monad.Logger               (LogLevel (..), LoggingT,
                                                      MonadLogger (..),
@@ -57,11 +59,14 @@ import Control.Monad.State (StateT)
 import           Data.Default                       (Default (..))
 import qualified Data.Set                           as Set
 import           Data.UUID                          (UUID)
-import           Data.SafeCopy (SafeCopy)
-import           Data.Serialize (Serialize)
+import Data.SafeCopy
+       (SafeCopy(..), Contained, contain, safePut, safeGet, base)
+import           Data.Serialize                     (Serialize)
+import qualified Data.Serialize                     as Cereal
 import           Database.LevelDB.Higher            (Key, KeySpace, LevelDBT
                                                     ,MonadLevelDB
                                                     ,Value)
+import           Network.Transport (EndPointAddress)
 
 
 type SafeStore a = (SafeCopy a, Serialize a, Show a, Typeable a)
@@ -327,17 +332,12 @@ data ServerRef = ServerRef String ProcessId
 instance Ord ServerRef where
     ServerRef a _ `compare` ServerRef b _ = a `compare` b
 
-instance Binary ServerRef
-
-
 data Peer = Peer { _peerUuid      :: UUID
                  , _peerProcessId :: !ProcessId
                  , _peerContexts  :: Set Context
                  , _peerZones     :: Set Zone
                  , _peerServers   :: Set ServerRef
                  } deriving (Show, Eq, Typeable, Generic)
-instance Binary Peer
-instance NFData Peer
 
 instance Ord Peer where
     a `compare` b = _peerUuid a `compare` _peerUuid b
@@ -346,9 +346,37 @@ data Target =   Local
               | Remote Peer
               | Route [Context] [Zone]
 
+-- create safecopy instances for Binary types - this
+-- is unsafe since migrations are impossible
+class Binary a => UnsafeCopy a where
+    unsafeGet :: Contained (Cereal.Get a)
+    unsafePut :: a -> Contained Cereal.Put
+
+    unsafeGet = contain $ safeGet >>= return . Binary.decode
+    unsafePut = contain . safePut . Binary.encode
+
+instance Typeable a => UnsafeCopy (Closure a)
+instance Typeable a => SafeCopy (Closure a) where
+    version = 1
+    kind = base
+    errorTypeName _ = "Control.Distributed.Static.Closure"
+    putCopy = unsafePut
+    getCopy = unsafeGet
+
+instance Typeable a => Serialize (Closure a) where
+    get = safeGet
+    put = safePut
+
 deriveSafeStore ''UUID
 deriveSerializers ''Context
 deriveSerializers ''Zone
 deriveSerializers ''Wrapped
 deriveSerializers ''Schedule
 deriveSerializers ''RunnableFail
+deriveSerializers ''ServerRef
+deriveSerializers ''Peer
+
+deriveSafeStore ''LocalProcessId
+deriveSafeStore ''EndPointAddress
+deriveSafeStore ''NodeId
+deriveSafeStore ''ProcessId

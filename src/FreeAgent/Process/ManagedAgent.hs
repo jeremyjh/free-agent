@@ -10,7 +10,8 @@ module FreeAgent.Process.ManagedAgent
     ( module FreeAgent.Process.ManagedAgent
     , module Managed
     , module Supervisor
-    , Addressable(..)
+    , Addressable
+    , Resolvable(..)
     , Delay(..)
     , ChildSpec(..)
     , milliSeconds
@@ -27,17 +28,20 @@ import           Control.Monad.State                                 (StateT, ev
                                                                      , execStateT, runStateT)
 import           Control.Concurrent.Lifted                           (threadDelay)
 import           Control.Distributed.Process.Platform.ManagedProcess as Managed
-                                                                    hiding (cast, call, syncCallChan, action)
+                                                                    hiding (cast, call, syncCallChan, action, shutdown)
 import           Control.Error                                       (EitherT, runEitherT)
 
-import           Control.Distributed.Process.Platform               (whereisOrStart,linkOnFailure, Addressable(..))
+import Control.Distributed.Process.Platform
+       (whereisOrStart, linkOnFailure, Addressable, Resolvable(..))
 import           Control.Distributed.Process.Platform.Supervisor    as Supervisor
 import           Control.Distributed.Process.Platform.Time          (Delay(..), milliSeconds)
 
 data AgentState a = AgentState AgentContext a
 
-instance Addressable AgentServer where
+instance Resolvable AgentServer where
     resolve (AgentServer sname _ _) = whereis sname
+
+instance Addressable AgentServer
 
 -- | starts the defined server process if it is not already running
 startServer :: (MonadAgent m) => AgentServer -> m ProcessId

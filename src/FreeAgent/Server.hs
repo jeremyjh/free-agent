@@ -25,9 +25,12 @@ runAgentServers ctxt ma = runAgent ctxt $ startSuper coreServers >> ma
 startSuper ::  [AgentServer] -> Agent ()
 startSuper servers' = do
     ctxt <- askContext
-    liftProcess $ do
-        cspecs <- sequence $ fmap (childFrom ctxt) servers'
-        void $ start restartOne cspecs
+    {-liftProcess $ do-}
+        {-cspecs <- sequence $ fmap (childFrom ctxt) servers'-}
+        {-void $ start restartOne ParallelShutdown cspecs-}
+    forM_ servers' $ \s -> liftProcess $ do
+        child' <- childFrom ctxt s
+        start restartOne ParallelShutdown [child']
     forM_ servers' $ \s -> waitRegistration $ s^.name
   where childFrom ctxt (AgentServer _ _ child) = child ctxt
 

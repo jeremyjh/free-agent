@@ -115,6 +115,24 @@ spec = do
                     result $ throw exception
             `shouldReturn` OK
 
+        it "will persist its listeners across restarts" $ do
+            testAgent $ \result -> do
+                catchAny $ do
+                    pid <- getSelfPid
+                    let matcher = $(mkClosure 'matchRemoteHostName) pid
+                    addListener Local matcher
+                    threadDelay 10000
+                    Just expid <- whereis $ execServer^.name
+                    liftProcess $ kill expid "testing"
+                    threadDelay 10000
+                    Right _ <- executeAction Local checkTCP
+                    nr <- expect :: Agent Result
+                    let Just (NagiosResult _ status) = extract nr
+                    result status
+                $ \exception ->
+                    result $ throw exception
+            `shouldReturn` OK
+
         it "it won't deliver a routed Action for an unknown context or zone" $ do
             testAgentNL $ \result -> do
                 catchAny $ do
@@ -164,10 +182,10 @@ checkTCP = CheckTCP  "localhost" 53
 
 testActionListener :: Agent [Listener]
 testActionListener = do
-    apid <- liftProcess $ spawnLocal $ loop (0::Int)
-    Process.register "ExecSpecActionListener" apid
+    apid <- startListener sname loop
     return [matchAction (\c -> _checktcpHost c == "localhost") apid]
   where
+    sname = "ExecSpecActionListener"
     loop count = do
         receiveWait
             [ match $ \ (_ :: Result) -> do
@@ -176,15 +194,16 @@ testActionListener = do
                   send pid count
             ]
 
+
 testResultListener :: Agent [Listener]
 testResultListener = do
-    rpid <- liftProcess $ spawnLocal $ loop (0::Int)
-    Process.register "ExecSpecResultListener" rpid
+    apid <- startListener sname loop
     return [matchResult (const True)
                         (\ (NagiosResult _ r) -> r == OK)
-                        rpid
+                        apid
            ]
   where
+    sname = "ExecSpecResultListener"
     loop count = do
         receiveWait
             [ match $ \ (_ :: Result) ->
@@ -193,7 +212,12 @@ testResultListener = do
                   send pid count
             ]
 
-
+startListener sname loop = do
+    whereis sname >>= maybe startIt return
+  where startIt = do
+            apid <- liftProcess $ spawnLocal $ loop (0::Int)
+            Process.register sname apid
+            return apid
 
 testDef :: NagiosConfig -> PluginDef
 testDef conf = definePlugin "ExecSpec"

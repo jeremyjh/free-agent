@@ -45,10 +45,10 @@ import           Data.Acid.Advanced (query')
 
 
 
-instance Addressable Peer where
+instance Resolvable Peer where
     resolve peer = return $ Just $ peer^.processId
 
-instance Addressable (Peer, AgentServer) where
+instance Resolvable (Peer, AgentServer) where
     resolve (peer,server) = do --TODO: resolve (nodeid,sname)
         whereisRemoteAsync nodeid sname
         WhereIsReply _ mpid <- expect
@@ -81,9 +81,6 @@ data PeerCommand = DiscoverPeers
 instance Binary PeerCommand
 instance NFData PeerCommand
 
-{-deleteAction :: Key -> Update PersistExec ()-}
-{-deleteAction key' =-}
-    {-actions %= Map.delete key'-}
 
 getPersist :: Query PeerPersist PeerPersist
 getPersist = ask
@@ -93,7 +90,6 @@ $(makeAcidic ''PeerPersist ['getPersist])
 -- API
 -- ---------------------------
 
-{-discoverPeers :: (MonadProcess m) => m ()-}
 -- | Advertise a Server on the local peer
 registerServer :: (MonadProcess m)
                => AgentServer -> ProcessId -> m ()
@@ -122,7 +118,7 @@ peerServer = AgentServer sname init child
     init ctxt = serve undefined initPeer peerProcess
       where
         initPeer _ = do
-            initp2p
+            initp2p >>= link
             Just newid <- liftIO nextUUID
             Just acid' <- initAcid (PeerPersist newid)
             self' <- initSelf acid'
@@ -130,8 +126,8 @@ peerServer = AgentServer sname init child
             getSelfPid >>= flip cast DiscoverPeers
             return $ InitOk (AgentState ctxt state') Infinity
           where
-            initp2p = void $ spawnLocal $ peerController $
-                        makeNodeId <$> (ctxt^.agentConfig.peerNodeSeeds)
+            initp2p = spawnLocal $ peerController $
+                          makeNodeId <$> (ctxt^.agentConfig.peerNodeSeeds)
             initAcid initpp = withAgent ctxt $ openOrGetDb "agent-peer" initpp def
             initSelf acid' =
                 withAgent ctxt $ do

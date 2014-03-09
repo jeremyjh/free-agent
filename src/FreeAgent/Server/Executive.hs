@@ -42,6 +42,7 @@ import           qualified FreeAgent.Server.Peer                               a
 
 import           Control.DeepSeq.TH                                  (deriveNFData)
 import           Control.Monad.State                                 (StateT)
+import Control.Monad.Reader (ask)
 import           Data.Binary
 import qualified Data.Map.Strict                                     as Map
 import qualified Data.Set                                            as Set
@@ -49,6 +50,7 @@ import qualified Data.Set                                            as Set
 import           Control.Distributed.Static                          (unclosure)
 import           Control.Error                                       hiding (err)
 import           Data.Default                          (Default(..))
+import Data.Acid.Advanced (query')
 
 -- -----------------------------
 -- Types
@@ -57,13 +59,14 @@ type RunningActions = Map Key ProcessId
 
 data ExecPersist
   = ExecPersist { _persistActions :: Map ByteString Action
-                } deriving (Show, Eq, Typeable)
+                , _persistListeners :: [Closure Listener]
+                } deriving (Show, Typeable)
 
 deriveSafeStore ''ExecPersist
 makeFields ''ExecPersist
 
 instance Default ExecPersist where
-    def = ExecPersist mempty
+    def = ExecPersist mempty []
 
 data ExecState
   = ExecState { _stateRunning   :: !RunningActions
@@ -112,9 +115,15 @@ deleteAction key' =
 getAction :: Key -> Query ExecPersist (Maybe Action)
 getAction key' = views actions (Map.lookup key')
 
+putListener :: Closure Listener -> Update ExecPersist ()
+putListener listener = listeners %= (:) listener
+
+getPersist :: Query ExecPersist ExecPersist
+getPersist = ask
 
 -- we have to make the splices near the top of the file
-$(makeAcidic ''ExecPersist ['putAction, 'getAction, 'deleteAction])
+$(makeAcidic ''ExecPersist ['putAction, 'getAction, 'deleteAction, 'putListener
+                           ,'getPersist])
 
 -- -----------------------------
 -- API
@@ -177,7 +186,9 @@ execServer = AgentServer sname init child
     init ctxt = do
         listeners' <- withAgent ctxt $ join $ viewConfig listeners
         Just acid' <- withAgent ctxt $ openOrGetDb "agent-executive" def def
-        let state' = ExecState (Map.fromList []) listeners' acid'
+        persist <- query' acid' GetPersist
+        let cls = rights $ map (unclosure (ctxt^.remoteTable)) (persist^.listeners)
+        let state' = ExecState (Map.fromList []) (listeners' ++ cls) acid'
         serve state' initExec executiveProcess
       where
         initExec state' = do
@@ -200,7 +211,9 @@ execServer = AgentServer sname init child
                 case unclosure rt cl of
                     Left msg -> [qwarn|AddListener failed! Could not evaluate
                                      new listener closure: #{msg}|]
-                    Right listener -> listeners %= (:) listener
+                    Right listener -> do
+                        listeners %= (:) listener
+                        update (PutListener cl)
             ]
 
         }

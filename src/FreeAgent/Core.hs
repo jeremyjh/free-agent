@@ -60,6 +60,7 @@ runAgent ctxt ma =
                                  & openStates .~ statesMV
                let proc   = runStdoutLoggingT $ runReaderT (unAgent ma) ctxt'
 
+               {-runProcess node $ initLogger >> proc-}
                runProcess node $ initLogger >> globalMonitor >> proc
                closeTransport tcp
                closeAgentDB dbChan
