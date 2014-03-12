@@ -25,6 +25,8 @@ runAgentServers ctxt ma = runAgent ctxt $ startSuper coreServers >> ma
 startSuper ::  [AgentServer] -> Agent ()
 startSuper servers' = do
     ctxt <- askContext
+    --TODO: I think its a bug in Supervisor that the whole group
+    --is restarted even when RestartOne is selected
     {-liftProcess $ do-}
         {-cspecs <- sequence $ fmap (childFrom ctxt) servers'-}
         {-void $ start restartOne ParallelShutdown cspecs-}

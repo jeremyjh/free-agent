@@ -1,6 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE KindSignatures #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults#-}
 
@@ -24,8 +25,8 @@ import           FreeAgent.Process as Process
 
 import Control.Exception (throw)
 
-matchRemoteHostName :: ProcessId -> Listener
-matchRemoteHostName pid = matchAction (\c -> _checktcpHost c == "localhost") pid
+matchRemoteHostName :: (NodeId, String) -> Listener
+matchRemoteHostName (nodeid, name') = matchAction (\c -> _checktcpHost c == "localhost") nodeid name'
 remotable ['matchRemoteHostName]
 
 main :: IO ()
@@ -75,6 +76,7 @@ spec = do
                 catchAny $ do
                     (Right nr) <- executeAction Local checkTCP
                     let Just (NagiosResult _ OK) = extract nr
+                    threadDelay 1000
                     -- confirm results were written
                     items <- agentDb $ withKeySpace "agent:actions:localhost:53" $ do
                         scan "" queryItems
@@ -90,6 +92,7 @@ spec = do
                     forM_ [0..2] $ \_ ->
                         executeAction Local checkTCP
                     -- make sure he's been listening
+                    threadDelay 1000
                     pid <- getSelfPid
                     nsend "ExecSpecActionListener" ("ask-result-count" :: String, pid)
                     actionCount <- expect :: Agent Int
@@ -103,8 +106,9 @@ spec = do
         it "can subscribe listeners at runtime" $ do
             testAgent $ \result -> do
                 catchAny $ do
-                    pid <- getSelfPid
-                    let matcher = $(mkClosure 'matchRemoteHostName) pid
+                    nodeid <- thisNodeId
+                    getSelfPid >>= register listenerName
+                    let matcher = $(mkClosure 'matchRemoteHostName) (nodeid, listenerName)
                     addListener Local matcher
                     threadDelay 10000
                     Right _ <- executeAction Local checkTCP
@@ -116,10 +120,12 @@ spec = do
             `shouldReturn` OK
 
         it "will persist its listeners across restarts" $ do
-            testAgent $ \result -> do
+            -- recover with state in memory after Supervisor restarts
+            result' <- testAgent $ \result -> do
                 catchAny $ do
-                    pid <- getSelfPid
-                    let matcher = $(mkClosure 'matchRemoteHostName) pid
+                    nodeid <- thisNodeId
+                    getSelfPid >>= register listenerName
+                    let matcher = $(mkClosure 'matchRemoteHostName) (nodeid, listenerName)
                     addListener Local matcher
                     threadDelay 10000
                     Just expid <- whereis $ execServer^.name
@@ -131,7 +137,20 @@ spec = do
                     result status
                 $ \exception ->
                     result $ throw exception
-            `shouldReturn` OK
+
+            -- recovery with state from disk when launching new agent
+            result'' <- testAgentNoSetup $ \result -> do
+                catchAny $ do
+                    getSelfPid >>= register listenerName
+                    Right _ <- executeAction Local checkTCP
+                    nr <- expect :: Agent Result
+                    let Just (NagiosResult _ status) = extract nr
+                    result status
+                $ \exception ->
+                    result $ throw exception
+
+            return (result' == result'')
+            `shouldReturn` True
 
         it "it won't deliver a routed Action for an unknown context or zone" $ do
             testAgentNL $ \result -> do
@@ -151,17 +170,20 @@ spec = do
 
 -- helper for running agent and getting results out of
 -- the Process through partially applied putMVar
-testAgentConfig :: AgentContext -> ((a -> Agent ()) -> Agent ()) -> IO a
-testAgentConfig ctxt ma = do
-    setup
+testAgentConfig :: Bool -> AgentContext -> ((a -> Agent ()) -> Agent ()) -> IO a
+testAgentConfig doSetup ctxt ma = do
+    when doSetup setup
     result <- newEmptyMVar
     runAgentServers ctxt (ma (putMVar result))
     threadDelay 2000 -- so we dont get open port errors
     takeMVar result
 
-testAgent ma = testAgentConfig appConfig ma
+testAgent ma = testAgentConfig True appConfig ma
 
-testAgentNL ma = testAgentConfig appConfigNL ma
+testAgentNoSetup ma = testAgentConfig False appConfig ma
+
+
+testAgentNL ma = testAgentConfig True appConfigNL ma
 
 
 -- for testing - useful to throw an exception if we "never" get the value we're expecting
@@ -179,28 +201,33 @@ setup = void $ system ("rm -rf " ++ appConfig^.agentConfig.dbPath)
 checkTCP = CheckTCP  "localhost" 53
 
 
+listenerName :: String
+listenerName = "listener:test"
 
 testActionListener :: Agent [Listener]
 testActionListener = do
-    apid <- startListener sname loop
-    return [matchAction (\c -> _checktcpHost c == "localhost") apid]
+    startListener sname loop
+    nodeid <- thisNodeId
+    return [matchAction (\c -> _checktcpHost c == "localhost") nodeid sname]
   where
     sname = "ExecSpecActionListener"
     loop count = do
         receiveWait
             [ match $ \ (_ :: Result) -> do
                   loop $ count + 1
-            , match $ \ ("ask-result-count" :: String, pid) ->
+            , match $ \ ("ask-result-count" :: String, pid :: ProcessId) ->
                   send pid count
             ]
 
 
 testResultListener :: Agent [Listener]
 testResultListener = do
-    apid <- startListener sname loop
+    startListener sname loop
+    nodeid <- thisNodeId
     return [matchResult (const True)
                         (\ (NagiosResult _ r) -> r == OK)
-                        apid
+                        nodeid
+                        sname
            ]
   where
     sname = "ExecSpecResultListener"
@@ -208,16 +235,15 @@ testResultListener = do
         receiveWait
             [ match $ \ (_ :: Result) ->
                   loop $ count + 1
-            , match $ \ ("ask-result-count" :: String, pid) ->
+            , match $ \ ("ask-result-count" :: String, pid :: ProcessId) ->
                   send pid count
             ]
 
 startListener sname loop = do
-    whereis sname >>= maybe startIt return
+    whereis sname >>= maybe startIt (return . const ())
   where startIt = do
             apid <- liftProcess $ spawnLocal $ loop (0::Int)
             Process.register sname apid
-            return apid
 
 testDef :: NagiosConfig -> PluginDef
 testDef conf = definePlugin "ExecSpec"

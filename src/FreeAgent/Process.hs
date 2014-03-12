@@ -13,6 +13,7 @@ module FreeAgent.Process
     , module Control.Distributed.Process.Closure
     , module FreeAgent.Process
     , NFSerializable
+    , localNodeId
     , ChildSpec
     )
 where
@@ -30,9 +31,11 @@ import           Control.Distributed.Process                           hiding
                                                                         call,
                                                                         whereis, sendChan)
 import qualified Control.Distributed.Process                           as Base
+import           Control.Distributed.Process.Node                      (localNodeId)
 import           Control.Distributed.Process.Closure                   (mkClosure, remotable)
 import           Control.Distributed.Process.Internal.Types            (Process(..), LocalProcess(..))
-import           Control.Distributed.Process.Platform                  (NFSerializable, Addressable)
+import Control.Distributed.Process.Platform
+       (NFSerializable, Addressable, Routable(..))
 import           Control.Distributed.Process.Serializable              (Serializable)
 import qualified Control.Distributed.Process.Platform                  as Base (spawnLinkLocal)
 import qualified Control.Distributed.Process.Platform.UnsafePrimitives as NF
@@ -109,10 +112,10 @@ spawnLinkLocal = mapProcess Base.spawnLinkLocal
 getSelfPid :: (MonadProcess m) => m ProcessId
 getSelfPid = liftProcess Base.getSelfPid
 
--- | Send a processId a message - note this is actually the "unsafe" version
--- from Control.Distributed.Process.Platform.UnsafePrimitives
-send :: (MonadProcess m, NFSerializable a) => ProcessId -> a -> m ()
-send pid = liftProcess . NF.send pid
+-- | Send a processId a message - note this is actually
+-- 'Routable.unsafeSendTo' from Control.Distributed.Process.Platform
+send :: (MonadProcess m, NFSerializable a, Routable addr) => addr -> a -> m ()
+send addr = liftProcess . unsafeSendTo addr
 
 
 -- | Send a processId a message - note this is actually the "unsafe" version

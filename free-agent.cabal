@@ -76,7 +76,7 @@ executable example
   build-depends:     free-agent, base == 4.*
 
 test-suite spec
-  ghc-options:       -threaded -rtsopts -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
+  ghc-options:       -threaded -with-rtsopts=-N -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
   default-language:  Haskell2010
   type:              exitcode-stdio-1.0
   hs-source-dirs:    test

@@ -162,7 +162,7 @@ addListener (Route contexts' zones') cl = do
 -- receive a 'Result' for each 'Action' executed that matches the typed predicate
 -- argument. Only predicates for Actions in which the underlying concrete type
 -- matches will be evaluated.
-matchAction :: (Runnable a b) => (a -> Bool) -> ProcessId -> Listener
+matchAction :: Runnable a b => (a -> Bool) -> NodeId -> String -> Listener
 matchAction af = ActionMatching (matchA af)
 
 -- | Used with 'addListener' - defines a 'Listener' that will
@@ -171,8 +171,8 @@ matchAction af = ActionMatching (matchA af)
 -- If you need the 'ActionMatcher' predicate to have access to the underlying
 -- concrete type, then pass the typed predicate to 'matchA' to make an
 -- 'ActionMatcher'.
-matchResult :: (Resulting b)
-            => ActionMatcher -> (b -> Bool) -> ProcessId -> Listener
+matchResult :: Resulting b
+            => ActionMatcher -> (b -> Bool) -> NodeId -> String -> Listener
 matchResult af rf = ResultMatching af (matchR rf)
 
 -- -----------------------------
@@ -285,13 +285,13 @@ doExec action' = do
     notifyListeners result = do
         listeners' <- uses listeners (filter fst . map exMatch)
         [qdebug| Checking match for #{length listeners'} listeners |]
-        forM_ listeners' $ \(_,pid) -> do
-            [qdebug|Sending Result: #{result} To: #{pid}|]
-            send pid result
+        forM_ listeners' $ \(_,addr) -> do
+            [qdebug|Sending Result: #{result} To: #{addr}|]
+            send addr result
         return result
       where
-        exMatch (ActionMatching afilter pid) =
-            (afilter action', pid)
-        exMatch (ResultMatching afilter rfilter pid) =
-            (afilter action' && rfilter result, pid)
+        exMatch (ActionMatching afilter nodeid name') =
+            (afilter action', (nodeid,name'))
+        exMatch (ResultMatching afilter rfilter nodeid name') =
+            (afilter action' && rfilter result, (nodeid, name'))
     timestampKey = toBytes . view timestamp . summary

@@ -23,14 +23,17 @@ import           Control.Concurrent.Lifted
 
 import           Control.Exception
 import           Test.Hspec
+import System.Process (system)
 
-matchRemoteHostName :: ProcessId -> Listener
-matchRemoteHostName pid = matchAction (\c -> _checktcpHost c == "localhost") pid
+matchRemoteHostName :: (NodeId, String) -> Listener
+matchRemoteHostName (nodeid, name') = matchAction (\c -> _checktcpHost c == "localhost") nodeid name'
 remotable ['matchRemoteHostName]
 
 main :: IO ()
 main = hspec spec
 
+listenerName :: String
+listenerName = "listener:test"
 
 spec :: Spec
 spec =
@@ -52,8 +55,8 @@ spec =
                     -- create a couple "remotes"
                     void $ fork $ liftIO $
                         runAgentServers appConfig2 $ do
-                                "waithere" <- expect :: Agent String
-                                return ()
+                            "waithere" <- expect :: Agent String
+                            return ()
 
                     void $ fork $ liftIO $
                         runAgentServers appConfigTX $ do
@@ -71,8 +74,9 @@ spec =
 
                     -- it "can register remote listeners"
                     let tx:_ = Set.toList peers
-                    pid <- getSelfPid
-                    let matcher = $(mkClosure 'matchRemoteHostName) pid
+                    getSelfPid >>= register listenerName
+                    nodeid <- thisNodeId
+                    let matcher = $(mkClosure 'matchRemoteHostName) (nodeid, listenerName)
                     addListener (Remote tx) matcher
                     threadDelay 10000
 
@@ -95,13 +99,21 @@ spec =
 -- the Process through partially applied putMVar
 testAgent :: ((a -> Agent ()) -> Agent ()) -> IO a
 testAgent ma = do
+    setup
     result <- newEmptyMVar
     runAgentServers appConfig (ma (putMVar result))
     threadDelay 2000 -- so we dont get open port errors
     takeMVar result
 
+setup :: IO ()
+setup = do
+    void $ system ("rm -rf " ++ appConfig^.agentConfig.dbPath)
+    void $ system ("rm -rf " ++ appConfig2^.agentConfig.dbPath)
+    void $ system ("rm -rf " ++ appConfigTX^.agentConfig.dbPath)
+
 appConfig :: AgentContext
 appConfig = Config.appConfig & appendRemoteTable __remoteTable
+      & agentConfig.dbPath .~ "/tmp/leveltestp" -- override Agent config values here!
       {-& agentConfig.minLogLevel .~ LevelDebug-}
 
 appConfig2 :: AgentContext

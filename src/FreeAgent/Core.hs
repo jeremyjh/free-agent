@@ -13,6 +13,7 @@ module FreeAgent.Core
     , registerPlugins
     , addPlugin
     , appendRemoteTable
+    , thisNodeId
     ) where
 
 import           AgentPrelude
@@ -23,7 +24,8 @@ import           FreeAgent.Lenses
 import           FreeAgent.Process
     ( spawnLocal, receiveWait, match
     , sendChan, SendPort, reregister
-    , say, DiedReason(..), RemoteTable)
+    , say, DiedReason(..), RemoteTable
+    , localNodeId, NodeId)
 
 import           Control.Exception
 import           Control.Monad.Reader             (runReaderT)
@@ -170,3 +172,6 @@ globalMonitor = do
 appendRemoteTable :: (RemoteTable -> RemoteTable) -> AgentContext -> AgentContext
 appendRemoteTable table ctxt =
     ctxt & remoteTable .~ table (ctxt^.remoteTable)
+
+thisNodeId :: (ContextReader m) => m NodeId
+thisNodeId = viewConfig $ processNode.to localNodeId

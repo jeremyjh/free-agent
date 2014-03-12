@@ -150,8 +150,8 @@ type ActionsWriter = Writer [PluginActions] ()
 type ActionMatcher = (Action -> Bool)
 type ResultMatcher = (Result -> Bool)
 
-data Listener = ActionMatching ActionMatcher ProcessId
-              | ResultMatching ActionMatcher ResultMatcher ProcessId
+data Listener = ActionMatching ActionMatcher NodeId String
+              | ResultMatching ActionMatcher ResultMatcher NodeId String
               deriving (Typeable)
 
 data DBMessage = Perform (AgentDB ()) | Terminate
