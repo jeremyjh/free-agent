@@ -32,6 +32,7 @@ import           System.Process    (readProcessWithExitCode)
 
 import           Control.Error (runEitherT, hoistEither)
 import           Data.Default      (Default (..))
+import Data.Serialize (encode)
 
 
 -- | Plugin-specific configuration
@@ -52,7 +53,7 @@ makeFields ''Command
 deriveSerializers ''Command
 
 instance Stashable Command where
-    key cmd = fromT $ cmd^.host
+    key cmd = convert $ cmd^.host
 
 data CommandResult = OK | Warning | Critical | Unknown
     deriving (Show, Eq, Typeable, Generic)
@@ -86,7 +87,7 @@ extractConfig' :: (ContextReader m) => m NagiosConfig
 extractConfig' = extractConfig $ pluginDef def ^.name
 
 instance Stashable NagiosResult where
-    key (NagiosResult (ResultSummary time _ _) _) = toBytes time
+    key (NagiosResult (ResultSummary time _ _) _) = encode time
 
 instance Resulting NagiosResult where
     summary (NagiosResult s _) = s
@@ -101,25 +102,25 @@ instance Runnable Command NagiosResult where
                     ExitFailure 1 -> completeAs Warning result'
                     ExitFailure 2 -> completeAs Critical result'
                     ExitFailure i -> return $
-                        Left $ UnknownResponse $ tshow i ++ ": " ++ toT result' )
+                        Left $ UnknownResponse $ tshow i ++ ": " ++ convert result' )
              (\ exception -> do
                 putStrLn $ "Command exec threw exception: " ++ tshow exception
                 return $ Left $ RIOException $ tshow exception )
       where
-        makeArgs = ["-H", fromT $ cmd^.host, "-p", portS $ cmd^.port]
-        portS (Just p) = showStr p
+        makeArgs = ["-H", convert $ cmd^.host, "-p", portS $ cmd^.port]
+        portS (Just p) = show p
         portS Nothing = ""
         completeAs cmdres result' = do
             time <- liftIO getCurrentTime
-            let summ = ResultSummary time (toT result') (Action cmd)
+            let summ = ResultSummary time (convert result') (Action cmd)
             return $ Right $ NagiosResult summ cmdres
         commandPath = do
             nagconf <- extractConfig'
-            let cmdPath = (nagconf^.pluginsPath) </> fromT (cmd^.shellCommand)
+            let cmdPath = (nagconf^.pluginsPath) </> convert (cmd^.shellCommand)
             return $ fpToString cmdPath
 
 instance Stashable CheckTCP where
-    key c = fromT $ c^.host ++ ":" ++ tshow (c^.port)
+    key c = convert $ c^.host ++ ":" ++ tshow (c^.port)
 
 instance Runnable CheckTCP NagiosResult where
     exec cmd = runEitherT $ do

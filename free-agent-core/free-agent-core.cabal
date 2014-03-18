@@ -1,4 +1,4 @@
-name:                free-agent
+name:                free-agent-core
 version:             0.1.0.0
 author:              Jeremy Huffman
 build-type:          Custom 
@@ -10,8 +10,6 @@ library
   hs-source-dirs:    src
   exposed-modules:   AgentPrelude
                    , FreeAgent 
-                   , FreeAgent.Database
-                   , FreeAgent.Database.KeySpace
                    , FreeAgent.Database.AcidState
                    , FreeAgent.Types
                    , FreeAgent.Lenses
@@ -31,8 +29,6 @@ library
                    , text
                    , classy-prelude == 0.6.*
                    , bytestring
-                   , higher-leveldb == 0.2.0
-                   , MissingH
                    , mtl
                    , file-location
                    , lifted-base
@@ -47,7 +43,6 @@ library
                    , distributed-static
                    , network-transport-tcp
                    , network-transport
-                   , resourcet
                    , transformers-base
                    , monad-control
                    , binary
@@ -66,24 +61,17 @@ library
                    , acid-state
                    , filepath
                    , aeson
-executable example 
-  ghc-options:       -Wall -threaded -with-rtsopts=-N -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
-  default-language:  Haskell2010
-  main-is:           App.hs
-  hs-source-dirs:  example 
-  build-depends:     free-agent, base == 4.*
 
 test-suite spec
-  ghc-options:       -threaded -with-rtsopts=-N -optl-Wl,-rpath,/usr/local/lib,-enable-new-dtags
+  ghc-options:       -threaded -with-rtsopts=-N
   default-language:  Haskell2010
   type:              exitcode-stdio-1.0
   hs-source-dirs:    test
   main-is:           Spec.hs
   other-modules:     AppConfig
   build-depends:     base == 4.*
-                   , free-agent
+                   , free-agent-core
                    , hspec >= 1.5
-                   , higher-leveldb == 0.2.0
                    , process
                    , bytestring
                    , lens

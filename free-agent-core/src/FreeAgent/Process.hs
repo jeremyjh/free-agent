@@ -44,11 +44,7 @@ import           Control.Distributed.Process.Platform.Supervisor (ChildSpec)
 import           Control.Error                                         (EitherT, mapEitherT)
 import           Control.Monad.Base                                    (MonadBase(..))
 import           Control.Monad.Trans.Control                           (MonadBaseControl(..))
-import           Control.Monad.Trans.Resource                          (MonadThrow(..), MonadUnsafeIO(..))
 
--- instances required under ResourceT
-deriving instance MonadThrow Process
-deriving instance MonadUnsafeIO Process
 deriving instance MonadBase IO Process
 
 instance MonadBaseControl IO Process where

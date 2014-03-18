@@ -32,7 +32,6 @@ where
 import           AgentPrelude
 import           FreeAgent.Action
 import           FreeAgent.Core                                      (withAgent)
-import           FreeAgent.Database
 import           FreeAgent.Database.AcidState
 import           FreeAgent.Lenses
 import           FreeAgent.Process                                   as Process

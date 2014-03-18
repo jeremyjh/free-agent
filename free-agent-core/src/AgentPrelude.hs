@@ -15,14 +15,11 @@
 module AgentPrelude
     (
       module ClassyPrelude
-    , showStr
     , FilePathS
     , debug, dbg, err
     , convert
     , convEither, convEitherT
     , Convertible(..)
-    , ConvertText(..)
-    , ConvertByteString(..)
     , def
     , P.undefined --classy undefined is obnoxious
     , Generic
@@ -31,8 +28,6 @@ module AgentPrelude
     , qdebug, qinfo, qwarn, qerror
     , qdebugNS
     , logDebug, logInfo, logWarn, logError
-    , forceMaybeMsg
-    , forceEither, forceEitherT
     , deriveSafeStore
     , deriveSafeStoreVersion
     , (!??)
@@ -42,7 +37,7 @@ import           ClassyPrelude                 hiding (undefined)
 import qualified Prelude                       as P
 
 import           Control.DeepSeq.TH            (deriveNFData)
-import           Control.Error                 (runEitherT, EitherT, hoistEither)
+import           Control.Error                 (EitherT, hoistEither)
 import           Control.Monad.Logger          (MonadLogger(..), logDebug, logInfo, logWarn, logError)
 import           Control.Monad.Logger.Quote    (qdebug, qinfo, qwarn, qerror, qdebugNS)
 import           Data.Binary                   as Binary (Binary (..))
@@ -50,7 +45,6 @@ import qualified Data.Binary                   as Binary
 import qualified Data.ByteString.Char8         as BS
 import           Data.Convertible              (Convertible(..), convert)
 import           Data.Default                  (def)
-import qualified Data.Text                     as Text
 import qualified Data.Text.Encoding            as Text (decodeUtf8, encodeUtf8)
 import           Data.Time                     (UTCTime(..),Day(..))
 import           Data.Typeable
@@ -59,48 +53,27 @@ import           GHC.Generics                  (Generic)
 import           Language.Haskell.TH           (Dec, Name, Q)
 import           Language.Haskell.TH.Lib       (conT)
 
-import           Data.Maybe.Utils (forceMaybeMsg)
-import           Data.Either.Utils (forceEither)
 import           Data.SafeCopy
        (Version, deriveSafeCopy, base, extension, safeGet, safePut)
-import           Data.UUID                     (toASCIIBytes, fromASCIIBytes, UUID)
 import           FileLocation                  (dbg, debug, err)
 
 instance MonadLogger m => MonadLogger (EitherT e m) where
     monadLoggerLog a b c d = lift $ monadLoggerLog a b c d
 
-showStr :: (Show a) => a -> String
-showStr = P.show
-
 type FilePathS = P.FilePath
 
-class ConvertText a where
-    toT :: a -> Text
-    fromT :: Text -> a
+instance Convertible Text ByteString where
+    safeConvert = return . Text.encodeUtf8
 
-instance ConvertText ByteString where
-    toT = Text.decodeUtf8
-    fromT = Text.encodeUtf8
+instance Convertible Text FilePath where
+    safeConvert = return . fpFromText
 
-instance ConvertText String where
-    toT = Text.pack
-    fromT = Text.unpack
-
-instance ConvertText FilePath where
-    toT = fpToText
-    fromT = fpFromText
+instance Convertible FilePath Text where
+    safeConvert = return . fpToText
 
 instance Binary.Binary Text where
     put = Binary.put . Text.encodeUtf8
     get = Text.decodeUtf8 <$> Binary.get
-
-class ConvertByteString a where
-    toBytes :: a -> ByteString
-    fromBytes :: ByteString -> a
-
-instance ConvertByteString UUID where
-    toBytes = toASCIIBytes
-    fromBytes uuid = fromMaybe  (error "invalid UUUID Bytes") (fromASCIIBytes uuid)
 
 instance Binary UTCTime where
  put (UTCTime (ModifiedJulianDay d) t) = do
@@ -119,10 +92,6 @@ instance Cereal.Serialize UTCTime where
         d <- Cereal.get
         t <- Cereal.get
         return $ UTCTime (ModifiedJulianDay d) (fromRational t)
-
-instance ConvertByteString UTCTime where
-    toBytes = Cereal.encode
-    fromBytes bs = let (Right time) = Cereal.decode bs in time
 
 -- | TemplateHaskell function to generate required serializers and related
 -- instances for Actions/Results.
@@ -146,9 +115,6 @@ fqName typee =  modName ++ "." ++ name
   where
     name = BS.pack . P.show $ typeOf typee
     modName = BS.pack . tyConModule . typeRepTyCon $ typeOf typee
-
-forceEitherT :: (Show e, Monad m) => EitherT e m a -> m a
-forceEitherT ema = runEitherT ema >>= return . forceEither
 
 convEither :: Convertible e f => Either e a -> Either f a
 convEither (Right result) = Right result

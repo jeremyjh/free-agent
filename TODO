@@ -3,18 +3,8 @@
   Common/Core:
    * generalize StateHandle terminology to manage any sort of state object
    * update distribute-process dependencies
-   * switch logging to hslogger
+   * switch logging to DP platform logger
    * update quasi-quotes to populate source from Loc
-
-  Executive:
-   * handle commands: 
-   * query execute action history
-   * Execution/Result history plugin Server Contract pattern query event history 
-   * State persistence across process restart
-
-  Database
-  * Execution/Result history impl using LevelDb
-  * Execution/Result history impl using AcidState
 
   Scheduler:
     * code it
@@ -34,10 +24,8 @@
       * Command (shell/createProcess) (pull out of Nagios)
   
   Result Alerting
-  * Server Contract and implementation
+  * Generic Listener - AgentServer w/ pluggable backend like History
   * Result Alerting Rules
-  * Results LevelDB
-  * Results to relational database
 
   Decisions
   * Does Runnable get an "extract" method? This may be needed for MetaAction.
@@ -49,6 +37,10 @@
           * CompositeAction - list of Actions to exec together
   
 1.0.0: 
+  Database
+  * Execution/Result history impl using LevelDb
+  * Execution/Result history impl using HDBC or persistent
+
   REST Interface (as Server Contract)
 
   ScriptAction 

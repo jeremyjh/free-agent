@@ -18,7 +18,6 @@
 
 module FreeAgent.Types
  ( module FreeAgent.Types
- , MonadLevelDB, Key, Value, KeySpace
  , MonadProcess
  , NFSerializable, Process, ProcessId
  , MonadBase
@@ -40,7 +39,6 @@ import           Data.Dynamic                       (Dynamic)
 import           Data.Time.Clock                    (UTCTime)
 import           Data.Typeable                      (cast)
 
-import           Control.Concurrent.Chan.Lifted     (Chan)
 import           Control.DeepSeq                    (NFData (..))
 import           Control.Error                      (EitherT)
 import           FreeAgent.Process (MonadProcess(..), Process
@@ -63,14 +61,12 @@ import Data.SafeCopy
        (SafeCopy(..), Contained, contain, safePut, safeGet, base)
 import           Data.Serialize                     (Serialize)
 import qualified Data.Serialize                     as Cereal
-import           Database.LevelDB.Higher            (Key, KeySpace, LevelDBT
-                                                    ,MonadLevelDB
-                                                    ,Value)
 import           Network.Transport (EndPointAddress)
 
 
 type SafeStore a = (SafeCopy a, Serialize a, Show a, Typeable a)
 
+type Key = ByteString
 -- | Types that can be serialized, stored and retrieved
 --
 class (SafeStore a) => Stashable a where
@@ -154,8 +150,6 @@ data Listener = ActionMatching ActionMatcher NodeId String
               | ResultMatching ActionMatcher ResultMatcher NodeId String
               deriving (Typeable)
 
-data DBMessage = Perform (AgentDB ()) | Terminate
-
 -- | Dynamic wrapper around an open 'AcidState' and a function
 -- which will close it - used with functions from
 -- 'FreeAgent.Database.AcidState'
@@ -208,7 +202,6 @@ data AgentContext
   = AgentContext { _contextActionMap       :: !ActionMap
                  , _contextResultMap       :: !ResultMap
                  , _contextAgentConfig     :: !AgentConfig
-                 , _contextAgentDBChan     :: Chan DBMessage
                  , _contextListeners       :: Agent [Listener]
                  , _contextProcessNode     :: LocalNode
                  , _contextRemoteTable     :: RemoteTable
@@ -223,7 +216,6 @@ instance Default AgentConfig where
 
 instance Default AgentContext where
     def = AgentContext mempty mempty def
-            (error "agentDB chan not initialized!")
             (return [])
             (error "process node not initialized!")
             initRemoteTable
@@ -245,8 +237,6 @@ instance ContextReader m => ContextReader (EitherT e m) where
     askContext = lift askContext
 
 -- Agent Monad
-
-type AgentDB m = LoggingT (LevelDBT IO) m
 
 type AgentBase m = (Applicative m, Monad m, MonadIO m, MonadBase IO m, MonadBaseControl IO m)
 type MonadAgent m = (AgentBase m, ContextReader m, MonadProcess m, MonadLogger m)

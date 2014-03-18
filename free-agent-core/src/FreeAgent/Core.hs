@@ -18,7 +18,6 @@ module FreeAgent.Core
 
 import           AgentPrelude
 import           FreeAgent.Action                 (registerPluginMaps)
-import           FreeAgent.Database
 import           FreeAgent.Database.AcidState (closeAllStates)
 import           FreeAgent.Lenses
 import           FreeAgent.Process
@@ -46,7 +45,6 @@ runAgent :: AgentContext -> Agent () -> IO ()
 runAgent ctxt ma =
     catchAny
           ( do registerPluginMaps (ctxt^.actionMap, ctxt^.resultMap)
-               (_, dbChan) <- initAgentDB ctxt
                statesMV <- newMVar mempty
                eithertcp <- createTransport (ctxt^.agentConfig.nodeHost)
                                             (ctxt^.agentConfig.nodePort)
@@ -57,15 +55,13 @@ runAgent ctxt ma =
                        return (node, tcp)
                    Left msg -> throw msg
 
-               let ctxt'  = ctxt & agentDBChan .~ dbChan
-                                 & processNode .~ node
+               let ctxt'  = ctxt & processNode .~ node
                                  & openStates .~ statesMV
                let proc   = runStdoutLoggingT $ runReaderT (unAgent ma) ctxt'
 
                {-runProcess node $ initLogger >> proc-}
                runProcess node $ initLogger >> globalMonitor >> proc
                closeTransport tcp
-               closeAgentDB dbChan
                closeAllStates statesMV )
 
         ( \exception -> do
