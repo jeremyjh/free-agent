@@ -1,0 +1,2 @@
+#!/bin/bash
+cabal build $1 && bin/spec

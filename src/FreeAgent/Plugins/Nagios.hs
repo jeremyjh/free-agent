@@ -30,6 +30,7 @@ import           Data.Time.Clock   (getCurrentTime)
 import           System.Exit       (ExitCode (..))
 import           System.Process    (readProcessWithExitCode)
 
+import           Control.Error (runEitherT, hoistEither)
 import           Data.Default      (Default (..))
 
 
@@ -69,8 +70,11 @@ makeFields ''CheckTCP
 deriveSerializers ''CheckTCP
 
 data NagiosResult
-  = NagiosResult ResultSummary CommandResult
+  = NagiosResult {_nagresResultSummary :: ResultSummary
+                 ,_nagresResult :: CommandResult
+                 }
   deriving (Show, Eq, Typeable, Generic)
+makeFields ''NagiosResult
 deriveSerializers ''NagiosResult
 
 pluginDef :: NagiosConfig -> PluginDef
@@ -91,13 +95,13 @@ instance Runnable Command NagiosResult where
     exec cmd =
         catchAny (
              do cmdPath <- commandPath
-                (rc, result, _) <- liftIO $ readProcessWithExitCode cmdPath makeArgs []
+                (rc, result', _) <- liftIO $ readProcessWithExitCode cmdPath makeArgs []
                 case rc of
-                    ExitSuccess   -> completeAs OK result
-                    ExitFailure 1 -> completeAs Warning result
-                    ExitFailure 2 -> completeAs Critical result
+                    ExitSuccess   -> completeAs OK result'
+                    ExitFailure 1 -> completeAs Warning result'
+                    ExitFailure 2 -> completeAs Critical result'
                     ExitFailure i -> return $
-                        Left $ UnknownResponse $ tshow i ++ ": " ++ toT result )
+                        Left $ UnknownResponse $ tshow i ++ ": " ++ toT result' )
              (\ exception -> do
                 putStrLn $ "Command exec threw exception: " ++ tshow exception
                 return $ Left $ RIOException $ tshow exception )
@@ -105,9 +109,9 @@ instance Runnable Command NagiosResult where
         makeArgs = ["-H", fromT $ cmd^.host, "-p", portS $ cmd^.port]
         portS (Just p) = showStr p
         portS Nothing = ""
-        completeAs cmdres result = do
+        completeAs cmdres result' = do
             time <- liftIO getCurrentTime
-            let summ = ResultSummary time (toT result) (Action cmd)
+            let summ = ResultSummary time (toT result') (Action cmd)
             return $ Right $ NagiosResult summ cmdres
         commandPath = do
             nagconf <- extractConfig'
@@ -118,4 +122,7 @@ instance Stashable CheckTCP where
     key c = fromT $ c^.host ++ ":" ++ tshow (c^.port)
 
 instance Runnable CheckTCP NagiosResult where
-    exec cmd = exec $ Command (cmd^.host) (Just $ cmd^.port) "check_tcp"
+    exec cmd = runEitherT $ do
+        result' <- (exec $ Command (cmd^.host) (Just $ cmd^.port) "check_tcp")
+                   >>= hoistEither
+        return $ result' & resultSummary.resultOf .~ (Action cmd)

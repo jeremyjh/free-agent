@@ -24,8 +24,8 @@ module FreeAgent.Server.Executive
     , addListener
     , matchAction
     , matchResult
+    , serverName
     , ExecFail(..)
-    , query, update
     )
 where
 
@@ -34,18 +34,17 @@ import           FreeAgent.Action
 import           FreeAgent.Core                                      (withAgent)
 import           FreeAgent.Database
 import           FreeAgent.Database.AcidState
-import qualified FreeAgent.Database.KeySpace                         as KS
 import           FreeAgent.Lenses
 import           FreeAgent.Process                                   as Process
 import           FreeAgent.Process.ManagedAgent
-import           qualified FreeAgent.Server.Peer                               as Peer
+import           FreeAgent.Server.Executive.History                  hiding (serverName)
+import           FreeAgent.Server.Peer
 
 import           Control.DeepSeq.TH                                  (deriveNFData)
 import           Control.Monad.State                                 (StateT)
 import Control.Monad.Reader (ask)
 import           Data.Binary
 import qualified Data.Map.Strict                                     as Map
-import qualified Data.Set                                            as Set
 
 import           Control.Distributed.Static                          (unclosure)
 import           Control.Error                                       hiding (err)
@@ -62,8 +61,6 @@ data ExecPersist
                 , _persistListeners :: [Closure Listener]
                 } deriving (Show, Typeable)
 
-deriveSafeStore ''ExecPersist
-makeFields ''ExecPersist
 
 instance Default ExecPersist where
     def = ExecPersist mempty []
@@ -73,19 +70,20 @@ data ExecState
               , _stateListeners :: ![Listener]
               , _stateAcid      :: !(AcidState ExecPersist)
               } deriving (Typeable, Generic)
-makeFields ''ExecState
 
-data ExecFail = RoutingFailed
+data ExecFail = ECallFailed CallFail
               | ActionNotFound Key
               | ActionFailed !Text
               | DBException !Text
               deriving (Show, Eq, Typeable, Generic)
 
 instance Binary ExecFail
-deriveNFData ''ExecFail
 
 instance Convertible RunnableFail ExecFail where
-    convert = ActionFailed . tshow
+    safeConvert = return . ActionFailed . tshow
+
+instance Convertible CallFail ExecFail where
+    safeConvert = return . ECallFailed
 
 data ExecutiveCommand =
         RegisterAction Action
@@ -151,12 +149,8 @@ executeAction target action' =
 -- | Asynchronously subscribe to a local or remote Executive service
 -- Throws an exception if a Route is supplied which cannot be resolved
 addListener :: (MonadAgent m)
-            => Target -> Closure Listener -> m ()
-addListener Local cl = cast execServer (AddListener cl)
-addListener (Remote peer) cl = cast (peer, execServer) (AddListener cl)
-addListener (Route contexts' zones') cl = do
-    peer <- forceEitherT $ resolveRoute contexts' zones'
-    cast (peer,execServer) (AddListener cl)
+            => Target -> Closure Listener -> m (Either CallFail ())
+addListener target cl = castServer serverName target (AddListener cl)
 
 -- | Used with 'addListener' - defines a 'Listener' that will
 -- receive a 'Result' for each 'Action' executed that matches the typed predicate
@@ -175,14 +169,25 @@ matchResult :: Resulting b
             => ActionMatcher -> (b -> Bool) -> NodeId -> String -> Listener
 matchResult af rf = ResultMatching af (matchR rf)
 
+serverName :: String
+serverName = "agent:executive"
+
+
+callExecutive :: (NFSerializable a, MonadAgent m)
+            => Target -> ExecutiveCommand -> m (Either ExecFail a)
+callExecutive target command = do
+    eresult <- callServer serverName target command
+    case eresult of
+        Right result' -> return result'
+        Left cf -> return (Left $ ECallFailed cf)
+
 -- -----------------------------
 -- Implementation
 -- -----------------------------
 
 execServer :: AgentServer
-execServer = AgentServer sname init child
+execServer = AgentServer serverName child
   where
-    sname = "agent:executive"
     init ctxt = do
         listeners' <- withAgent ctxt $ join $ viewConfig listeners
         Just acid' <- withAgent ctxt $ openOrGetDb "agent-executive" def def
@@ -193,7 +198,7 @@ execServer = AgentServer sname init child
       where
         initExec state' = do
             pid <- getSelfPid
-            Peer.registerServer execServer pid
+            registerServer execServer pid
             return $ InitOk (AgentState ctxt state') Infinity
 
         executiveProcess = defaultProcess {
@@ -227,29 +232,9 @@ execServer = AgentServer sname init child
             , childRestart = Permanent
             , childStop    = TerminateTimeout (Delay $ milliSeconds 10)
             , childStart   = initChild
-            , childRegName = Just $ LocalName sname
+            , childRegName = Just $ LocalName serverName
         }
 
-callExecutive :: (NFSerializable a, MonadAgent m)
-            => Target -> ExecutiveCommand -> m (Either ExecFail a)
-callExecutive Local command = syncCallChan execServer command
-callExecutive (Remote peer) command = syncCallChan (peer, execServer) command
-callExecutive (Route contexts' zones') command = runEitherT $ do
-    peer <- resolveRoute contexts' zones'
-    syncCallChan (peer, execServer) command >>= hoistEither
-
-resolveRoute :: (MonadAgent m) => [Context] -> [Zone] -> EitherT ExecFail m Peer
-resolveRoute contexts' zones' = do
-    peers <- lift $ Peer.queryPeerServers execServer
-                                          (Set.fromList contexts')
-                                          (Set.fromList zones')
-    foundPeer peers
-  where foundPeer peers
-            | peers == Set.empty = do
-                [qwarn| Could not resolve a Route
-                        with Context: #{contexts'} and Zone: #{zones'}|]
-                left RoutingFailed
-            | otherwise = let peer:_ = Set.toList peers in right peer
 
 type ExecAgent a = EitherT ExecFail (StateT ExecState Agent) a
 
@@ -279,8 +264,7 @@ doExec action' = do
   where
     storeResult result = do
         [qdebug| Storing result: #{result}|]
-        asyncAgentDb $ withKeySpace (KS.actionsAp $ key action') $
-            store (timestampKey result) result
+        writeResult Local result >>= convEitherT
         return result
     notifyListeners result = do
         listeners' <- uses listeners (filter fst . map exMatch)
@@ -294,4 +278,9 @@ doExec action' = do
             (afilter action', (nodeid,name'))
         exMatch (ResultMatching afilter rfilter nodeid name') =
             (afilter action' && rfilter result, (nodeid, name'))
-    timestampKey = toBytes . view timestamp . summary
+
+
+deriveSafeStore ''ExecPersist
+makeFields ''ExecPersist
+makeFields ''ExecState
+deriveNFData ''ExecFail

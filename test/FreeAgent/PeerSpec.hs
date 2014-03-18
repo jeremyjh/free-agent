@@ -10,7 +10,7 @@ import qualified Prelude as P
 import qualified AppConfig as Config
 import           FreeAgent.Core
 import           FreeAgent.Process
-import           FreeAgent.Server.Executive
+import           FreeAgent.Server.Executive as Exec
 import           FreeAgent.Lenses
 import           FreeAgent.Plugins.Nagios as Nagios
 import           FreeAgent.Server (runAgentServers)
@@ -69,8 +69,8 @@ spec =
                     count <- queryPeerCount
 
                     -- it "can query for a Set of matching Peers"
-                    peers <- queryPeerServers execServer (Set.fromList [def] )
-                                                         (Set.fromList [Zone "TX"] )
+                    peers <- queryPeerServers Exec.serverName (Set.fromList [def] )
+                                                              (Set.fromList [Zone "TX"] )
 
                     -- it "can register remote listeners"
                     let tx:_ = Set.toList peers
@@ -92,7 +92,7 @@ spec =
                     result (count, length peers,aname, status)
                 $ \exception ->
                     result $ throw exception
-            `shouldReturn` (3, 1, "localhost", OK)
+            `shouldReturn` (3, 1, "localhost:53", OK)
 
 
 -- helper for running agent and getting results out of

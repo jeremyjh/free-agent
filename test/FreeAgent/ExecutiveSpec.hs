@@ -13,7 +13,8 @@ import           Test.Hspec
 import           AgentPrelude
 import           FreeAgent.Lenses
 import           FreeAgent.Core
-import           FreeAgent.Database
+import           FreeAgent.Server.Peer (CallFail(..))
+import           FreeAgent.Server.Executive.History
 import           FreeAgent.Plugins.Nagios as Nagios
 import           FreeAgent.Server.Executive as Exec
 import           FreeAgent.Server (runAgentServers)
@@ -39,7 +40,7 @@ spec = do
         it "is started by Core supervisor" $ do
             testAgent $ \result -> do
                 catchAny $ do
-                    Just _ <- whereis $ execServer^.name
+                    Just _ <- resolve execServer
                     result True
                 $ \exception ->
                     result $ throw exception
@@ -50,11 +51,10 @@ spec = do
                 catchAny $ do
                     Right _ <-registerAction Local checkTCP
                     (Right _) <- executeRegistered Local $ key checkTCP
-                    threadDelay 10000
                     -- confirm results were written
-                    items <- agentDb $ withKeySpace "agent:actions:localhost:53" $ do
-                        scan "" queryItems
-                    result $ length items
+                    Right results' <- allResultsFrom Local
+                                                     (convert (0::Int))
+                    result $ length results'
                 $ \exception ->
                     result $ throw exception
             `shouldReturn` 1
@@ -64,8 +64,6 @@ spec = do
                 catchAny $ do
                     Right () <- unregisterAction Local (key checkTCP)
                     Left (ActionNotFound _) <- executeRegistered Local $ key checkTCP
-                    threadDelay 10000
-                    -- confirm results were written
                     result True -- no match failure
                 $ \exception ->
                     result $ throw exception
@@ -76,11 +74,11 @@ spec = do
                 catchAny $ do
                     (Right nr) <- executeAction Local checkTCP
                     let Just (NagiosResult _ OK) = extract nr
-                    threadDelay 1000
                     -- confirm results were written
-                    items <- agentDb $ withKeySpace "agent:actions:localhost:53" $ do
-                        scan "" queryItems
-                    result $ length items
+                    Right results' <- actionResultsFrom Local
+                                                        "localhost:53"
+                                                        (convert (0::Int))
+                    result $ length results'
                 $ \exception ->
                     result $ throw exception
             `shouldReturn` 1
@@ -109,7 +107,7 @@ spec = do
                     nodeid <- thisNodeId
                     getSelfPid >>= register listenerName
                     let matcher = $(mkClosure 'matchRemoteHostName) (nodeid, listenerName)
-                    addListener Local matcher
+                    Right () <- addListener Local matcher
                     threadDelay 10000
                     Right _ <- executeAction Local checkTCP
                     nr <- expect :: Agent Result
@@ -126,7 +124,7 @@ spec = do
                     nodeid <- thisNodeId
                     getSelfPid >>= register listenerName
                     let matcher = $(mkClosure 'matchRemoteHostName) (nodeid, listenerName)
-                    addListener Local matcher
+                    Right () <- addListener Local matcher
                     threadDelay 10000
                     Just expid <- whereis $ execServer^.name
                     liftProcess $ kill expid "testing"
@@ -155,10 +153,10 @@ spec = do
         it "it won't deliver a routed Action for an unknown context or zone" $ do
             testAgentNL $ \result -> do
                 catchAny $ do
-                    Left RoutingFailed <- executeAction (Route [Context "unkown"] [def])
+                    Left (ECallFailed RoutingFailed) <- executeAction (Route [Context "unkown"] [def])
                                             checkTCP
 
-                    Left RoutingFailed <- executeAction (Route [def] [Zone "unkown"])
+                    Left (ECallFailed RoutingFailed) <- executeAction (Route [def] [Zone "unkown"])
                                             checkTCP
 
 

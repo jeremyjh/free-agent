@@ -18,6 +18,7 @@ module AgentPrelude
     , showStr
     , FilePathS
     , debug, dbg, err
+    , convert
     , convEither, convEitherT
     , Convertible(..)
     , ConvertText(..)
@@ -34,6 +35,7 @@ module AgentPrelude
     , forceEither, forceEitherT
     , deriveSafeStore
     , deriveSafeStoreVersion
+    , (!??)
     ) where
 
 import           ClassyPrelude                 hiding (undefined)
@@ -45,13 +47,14 @@ import           Control.Monad.Logger          (MonadLogger(..), logDebug, logIn
 import           Control.Monad.Logger.Quote    (qdebug, qinfo, qwarn, qerror, qdebugNS)
 import           Data.Binary                   as Binary (Binary (..))
 import qualified Data.Binary                   as Binary
-import qualified Data.Serialize                as Cereal
 import qualified Data.ByteString.Char8         as BS
+import           Data.Convertible              (Convertible(..), convert)
 import           Data.Default                  (def)
 import qualified Data.Text                     as Text
 import qualified Data.Text.Encoding            as Text (decodeUtf8, encodeUtf8)
 import           Data.Time                     (UTCTime(..),Day(..))
 import           Data.Typeable
+import qualified Data.Serialize                as Cereal
 import           GHC.Generics                  (Generic)
 import           Language.Haskell.TH           (Dec, Name, Q)
 import           Language.Haskell.TH.Lib       (conT)
@@ -62,9 +65,6 @@ import           Data.SafeCopy
        (Version, deriveSafeCopy, base, extension, safeGet, safePut)
 import           Data.UUID                     (toASCIIBytes, fromASCIIBytes, UUID)
 import           FileLocation                  (dbg, debug, err)
-
-class Convertible a b where
-    convert :: a -> b
 
 instance MonadLogger m => MonadLogger (EitherT e m) where
     monadLoggerLog a b c d = lift $ monadLoggerLog a b c d
@@ -184,3 +184,9 @@ deriveSafeStoreVersion ver name = do
                 put = safePut
           |]
     return $ sc ++ ss
+
+(!??) :: Applicative m => m (Maybe a) -> e -> m (Either e a)
+(!??) ma e = toeither <$> ma
+  where toeither Nothing = Left e
+        toeither (Just a) = Right a
+

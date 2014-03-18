@@ -322,7 +322,6 @@ data Schedule = Now | Later
 data ActionHistory = ActionHistory deriving (Show, Eq, Typeable, Generic)
 
 data AgentServer = AgentServer { _serverName :: String
-                               , _serverinitProc :: AgentContext -> Process ()
                                , _serverchildSpec :: AgentContext -> Process ChildSpec
                                }
 

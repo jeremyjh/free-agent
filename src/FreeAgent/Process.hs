@@ -35,9 +35,9 @@ import           Control.Distributed.Process.Node                      (localNod
 import           Control.Distributed.Process.Closure                   (mkClosure, remotable)
 import           Control.Distributed.Process.Internal.Types            (Process(..), LocalProcess(..))
 import Control.Distributed.Process.Platform
-       (NFSerializable, Addressable, Routable(..))
+       (NFSerializable, Addressable, Routable(..), Resolvable)
 import           Control.Distributed.Process.Serializable              (Serializable)
-import qualified Control.Distributed.Process.Platform                  as Base (spawnLinkLocal)
+import qualified Control.Distributed.Process.Platform                  as Base
 import qualified Control.Distributed.Process.Platform.UnsafePrimitives as NF
 import qualified Control.Distributed.Process.Platform.ManagedProcess.UnsafeClient   as Managed
 import           Control.Distributed.Process.Platform.Supervisor (ChildSpec)
@@ -156,3 +156,7 @@ call pid = liftProcess . Managed.call pid
 waitRegistration :: MonadProcess m => String -> m ProcessId
 waitRegistration sname = loop
   where loop = whereis sname >>= maybe (threadDelay 1000 >> loop) return
+
+resolve :: (MonadProcess m, Resolvable addr)
+        => addr -> m (Maybe ProcessId)
+resolve = liftProcess . Base.resolve

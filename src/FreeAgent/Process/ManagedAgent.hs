@@ -7,11 +7,16 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module FreeAgent.Process.ManagedAgent
-    ( module FreeAgent.Process.ManagedAgent
-    , module Managed
+    ( module Managed
     , module Supervisor
+    , AgentState(..)
+    , initState
+    , agentCastHandler
+    , agentCallHandlerET
+    , agentCallHandler
+    , agentAsyncCallHandler
+    , agentAsyncCallHandlerET
     , Addressable
-    , Resolvable(..)
     , Delay(..)
     , ChildSpec(..)
     , milliSeconds
@@ -26,28 +31,24 @@ import           FreeAgent.Process
 
 import           Control.Monad.State                                 (StateT, evalStateT
                                                                      , execStateT, runStateT)
+
+
 import           Control.Concurrent.Lifted                           (threadDelay)
 import           Control.Distributed.Process.Platform.ManagedProcess as Managed
-                                                                    hiding (cast, call, syncCallChan, action, shutdown)
-import           Control.Error                                       (EitherT, runEitherT)
-
-import Control.Distributed.Process.Platform
-       (whereisOrStart, linkOnFailure, Addressable, Resolvable(..))
+    hiding (cast, call, syncCallChan, action, shutdown)
+import           Control.Distributed.Process.Platform
+    (linkOnFailure, Addressable)
+import qualified Control.Distributed.Process.Platform               as Platform
 import           Control.Distributed.Process.Platform.Supervisor    as Supervisor
 import           Control.Distributed.Process.Platform.Time          (Delay(..), milliSeconds)
+import           Control.Error                                       (EitherT, runEitherT)
 
 data AgentState a = AgentState AgentContext a
 
-instance Resolvable AgentServer where
-    resolve (AgentServer sname _ _) = whereis sname
+instance Platform.Resolvable AgentServer where
+    resolve (AgentServer sname _) = whereis sname
 
 instance Addressable AgentServer
-
--- | starts the defined server process if it is not already running
-startServer :: (MonadAgent m) => AgentServer -> m ProcessId
-startServer (AgentServer sname sinit _) = do
-    ctxt <- askContext
-    liftProcess $ whereisOrStart sname (sinit ctxt)
 
 initState :: AgentContext -> a -> Process (InitResult (AgentState a))
 initState ctxt state' = return $ InitOk (AgentState ctxt state') Infinity
@@ -144,3 +145,8 @@ agentCastHandler fn (AgentState ctxt ustate) command = do
         [qdebug| Processing command: #{command}|]
         execStateT (fn command) ustate
     continue $ AgentState ctxt newState
+
+
+-- -----------------------------
+-- Implementation
+-- -----------------------------

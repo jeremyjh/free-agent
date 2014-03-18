@@ -12,6 +12,7 @@ import FreeAgent.Lenses
 import FreeAgent.Process
 import FreeAgent.Core (runAgent)
 import FreeAgent.Server.Executive (execServer)
+import FreeAgent.Server.Executive.History (defaultHistoryServer)
 import FreeAgent.Server.Peer (peerServer)
 
 import Control.Distributed.Process.Platform.Supervisor
@@ -34,8 +35,8 @@ startSuper servers' = do
         child' <- childFrom ctxt s
         start restartOne ParallelShutdown [child']
     forM_ servers' $ \s -> waitRegistration $ s^.name
-  where childFrom ctxt (AgentServer _ _ child) = child ctxt
+  where childFrom ctxt (AgentServer _ child) = child ctxt
 
 -- | Servers that are required for most use cases
 coreServers :: [AgentServer]
-coreServers = [peerServer, execServer]
+coreServers = [peerServer, execServer, defaultHistoryServer]

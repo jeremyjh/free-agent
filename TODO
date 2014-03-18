@@ -1,6 +1,7 @@
 0.2.0:
 
   Common/Core:
+   * generalize StateHandle terminology to manage any sort of state object
    * update distribute-process dependencies
    * switch logging to hslogger
    * update quasi-quotes to populate source from Loc
@@ -12,8 +13,8 @@
    * State persistence across process restart
 
   Database
-  * AcidState for AgentDB
   * Execution/Result history impl using LevelDb
+  * Execution/Result history impl using AcidState
 
   Scheduler:
     * code it
