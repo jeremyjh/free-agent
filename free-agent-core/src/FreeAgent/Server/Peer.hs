@@ -54,19 +54,8 @@ import           Data.Acid.Advanced (query')
 instance Platform.Resolvable Peer where
     resolve peer = return $ Just $ peer^.processId
 
-instance Platform.Resolvable (Peer, AgentServer) where
-    resolve (peer,server) = do
-        whereisRemoteAsync nodeid sname
-        WhereIsReply _ mpid <- expect
-        return mpid
-      where sname = server^.name
-            nodeid = processNodeId $ peer^.processId
-
 instance Platform.Resolvable (Peer, String) where
-    resolve (peer,sname) = do
-        whereisRemoteAsync nodeid sname
-        WhereIsReply _ mpid <- expect
-        return mpid
+    resolve (peer,sname) = resolve (nodeid, sname)
       where nodeid = processNodeId $ peer^.processId
 
 data CallFail = RoutingFailed | ServerCrash String

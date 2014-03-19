@@ -44,6 +44,7 @@ import           Control.Error                      (EitherT)
 import           FreeAgent.Process (MonadProcess(..), Process
                                                     ,ProcessId, NFSerializable
                                                     ,ChildSpec, RemoteTable)
+import qualified Control.Distributed.Process.Platform as Platform (__remoteTable)
 import           Control.Distributed.Process.Node   (LocalNode, initRemoteTable)
 import           Control.Distributed.Process.Internal.Types (LocalProcessId)
 import Control.Distributed.Process (NodeId, Closure)
@@ -62,6 +63,7 @@ import Data.SafeCopy
 import           Data.Serialize                     (Serialize)
 import qualified Data.Serialize                     as Cereal
 import           Network.Transport (EndPointAddress)
+
 
 
 type SafeStore a = (SafeCopy a, Serialize a, Show a, Typeable a)
@@ -218,7 +220,7 @@ instance Default AgentContext where
     def = AgentContext mempty mempty def
             (return [])
             (error "process node not initialized!")
-            initRemoteTable
+            (Platform.__remoteTable initRemoteTable)
             (error "states mvar not initialized! ")
 
 class (Functor m, Applicative m, Monad m)
