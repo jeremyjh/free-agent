@@ -173,7 +173,7 @@ testAgentConfig doSetup ctxt ma = do
     when doSetup setup
     result <- newEmptyMVar
     runAgentServers ctxt (ma (putMVar result))
-    threadDelay 2000 -- so we dont get open port errors
+    threadDelay 10000 -- so we dont get open port errors
     takeMVar result
 
 testAgent ma = testAgentConfig True appConfig ma
@@ -247,13 +247,14 @@ testDef :: NagiosConfig -> PluginDef
 testDef conf = definePlugin "ExecSpec"
                             conf
                             ((++) <$> testActionListener <*> testResultListener)
+                            []
                             (return ())
 
 
 -- use a local config here because we are wiring up our own test listener
 appConfig :: AgentContext
 appConfig = (
-    registerPlugins $ do
+    registerPlugins def $ do
         addPlugin $ Nagios.pluginDef def {
             -- override default plugin-specific config
             _nagiosPluginsPath = "/usr/lib/nagios/plugins"

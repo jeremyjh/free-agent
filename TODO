@@ -3,7 +3,7 @@
   Common/Core:
    * generalize StateHandle terminology to manage any sort of state object
    * update distribute-process dependencies
-   * switch logging to DP platform logger
+   * switch logging to hslogger or DP platform logger 
    * update quasi-quotes to populate source from Loc
 
   Scheduler:

@@ -20,7 +20,12 @@ import Control.Distributed.Process.Platform.Supervisor
 
 -- | Same as 'runAgent' but first starts core server processes
 runAgentServers :: AgentContext -> Agent () -> IO ()
-runAgentServers ctxt ma = runAgent ctxt $ startSuper coreServers >> ma
+runAgentServers context' ma =
+    let pservers = pluginServers context'
+        cservers = filter (inPlugins pservers) coreServers in
+    runAgent context' $ startSuper (join [pservers, cservers]) >> ma
+  where inPlugins pservers cserver =
+            all (\s -> s^.name /= cserver^.name) pservers
 
 -- | Start a supervisor as RestartOne with a list of AgentServer definitions
 startSuper ::  [AgentServer] -> Agent ()
@@ -40,3 +45,7 @@ startSuper servers' = do
 -- | Servers that are required for most use cases
 coreServers :: [AgentServer]
 coreServers = [peerServer, execServer, defaultHistoryServer]
+
+pluginServers :: AgentContext -> [AgentServer]
+pluginServers context' = let plugs = context'^.plugins in
+    concat $ map (view servers) plugs

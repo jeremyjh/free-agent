@@ -9,7 +9,6 @@
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
@@ -167,6 +166,7 @@ data PluginDef
               , _plugindefContext   :: !Dynamic
               , _plugindefActions   :: ![PluginActions]
               , _plugindefListeners :: Agent [Listener]
+              , _plugindefServers   :: [AgentServer]
               }
 
 -- | AgentConfig data is set at startup and does not change while
@@ -208,6 +208,7 @@ data AgentContext
                  , _contextProcessNode     :: LocalNode
                  , _contextRemoteTable     :: RemoteTable
                  , _contextOpenStates      :: MVar (Map String StateHandles)
+                 , _contextPlugins         :: [PluginDef]
                  }
 
 instance Default AgentConfig where
@@ -222,6 +223,7 @@ instance Default AgentContext where
             (error "process node not initialized!")
             (Platform.__remoteTable initRemoteTable)
             (error "states mvar not initialized! ")
+            []
 
 class (Functor m, Applicative m, Monad m)
       => ContextReader m where
@@ -347,6 +349,7 @@ class Binary a => UnsafeCopy a where
     unsafePut = contain . safePut . Binary.encode
 
 instance Typeable a => UnsafeCopy (Closure a)
+
 instance Typeable a => SafeCopy (Closure a) where
     version = 1
     kind = base

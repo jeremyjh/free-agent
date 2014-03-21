@@ -135,6 +135,7 @@ testDef :: AgentConfig -> PluginDef
 testDef _ = definePlugin "PeerSpec"
                             ()
                             (return [])
+                            []
                             (return ())
 
 checkTCP = CheckTCP  "localhost" 53

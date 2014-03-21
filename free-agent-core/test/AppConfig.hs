@@ -10,7 +10,7 @@ import FreeAgent.Plugins.Nagios as Nagios
 -- use record syntax to over-ride default configuration values
 appConfig :: AgentContext
 appConfig = (
-    registerPlugins $ do
+    registerPlugins def $ do
         addPlugin $ Nagios.pluginDef def {
             -- override default plugin-specific config
             _nagiosPluginsPath = "/usr/lib/nagios/plugins"

@@ -59,7 +59,6 @@ runAgent ctxt ma =
                                  & openStates .~ statesMV
                let proc   = runStdoutLoggingT $ runReaderT (unAgent ma) ctxt'
 
-               {-runProcess node $ initLogger >> proc-}
                runProcess node $ initLogger >> globalMonitor >> proc
                closeTransport tcp
                closeAllStates statesMV )
@@ -101,7 +100,7 @@ spawnAgent :: AgentContext -> Agent a -> Process ProcessId
 spawnAgent ctxt ma = spawnLocal (void $ withAgent ctxt ma)
 
 -- | Lookup a plugin-specific config from the pluginConfigs map
--- and extract it to a concrete type with fromDynamic
+-- and extract it to a concrete type
 extractConfig :: (ContextReader m, Typeable a) => ByteString -> m a
 extractConfig configName = do
     configMap <- viewConfig $ agentConfig.pluginContexts
@@ -113,17 +112,18 @@ extractConfig configName = do
                   return
                   (fromDynamic dynconf)
 
-registerPlugins :: PluginWriter -> AgentContext
-registerPlugins pw =
-    let plugs = execWriter pw
+-- | wire up a set of Plugins - used in program initialization
+registerPlugins :: AgentContext -> PluginWriter -> AgentContext
+registerPlugins context' pluginW' =
+    let plugs = execWriter pluginW'
         acts = concatMap _plugindefActions plugs
         acontexts = map buildContexts plugs
         (amap, rmap) = buildPluginMaps acts in
-    def { _contextActionMap = amap
-        , _contextResultMap = rmap
-        , _contextAgentConfig = def {_configPluginContexts = Map.fromList acontexts}
-        , _contextListeners = buildListeners plugs
-        }
+    context' & actionMap .~ amap
+             & resultMap .~ rmap
+             & listeners .~ buildListeners plugs
+             & plugins .~ plugs
+             & agentConfig.pluginContexts .~ Map.fromList acontexts
   where
     buildContexts plugin =
         (_plugindefName plugin, _plugindefContext plugin)
@@ -135,16 +135,20 @@ registerPlugins pw =
     buildListeners = foldM appendListener []
     appendListener acc = _plugindefListeners >=> return . (++ acc)
 
+-- | add one particular plugin
+-- > addPlugin pd = tell [pd]
 addPlugin :: PluginDef -> PluginWriter
 addPlugin pd = tell [pd]
 
+-- | used by Plugin *authors* to build PluginDef structure
 definePlugin :: (Typeable a)
              => ByteString -> a
              -> Agent [Listener]
+             -> [AgentServer]
              -> ActionsWriter
              -> PluginDef
-definePlugin pname pcontext listeners' pwriter
-  = PluginDef pname (toDyn pcontext) (execWriter pwriter) listeners'
+definePlugin pname pcontext listeners' servers' pwriter
+  = PluginDef pname (toDyn pcontext) (execWriter pwriter) listeners' servers'
 
 globalMonitor :: Process ()
 globalMonitor = do
@@ -169,5 +173,6 @@ appendRemoteTable :: (RemoteTable -> RemoteTable) -> AgentContext -> AgentContex
 appendRemoteTable table ctxt =
     ctxt & remoteTable .~ table (ctxt^.remoteTable)
 
+-- | NodeId for this Agent
 thisNodeId :: (ContextReader m) => m NodeId
 thisNodeId = viewConfig $ processNode.to localNodeId
