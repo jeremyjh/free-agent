@@ -27,10 +27,7 @@ module FreeAgent.Server.Executive.History
 
 import           AgentPrelude
 import           FreeAgent.Lenses
-import           FreeAgent.Core
-import           FreeAgent.Process
 import           FreeAgent.Server.Peer (castServer, callServer, CallFail)
-import qualified FreeAgent.Server.Peer as Peer
 import           FreeAgent.Database.AcidState
 import           FreeAgent.Process.ManagedAgent
 
@@ -98,43 +95,23 @@ callHistory target command = do
         Left cf -> return (Left $ HCallFailed cf)
 
 historyServerImpl :: HistoryBackend st -> AgentServer
-historyServerImpl backend@HistoryBackend{..} = AgentServer serverName child
-  where
-    init ctxt = do
-        state' <- withAgent ctxt doInit
-        serve state' initHistory historyProcess
-      where
-        initHistory state' = do
-            pid <- getSelfPid
-            Peer.registerServer (historyServerImpl backend) pid
-            return $ InitOk (AgentState ctxt state') Infinity
+historyServerImpl backend@HistoryBackend{..} =
+    defineServer serverName
+                 doInit
+                 defaultProcess {
+                     apiHandlers =
+                     [ handleCast $ agentCastHandler $
+                           \cmd -> case cmd of
+                               WriteResult r -> doWriteResult r
+                               _ -> $(err "illegal pattern match")
 
-        historyProcess = defaultProcess {
-            apiHandlers =
-            [ handleCast $ agentCastHandler $
-                  \cmd -> case cmd of
-                      WriteResult r -> doWriteResult r
-                      _ -> $(err "illegal pattern match")
-
-            , handleRpcChan $ agentCallHandlerET $
-                  \cmd -> case cmd of
-                      AllResultsFrom time -> doAllResultsFrom time
-                      ActionResultsFrom key' time -> doActionResultsFrom key' time
-                      _ -> $(err "illegal pattern match")
-            ]
-        }
-
-    child ctxt = do
-        initChild <- toChildStart $ init ctxt
-
-        return ChildSpec {
-              childKey     = ""
-            , childType    = Worker
-            , childRestart = Permanent
-            , childStop    = TerminateTimeout (Delay $ milliSeconds 10)
-            , childStart   = initChild
-            , childRegName = Just $ LocalName serverName
-        }
+                     , handleRpcChan $ agentCallHandlerET $
+                           \cmd -> case cmd of
+                               AllResultsFrom time -> doAllResultsFrom time
+                               ActionResultsFrom key' time -> doActionResultsFrom key' time
+                               _ -> $(err "illegal pattern match")
+                     ]
+                 }
 
 -- -----------------------------
 -- Default Implementation

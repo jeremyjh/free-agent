@@ -10,7 +10,7 @@ module FreeAgent.Process.ManagedAgent
     ( module Managed
     , module Supervisor
     , AgentState(..)
-    , initState
+    , defineServer
     , agentCastHandler
     , agentCallHandlerET
     , agentCallHandler
@@ -50,8 +50,29 @@ instance Platform.Resolvable AgentServer where
 
 instance Addressable AgentServer
 
-initState :: AgentContext -> a -> Process (InitResult (AgentState a))
-initState ctxt state' = return $ InitOk (AgentState ctxt state') Infinity
+defineServer :: String -- ^ server name
+             -> (Agent st) -- ^ state intialization
+             -> ProcessDefinition (AgentState st)
+             -> AgentServer
+defineServer name' initState' processDef' = AgentServer name' child
+  where
+    init context' = do
+        state' <- withAgent context' initState'
+        serve state' onStart processDef'
+      where onStart state' = do
+                return $ InitOk (AgentState context' state') Infinity
+
+    child ctxt = do
+        initChild <- toChildStart $ init ctxt
+
+        return ChildSpec {
+              childKey     = ""
+            , childType    = Worker
+            , childRestart = Permanent
+            , childStop    = TerminateTimeout (Delay $ milliSeconds 10)
+            , childStart   = initChild
+            , childRegName = Just $ LocalName name'
+        }
 
 -- | handle calls that may mutate the State environment
 agentCallHandler :: (NFSerializable a, NFSerializable b, Show a)

@@ -28,7 +28,6 @@ where
 import           AgentPrelude
 import           FreeAgent.Lenses
 import           FreeAgent.Process
-import           FreeAgent.Core
 import           FreeAgent.Database.AcidState
 import           FreeAgent.Process.ManagedAgent
 
@@ -37,10 +36,10 @@ import qualified Data.Set as Set
 
 import qualified Control.Distributed.Process.Platform as Platform
 import           Control.Monad.State                            as State (StateT, MonadState)
-import Control.Monad.Reader (ask)
+import           Control.Monad.Reader (ask)
 import           Control.Distributed.Backend.P2P(getCapable, peerController,makeNodeId)
-import Control.Error (runEitherT, (!?), hoistEither, EitherT)
-import Control.DeepSeq.TH (deriveNFData)
+import           Control.Error (runEitherT, (!?), hoistEither, EitherT)
+import           Control.DeepSeq.TH (deriveNFData)
 import           Data.UUID.V1 (nextUUID)
 import           Data.Acid.Advanced (query')
 
@@ -146,66 +145,51 @@ castServer name' target command = runEitherT $ do
 -- ---------------------------
 
 peerServer :: AgentServer
-peerServer = AgentServer sname child
+peerServer =
+    defineServer "agent:peer"
+                 initState
+                 defaultProcess {
+                     apiHandlers =
+                     [ handleCast $ agentCastHandler $ \ cmd ->
+                         -- registration is async to avoid possiblity of deadlock
+                         case cmd of
+                             DiscoverPeers -> doDiscoverPeers
+                             RegisterPeer peer -> doRegisterPeer peer True
+                             RespondRegisterPeer peer -> doRegisterPeer peer False
+                             RegisterServer name' pid -> doRegisterServer name' pid
+                             _ -> $(err "illegal pattern match")
+
+                     , handleRpcChan $ \
+                           state'@( AgentState _ (PeerState _ peers _))
+                           port
+                           QueryPeerCount ->
+                               sendChan port (length peers) >> continue state'
+
+                     , handleRpcChan $ agentCallHandler $
+                         \ (QueryPeerServers n c z) -> doQueryPeerServers n c z
+                     ]
+                 }
+
   where
-    sname = "agent:peer"
-    init ctxt = serve undefined initPeer peerProcess
-      where
-        initPeer _ = do
-            initp2p >>= link
-            Just newid <- liftIO nextUUID
-            Just acid' <- initAcid (PeerPersist newid)
-            self' <- initSelf acid'
-            let state' = PeerState self' (Set.fromList [self']) acid'
-            getSelfPid >>= flip cast DiscoverPeers
-            return $ InitOk (AgentState ctxt state') Infinity
-          where
-            initp2p = spawnLocal $ peerController $
-                          makeNodeId <$> (ctxt^.agentConfig.peerNodeSeeds)
-            initAcid initpp = withAgent ctxt $ openOrGetDb "agent-peer" initpp def
-            initSelf acid' =
-                withAgent ctxt $ do
-                    persist <- query' acid' GetPersist
-                    pid <- getSelfPid
-                    ctxts <- viewConfig $ agentConfig.contexts
-                    zs <- viewConfig $ agentConfig.zones
-                    let self' = Peer (persist^.uuid) pid ctxts zs Set.empty
-                    [qdebug| Peer initialized self: #{self'}|]
-                    return self'
-        peerProcess = defaultProcess {
-            apiHandlers =
-            [ handleCast $ agentCastHandler $ \ cmd ->
-                -- registration is async to avoid possiblity of deadlock
-                case cmd of
-                    DiscoverPeers -> doDiscoverPeers
-                    RegisterPeer peer -> doRegisterPeer peer True
-                    RespondRegisterPeer peer -> doRegisterPeer peer False
-                    RegisterServer name' pid -> doRegisterServer name' pid
-                    _ -> $(err "illegal pattern match")
-
-            , handleRpcChan $ \
-                  state'@( AgentState _ (PeerState _ peers _))
-                  port
-                  QueryPeerCount ->
-                      sendChan port (length peers) >> continue state'
-
-            , handleRpcChan $ agentCallHandler $
-                \ (QueryPeerServers n c z) -> doQueryPeerServers n c z
-            ]
-
-        }
-
-    child ctxt = do
-       initChild <- toChildStart $ init ctxt
-
-       return ChildSpec {
-             childKey     = ""
-           , childType    = Worker
-           , childRestart = Permanent
-           , childStop    = TerminateTimeout (Delay $ milliSeconds 10)
-           , childStart   = initChild
-           , childRegName = Just $ LocalName sname
-       }
+    initState = do
+        context' <- askContext
+        Just newid <- liftIO nextUUID
+        Just acid' <- initAcid (PeerPersist newid)
+        self' <- initSelf acid'
+        liftProcess $ initp2p context' >>= link
+        getSelfPid >>= flip cast DiscoverPeers
+        return $ PeerState self' (Set.fromList [self']) acid'
+    initp2p context' = spawnLocal $ peerController $
+                  makeNodeId <$> (context'^.agentConfig.peerNodeSeeds)
+    initAcid initpp = openOrGetDb "agent-peer" initpp def
+    initSelf acid' = do
+        persist <- query' acid' GetPersist
+        pid <- getSelfPid
+        ctxts <- viewConfig $ agentConfig.contexts
+        zs <- viewConfig $ agentConfig.zones
+        let self' = Peer (persist^.uuid) pid ctxts zs Set.empty
+        [qdebug| Peer initialized self: #{self'}|]
+        return self'
 
 doDiscoverPeers :: PeerAgent ()
 doDiscoverPeers = do

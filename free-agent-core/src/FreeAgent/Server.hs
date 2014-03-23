@@ -13,12 +13,12 @@ import FreeAgent.Process
 import FreeAgent.Core (runAgent)
 import FreeAgent.Server.Executive (execServer)
 import FreeAgent.Server.Executive.History (defaultHistoryServer)
-import FreeAgent.Server.Peer (peerServer)
+import FreeAgent.Server.Peer (peerServer, registerServer)
 
 import Control.Distributed.Process.Platform.Supervisor
 
 
--- | Same as 'runAgent' but first starts core server processes
+-- | Same as 'runAgent' but first starts core and plugin server processes
 runAgentServers :: AgentContext -> Agent () -> IO ()
 runAgentServers context' ma =
     let pservers = pluginServers context'
@@ -30,17 +30,21 @@ runAgentServers context' ma =
 -- | Start a supervisor as RestartOne with a list of AgentServer definitions
 startSuper ::  [AgentServer] -> Agent ()
 startSuper servers' = do
-    ctxt <- askContext
+    context' <- askContext
     --TODO: I think its a bug in Supervisor that the whole group
     --is restarted even when RestartOne is selected
     {-liftProcess $ do-}
-        {-cspecs <- sequence $ fmap (childFrom ctxt) servers'-}
+        {-cspecs <- sequence $ fmap (childFrom context') servers'-}
         {-void $ start restartOne ParallelShutdown cspecs-}
-    forM_ servers' $ \s -> liftProcess $ do
-        child' <- childFrom ctxt s
-        start restartOne ParallelShutdown [child']
-    forM_ servers' $ \s -> waitRegistration $ s^.name
-  where childFrom ctxt (AgentServer _ child) = child ctxt
+        {-pid <- waitRegistration $ (server'^.name)-}
+        {-registerServer server' pid-}
+    forM_ servers' $ \server' -> liftProcess $ do
+        child' <- childFrom context' server'
+        void $ start restartOne ParallelShutdown [child']
+        when (server'^.name /= peerServer^.name) $ do
+            pid <- waitRegistration $ server'^.name
+            registerServer server' pid
+  where childFrom context' (AgentServer _ child) = child context'
 
 -- | Servers that are required for most use cases
 coreServers :: [AgentServer]

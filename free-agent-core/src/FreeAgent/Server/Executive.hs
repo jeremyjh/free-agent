@@ -31,7 +31,6 @@ where
 
 import           AgentPrelude
 import           FreeAgent.Action
-import           FreeAgent.Core                                      (withAgent)
 import           FreeAgent.Database.AcidState
 import           FreeAgent.Lenses
 import           FreeAgent.Process                                   as Process
@@ -185,54 +184,36 @@ callExecutive target command = do
 -- -----------------------------
 
 execServer :: AgentServer
-execServer = AgentServer serverName child
-  where
-    init ctxt = do
-        listeners' <- withAgent ctxt $ join $ viewConfig listeners
-        Just acid' <- withAgent ctxt $ openOrGetDb "agent-executive" def def
-        persist <- query' acid' GetPersist
-        let cls = rights $ map (unclosure (ctxt^.remoteTable)) (persist^.listeners)
-        let state' = ExecState (Map.fromList []) (listeners' ++ cls) acid'
-        serve state' initExec executiveProcess
-      where
-        initExec state' = do
-            pid <- getSelfPid
-            registerServer execServer pid
-            return $ InitOk (AgentState ctxt state') Infinity
+execServer =
+    defineServer serverName
+                 initExec
+                 defaultProcess {
+                     apiHandlers =
+                     [ handleRpcChan $ agentAsyncCallHandlerET $
+                           \cmd -> case cmd of
+                               ExecuteAction act -> doExecuteAction act
+                               ExecuteRegistered k -> doExecuteRegistered k
+                               _ -> $(err "illegal pattern match")
 
-        executiveProcess = defaultProcess {
-            apiHandlers =
-            [ handleRpcChan $ agentAsyncCallHandlerET $
-                  \cmd -> case cmd of
-                      ExecuteAction act -> doExecuteAction act
-                      ExecuteRegistered k -> doExecuteRegistered k
-                      _ -> $(err "illegal pattern match")
+                     , handleRpcChan $ agentAsyncCallHandlerET $ \cmd -> doRegistration cmd
 
-            , handleRpcChan $ agentAsyncCallHandlerET $ \cmd -> doRegistration cmd
-
-            , handleCast $ agentCastHandler $ \ (AddListener cl) -> do
-                rt <- viewConfig remoteTable
-                case unclosure rt cl of
-                    Left msg -> [qwarn|AddListener failed! Could not evaluate
-                                     new listener closure: #{msg}|]
-                    Right listener -> do
-                        listeners %= (:) listener
-                        update (PutListener cl)
-            ]
-
-        }
-
-    child ctxt = do
-        initChild <- toChildStart $ init ctxt
-
-        return ChildSpec {
-              childKey     = ""
-            , childType    = Worker
-            , childRestart = Permanent
-            , childStop    = TerminateTimeout (Delay $ milliSeconds 10)
-            , childStart   = initChild
-            , childRegName = Just $ LocalName serverName
-        }
+                     , handleCast $ agentCastHandler $ \ (AddListener cl) -> do
+                         rt <- viewConfig remoteTable
+                         case unclosure rt cl of
+                             Left msg -> [qwarn|AddListener failed! Could not evaluate
+                                              new listener closure: #{msg}|]
+                             Right listener -> do
+                                 listeners %= (:) listener
+                                 update (PutListener cl)
+                     ]
+                 }
+  where initExec = do
+            listeners' <- join $ viewConfig listeners
+            Just acid' <- openOrGetDb "agent-executive" def def
+            persist <- query' acid' GetPersist
+            rt <- viewConfig remoteTable
+            let cls = rights $ map (unclosure rt) (persist^.listeners)
+            return $ ExecState (Map.fromList []) (listeners' ++ cls) acid'
 
 
 type ExecAgent a = EitherT ExecFail (StateT ExecState Agent) a
