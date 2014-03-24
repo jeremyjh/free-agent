@@ -20,7 +20,7 @@ import           FreeAgent.Types
 
 import Control.Lens
        (makeFields, makeLenses, Getting, use, uses, view, views, (&),
-       (.~), (^.), _1, _2, set, to, _Right, (%=), Profunctor)
+       (.~), (^.), _1, _2, set, to, _Right, (%=), (%~), Profunctor)
 
 import Control.Lens.Type (Overloading)
 import Control.Lens.Getter (Accessor)
@@ -33,6 +33,7 @@ makeFields ''PluginDef
 makeFields ''ResultSummary
 makeFields ''AgentServer
 makeFields ''Peer
+makeFields ''PluginSet
 
 -- | Use a lens to view a portion of AgentContext
 viewConfig :: (ContextReader m) => Getting a AgentContext a -> m a

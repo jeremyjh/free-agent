@@ -42,9 +42,9 @@ import           Control.DeepSeq                    (NFData (..))
 import           Control.Error                      (EitherT)
 import           FreeAgent.Process (MonadProcess(..), Process
                                                     ,ProcessId, NFSerializable
-                                                    ,ChildSpec, RemoteTable)
-import qualified Control.Distributed.Process.Platform as Platform (__remoteTable)
-import           Control.Distributed.Process.Node   (LocalNode, initRemoteTable)
+                                                    ,ChildSpec, RemoteTable
+                                                    ,initRemoteTable)
+import           Control.Distributed.Process.Node   (LocalNode)
 import           Control.Distributed.Process.Internal.Types (LocalProcessId)
 import Control.Distributed.Process (NodeId, Closure)
 import           Control.Monad.Base                 (MonadBase)
@@ -139,7 +139,7 @@ type Unwrapper a = (Wrapped -> Either String a)
 type ActionMap = Map ByteString (Unwrapper Action)
 type ResultMap = Map ByteString (Unwrapper Result)
 type PluginMaps = (ActionMap, ResultMap)
-type PluginContexts = Map ByteString Dynamic
+type PluginConfigs = Map ByteString Dynamic
 type PluginActions = ( ByteString, Unwrapper Action
                      , ByteString, Unwrapper Result)
 type PluginWriter = Writer [PluginDef] ()
@@ -169,19 +169,34 @@ data PluginDef
               , _plugindefServers   :: [AgentServer]
               }
 
+data PluginSet
+  = PluginSet { _pluginsetActionMap       :: !ActionMap
+              , _pluginsetResultMap       :: !ResultMap
+              , _pluginsetListeners       :: Agent [Listener]
+              , _pluginsetConfigs         :: !PluginConfigs
+              , _pluginsetPlugins         :: ![PluginDef]
+              }
+
 -- | AgentConfig data is set at startup and does not change while
 -- the process is running
 data AgentConfig
   = AgentConfig  { _configDbPath         :: !FilePathS
                  , _configNodeHost       :: !String
                  , _configNodePort       :: !String
-                 , _configPluginContexts :: !PluginContexts
                  , _configDebugLogCount  :: !Int
                  , _configMinLogLevel    :: !LogLevel
                  , _configContexts       :: Set Context
                  , _configZones          :: Set Zone
                  , _configPeerNodeSeeds  :: [String]
+                 , _configRemoteTable   :: !RemoteTable
                  }
+
+instance Default AgentConfig where
+    def = AgentConfig "./db" "127.0.0.1" "3546" 10 LevelWarn
+            (Set.fromList [def])
+            (Set.fromList [def])
+            []
+            initRemoteTable
 
 -- | Each agent belongs to one or more contexts - every 'Package' specifies
 -- the Context(s) in which it will execute
@@ -198,32 +213,17 @@ data Zone = Zone !Text deriving (Show, Eq, Ord, Typeable, Generic)
 
 instance Default Zone where def = Zone "default"
 
+
 -- | AgentContext may be initialized during startup but is more
 -- dynamic than config and may change and/or provide communications
 data AgentContext
-  = AgentContext { _contextActionMap       :: !ActionMap
-                 , _contextResultMap       :: !ResultMap
-                 , _contextAgentConfig     :: !AgentConfig
-                 , _contextListeners       :: Agent [Listener]
-                 , _contextProcessNode     :: LocalNode
-                 , _contextRemoteTable     :: RemoteTable
+  = AgentContext { _contextAgentConfig     :: !AgentConfig
+                 , _contextPlugins         :: !PluginSet
+                 , _contextProcessNode     :: !LocalNode
                  , _contextOpenStates      :: MVar (Map String StateHandles)
-                 , _contextPlugins         :: [PluginDef]
                  }
 
-instance Default AgentConfig where
-    def = AgentConfig "./db" "127.0.0.1" "3546" mempty 10 LevelWarn
-            (Set.fromList [Context "default"])
-            (Set.fromList [Zone "default"])
-            []
 
-instance Default AgentContext where
-    def = AgentContext mempty mempty def
-            (return [])
-            (error "process node not initialized!")
-            (Platform.__remoteTable initRemoteTable)
-            (error "states mvar not initialized! ")
-            []
 
 class (Functor m, Applicative m, Monad m)
       => ContextReader m where

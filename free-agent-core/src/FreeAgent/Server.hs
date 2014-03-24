@@ -19,11 +19,11 @@ import Control.Distributed.Process.Platform.Supervisor
 
 
 -- | Same as 'runAgent' but first starts core and plugin server processes
-runAgentServers :: AgentContext -> Agent () -> IO ()
-runAgentServers context' ma =
-    let pservers = pluginServers context'
+runAgentServers :: AgentConfig -> PluginSet -> Agent () -> IO ()
+runAgentServers config' plugins' ma =
+    let pservers = pluginServers plugins'
         cservers = filter (inPlugins pservers) coreServers in
-    runAgent context' $ startSuper (join [pservers, cservers]) >> ma
+    runAgent config' plugins' $ startSuper (join [pservers, cservers]) >> ma
   where inPlugins pservers cserver =
             all (\s -> s^.name /= cserver^.name) pservers
 
@@ -50,6 +50,6 @@ startSuper servers' = do
 coreServers :: [AgentServer]
 coreServers = [peerServer, execServer, defaultHistoryServer]
 
-pluginServers :: AgentContext -> [AgentServer]
-pluginServers context' = let plugs = context'^.plugins in
+pluginServers :: PluginSet -> [AgentServer]
+pluginServers plugins' = let plugs = plugins'^.plugins in
     concat $ map (view servers) plugs

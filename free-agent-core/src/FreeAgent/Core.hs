@@ -10,7 +10,7 @@ module FreeAgent.Core
     , spawnAgent
     , extractConfig
     , definePlugin
-    , registerPlugins
+    , pluginSet
     , addPlugin
     , appendRemoteTable
     , thisNodeId
@@ -41,25 +41,30 @@ import           Network.Transport.TCP
 
 import Control.Monad.Logger (runStdoutLoggingT)
 -- | Execute the agent - main entry point
-runAgent :: AgentContext -> Agent () -> IO ()
-runAgent ctxt ma =
+runAgent :: AgentConfig -> PluginSet -> Agent () -> IO ()
+runAgent config' plugins' ma =
     catchAny
-          ( do registerPluginMaps (ctxt^.actionMap, ctxt^.resultMap)
+          ( do registerPluginMaps (plugins'^.actionMap, plugins'^.resultMap)
                statesMV <- newMVar mempty
-               eithertcp <- createTransport (ctxt^.agentConfig.nodeHost)
-                                            (ctxt^.agentConfig.nodePort)
+               eithertcp <- createTransport (config'^.nodeHost)
+                                            (config'^.nodePort)
                                             defaultTCPParameters
                (node, tcp) <- case eithertcp of
                    Right tcp -> do
-                       node <- newLocalNode tcp $ ctxt^.remoteTable
+                       node <- newLocalNode tcp $ config'^.remoteTable
                        return (node, tcp)
                    Left msg -> throw msg
 
-               let ctxt'  = ctxt & processNode .~ node
-                                 & openStates .~ statesMV
-               let proc   = runStdoutLoggingT $ runReaderT (unAgent ma) ctxt'
+               let context' = AgentContext
+                                 { _contextAgentConfig = config'
+                                 , _contextPlugins = plugins'
+                                 , _contextProcessNode = node
+                                 , _contextOpenStates = statesMV
+                                 }
 
-               runProcess node $ initLogger >> globalMonitor >> proc
+               let proc   = runStdoutLoggingT $ runReaderT (unAgent ma) context'
+
+               runProcess node $ initLogger context' >> globalMonitor >> proc
                closeTransport tcp
                closeAllStates statesMV )
 
@@ -68,7 +73,7 @@ runAgent ctxt ma =
             return () )
   where
    -- overrides default Process logger to use Agent's logging framework
-    initLogger = do
+    initLogger context' = do
         pid <- spawnLocal logger
         reregister "logger" pid
         threadDelay 10000
@@ -76,17 +81,19 @@ runAgent ctxt ma =
        logger =
          receiveWait
            [ match $ \((time, pid, string) ::(String, ProcessId, String)) -> do
-               withAgent ctxt $ [qinfo|#{time} #{pid}: #{string} |]
+               withAgent context' $ [qinfo|#{time} #{pid}: #{string} |]
                logger
            , match $ \((time, string) :: (String, String)) -> do
                -- this is a 'trace' message from the local node tracer
-               withAgent ctxt $ [qdebug|#{time}: #{string} |]
+               withAgent context' $ [qdebug|#{time}: #{string} |]
                logger
            , match $ \(ch :: SendPort ()) -> -- a shutdown request
                sendChan ch ()
            ]
 
--- | Used to embed Agent code in the Process monad
+-- | Run an Agent action with an extracted AgentContext.
+-- This is used to embed Agent code in the Process monad, for
+-- example in ManagedProcess.
 withAgent :: AgentContext -> Agent a -> Process a
 withAgent ctxt ma =
     catchAny (runStdoutLoggingT $ runReaderT (unAgent ma) ctxt)
@@ -94,38 +101,39 @@ withAgent ctxt ma =
                  putStrLn $ "Exception in withAgent: " ++ tshow exception
                  throw exception
 
--- | Spawn a new process with an Agent Context and throwing
--- away the result
+-- | Spawn a new process in the Agent monad.
 spawnAgent :: AgentContext -> Agent a -> Process ProcessId
 spawnAgent ctxt ma = spawnLocal (void $ withAgent ctxt ma)
 
 -- | Lookup a plugin-specific config from the pluginConfigs map
--- and extract it to a concrete type
+-- and extract it to a concrete type.
 extractConfig :: (ContextReader m, Typeable a) => ByteString -> m a
 extractConfig configName = do
-    configMap <- viewConfig $ agentConfig.pluginContexts
+    configMap <- viewConfig $ plugins.configs
     case Map.lookup configName configMap of
         Nothing ->
             error $ show $ configName ++ " not found! Did you register the plugin config?"
         Just dynconf ->
-            maybe (error "fromDynamic failed for NagiosConfig!")
+            maybe (error $ "fromDynamic failed for " ++ (show configName))
                   return
                   (fromDynamic dynconf)
 
--- | wire up a set of Plugins - used in program initialization
-registerPlugins :: AgentContext -> PluginWriter -> AgentContext
-registerPlugins context' pluginW' =
-    let plugs = execWriter pluginW'
+-- | Define the plugins to use in this program.
+pluginSet :: PluginWriter -> PluginSet
+pluginSet pluginWriter =
+    let plugs = execWriter pluginWriter
         acts = concatMap _plugindefActions plugs
-        acontexts = map buildContexts plugs
+        aconfigs = map buildConfigs plugs
         (amap, rmap) = buildPluginMaps acts in
-    context' & actionMap .~ amap
-             & resultMap .~ rmap
-             & listeners .~ buildListeners plugs
-             & plugins .~ plugs
-             & agentConfig.pluginContexts .~ Map.fromList acontexts
+
+    PluginSet { _pluginsetActionMap = amap
+              , _pluginsetResultMap = rmap
+              , _pluginsetListeners = buildListeners plugs
+              , _pluginsetConfigs = Map.fromList aconfigs
+              , _pluginsetPlugins = plugs
+              }
   where
-    buildContexts plugin =
+    buildConfigs plugin =
         (_plugindefName plugin, _plugindefContext plugin)
     buildPluginMaps plugs =
         let pairs = unzip $ map (\(q1, q2, q3, q4) -> ((q1, q2), (q3, q4))) plugs
@@ -135,12 +143,13 @@ registerPlugins context' pluginW' =
     buildListeners = foldM appendListener []
     appendListener acc = _plugindefListeners >=> return . (++ acc)
 
--- | add one particular plugin
+-- | Add one particular plugin - call this in the 'PluginWriter'
+-- opened by 'pluginSet'.
 -- > addPlugin pd = tell [pd]
 addPlugin :: PluginDef -> PluginWriter
 addPlugin pd = tell [pd]
 
--- | used by Plugin *authors* to build PluginDef structure
+-- | used by Plugin *authors* to build PluginDef structures.
 definePlugin :: (Typeable a)
              => ByteString -> a
              -> Agent [Listener]
@@ -169,9 +178,8 @@ globalMonitor = do
 
 -- | Add a module's __remotetable to the RemoteTable that will
 -- be used to activate the node
-appendRemoteTable :: (RemoteTable -> RemoteTable) -> AgentContext -> AgentContext
-appendRemoteTable table ctxt =
-    ctxt & remoteTable .~ table (ctxt^.remoteTable)
+appendRemoteTable :: (RemoteTable -> RemoteTable) -> AgentConfig -> AgentConfig
+appendRemoteTable table config' = config' & remoteTable %~ table
 
 -- | NodeId for this Agent
 thisNodeId :: (ContextReader m) => m NodeId

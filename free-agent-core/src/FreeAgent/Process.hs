@@ -32,6 +32,8 @@ import           Control.Distributed.Process                           hiding
                                                                         whereis, sendChan)
 import qualified Control.Distributed.Process                           as Base
 import           Control.Distributed.Process.Node                      (localNodeId)
+import qualified Control.Distributed.Process.Node                      as Node
+import qualified Control.Distributed.Process.Platform as Platform (__remoteTable)
 import           Control.Distributed.Process.Closure                   (mkClosure, remotable)
 import           Control.Distributed.Process.Internal.Types            (Process(..), LocalProcess(..))
 import Control.Distributed.Process.Platform
@@ -98,6 +100,11 @@ instance (Monoid w, Monad m, MonadProcess m) => MonadProcess (RWST r w s m) wher
             {-(a, s, w) <- (trace "hit map2" ma')-}
             {-b <- mapProcess (trace "hit map3" f) (return a)-}
             {-return (b, s, w)-}
+
+
+
+initRemoteTable :: RemoteTable
+initRemoteTable = Platform.__remoteTable Node.initRemoteTable
 
 spawnLocal :: (MonadProcess m) => m () -> m ProcessId
 spawnLocal = mapProcess Base.spawnLocal

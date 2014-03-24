@@ -17,9 +17,9 @@ import           FreeAgent.Server.Peer (CallFail(..))
 import           FreeAgent.Server.Executive.History
 import           FreeAgent.Plugins.Nagios as Nagios
 import           FreeAgent.Server.Executive as Exec
-import           FreeAgent.Server (runAgentServers)
 
-import           System.Process(system)
+import           FreeAgent.TestHelper hiding (appConfig, appPlugins)
+import qualified FreeAgent.TestHelper as Helper
 
 import           Control.Concurrent.Lifted
 import           FreeAgent.Process as Process
@@ -166,22 +166,13 @@ spec = do
             `shouldReturn` True
 
 
--- helper for running agent and getting results out of
--- the Process through partially applied putMVar
-testAgentConfig :: Bool -> AgentContext -> ((a -> Agent ()) -> Agent ()) -> IO a
-testAgentConfig doSetup ctxt ma = do
-    when doSetup setup
-    result <- newEmptyMVar
-    runAgentServers ctxt (ma (putMVar result))
-    threadDelay 10000 -- so we dont get open port errors
-    takeMVar result
 
-testAgent ma = testAgentConfig True appConfig ma
+testAgent ma = testRunAgent setup appConfig appPlugins ma
 
-testAgentNoSetup ma = testAgentConfig False appConfig ma
+testAgentNoSetup ma = testRunAgent nosetup appConfig appPlugins ma
 
 
-testAgentNL ma = testAgentConfig True appConfigNL ma
+testAgentNL ma = testRunAgent setup appConfigNL appPlugins ma
 
 
 -- for testing - useful to throw an exception if we "never" get the value we're expecting
@@ -191,10 +182,6 @@ texpect = do
     case gotit of
         Nothing -> error "Timed out in test expect"
         Just v -> return v
-
-setup :: IO ()
-setup = void $ system ("rm -rf " ++ appConfig^.agentConfig.dbPath)
-
 
 checkTCP = CheckTCP  "localhost" 53
 
@@ -252,17 +239,17 @@ testDef conf = definePlugin "ExecSpec"
 
 
 -- use a local config here because we are wiring up our own test listener
-appConfig :: AgentContext
-appConfig = (
-    registerPlugins def $ do
+appConfig :: AgentConfig
+appConfig = Helper.appConfig & appendRemoteTable __remoteTable
+      {-& agentConfig.minLogLevel .~ LevelDebug-}
+
+appPlugins :: PluginSet
+appPlugins =
+    pluginSet $ do
         addPlugin $ Nagios.pluginDef def {
             -- override default plugin-specific config
             _nagiosPluginsPath = "/usr/lib/nagios/plugins"
         }
         addPlugin $ testDef def
-        -- add more plugins here!
-    ) & agentConfig.dbPath .~ "/tmp/leveltest" -- override Agent config values here!
-      & appendRemoteTable __remoteTable
-      {-& agentConfig.minLogLevel .~ LevelDebug-}
 
-appConfigNL = appConfig & agentConfig.minLogLevel .~ LevelOther ""
+appConfigNL = appConfig & minLogLevel .~ LevelOther ""

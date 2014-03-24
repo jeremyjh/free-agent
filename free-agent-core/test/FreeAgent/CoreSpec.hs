@@ -5,16 +5,13 @@
 module FreeAgent.CoreSpec (main, spec) where
 
 import           AgentPrelude
-import           System.Process(system)
 import           Test.Hspec
 
 import           FreeAgent.Lenses
-import           FreeAgent.Core
 import           FreeAgent.Plugins.Nagios
 
-import           AppConfig(appConfig)
+import           FreeAgent.TestHelper
 
-import           Control.Concurrent.Lifted
 import           FreeAgent.Process
 
 import           Control.Exception
@@ -78,14 +75,7 @@ spec = do
                         result $ throw exception
                 `shouldReturn` "Got OK"
 
--- helper for running agent and getting results out of
--- the Process through partially applied putMVar
-testAgent :: ((a -> Agent ()) -> Agent ()) -> IO a
-testAgent ma = do
-    result <- newEmptyMVar
-    runAgent appConfig (ma (putMVar result))
-    threadDelay 2000 -- so we dont get open port errors
-    takeMVar result
+testAgent ma = testRunAgent setup appConfig appPlugins ma
 
 -- for testing - useful to throw an exception if we "never" get the value we're expecting
 texpect :: (MonadProcess m, Monad m) => forall a. NFSerializable a => m a
@@ -94,8 +84,5 @@ texpect = do
     case gotit of
         Nothing -> error "Timed out in test expect"
         Just v -> return v
-
-setup :: IO ()
-setup = void $ system ("rm -rf " ++ appConfig^.agentConfig.dbPath)
 
 checkTCP = CheckTCP  "localhost" 53

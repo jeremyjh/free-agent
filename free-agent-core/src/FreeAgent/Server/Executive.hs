@@ -198,7 +198,7 @@ execServer =
                      , handleRpcChan $ agentAsyncCallHandlerET $ \cmd -> doRegistration cmd
 
                      , handleCast $ agentCastHandler $ \ (AddListener cl) -> do
-                         rt <- viewConfig remoteTable
+                         rt <- viewConfig $ agentConfig.remoteTable
                          case unclosure rt cl of
                              Left msg -> [qwarn|AddListener failed! Could not evaluate
                                               new listener closure: #{msg}|]
@@ -208,10 +208,10 @@ execServer =
                      ]
                  }
   where initExec = do
-            listeners' <- join $ viewConfig listeners
+            listeners' <- join $ viewConfig $ plugins.listeners
             Just acid' <- openOrGetDb "agent-executive" def def
             persist <- query' acid' GetPersist
-            rt <- viewConfig remoteTable
+            rt <- viewConfig $ agentConfig.remoteTable
             let cls = rights $ map (unclosure rt) (persist^.listeners)
             return $ ExecState (Map.fromList []) (listeners' ++ cls) acid'
 

@@ -68,7 +68,7 @@ test-suite spec
   type:              exitcode-stdio-1.0
   hs-source-dirs:    test
   main-is:           Spec.hs
-  other-modules:     AppConfig
+  other-modules:     FreeAgent.TestHelper 
   build-depends:     base == 4.*
                    , free-agent-core
                    , hspec >= 1.5
