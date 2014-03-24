@@ -43,21 +43,23 @@ import           Control.Error                      (EitherT)
 import           FreeAgent.Process (MonadProcess(..), Process
                                                     ,ProcessId, NFSerializable
                                                     ,ChildSpec, RemoteTable
-                                                    ,initRemoteTable)
+                                                    ,initRemoteTable, whereis
+                                                    ,processNodeId)
 import           Control.Distributed.Process.Node   (LocalNode)
 import           Control.Distributed.Process.Internal.Types (LocalProcessId)
-import Control.Distributed.Process (NodeId, Closure)
+import           Control.Distributed.Process (NodeId, Closure)
+import           Control.Distributed.Process.Platform (Resolvable(..))
 import           Control.Monad.Base                 (MonadBase)
 import           Control.Monad.Logger               (LogLevel (..), LoggingT,
                                                      MonadLogger (..),
                                                      runStdoutLoggingT,
                                                      withChannelLogger)
 import           Control.Monad.Trans.Control
-import Control.Monad.State (StateT)
+import           Control.Monad.State (StateT)
 import           Data.Default                       (Default (..))
 import qualified Data.Set                           as Set
 import           Data.UUID                          (UUID)
-import Data.SafeCopy
+import           Data.SafeCopy
        (SafeCopy(..), Contained, contain, safePut, safeGet, base)
 import           Data.Serialize                     (Serialize)
 import qualified Data.Serialize                     as Cereal
@@ -319,6 +321,9 @@ data AgentServer = AgentServer { _serverName :: String
                                , _serverchildSpec :: AgentContext -> Process ChildSpec
                                }
 
+instance Resolvable AgentServer where
+    resolve (AgentServer sname _) = whereis sname
+
 data ServerRef = ServerRef String ProcessId
                  deriving (Show, Eq, Generic)
 
@@ -334,6 +339,13 @@ data Peer = Peer { _peerUuid      :: UUID
 
 instance Ord Peer where
     a `compare` b = _peerUuid a `compare` _peerUuid b
+
+instance Resolvable Peer where
+    resolve = return . Just . _peerProcessId
+
+instance Resolvable (Peer, String) where
+    resolve (peer,sname) = resolve (nodeid, sname)
+      where nodeid = processNodeId (_peerProcessId peer)
 
 data Target =   Local
               | Remote Peer

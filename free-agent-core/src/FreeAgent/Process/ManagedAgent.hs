@@ -1,10 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE QuasiQuotes #-}
 
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module FreeAgent.Process.ManagedAgent
     ( module Managed
@@ -38,17 +35,12 @@ import           Control.Distributed.Process.Platform.ManagedProcess as Managed
     hiding (cast, call, syncCallChan, action, shutdown)
 import           Control.Distributed.Process.Platform
     (linkOnFailure, Addressable)
-import qualified Control.Distributed.Process.Platform               as Platform
 import           Control.Distributed.Process.Platform.Supervisor    as Supervisor
 import           Control.Distributed.Process.Platform.Time          (Delay(..), milliSeconds)
 import           Control.Error                                       (EitherT, runEitherT)
 
 data AgentState a = AgentState AgentContext a
 
-instance Platform.Resolvable AgentServer where
-    resolve (AgentServer sname _) = whereis sname
-
-instance Addressable AgentServer
 
 defineServer :: String -- ^ server name
              -> (Agent st) -- ^ state intialization

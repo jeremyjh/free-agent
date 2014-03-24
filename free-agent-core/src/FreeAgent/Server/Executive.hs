@@ -11,7 +11,6 @@
 {-# LANGUAGE TemplateHaskell        #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE TypeFamilies #-}
 
 
@@ -125,28 +124,28 @@ $(makeAcidic ''ExecPersist ['putAction, 'getAction, 'deleteAction, 'putListener
 -- API
 -- -----------------------------
 
-registerAction :: (MonadAgent m, Actionable a b)
+registerAction :: (MonadProcess m, Actionable a b)
                => Target -> a -> m (Either ExecFail ())
 registerAction target action' =
     callExecutive target $ RegisterAction (toAction action')
 
-unregisterAction :: (MonadAgent m) => Target -> Key -> m (Either ExecFail ())
+unregisterAction :: (MonadProcess m) => Target -> Key -> m (Either ExecFail ())
 unregisterAction target key' =
     callExecutive target $ UnregisterAction key'
 
-executeRegistered :: (MonadAgent m)
+executeRegistered :: (MonadProcess m)
                   => Target -> Key -> m (Either ExecFail Result)
 executeRegistered target key' =
     callExecutive target $ ExecuteRegistered key'
 
-executeAction :: (MonadAgent m, Actionable a b)
+executeAction :: (MonadProcess m, Actionable a b)
               => Target -> a -> m (Either ExecFail Result)
 executeAction target action' =
     callExecutive target $ ExecuteAction (toAction action')
 
 -- | Asynchronously subscribe to a local or remote Executive service
 -- Throws an exception if a Route is supplied which cannot be resolved
-addListener :: (MonadAgent m)
+addListener :: (MonadProcess m)
             => Target -> Closure Listener -> m (Either CallFail ())
 addListener target cl = castServer serverName target (AddListener cl)
 
@@ -171,7 +170,7 @@ serverName :: String
 serverName = "agent:executive"
 
 
-callExecutive :: (NFSerializable a, MonadAgent m)
+callExecutive :: (NFSerializable a, MonadProcess m)
             => Target -> ExecutiveCommand -> m (Either ExecFail a)
 callExecutive target command = do
     eresult <- callServer serverName target command

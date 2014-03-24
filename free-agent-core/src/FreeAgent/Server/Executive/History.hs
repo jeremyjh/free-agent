@@ -1,8 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
@@ -13,7 +11,6 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
 
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module FreeAgent.Server.Executive.History
     ( writeResult
@@ -70,15 +67,15 @@ instance Binary HistoryCommand
 -- API
 -- -----------------------------
 
-writeResult        :: (MonadAgent m)
+writeResult        :: (MonadProcess m)
                    => Target -> Result -> m (Either CallFail ())
 writeResult target = castServer serverName target . WriteResult
 
-allResultsFrom :: (MonadAgent m)
+allResultsFrom :: (MonadProcess m)
                    => Target -> UTCTime -> m (Either HistoryFail [Result])
 allResultsFrom target = callHistory target . AllResultsFrom
 
-actionResultsFrom:: (MonadAgent m)
+actionResultsFrom:: (MonadProcess m)
                    => Target -> Key -> UTCTime -> m (Either HistoryFail [Result])
 actionResultsFrom target key' = callHistory target . ActionResultsFrom key'
 
@@ -86,7 +83,7 @@ actionResultsFrom target key' = callHistory target . ActionResultsFrom key'
 serverName :: String
 serverName = "agent:executive:history"
 
-callHistory :: (NFSerializable a, MonadAgent m)
+callHistory :: (NFSerializable a, MonadProcess m)
             => Target -> HistoryCommand -> m (Either HistoryFail a)
 callHistory target command = do
     eresult <- callServer serverName target command

@@ -8,9 +8,9 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeFamilies #-}
+
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module FreeAgent.Server.Peer
@@ -48,14 +48,6 @@ import           Data.Acid.Advanced (query')
 -- Types
 -- ---------------------------
 
-
-
-instance Platform.Resolvable Peer where
-    resolve peer = return $ Just $ peer^.processId
-
-instance Platform.Resolvable (Peer, String) where
-    resolve (peer,sname) = resolve (nodeid, sname)
-      where nodeid = processNodeId $ peer^.processId
 
 data CallFail = RoutingFailed | ServerCrash String
         deriving (Show, Eq, Typeable, Generic)
@@ -128,13 +120,13 @@ instance Platform.Resolvable (Target, String) where
 tryAnyT :: (MonadBaseControl IO m) => m a -> EitherT SomeException m a
 tryAnyT ma = lift (tryAny ma) >>= hoistEither
 
-callServer :: (MonadAgent m, NFSerializable a, NFSerializable b)
+callServer :: (MonadProcess m, NFSerializable a, NFSerializable b)
            => String -> Target -> a -> m (Either CallFail b)
 callServer name' target command = runEitherT $ do
     pid <- resolve (target, name') !? RoutingFailed
     tryAny (syncCallChan pid command) >>= convEitherT
 
-castServer :: (MonadAgent m, NFSerializable a)
+castServer :: (MonadProcess m, NFSerializable a)
            => String -> Target -> a -> m (Either CallFail ())
 castServer name' target command = runEitherT $ do
     pid <- resolve (target, name') !? RoutingFailed
