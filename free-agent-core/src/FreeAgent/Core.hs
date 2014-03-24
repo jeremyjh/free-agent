@@ -109,7 +109,7 @@ spawnAgent ctxt ma = spawnLocal (void $ withAgent ctxt ma)
 -- and extract it to a concrete type.
 extractConfig :: (ContextReader m, Typeable a) => ByteString -> m a
 extractConfig configName = do
-    configMap <- viewConfig $ plugins.configs
+    configMap <- viewContext $ plugins.configs
     case Map.lookup configName configMap of
         Nothing ->
             error $ show $ configName ++ " not found! Did you register the plugin config?"
@@ -183,4 +183,4 @@ appendRemoteTable table config' = config' & remoteTable %~ table
 
 -- | NodeId for this Agent
 thisNodeId :: (ContextReader m) => m NodeId
-thisNodeId = viewConfig $ processNode.to localNodeId
+thisNodeId = viewContext $ processNode.to localNodeId

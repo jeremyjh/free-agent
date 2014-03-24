@@ -36,8 +36,17 @@ makeFields ''Peer
 makeFields ''PluginSet
 
 -- | Use a lens to view a portion of AgentContext
-viewConfig :: (ContextReader m) => Getting a AgentContext a -> m a
-viewConfig lens = view lens <$> askContext
+viewConfig :: (ContextReader m) => Getting a AgentConfig a -> m a
+viewConfig lens = view (agentConfig.lens) <$> askContext
 
-viewsConfig :: (Profunctor p, ContextReader f) => Overloading p (->) (Accessor r) AgentContext AgentContext a a -> p a r -> f r
-viewsConfig lens f = views lens f <$> askContext
+-- | Use a lens to view a portion of AgentContext
+viewContext :: (ContextReader m) => Getting a AgentContext a -> m a
+viewContext lens = view lens <$> askContext
+
+viewsConfig :: (Profunctor p, ContextReader f)
+            => Overloading p (->) (Accessor r) AgentConfig AgentConfig a a
+            -> p a r -> f r
+viewsConfig lens f = views (agentConfig.lens) f <$> askContext
+
+viewsContext :: (Profunctor p, ContextReader f) => Overloading p (->) (Accessor r) AgentContext AgentContext a a -> p a r -> f r
+viewsContext lens f = views lens f <$> askContext

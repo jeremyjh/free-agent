@@ -60,10 +60,10 @@ openOrGetDb name' init (AcidOptions needCheckpoint) =
     foundOpen Nothing = doInit
     extractState (StateHandles ac _) = return $ fromDynamic ac
     doInit = do
-        path <- viewsConfig (agentConfig.dbPath) (</> name')
+        path <- viewsConfig (dbPath) (</> name')
         ast <- liftIO $ openLocalStateFrom path init
         let newhandle = StateHandles (toDyn ast)  (const (closer ast))
-        handlesMV <- viewConfig openStates
+        handlesMV <- viewContext openStates
         modifyMVar_ handlesMV $ \handles ->
             return $ Map.insert name' newhandle handles
         return newhandle
@@ -78,7 +78,7 @@ closeAllStates statesMV = do
 
 lookupOpen :: MonadAgent m => String -> m (Maybe StateHandles)
 lookupOpen name' = do
-    mvstates <- viewConfig openStates
+    mvstates <- viewContext openStates
     states <- readMVar mvstates
     return $ Map.lookup name' states
 

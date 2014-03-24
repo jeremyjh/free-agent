@@ -177,8 +177,8 @@ peerServer =
     initSelf acid' = do
         persist <- query' acid' GetPersist
         pid <- getSelfPid
-        ctxts <- viewConfig $ agentConfig.contexts
-        zs <- viewConfig $ agentConfig.zones
+        ctxts <- viewConfig contexts
+        zs <- viewConfig zones
         let self' = Peer (persist^.uuid) pid ctxts zs Set.empty
         [qdebug| Peer initialized self: #{self'}|]
         return self'
