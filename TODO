@@ -33,9 +33,16 @@
 
   Actions: 
    * MetaAction (provides Metadata to ... Executive? more routing?)
+     * or just a Runnable member "meta :: [MetaInfo]"
           * CompositeAction - list of Actions to exec together
   
 1.0.0: 
+
+  Security model:
+  * authentication, authorization?
+  * signer keys for plugins?
+  * TLS?
+
   Database
   * Execution/Result history impl using LevelDb
   * Execution/Result history impl using HDBC or persistent

@@ -6,7 +6,7 @@
 {-# OPTIONS_GHC -fno-warn-type-defaults#-}
 
 
-module FreeAgent.ExecutiveSpec (main, spec) where
+module FreeAgent.Server.ExecutiveSpec (main, spec) where
 
 import           Test.Hspec
 

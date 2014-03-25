@@ -3,7 +3,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 
-module FreeAgent.PeerSpec (main, spec) where
+module FreeAgent.Server.PeerSpec (main, spec) where
 
 import           AgentPrelude
 import qualified Prelude as P
@@ -57,15 +57,22 @@ spec =
                     -- create a couple "remotes"
                     void $ fork $ liftIO $
                         runAgentServers appConfig2 appPlugins $ do
+                            getSelfPid >>= register "waiter"
                             "waithere" <- expect :: Agent String
                             return ()
 
                     void $ fork $ liftIO $
                         runAgentServers appConfigTX appPlugins $ do
+                            getSelfPid >>= register "waiter"
                             "waithere" <- expect :: Agent String
                             return ()
 
-                    threadDelay 500000 -- wait for the swarm to stabilize
+
+                    -- wait for swarm to stabilize
+                    let waitFor3 = do
+                        count <- queryPeerCount
+                        when (count < 3) (threadDelay 10000 >> waitFor3)
+                    waitFor3
 
                     -- it "can count peers"
                     count <- queryPeerCount
@@ -90,6 +97,17 @@ spec =
                     let Just (NagiosResult _ status) = extract nr
 
                     let aname = res ^.to summary.resultOf.to key
+
+                    -- we're done, tell the two "remotes" to exit
+                    all3 <- queryPeerServers serverName (Set.fromList[def])
+                                                        (Set.fromList[def])
+                    forM_ all3 $ \peer' -> do
+                        mpid <- resolve (peer', ("waiter"::String))
+                        case mpid of
+                            Nothing -> return ()
+                            Just pid -> do
+                                send pid ("waithere" :: String)
+                    threadDelay 10000
 
                     result (count, length peers,aname, status)
                 $ \exception ->
