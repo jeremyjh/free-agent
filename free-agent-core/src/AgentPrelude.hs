@@ -53,6 +53,7 @@ import           GHC.Generics                  (Generic)
 import           Language.Haskell.TH           (Dec, Name, Q)
 import           Language.Haskell.TH.Lib       (conT)
 
+import           Data.Aeson                    (FromJSON(..), ToJSON)
 import           Data.SafeCopy
        (Version, deriveSafeCopy, base, extension, safeGet, safePut)
 import           FileLocation                  (dbg, debug, err)
@@ -64,6 +65,9 @@ type FilePathS = P.FilePath
 
 instance Convertible Text ByteString where
     safeConvert = return . Text.encodeUtf8
+
+instance Convertible ByteString Text where
+    safeConvert = return . Text.decodeUtf8
 
 instance Convertible Text FilePath where
     safeConvert = return . fpFromText
@@ -106,9 +110,11 @@ deriveSerializers = deriveSerializersVersion 1
 deriveSerializersVersion :: Version a -> Name -> Q [Dec]
 deriveSerializersVersion ver name = do
     sc <- deriveSafeStoreVersion ver name
-    bi <- [d| instance Binary $(conT name) where |]
     nf <- deriveNFData name
-    return $ sc ++ bi ++ nf
+    gen <- [d| instance Binary   $(conT name)
+               instance FromJSON $(conT name)
+               instance ToJSON   $(conT name) |]
+    return $ sc ++ nf ++ gen
 
 fqName :: (Typeable a) => a -> ByteString
 fqName typee =  modName ++ "." ++ name

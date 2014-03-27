@@ -17,7 +17,6 @@ import FreeAgent.Server.Peer (peerServer, registerServer)
 
 import Control.Distributed.Process.Platform.Supervisor
 
-
 -- | Same as 'runAgent' but first starts core and plugin server processes
 runAgentServers :: AgentConfig -> PluginSet -> Agent () -> IO ()
 runAgentServers config' plugins' ma =
@@ -52,4 +51,4 @@ coreServers = [peerServer, execServer, defaultHistoryServer]
 
 pluginServers :: PluginSet -> [AgentServer]
 pluginServers plugins' = let plugs = plugins'^.plugins in
-    concat $ map (view servers) plugs
+    concatMap (view servers) plugs

@@ -70,8 +70,8 @@ spec =
 
                     -- wait for swarm to stabilize
                     let waitFor3 = do
-                        count <- queryPeerCount
-                        when (count < 3) (threadDelay 10000 >> waitFor3)
+                            count <- queryPeerCount
+                            when (count < 3) (threadDelay 10000 >> waitFor3)
                     waitFor3
 
                     -- it "can count peers"

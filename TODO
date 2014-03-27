@@ -1,7 +1,6 @@
 0.2.0:
 
   Common/Core:
-   * generalize StateHandle terminology to manage any sort of state object
    * switch logging to hslogger or DP platform logger 
    * update quasi-quotes to populate source from Loc
 

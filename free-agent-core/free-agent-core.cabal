@@ -61,6 +61,7 @@ library
                    , acid-state
                    , filepath
                    , aeson
+                   , yaml
 
 test-suite spec
   ghc-options:       -threaded -with-rtsopts=-N
@@ -85,3 +86,5 @@ test-suite spec
                    , lifted-base
                    , text
                    , binary
+                   , aeson
+                   , yaml

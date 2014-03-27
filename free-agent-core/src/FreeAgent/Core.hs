@@ -44,7 +44,7 @@ import Control.Monad.Logger (runStdoutLoggingT)
 runAgent :: AgentConfig -> PluginSet -> Agent () -> IO ()
 runAgent config' plugins' ma =
     catchAny
-          ( do registerPluginMaps (plugins'^.actionMap, plugins'^.resultMap)
+          ( do registerPluginMaps (plugins'^.unwrappersMap)
                statesMV <- newMVar mempty
                eithertcp <- createTransport (config'^.nodeHost)
                                             (config'^.nodePort)
@@ -114,7 +114,7 @@ extractConfig configName = do
         Nothing ->
             error $ show $ configName ++ " not found! Did you register the plugin config?"
         Just dynconf ->
-            maybe (error $ "fromDynamic failed for " ++ (show configName))
+            maybe (error $ "fromDynamic failed for " ++ show configName)
                   return
                   (fromDynamic dynconf)
 
@@ -122,12 +122,11 @@ extractConfig configName = do
 pluginSet :: PluginWriter -> PluginSet
 pluginSet pluginWriter =
     let plugs = execWriter pluginWriter
-        acts = concatMap _plugindefActions plugs
+        unwrappers = concatMap _plugindefActionUnwrappers plugs
         aconfigs = map buildConfigs plugs
-        (amap, rmap) = buildPluginMaps acts in
+        uwMap = buildPluginMaps unwrappers in
 
-    PluginSet { _pluginsetActionMap = amap
-              , _pluginsetResultMap = rmap
+    PluginSet { _pluginsetUnwrappersMap = uwMap
               , _pluginsetListeners = buildListeners plugs
               , _pluginsetConfigs = Map.fromList aconfigs
               , _pluginsetPlugins = plugs
@@ -135,11 +134,14 @@ pluginSet pluginWriter =
   where
     buildConfigs plugin =
         (_plugindefName plugin, _plugindefContext plugin)
-    buildPluginMaps plugs =
-        let pairs = unzip $ map (\(q1, q2, q3, q4) -> ((q1, q2), (q3, q4))) plugs
+    buildPluginMaps unwrappers =
+        let pairs = unzip $ map (\uw ->
+                                    ( ("Action:" ++ actionTypeName uw, uw)
+                                    , ("Result:" ++ resultTypeName uw, uw) ) )
+                                unwrappers
             amap = Map.fromList (fst pairs)
             rmap = Map.fromList (snd pairs) in
-        (amap, rmap)
+        amap ++ rmap
     buildListeners = foldM appendListener []
     appendListener acc = _plugindefListeners >=> return . (++ acc)
 

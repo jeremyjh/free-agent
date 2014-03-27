@@ -28,7 +28,8 @@ import           System.Process    (readProcessWithExitCode)
 
 import           Control.Error (runEitherT, hoistEither)
 import           Data.Default      (Default (..))
-import Data.Serialize (encode)
+import qualified Data.Serialize as Cereal (encode)
+
 
 
 -- | Plugin-specific configuration
@@ -83,7 +84,7 @@ extractConfig' :: (ContextReader m) => m NagiosConfig
 extractConfig' = extractConfig $ pluginDef def ^.name
 
 instance Stashable NagiosResult where
-    key (NagiosResult (ResultSummary time _ _) _) = encode time
+    key (NagiosResult (ResultSummary time _ _) _) = Cereal.encode time
 
 instance Resulting NagiosResult where
     summary (NagiosResult s _) = s
@@ -120,6 +121,6 @@ instance Stashable CheckTCP where
 
 instance Runnable CheckTCP NagiosResult where
     exec cmd = runEitherT $ do
-        result' <- (exec $ Command (cmd^.host) (Just $ cmd^.port) "check_tcp")
+        result' <- exec (Command (cmd^.host) (Just $ cmd^.port) "check_tcp")
                    >>= hoistEither
-        return $ result' & resultSummary.resultOf .~ (Action cmd)
+        return $ result' & resultSummary.resultOf .~ Action cmd

@@ -123,8 +123,8 @@ makeFields ''HistoryPersist
 data HistoryState = HistoryState {_historyAcid :: AcidState HistoryPersist}
 
 fetchAllFrom  :: UTCTime -> Query HistoryPersist [Result]
-fetchAllFrom time = view results >>=
-    return . (takeWhile (\r -> r^.to summary.timestamp >= time))
+fetchAllFrom time =
+    takeWhile (\r -> r^.to summary.timestamp >= time) <$> view results
 
 insertResult :: Result -> Update HistoryPersist ()
 insertResult r = results %= (r :)

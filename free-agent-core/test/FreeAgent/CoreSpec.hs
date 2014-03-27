@@ -12,8 +12,8 @@ import           FreeAgent.Plugins.Nagios
 
 import           FreeAgent.TestHelper
 
+import qualified Data.Yaml  as Yaml
 import           FreeAgent.Process
-
 import           Control.Exception
 
 
@@ -74,6 +74,21 @@ spec = do
                     $ \exception ->
                         result $ throw exception
                 `shouldReturn` "Got OK"
+
+            it "can serialize an action and result to json/yaml and back" $ do
+                testAgent $ \ result -> do
+                    catchAny $ do
+                        let yaction = Yaml.encode $ Action checkTCP
+                        let Just action' = Yaml.decode yaction
+
+                        Right cresult <- exec $ Action checkTCP
+                        let yresult = Yaml.encode cresult
+                        let Just (_::Result) = Yaml.decode yresult
+
+                        result action'
+                    $ \exception ->
+                        result $ throw exception
+                `shouldReturn` Action checkTCP
 
 testAgent ma = testRunAgent setup appConfig appPlugins ma
 

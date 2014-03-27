@@ -24,6 +24,7 @@ module FreeAgent.Types
  , NFData(..)
  , LogLevel(..), MonadLogger
  , UUID
+ , FromJSON(..), ToJSON (..)
  )
 
 where
@@ -39,6 +40,7 @@ import           Data.Time.Clock                    (UTCTime)
 import           Data.Typeable                      (cast)
 
 import           Control.DeepSeq                    (NFData (..))
+import Control.DeepSeq.TH (deriveNFData)
 import           Control.Error                      (EitherT)
 import           FreeAgent.Process (MonadProcess(..), Process
                                                     ,ProcessId, NFSerializable
@@ -46,7 +48,6 @@ import           FreeAgent.Process (MonadProcess(..), Process
                                                     ,initRemoteTable, whereis
                                                     ,processNodeId)
 import           Control.Distributed.Process.Node   (LocalNode)
-import           Control.Distributed.Process.Internal.Types (LocalProcessId)
 import           Control.Distributed.Process (NodeId, Closure)
 import           Control.Distributed.Process.Platform (Resolvable(..))
 import           Control.Monad.Base                 (MonadBase)
@@ -56,6 +57,7 @@ import           Control.Monad.Logger               (LogLevel (..), LoggingT,
                                                      withChannelLogger)
 import           Control.Monad.Trans.Control
 import           Control.Monad.State (StateT)
+import Data.Aeson (FromJSON(..), ToJSON(..), Value)
 import           Data.Default                       (Default (..))
 import qualified Data.Set                           as Set
 import           Data.UUID                          (UUID)
@@ -63,7 +65,6 @@ import           Data.SafeCopy
        (SafeCopy(..), Contained, contain, safePut, safeGet, base)
 import           Data.Serialize                     (Serialize)
 import qualified Data.Serialize                     as Cereal
-import           Network.Transport (EndPointAddress)
 
 
 
@@ -79,16 +80,16 @@ class (SafeStore a) => Stashable a where
 -- | Wrapped lets us store an Action and recover it using
 -- TODO: fix this comment: the type name in 'registerUnwrappers'
 data Wrapped
-  = Wrapped { _wrappedWrappedKey :: ByteString
-            , _wrappedTypeName   :: ByteString
-            , _wrappedValue      :: ByteString
+  = Wrapped { wrappedKey        :: ByteString
+            , wrappedTypeName   :: ByteString
+            , wrappedValue      :: ByteString
             } deriving (Show, Eq, Typeable, Generic)
 
 
 instance Stashable Wrapped where
-    key = _wrappedWrappedKey
+    key = wrappedKey
 
-type Actionable a b = (Stashable a, Stashable b, Resulting b, Runnable a b, NFData a, NFData b, Eq a)
+type Actionable a b = (Stashable a, Stashable b, Resulting b, Runnable a b, NFData a, NFData b, Eq a, FromJSON a, FromJSON b, ToJSON a, ToJSON b)
 
 data Action = forall a b. (Actionable a b) => Action a
 
@@ -108,7 +109,7 @@ instance NFData Action where
 
 
 -- | Class for types that will be boxed as Result
-class (NFSerializable a, Stashable a) => Resulting a where
+class (NFSerializable a, Stashable a, FromJSON a, ToJSON a) => Resulting a where
     -- | extract the concrete result - if you know what type it is
     extract :: (Typeable b) => a -> Maybe b
     -- | provide a 'ResultSummary'
@@ -137,15 +138,24 @@ instance NFData Result where
 
 type FetchAction = Either String Action
 -- Unwrapper and registration types
+type JsonUnwrapper a = (Value -> Either String a)
 type Unwrapper a = (Wrapped -> Either String a)
-type ActionMap = Map ByteString (Unwrapper Action)
-type ResultMap = Map ByteString (Unwrapper Result)
-type PluginMaps = (ActionMap, ResultMap)
+type ResultMap = Map ByteString (Unwrapper Result, JsonUnwrapper Result)
 type PluginConfigs = Map ByteString Dynamic
-type PluginActions = ( ByteString, Unwrapper Action
-                     , ByteString, Unwrapper Result)
+
+data ActionUnwrappers
+  =  ActionUnwrappers { actionTypeName :: ByteString
+                      , actionUnwrapper :: Unwrapper Action
+                      , actionJsonUnwrapper :: JsonUnwrapper Action
+                      , resultTypeName :: ByteString
+                      , resultUnwrapper :: Unwrapper Result
+                      , resultJsonUnwrapper :: JsonUnwrapper Result
+                      }
+
+type UnwrappersMap = Map ByteString ActionUnwrappers
+
 type PluginWriter = Writer [PluginDef] ()
-type ActionsWriter = Writer [PluginActions] ()
+type ActionsWriter = Writer [ActionUnwrappers] ()
 type ActionMatcher = (Action -> Bool)
 type ResultMatcher = (Result -> Bool)
 
@@ -166,14 +176,13 @@ data StateHandles =
 data PluginDef
   = PluginDef { _plugindefName      :: !ByteString
               , _plugindefContext   :: !Dynamic
-              , _plugindefActions   :: ![PluginActions]
+              , _plugindefActionUnwrappers :: ![ActionUnwrappers]
               , _plugindefListeners :: Agent [Listener]
               , _plugindefServers   :: [AgentServer]
               }
 
 data PluginSet
-  = PluginSet { _pluginsetActionMap       :: !ActionMap
-              , _pluginsetResultMap       :: !ResultMap
+  = PluginSet { _pluginsetUnwrappersMap   :: !UnwrappersMap
               , _pluginsetListeners       :: Agent [Listener]
               , _pluginsetConfigs         :: !PluginConfigs
               , _pluginsetPlugins         :: ![PluginDef]
@@ -327,6 +336,8 @@ instance Resolvable AgentServer where
 data ServerRef = ServerRef String ProcessId
                  deriving (Show, Eq, Generic)
 
+instance Binary ServerRef
+
 instance Ord ServerRef where
     ServerRef a _ `compare` ServerRef b _ = a `compare` b
 
@@ -336,6 +347,8 @@ data Peer = Peer { _peerUuid      :: UUID
                  , _peerZones     :: Set Zone
                  , _peerServers   :: Set ServerRef
                  } deriving (Show, Eq, Typeable, Generic)
+
+instance Binary Peer
 
 instance Ord Peer where
     a `compare` b = _peerUuid a `compare` _peerUuid b
@@ -379,10 +392,6 @@ deriveSerializers ''Zone
 deriveSerializers ''Wrapped
 deriveSerializers ''Schedule
 deriveSerializers ''RunnableFail
-deriveSerializers ''ServerRef
-deriveSerializers ''Peer
 
-deriveSafeStore ''LocalProcessId
-deriveSafeStore ''EndPointAddress
-deriveSafeStore ''NodeId
-deriveSafeStore ''ProcessId
+deriveNFData ''ServerRef
+deriveNFData ''Peer

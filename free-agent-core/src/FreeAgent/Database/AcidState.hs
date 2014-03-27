@@ -60,7 +60,7 @@ openOrGetDb name' init (AcidOptions needCheckpoint) =
     foundOpen Nothing = doInit
     extractState (StateHandles ac _) = return $ fromDynamic ac
     doInit = do
-        path <- viewsConfig (dbPath) (</> name')
+        path <- viewsConfig dbPath (</> name')
         ast <- liftIO $ openLocalStateFrom path init
         let newhandle = StateHandles (toDyn ast)  (const (closer ast))
         handlesMV <- viewContext openStates

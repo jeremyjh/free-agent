@@ -43,7 +43,7 @@ data AgentState a = AgentState AgentContext a
 
 
 defineServer :: String -- ^ server name
-             -> (Agent st) -- ^ state intialization
+             -> Agent st -- ^ state intialization
              -> ProcessDefinition (AgentState st)
              -> AgentServer
 defineServer name' initState' processDef' = AgentServer name' child
@@ -51,7 +51,7 @@ defineServer name' initState' processDef' = AgentServer name' child
     init context' = do
         state' <- withAgent context' initState'
         serve state' onStart processDef'
-      where onStart state' = do
+      where onStart state' =
                 return $ InitOk (AgentState context' state') Infinity
 
     child ctxt = do

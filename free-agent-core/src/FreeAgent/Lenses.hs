@@ -28,11 +28,10 @@ import Control.Lens.Getter (Accessor)
 
 makeFields ''AgentContext
 makeFields ''AgentConfig
-makeFields ''Wrapped
 makeFields ''PluginDef
 makeFields ''ResultSummary
-makeFields ''AgentServer
 makeFields ''Peer
+makeFields ''AgentServer
 makeFields ''PluginSet
 
 -- | Use a lens to view a portion of AgentContext

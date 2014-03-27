@@ -7,6 +7,7 @@
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE StandaloneDeriving    #-}
 {-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -21,6 +22,7 @@ import           AgentPrelude
 import           FreeAgent.Lenses
 
 import           Control.Monad.Writer        (tell)
+import Control.Monad (mzero)
 import           Data.Binary                 (Binary)
 import qualified Data.Binary                 as Binary
 import qualified Data.ByteString.Char8       as BS
@@ -33,6 +35,9 @@ import           Data.SafeCopy
 import           Data.Serialize              (Serialize)
 import qualified Data.Serialize              as Cereal
 
+import           Data.Aeson (Value(..), fromJSON, (.=), (.:))
+import qualified Data.Aeson  as Aeson
+
 -- Serialization instances for Action are all this module as they require specialized
 -- and sensitive functions we want to keep encapsulated e.g. (readPluginMaps)
 
@@ -43,7 +48,7 @@ instance Binary Action where
     put (Action a) = Binary.put $ wrap a
     get = do
         wrapped <- Binary.get
-        return $ decodeAction' (fst readPluginMaps) wrapped
+        return $ decodeAction' readPluginMaps wrapped
 
 instance Serialize Action where
     put = safePut
@@ -56,17 +61,28 @@ instance SafeCopy Action where
     putCopy (Action a) = contain $ safePut $ wrap a
     getCopy = contain $ do
         wrapped <- safeGet
-        return $ decodeAction' (fst readPluginMaps) wrapped
+        return $ decodeAction' readPluginMaps wrapped
 
 instance Stashable Action where
     key (Action a) = key a
+
+instance FromJSON Action where
+    parseJSON (Object value') = do
+        type'  <- value' .: "type"
+        action' <- value' .: "action"
+        return $ decodeJsonAction readPluginMaps type' action'
+    parseJSON _ = mzero
+
+instance ToJSON Action where
+    toJSON (Action action') =
+        Aeson.object ["type" .= fqName action', "action" .= toJSON action']
 
 -- same as Action - we need Result serialization instances here
 instance Binary Result where
     put (Result a) = Binary.put $ wrap a
     get = do
         wrapped <- Binary.get
-        return $ decodeResult' (snd readPluginMaps) wrapped
+        return $ decodeResult' readPluginMaps wrapped
 
 instance Serialize Result where
     put = safePut
@@ -79,7 +95,19 @@ instance SafeCopy Result where
     putCopy (Result r) = contain $ safePut (wrap r)
     getCopy = contain $ do
         wrapped <- safeGet
-        return $ decodeResult' (snd readPluginMaps) wrapped
+        return $ decodeResult' readPluginMaps wrapped
+
+instance FromJSON Result where
+    parseJSON (Object value') = do
+        type'  <- value' .: "type"
+        result' <- value' .: "result"
+        return $ decodeJsonResult readPluginMaps type' result'
+    parseJSON _ = mzero
+
+instance ToJSON Result where
+    toJSON (Result result') =
+        Aeson.object ["type" .= fqName result', "result" .= toJSON result']
+
 
 instance Resulting Result where
     extract (Result a) = cast a
@@ -106,10 +134,14 @@ toAction act = fromMaybe (Action act) (cast act)
 -- > register (actiontype :: MyType)
 register :: forall a b. (Actionable a b, Resulting b)
          => a -> ActionsWriter
-register act = tell [( fqName act
-                     , unWrapAction (unWrap :: Unwrapper a)
-                     , fqName (undefined :: b)
-                     , unwrapResult (unWrap :: Unwrapper b) )]
+register action' = tell [
+    ActionUnwrappers (fqName action')
+                     (unwrapAction (unWrap :: Unwrapper a))
+                     (unwrapJsonAction (unWrapJson :: JsonUnwrapper a))
+                     (fqName (undefined :: b))
+                     (unwrapResult (unWrap :: Unwrapper b))
+                     (unwrapJsonResult (unWrapJson :: JsonUnwrapper b))
+    ]
 
 -- | Used only to fix the type passed to 'register' - this should not
 -- ever be evaluated and will throw an error if it is
@@ -119,13 +151,21 @@ actionType = error "actionType should never be evaluated! Only pass it \
 
 -- | Unwrap a concrete type into an Action
 --
-unWrapAction :: (Actionable a b)
+unwrapAction :: (Actionable a b)
              => Unwrapper a -> Wrapped -> FetchAction
-unWrapAction uw wrapped = Action <$> uw wrapped
+unwrapAction uw wrapped = Action <$> uw wrapped
+
+unwrapJsonAction :: (Actionable a b)
+             => JsonUnwrapper a -> Value -> FetchAction
+unwrapJsonAction uw wrapped = Action <$> uw wrapped
 
 unwrapResult :: (Resulting b)
              => Unwrapper b -> Wrapped -> Either String Result
 unwrapResult uw wrapped = Result <$> uw wrapped
+
+unwrapJsonResult :: (Resulting b)
+             => JsonUnwrapper b -> Value -> Either String Result
+unwrapJsonResult uw wrapped = Result <$> uw wrapped
 
 -- Wrap a concrete type for stash or send where it
 -- will be decoded to an Action or Result
@@ -134,39 +174,63 @@ wrap st = Wrapped (key st) (fqName st) (Cereal.encode st)
 
 -- | Unwrap a 'Wrapper' into a (known) concrete type
 unWrap :: (Stashable a) => Wrapped -> Either String a
-unWrap = Cereal.decode . _wrappedValue
+unWrap = Cereal.decode . wrappedValue
+
+unWrapJson :: FromJSON a => Value -> Either String a
+unWrapJson jwrapped = case fromJSON jwrapped of
+    Aeson.Error msg -> Left msg
+    Aeson.Success value' -> Right value'
 
 --used in serialization instances - throws an exception since Binary decode is no maybe
-decodeAction' :: ActionMap -> Wrapped -> Action
-decodeAction' pluginMap wrapped =
-    case Map.lookup (wrapped^.typeName) pluginMap of
-        Just f -> case f wrapped of
+decodeAction' :: UnwrappersMap -> Wrapped -> Action
+decodeAction' pluginMap wrapped@(Wrapped _ type' _) =
+    case Map.lookup ("Action:" ++ type') pluginMap of
+        Just uwMap -> case (actionUnwrapper uwMap) wrapped of
             Right act -> act
             Left s -> error $ "Error deserializing wrapper: " ++ s
-        Nothing -> error $ "Type Name: " ++ BS.unpack (wrapped^.typeName)
+        Nothing -> error $ "Type Name: " ++ BS.unpack type'
+                    ++ " not matched! Is your plugin registered?"
+
+decodeJsonAction :: UnwrappersMap -> ByteString -> Value -> Action
+decodeJsonAction pluginMap type' action' =
+    case Map.lookup ("Action:" ++ type') pluginMap of
+        Just uwMap -> case (actionJsonUnwrapper uwMap) action' of
+            Right act -> act
+            Left s -> error $ "Error deserializing wrapper: " ++ s
+        Nothing -> error $ "Type Name: " ++ BS.unpack type'
                     ++ " not matched! Is your plugin registered?"
 
 -- | Set or re-set the top-level Action Map (done after plugins are registered)
-registerPluginMaps :: (MonadBase IO m) => PluginMaps -> m ()
+registerPluginMaps :: (MonadBase IO m) => UnwrappersMap -> m ()
 registerPluginMaps = writeIORef globalPluginMaps
 
-globalPluginMaps :: IORef PluginMaps
-globalPluginMaps = unsafePerformIO $ newIORef (Map.fromList [], Map.fromList [])
+globalPluginMaps :: IORef UnwrappersMap
+globalPluginMaps = unsafePerformIO $ newIORef (Map.fromList [])
 {-# NOINLINE globalPluginMaps #-}
 
 -- Yes...this is not transparent. This is necessary to deserialize
 -- Actions and Results defined in Plugins. There are workarounds for
 -- most cases but to receive an Action in a Cloud Haskell 'expect' we must be
 -- able to deserialize in a pure Binary getter.
-readPluginMaps :: PluginMaps
+readPluginMaps :: UnwrappersMap
 readPluginMaps = unsafePerformIO $ readIORef globalPluginMaps
 {-# NOINLINE readPluginMaps #-}
 
-decodeResult' :: ResultMap -> Wrapped -> Result
-decodeResult' pluginMap wrapped =
-    case Map.lookup (wrapped^.typeName) pluginMap of
-        Just f -> case f wrapped of
+decodeResult' :: UnwrappersMap -> Wrapped -> Result
+decodeResult' pluginMap wrapped@(Wrapped _ type' _) =
+    case Map.lookup ("Result:" ++ type') pluginMap of
+        Just uwMap -> case (resultUnwrapper uwMap) wrapped of
             Right act -> act
             Left s -> error $ "Error deserializing wrapper: " ++ s
-        Nothing -> error $ "Type Name: " ++ BS.unpack (wrapped^.typeName)
+        Nothing -> error $ "Type Name: " ++ BS.unpack type'
+                    ++ " not matched! Is your plugin registered?"
+
+--used in serialization instances - throws an exception since Binary decode is no maybe
+decodeJsonResult :: UnwrappersMap -> ByteString -> Value -> Result
+decodeJsonResult pluginMap type' value' =
+    case Map.lookup ("Result:" ++ type') pluginMap of
+        Just uwMap -> case (resultJsonUnwrapper uwMap) value' of
+            Right act -> act
+            Left s -> error $ "Error deserializing wrapper: " ++ s
+        Nothing -> error $ "Type Name: " ++ BS.unpack type'
                     ++ " not matched! Is your plugin registered?"

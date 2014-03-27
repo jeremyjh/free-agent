@@ -58,6 +58,7 @@ data ExecPersist
                 , _persistListeners :: [Closure Listener]
                 } deriving (Show, Typeable)
 
+makeFields ''ExecPersist
 
 instance Default ExecPersist where
     def = ExecPersist mempty []
@@ -260,6 +261,5 @@ doExec action' = do
 
 
 deriveSafeStore ''ExecPersist
-makeFields ''ExecPersist
 makeFields ''ExecState
 deriveNFData ''ExecFail
