@@ -185,7 +185,7 @@ unWrapJson jwrapped = case fromJSON jwrapped of
 decodeAction' :: UnwrappersMap -> Wrapped -> Action
 decodeAction' pluginMap wrapped@(Wrapped _ type' _) =
     case Map.lookup ("Action:" ++ type') pluginMap of
-        Just uwMap -> case (actionUnwrapper uwMap) wrapped of
+        Just uwMap -> case actionUnwrapper uwMap wrapped of
             Right act -> act
             Left s -> error $ "Error deserializing wrapper: " ++ s
         Nothing -> error $ "Type Name: " ++ BS.unpack type'
@@ -194,7 +194,7 @@ decodeAction' pluginMap wrapped@(Wrapped _ type' _) =
 decodeJsonAction :: UnwrappersMap -> ByteString -> Value -> Action
 decodeJsonAction pluginMap type' action' =
     case Map.lookup ("Action:" ++ type') pluginMap of
-        Just uwMap -> case (actionJsonUnwrapper uwMap) action' of
+        Just uwMap -> case actionJsonUnwrapper uwMap action' of
             Right act -> act
             Left s -> error $ "Error deserializing wrapper: " ++ s
         Nothing -> error $ "Type Name: " ++ BS.unpack type'
@@ -219,7 +219,7 @@ readPluginMaps = unsafePerformIO $ readIORef globalPluginMaps
 decodeResult' :: UnwrappersMap -> Wrapped -> Result
 decodeResult' pluginMap wrapped@(Wrapped _ type' _) =
     case Map.lookup ("Result:" ++ type') pluginMap of
-        Just uwMap -> case (resultUnwrapper uwMap) wrapped of
+        Just uwMap -> case resultUnwrapper uwMap wrapped of
             Right act -> act
             Left s -> error $ "Error deserializing wrapper: " ++ s
         Nothing -> error $ "Type Name: " ++ BS.unpack type'
@@ -229,7 +229,7 @@ decodeResult' pluginMap wrapped@(Wrapped _ type' _) =
 decodeJsonResult :: UnwrappersMap -> ByteString -> Value -> Result
 decodeJsonResult pluginMap type' value' =
     case Map.lookup ("Result:" ++ type') pluginMap of
-        Just uwMap -> case (resultJsonUnwrapper uwMap) value' of
+        Just uwMap -> case resultJsonUnwrapper uwMap value' of
             Right act -> act
             Left s -> error $ "Error deserializing wrapper: " ++ s
         Nothing -> error $ "Type Name: " ++ BS.unpack type'

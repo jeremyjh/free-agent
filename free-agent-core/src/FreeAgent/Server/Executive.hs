@@ -209,7 +209,7 @@ execServer =
                  }
   where initExec = do
             listeners' <- join $ viewContext $ plugins.listeners
-            Just acid' <- openOrGetDb "agent-executive" def def
+            acid' <- openOrGetDb "agent-executive" def def
             persist <- query' acid' GetPersist
             rt <- viewConfig remoteTable
             let cls = rights $ map (unclosure rt) (persist^.listeners)

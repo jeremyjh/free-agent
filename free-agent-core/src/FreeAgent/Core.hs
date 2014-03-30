@@ -3,6 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE ConstraintKinds #-}
 
 module FreeAgent.Core
     ( runAgent
@@ -14,11 +15,12 @@ module FreeAgent.Core
     , addPlugin
     , appendRemoteTable
     , thisNodeId
+    , manageResource
+    , lookupResource
     ) where
 
 import           AgentPrelude
 import           FreeAgent.Action                 (registerPluginMaps)
-import           FreeAgent.Database.AcidState (closeAllStates)
 import           FreeAgent.Lenses
 import           FreeAgent.Process
     ( spawnLocal, receiveWait, match
@@ -26,10 +28,9 @@ import           FreeAgent.Process
     , say, DiedReason(..), RemoteTable
     , localNodeId, NodeId)
 
-import           Control.Exception
 import           Control.Monad.Reader             (runReaderT)
 import           Control.Monad.Writer             (execWriter, tell)
-import           Data.Dynamic                     (fromDynamic, toDyn)
+import           Data.Dynamic                     (fromDynamic, toDyn )
 import qualified Data.Map                         as Map
 
 import           Control.Concurrent.Lifted        (threadDelay)
@@ -53,20 +54,20 @@ runAgent config' plugins' ma =
                    Right tcp -> do
                        node <- newLocalNode tcp $ config'^.remoteTable
                        return (node, tcp)
-                   Left msg -> throw msg
+                   Left msg -> throwIO msg
 
                let context' = AgentContext
                                  { _contextAgentConfig = config'
                                  , _contextPlugins = plugins'
                                  , _contextProcessNode = node
-                                 , _contextOpenStates = statesMV
+                                 , _contextOpenResources = statesMV
                                  }
 
                let proc   = runStdoutLoggingT $ runReaderT (unAgent ma) context'
 
                runProcess node $ initLogger context' >> globalMonitor >> proc
                closeTransport tcp
-               closeAllStates statesMV )
+               closeResources statesMV )
 
         ( \exception -> do
             putStrLn $ "Exception in runAgent: " ++ tshow exception
@@ -99,7 +100,7 @@ withAgent ctxt ma =
     catchAny (runStdoutLoggingT $ runReaderT (unAgent ma) ctxt)
              $ \exception -> do
                  putStrLn $ "Exception in withAgent: " ++ tshow exception
-                 throw exception
+                 throwIO exception
 
 -- | Spawn a new process in the Agent monad.
 spawnAgent :: AgentContext -> Agent a -> Process ProcessId
@@ -186,3 +187,41 @@ appendRemoteTable table config' = config' & remoteTable %~ table
 -- | NodeId for this Agent
 thisNodeId :: (ContextReader m) => m NodeId
 thisNodeId = viewContext $ processNode.to localNodeId
+
+-- | Register a named, managed resource. A managed resource will be closed
+-- when the Agent shuts down by invoking the () -> IO () parameter.
+-- Note that the resource is "namespaced" with its type. Registering
+-- two different typed values with the same name is fine. Registering a
+-- second instance of a type with the same name will throw an exception.
+manageResource :: (MonadAgent m, Typeable a)
+            => Text -> a ->  IO () -> m ()
+manageResource name' resource' closer = do
+    resourcesMV <- viewContext openResources
+    modifyMVar_ resourcesMV insertIf
+  where insertIf resources
+           | Map.member name' resources =
+                throwIO $ userError $ "Resource: " ++ convert name' ++ " is already managed!"
+           | otherwise =
+                return $ Map.insert qualifiedName
+                                    (ManagedResource (toDyn resource') closer)
+                                    resources
+        qualifiedName = convert (fqName resource') ++ name'
+
+-- | Find and return a resource value by name if is registered.
+lookupResource :: forall a m. (MonadAgent m, Typeable a)
+               => Text -> m (Maybe a)
+lookupResource name' = do
+    mvstates <- viewContext openResources
+    states <- readMVar mvstates
+    return $ maybe Nothing
+                   fromDynamic
+                   (value <$> Map.lookup qualifiedName states)
+  where value (ManagedResource v _) = v
+        qualifiedName = convert (fqName (undefined::a)) ++ name'
+
+closeResources :: (MonadBase IO m, MonadIO m)
+               => MVar (Map Text ManagedResource) -> m ()
+closeResources statesMV = do
+    handles <-  takeMVar statesMV
+    forM_ handles $ \ (ManagedResource _ closeFn) ->
+        liftIO $ closeFn

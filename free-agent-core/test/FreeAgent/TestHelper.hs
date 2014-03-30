@@ -36,7 +36,7 @@ testRunAgent doSetup config' plugins' ma = do
     doSetup
     result <- newEmptyMVar
     runAgentServers config' plugins' (ma (putMVar result))
-    threadDelay 10000 -- so we dont get open port errors
+    threadDelay 15000 -- so we dont get open port errors
     takeMVar result
 
 setup :: IO ()

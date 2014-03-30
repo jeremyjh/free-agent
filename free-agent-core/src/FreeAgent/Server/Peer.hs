@@ -166,7 +166,7 @@ peerServer =
     initState = do
         context' <- askContext
         Just newid <- liftIO nextUUID
-        Just acid' <- initAcid (PeerPersist newid)
+        acid' <- initAcid (PeerPersist newid)
         self' <- initSelf acid'
         liftProcess $ initp2p context' >>= link
         getSelfPid >>= flip cast DiscoverPeers

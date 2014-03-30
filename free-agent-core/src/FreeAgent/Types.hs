@@ -168,10 +168,9 @@ data Listener = ActionMatching ActionMatcher NodeId String
 -- 'FreeAgent.Database.AcidState'
 
 
-data StateHandles =
-    StateHandles { acState :: Dynamic
-                 , acClose :: () -> IO ()
-                 }
+data ManagedResource =
+    ManagedResource Dynamic (IO ())
+
 
 data PluginDef
   = PluginDef { _plugindefName      :: !ByteString
@@ -231,7 +230,7 @@ data AgentContext
   = AgentContext { _contextAgentConfig     :: !AgentConfig
                  , _contextPlugins         :: !PluginSet
                  , _contextProcessNode     :: !LocalNode
-                 , _contextOpenStates      :: MVar (Map String StateHandles)
+                 , _contextOpenResources :: MVar (Map Text ManagedResource)
                  }
 
 

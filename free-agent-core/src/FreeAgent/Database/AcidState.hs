@@ -27,8 +27,8 @@ import           AgentPrelude hiding ((</>))
 import           System.FilePath.Posix ((</>))
 import           FreeAgent.Lenses
 import           FreeAgent.Action     ()
+import           FreeAgent.Core
 
-import qualified Data.Map.Strict      as Map
 import           Control.Monad.State  (MonadState)
 
 import Data.Acid
@@ -37,7 +37,6 @@ import Data.Acid
 import           Data.Acid.Local      ( createCheckpointAndClose)
 import Data.Acid.Advanced (query', update', MethodState)
 import           Data.Default (Default(..))
-import Data.Dynamic (fromDynamic, toDyn)
 
 import Data.Typeable
 
@@ -52,35 +51,20 @@ instance Default AcidOptions where
     def = AcidOptions True
 
 openOrGetDb :: (MonadAgent m, IsAcidic s, Typeable s)
-            => String -> s -> AcidOptions -> m (Maybe (AcidState s))
+            => Text -> s -> AcidOptions -> m (AcidState s)
 openOrGetDb name' init (AcidOptions needCheckpoint) =
-    lookupOpen name' >>= foundOpen >>= extractState
+    lookupResource name' >>= foundOpen
   where
-    foundOpen (Just sh) = return  sh
+    foundOpen (Just sh) = return sh
     foundOpen Nothing = doInit
-    extractState (StateHandles ac _) = return $ fromDynamic ac
     doInit = do
-        path <- viewsConfig dbPath (</> name')
-        ast <- liftIO $ openLocalStateFrom path init
-        let newhandle = StateHandles (toDyn ast)  (const (closer ast))
-        handlesMV <- viewContext openStates
-        modifyMVar_ handlesMV $ \handles ->
-            return $ Map.insert name' newhandle handles
-        return newhandle
-    closer = if needCheckpoint then createCheckpointAndClose
-             else closeAcidState
-
-closeAllStates :: (AgentBase m) => MVar (Map String StateHandles) -> m ()
-closeAllStates statesMV = do
-    handles <-  takeMVar statesMV
-    forM_ handles $ \ (StateHandles _ closeFn) ->
-        liftIO $ closeFn ()
-
-lookupOpen :: MonadAgent m => String -> m (Maybe StateHandles)
-lookupOpen name' = do
-    mvstates <- viewContext openStates
-    states <- readMVar mvstates
-    return $ Map.lookup name' states
+        path <- viewsConfig dbPath (</> convert name')
+        acid' <- liftIO $ openLocalStateFrom path init
+        manageResource name' acid' (closer acid')
+        return acid'
+    closer
+      | needCheckpoint = createCheckpointAndClose
+      | otherwise = closeAcidState
 
 query :: (QueryEvent e, MonadIO m, MonadState s m, HasAcid s (AcidState (MethodState e)))
       => e -> m (EventResult e)

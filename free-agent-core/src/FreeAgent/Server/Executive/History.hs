@@ -134,7 +134,7 @@ $(makeAcidic ''HistoryPersist ['insertResult, 'fetchAllFrom])
 defaultBackend :: HistoryBackend HistoryState
 defaultBackend = HistoryBackend {
       doInit = do
-        Just acid' <- openOrGetDb "agent-executive-history"
+        acid' <- openOrGetDb "agent-executive-history"
                                   (HistoryPersist []) def
         return $ HistoryState acid'
     , doWriteResult = update . InsertResult
