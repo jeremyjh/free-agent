@@ -120,9 +120,9 @@ testAgent ma = testRunAgent setup appConfig appPlugins ma
 
 setup :: IO ()
 setup = do
-    void $ system ("rm -rf " ++ appConfig^.dbPath)
-    void $ system ("rm -rf " ++ appConfig2^.dbPath)
-    void $ system ("rm -rf " ++ appConfigTX^.dbPath)
+    void $ system ("rm -rf " ++ (convert $ appConfig^.dbPath))
+    void $ system ("rm -rf " ++ (convert $ appConfig2^.dbPath))
+    void $ system ("rm -rf " ++ (convert $ appConfigTX^.dbPath))
 
 appConfig :: AgentConfig
 appConfig = Helper.appConfig & appendRemoteTable __remoteTable

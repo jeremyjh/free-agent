@@ -22,9 +22,7 @@ module FreeAgent.Database.AcidState
 
 where
 
-import           AgentPrelude hiding ((</>))
--- TODO: use CurrentOS Filepath
-import           System.FilePath.Posix ((</>))
+import           AgentPrelude
 import           FreeAgent.Lenses
 import           FreeAgent.Action     ()
 import           FreeAgent.Core
@@ -59,7 +57,7 @@ openOrGetDb name' init (AcidOptions needCheckpoint) =
     foundOpen Nothing = doInit
     doInit = do
         path <- viewsConfig dbPath (</> convert name')
-        acid' <- liftIO $ openLocalStateFrom path init
+        acid' <- liftIO $ openLocalStateFrom (convert path) init
         manageResource name' acid' (closer acid')
         return acid'
     closer

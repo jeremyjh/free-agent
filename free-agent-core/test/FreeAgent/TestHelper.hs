@@ -40,7 +40,7 @@ testRunAgent doSetup config' plugins' ma = do
     takeMVar result
 
 setup :: IO ()
-setup = void $ system ("rm -rf " ++ appConfig^.dbPath)
+setup = void $ system ("rm -rf " ++ (convert $ appConfig^.dbPath))
 
 nosetup :: IO ()
 nosetup = return ()

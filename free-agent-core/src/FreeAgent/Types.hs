@@ -190,7 +190,7 @@ data PluginSet
 -- | AgentConfig data is set at startup and does not change while
 -- the process is running
 data AgentConfig
-  = AgentConfig  { _configDbPath         :: !FilePathS
+  = AgentConfig  { _configDbPath         :: !FilePath
                  , _configNodeHost       :: !String
                  , _configNodePort       :: !String
                  , _configDebugLogCount  :: !Int

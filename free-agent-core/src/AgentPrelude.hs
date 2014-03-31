@@ -69,6 +69,12 @@ instance Convertible Text ByteString where
 instance Convertible ByteString Text where
     safeConvert = return . Text.decodeUtf8
 
+instance Convertible String FilePath where
+    safeConvert = return . fpFromString
+
+instance Convertible FilePath String where
+    safeConvert = return . fpToString
+
 instance Convertible Text FilePath where
     safeConvert = return . fpFromText
 
