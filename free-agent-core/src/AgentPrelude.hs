@@ -42,7 +42,6 @@ import           Control.Monad.Logger          (MonadLogger(..), logDebug, logIn
 import           Control.Monad.Logger.Quote    (qdebug, qinfo, qwarn, qerror, qdebugNS)
 import           Data.Binary                   as Binary (Binary (..))
 import qualified Data.Binary                   as Binary
-import qualified Data.ByteString.Char8         as BS
 import           Data.Convertible              (Convertible(..), convert)
 import           Data.Default                  (def)
 import qualified Data.Text.Encoding            as Text (decodeUtf8, encodeUtf8)
@@ -122,11 +121,11 @@ deriveSerializersVersion ver name = do
                instance ToJSON   $(conT name) |]
     return $ sc ++ nf ++ gen
 
-fqName :: (Typeable a) => a -> ByteString
+fqName :: (Typeable a) => a -> Text
 fqName typee =  modName ++ "." ++ name
   where
-    name = BS.pack . P.show $ typeOf typee
-    modName = BS.pack . tyConModule . typeRepTyCon $ typeOf typee
+    name = pack . P.show $ typeOf typee
+    modName = pack . tyConModule . typeRepTyCon $ typeOf typee
 
 convEither :: Convertible e f => Either e a -> Either f a
 convEither (Right result) = Right result

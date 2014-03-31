@@ -54,7 +54,7 @@ import Data.Acid.Advanced (query')
 type RunningActions = Map Key ProcessId
 
 data ExecPersist
-  = ExecPersist { _persistActions :: Map ByteString Action
+  = ExecPersist { _persistActions :: Map Key Action
                 , _persistListeners :: [Closure Listener]
                 } deriving (Show, Typeable)
 

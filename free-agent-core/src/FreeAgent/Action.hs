@@ -25,7 +25,6 @@ import           Control.Monad.Writer        (tell)
 import Control.Monad (mzero)
 import           Data.Binary                 (Binary)
 import qualified Data.Binary                 as Binary
-import qualified Data.ByteString.Char8       as BS
 import           Data.Dynamic                (cast)
 import qualified Data.Map                    as Map
 import qualified Prelude                     as P
@@ -188,16 +187,16 @@ decodeAction' pluginMap wrapped@(Wrapped _ type' _) =
         Just uwMap -> case actionUnwrapper uwMap wrapped of
             Right act -> act
             Left s -> error $ "Error deserializing wrapper: " ++ s
-        Nothing -> error $ "Type Name: " ++ BS.unpack type'
+        Nothing -> error $ "Type Name: " ++ convert type'
                     ++ " not matched! Is your plugin registered?"
 
-decodeJsonAction :: UnwrappersMap -> ByteString -> Value -> Action
+decodeJsonAction :: UnwrappersMap -> Text -> Value -> Action
 decodeJsonAction pluginMap type' action' =
     case Map.lookup ("Action:" ++ type') pluginMap of
         Just uwMap -> case actionJsonUnwrapper uwMap action' of
             Right act -> act
             Left s -> error $ "Error deserializing wrapper: " ++ s
-        Nothing -> error $ "Type Name: " ++ BS.unpack type'
+        Nothing -> error $ "Type Name: " ++ convert type'
                     ++ " not matched! Is your plugin registered?"
 
 -- | Set or re-set the top-level Action Map (done after plugins are registered)
@@ -222,15 +221,15 @@ decodeResult' pluginMap wrapped@(Wrapped _ type' _) =
         Just uwMap -> case resultUnwrapper uwMap wrapped of
             Right act -> act
             Left s -> error $ "Error deserializing wrapper: " ++ s
-        Nothing -> error $ "Type Name: " ++ BS.unpack type'
+        Nothing -> error $ "Type Name: " ++ convert type'
                     ++ " not matched! Is your plugin registered?"
 
 --used in serialization instances - throws an exception since Binary decode is no maybe
-decodeJsonResult :: UnwrappersMap -> ByteString -> Value -> Result
+decodeJsonResult :: UnwrappersMap -> Text -> Value -> Result
 decodeJsonResult pluginMap type' value' =
     case Map.lookup ("Result:" ++ type') pluginMap of
         Just uwMap -> case resultJsonUnwrapper uwMap value' of
             Right act -> act
             Left s -> error $ "Error deserializing wrapper: " ++ s
-        Nothing -> error $ "Type Name: " ++ BS.unpack type'
+        Nothing -> error $ "Type Name: " ++ convert type'
                     ++ " not matched! Is your plugin registered?"

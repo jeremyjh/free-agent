@@ -80,8 +80,8 @@ class (SafeStore a) => Stashable a where
 -- | Wrapped lets us store an Action and recover it using
 -- TODO: fix this comment: the type name in 'registerUnwrappers'
 data Wrapped
-  = Wrapped { wrappedKey        :: ByteString
-            , wrappedTypeName   :: ByteString
+  = Wrapped { wrappedKey        :: Key
+            , wrappedTypeName   :: Text
             , wrappedValue      :: ByteString
             } deriving (Show, Eq, Typeable, Generic)
 
@@ -140,19 +140,18 @@ type FetchAction = Either String Action
 -- Unwrapper and registration types
 type JsonUnwrapper a = (Value -> Either String a)
 type Unwrapper a = (Wrapped -> Either String a)
-type ResultMap = Map ByteString (Unwrapper Result, JsonUnwrapper Result)
-type PluginConfigs = Map ByteString Dynamic
+type PluginConfigs = Map Text Dynamic
 
 data ActionUnwrappers
-  =  ActionUnwrappers { actionTypeName :: ByteString
+  =  ActionUnwrappers { actionTypeName :: Text
                       , actionUnwrapper :: Unwrapper Action
                       , actionJsonUnwrapper :: JsonUnwrapper Action
-                      , resultTypeName :: ByteString
+                      , resultTypeName :: Text
                       , resultUnwrapper :: Unwrapper Result
                       , resultJsonUnwrapper :: JsonUnwrapper Result
                       }
 
-type UnwrappersMap = Map ByteString ActionUnwrappers
+type UnwrappersMap = Map Text ActionUnwrappers
 
 type PluginWriter = Writer [PluginDef] ()
 type ActionsWriter = Writer [ActionUnwrappers] ()
@@ -173,7 +172,7 @@ data ManagedResource =
 
 
 data PluginDef
-  = PluginDef { _plugindefName      :: !ByteString
+  = PluginDef { _plugindefName      :: !Text
               , _plugindefContext   :: !Dynamic
               , _plugindefActionUnwrappers :: ![ActionUnwrappers]
               , _plugindefListeners :: Agent [Listener]

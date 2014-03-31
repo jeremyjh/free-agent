@@ -108,7 +108,7 @@ spawnAgent ctxt ma = spawnLocal (void $ withAgent ctxt ma)
 
 -- | Lookup a plugin-specific config from the pluginConfigs map
 -- and extract it to a concrete type.
-extractConfig :: (ContextReader m, Typeable a) => ByteString -> m a
+extractConfig :: (ContextReader m, Typeable a) => Text -> m a
 extractConfig configName = do
     configMap <- viewContext $ plugins.configs
     case Map.lookup configName configMap of
@@ -154,7 +154,7 @@ addPlugin pd = tell [pd]
 
 -- | used by Plugin *authors* to build PluginDef structures.
 definePlugin :: (Typeable a)
-             => ByteString -> a
+             => Text -> a
              -> Agent [Listener]
              -> [AgentServer]
              -> ActionsWriter
@@ -205,7 +205,7 @@ manageResource name' resource' closer = do
                 return $ Map.insert qualifiedName
                                     (ManagedResource (toDyn resource') closer)
                                     resources
-        qualifiedName = convert (fqName resource') ++ name'
+        qualifiedName = fqName resource' ++ name'
 
 -- | Find and return a resource value by name if is registered.
 lookupResource :: forall a m. (MonadAgent m, Typeable a)
@@ -217,7 +217,7 @@ lookupResource name' = do
                    fromDynamic
                    (value <$> Map.lookup qualifiedName states)
   where value (ManagedResource v _) = v
-        qualifiedName = convert (fqName (undefined::a)) ++ name'
+        qualifiedName = fqName (undefined::a) ++ name'
 
 closeResources :: (MonadBase IO m, MonadIO m)
                => MVar (Map Text ManagedResource) -> m ()
