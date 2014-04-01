@@ -31,7 +31,7 @@ import qualified Prelude                     as P
 import           System.IO.Unsafe            (unsafePerformIO)
 
 import           Data.SafeCopy
-import           Data.Serialize              (Serialize)
+import Data.Serialize (Serialize, runPut, runGet)
 import qualified Data.Serialize              as Cereal
 
 import           Data.Aeson (Value(..), fromJSON, (.=), (.:))
@@ -169,11 +169,17 @@ unwrapJsonResult uw wrapped = Result <$> uw wrapped
 -- Wrap a concrete type for stash or send where it
 -- will be decoded to an Action or Result
 wrap :: (Stashable a) => a -> Wrapped
-wrap st = Wrapped (key st) (fqName st) (Cereal.encode st)
+wrap st = Wrapped (key st) (fqName st) (safeEncode st)
 
 -- | Unwrap a 'Wrapper' into a (known) concrete type
 unWrap :: (Stashable a) => Wrapped -> Either String a
-unWrap = Cereal.decode . wrappedValue
+unWrap = safeDecode . wrappedValue
+
+safeEncode :: (SafeCopy a) => a -> ByteString
+safeEncode = runPut . safePut
+
+safeDecode :: (SafeCopy a) => ByteString -> Either String a
+safeDecode = runGet safeGet
 
 unWrapJson :: FromJSON a => Value -> Either String a
 unWrapJson jwrapped = case fromJSON jwrapped of

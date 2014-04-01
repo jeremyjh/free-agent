@@ -68,7 +68,7 @@ import qualified Data.Serialize                     as Cereal
 
 
 
-type SafeStore a = (SafeCopy a, Serialize a, Show a, Typeable a)
+type SafeStore a = (SafeCopy a, Show a, Typeable a)
 
 type Key = ByteString
 -- | Types that can be serialized, stored and retrieved

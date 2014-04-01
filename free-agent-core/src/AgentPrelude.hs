@@ -54,7 +54,7 @@ import           Language.Haskell.TH.Lib       (conT)
 
 import           Data.Aeson                    (FromJSON(..), ToJSON)
 import           Data.SafeCopy
-       (Version, deriveSafeCopy, base, extension, safeGet, safePut)
+       (Version, deriveSafeCopy, base, extension)
 import           FileLocation                  (dbg, debug, err)
 
 instance MonadLogger m => MonadLogger (EitherT e m) where
@@ -156,11 +156,7 @@ deriveSafeStoreVersion ver name = do
     sc <- case ver of
         1 -> deriveSafeCopy 1 'base name
         _ -> deriveSafeCopy ver 'extension name
-    ss <- [d| instance Cereal.Serialize $(conT name) where
-                get = safeGet
-                put = safePut
-          |]
-    return $ sc ++ ss
+    return $ sc
 
 (!??) :: Applicative m => m (Maybe a) -> e -> m (Either e a)
 (!??) ma e = toeither <$> ma
