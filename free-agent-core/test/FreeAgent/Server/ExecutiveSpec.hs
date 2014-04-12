@@ -35,7 +35,7 @@ main = hspec spec
 
 spec :: Spec
 spec = do
-    describe "FreeAgent.Executive" $ do
+    describe "Basic executive operations" $ do
 
         it "is started by Core supervisor" $ do
             testAgent $ \result -> do
@@ -51,6 +51,20 @@ spec = do
                 catchAny $ do
                     Right _ <-registerAction Local checkTCP
                     (Right _) <- executeRegistered Local $ key checkTCP
+                    -- confirm results were written
+                    Right results' <- allResultsFrom Local
+                                                     (convert (0::Int))
+                    result $ length results'
+                $ \exception ->
+                    result $ throw exception
+            `shouldReturn` 1
+
+        it "can execute a registered action asynchronously" $ do
+            testAgent $ \result -> do
+                catchAny $ do
+                    Right _ <-registerAction Local checkTCP
+                    Right _ <- executeRegisteredAsync Local $ key checkTCP
+                    threadDelay 10000
                     -- confirm results were written
                     Right results' <- allResultsFrom Local
                                                      (convert (0::Int))
@@ -83,6 +97,7 @@ spec = do
                     result $ throw exception
             `shouldReturn` 1
 
+    describe "Listener notifications" $ do
         it "will invoke any configured listeners" $ do
             testAgent $ \result -> do
                 catchAny $ do
@@ -150,14 +165,17 @@ spec = do
             return (result' == result'')
             `shouldReturn` True
 
+    describe "Routing features supplied by Peer" $ do
         it "it won't deliver a routed Action for an unknown context or zone" $ do
             testAgentNL $ \result -> do
                 catchAny $ do
-                    Left (ECallFailed RoutingFailed) <- executeAction (Route [Context "unkown"] [def])
-                                            checkTCP
+                    Left (ECallFailed RoutingFailed)
+                        <- executeAction (Route [Context "unkown"] [def])
+                                         checkTCP
 
-                    Left (ECallFailed RoutingFailed) <- executeAction (Route [def] [Zone "unkown"])
-                                            checkTCP
+                    Left (ECallFailed RoutingFailed)
+                        <- executeAction (Route [def] [Zone "unkown"])
+                                         checkTCP
 
 
                     result $ True -- no exceptions
@@ -182,9 +200,6 @@ texpect = do
     case gotit of
         Nothing -> error "Timed out in test expect"
         Just v -> return v
-
-checkTCP = CheckTCP  "localhost" 53
-
 
 listenerName :: String
 listenerName = "listener:test"
@@ -248,7 +263,7 @@ appPlugins =
     pluginSet $ do
         addPlugin $ Nagios.pluginDef def {
             -- override default plugin-specific config
-            _nagiosPluginsPath = "/usr/lib/nagios/plugins"
+            nagiosPluginsPath = "/usr/lib/nagios/plugins"
         }
         addPlugin $ testDef def
 

@@ -9,10 +9,13 @@ module FreeAgent.Process.ManagedAgent
     , AgentState(..)
     , defineServer
     , agentCastHandler
+    , agentCastHandlerET
     , agentCallHandlerET
     , agentCallHandler
     , agentAsyncCallHandler
     , agentAsyncCallHandlerET
+    , agentExitHandler
+    , serverState
     , Addressable
     , Delay(..)
     , ChildSpec(..)
@@ -33,14 +36,15 @@ import           Control.Monad.State                                 (StateT, ev
 import           Control.Concurrent.Lifted                           (threadDelay)
 import           Control.Distributed.Process.Platform.ManagedProcess as Managed
     hiding (cast, call, syncCallChan, action, shutdown)
-import           Control.Distributed.Process.Platform
-    (linkOnFailure, Addressable)
+import           Control.Distributed.Process.Platform (linkOnFailure, Addressable)
 import           Control.Distributed.Process.Platform.Supervisor    as Supervisor
 import           Control.Distributed.Process.Platform.Time          (Delay(..), milliSeconds)
 import           Control.Error                                       (EitherT, runEitherT)
 
 data AgentState a = AgentState AgentContext a
 
+serverState :: Lens' (AgentState a) a
+serverState f (AgentState c a) = fmap (\a' -> AgentState c a') (f a)
 
 defineServer :: String -- ^ server name
              -> Agent st -- ^ state intialization
@@ -159,7 +163,32 @@ agentCastHandler fn (AgentState ctxt ustate) command = do
         execStateT (fn command) ustate
     continue $ AgentState ctxt newState
 
+-- | wrapper for commands that will handle a cast and mutate state -
+-- the updated StateT environment will provide the state value to
+-- 'continue'
+agentCastHandlerET :: (NFSerializable a, Show a, NFSerializable e, Show e)
+                 => (a -> (EitherT e (StateT s Agent)) ())
+                 -> AgentState s -> a
+                 -> Process (ProcessAction (AgentState s) )
+agentCastHandlerET fn (AgentState ctxt ustate) command = do
+    newState <- withAgent ctxt $ do
+        [qdebug| Processing command: #{command}|]
+        let ema = runEitherT (fn command) >>= logEitherT
+        execStateT ema ustate
+    continue $ AgentState ctxt newState
+  where
+    logEitherT left'@(Left reason) = do
+        [qwarn| Processing for #{command} failed with reason: #{reason} |]
+        return left'
+    logEitherT right' = return right'
 
--- -----------------------------
--- Implementation
--- -----------------------------
+
+agentExitHandler :: (NFSerializable a, Show a)
+                 => (ProcessId -> a -> (StateT s Agent) ())
+                 -> AgentState s -> ProcessId -> a
+                 -> Process (ProcessAction (AgentState s) )
+agentExitHandler fn (AgentState ctxt ustate) pid reason = do
+    newState <- withAgent ctxt $ do
+        [qdebug| Handling exit reason #{reason}|]
+        execStateT (fn pid reason) ustate
+    continue $ AgentState ctxt newState

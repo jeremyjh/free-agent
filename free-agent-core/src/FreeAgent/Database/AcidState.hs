@@ -18,6 +18,7 @@ module FreeAgent.Database.AcidState
     , AcidState
     , makeAcidic
     , Query, Update
+    , query', update'
     )
 
 where
@@ -33,7 +34,7 @@ import Data.Acid
        (AcidState, IsAcidic, openLocalStateFrom, closeAcidState,
         makeAcidic, Query, Update, UpdateEvent, QueryEvent, EventResult )
 import           Data.Acid.Local      ( createCheckpointAndClose)
-import Data.Acid.Advanced (query', update', MethodState)
+import           Data.Acid.Advanced (query', update', MethodState)
 import           Data.Default (Default(..))
 
 import Data.Typeable

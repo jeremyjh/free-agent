@@ -20,6 +20,7 @@ library
                    , FreeAgent.Server.Peer
                    , FreeAgent.Server.Executive
                    , FreeAgent.Server.Executive.History
+                   , FreeAgent.Server.Schedule
                    , FreeAgent.Action
                    , FreeAgent.Plugins.Nagios
                    , Control.Monad.Logger.Quote
@@ -62,6 +63,8 @@ library
                    , filepath
                    , aeson
                    , yaml
+                   , cron
+                   , attoparsec
 
 test-suite spec
   ghc-options:       -threaded -with-rtsopts=-N
@@ -81,6 +84,7 @@ test-suite spec
                    , containers
                    , mtl
                    , distributed-process
+                   , distributed-process-platform
                    , network-transport
                    , network-transport-tcp
                    , lifted-base

@@ -19,7 +19,7 @@ module FreeAgent.Action
 where
 
 import           AgentPrelude
-import           FreeAgent.Lenses
+import           FreeAgent.Lenses hiding ((.=))
 
 import           Control.Monad.Writer        (tell)
 import Control.Monad (mzero)

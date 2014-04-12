@@ -22,10 +22,7 @@ main = hspec spec
 
 spec :: Spec
 spec = do
-    describe "FreeAgent.Core" $ do
-        it "setup" $ do setup >>= shouldReturn(return())
-
-        describe "works with Agent" $ do
+    describe "C.D.Process primitives in Agent monad" $ do
             it "can run a process" $ do
                 testAgent $ \ result -> do
                     pid <- getSelfPid
@@ -43,23 +40,8 @@ spec = do
                     result said
                 `shouldReturn` "I said: foo"
 
-            it "can send a result action to a listener as an existential type" $ do
-                testAgent $ \result -> do
-                    catchAny $ do
-                        (Right nr) <- exec $ Action checkTCP
-                        parent <- getSelfPid
-                        child <- spawnLocal $ do
-                            wr <- texpect :: Agent Result
-                            let Just (NagiosResult _ OK)= extract wr
-                            send parent ("Got OK" :: Text)
-                        send child nr
-                        confirm <- texpect :: Agent Text
-                        result confirm
-                    $ \exception ->
-                        result $ throw exception
-                `shouldReturn` "Got OK"
-
-            it "can send/receive an action" $ do
+    describe "Binary (de)serialization of existential Action type" $ do
+            it "can send/receive an Action" $ do
                 testAgent $ \ result -> do
                     catchAny $ do
                         parent <- getSelfPid
@@ -75,7 +57,25 @@ spec = do
                         result $ throw exception
                 `shouldReturn` "Got OK"
 
-            it "can serialize an action and result to json/yaml and back" $ do
+            it "can send the result of an Action" $ do
+                testAgent $ \result -> do
+                    catchAny $ do
+                        (Right nr) <- exec $ Action checkTCP
+                        parent <- getSelfPid
+                        child <- spawnLocal $ do
+                            wr <- texpect :: Agent Result
+                            let Just (NagiosResult _ OK)= extract wr
+                            send parent ("Got OK" :: Text)
+                        send child nr
+                        confirm <- texpect :: Agent Text
+                        result confirm
+                    $ \exception ->
+                        result $ throw exception
+                `shouldReturn` "Got OK"
+
+
+    describe "Json (de)serialization of existential Action type" $ do
+            it "works about the same as Binary" $ do
                 testAgent $ \ result -> do
                     catchAny $ do
                         let yaction = Yaml.encode $ Action checkTCP
@@ -99,5 +99,3 @@ texpect = do
     case gotit of
         Nothing -> error "Timed out in test expect"
         Just v -> return v
-
-checkTCP = CheckTCP  "localhost" 53

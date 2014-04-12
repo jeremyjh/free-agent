@@ -33,7 +33,7 @@ import qualified Data.Serialize as Cereal (encode)
 
 
 -- | Plugin-specific configuration
-data NagiosConfig = NagiosConfig {_nagiosPluginsPath :: FilePath}
+data NagiosConfig = NagiosConfig {nagiosPluginsPath :: FilePath}
                         deriving (Show, Eq, Typeable, Generic)
 
 instance Default NagiosConfig where
@@ -113,7 +113,7 @@ instance Runnable Command NagiosResult where
             return $ Right $ NagiosResult summ cmdres
         commandPath = do
             nagconf <- extractConfig'
-            let cmdPath = (nagconf^.pluginsPath) </> convert (cmd^.shellCommand)
+            let cmdPath = (nagiosPluginsPath nagconf) </> convert (cmd^.shellCommand)
             return $ fpToString cmdPath
 
 instance Stashable CheckTCP where

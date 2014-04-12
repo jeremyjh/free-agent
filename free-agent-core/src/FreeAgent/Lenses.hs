@@ -19,8 +19,9 @@ import           AgentPrelude
 import           FreeAgent.Types
 
 import Control.Lens
-       (makeFields, makeLenses, Getting, use, uses, view, views, (&),
-       (.~), (^.), _1, _2, set, to, _Right, (%=), (%~), Profunctor)
+       ( makeFields, makeLenses, Getting, use, uses, view, views, (&)
+       , (.~), (^.), _1, _2, set, to, _Right, (%=), (%~), (.=)
+       , Profunctor, Lens')
 
 import Control.Lens.Type (Overloading)
 import Control.Lens.Getter (Accessor)

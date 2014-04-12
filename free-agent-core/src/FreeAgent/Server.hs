@@ -13,6 +13,7 @@ import FreeAgent.Process
 import FreeAgent.Core (runAgent)
 import FreeAgent.Server.Executive (execServer)
 import FreeAgent.Server.Executive.History (defaultHistoryServer)
+import FreeAgent.Server.Schedule (scheduleServer)
 import FreeAgent.Server.Peer (peerServer, registerServer)
 
 import Control.Distributed.Process.Platform.Supervisor
@@ -47,7 +48,7 @@ startSuper servers' = do
 
 -- | Servers that are required for most use cases
 coreServers :: [AgentServer]
-coreServers = [peerServer, execServer, defaultHistoryServer]
+coreServers = [peerServer, execServer, defaultHistoryServer, scheduleServer]
 
 pluginServers :: PluginSet -> [AgentServer]
 pluginServers plugins' = let plugs = plugins'^.plugins in

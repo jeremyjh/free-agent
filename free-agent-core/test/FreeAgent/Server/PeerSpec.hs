@@ -143,5 +143,3 @@ appConfigTX = appConfig
       & peerNodeSeeds .~ ["127.0.0.1:3546"]
       & zones .~ Set.fromList [def, Zone "TX"]
       {-& minLogLevel .~ LevelDebug-}
-
-checkTCP = CheckTCP  "localhost" 53

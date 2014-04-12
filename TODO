@@ -4,8 +4,9 @@
    * switch logging to hslogger or DP platform logger 
    * update quasi-quotes to populate source from Loc
 
-  Scheduler:
-    * code it
+  Executive: 
+   * Listeners for events - for example Schedule should
+     be notified when an Action is unregistered
 
   Managed Agent:
    * refactor common code in agent handlers
@@ -39,8 +40,10 @@
 
   Security model:
   * authentication, authorization?
+     * ACLs? (maybe with meta [])
   * signer keys for plugins?
   * TLS?
+  * Network.Transport.ZMQ supports authentication
 
   Database
   * Execution/Result history impl using LevelDb

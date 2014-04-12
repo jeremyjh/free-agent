@@ -317,11 +317,6 @@ data ResultSummary
                   , _resultResultOf  :: Action
                   } deriving (Show, Typeable, Generic)
 
-
--- Scheduling
-data Schedule = Now | Later
-    deriving (Show, Eq, Typeable, Generic)
-
 data ActionHistory = ActionHistory deriving (Show, Eq, Typeable, Generic)
 
 data AgentServer = AgentServer { _serverName :: String
@@ -388,7 +383,6 @@ deriveSafeStore ''UUID
 deriveSerializers ''Context
 deriveSerializers ''Zone
 deriveSerializers ''Wrapped
-deriveSerializers ''Schedule
 deriveSerializers ''RunnableFail
 
 deriveNFData ''ServerRef

@@ -5,6 +5,7 @@ module FreeAgent.TestHelper
     , testRunAgent
     , setup
     , nosetup
+    , checkTCP
     ) where
 
 import FreeAgent
@@ -26,21 +27,25 @@ appPlugins =
     pluginSet $ do
         addPlugin $ Nagios.pluginDef def {
             -- override default plugin-specific config
-            _nagiosPluginsPath = "/usr/lib/nagios/plugins"
+            nagiosPluginsPath = "/usr/lib/nagios/plugins"
         }
 
 -- helper for running agent and getting results out of
 -- the Process through partially applied putMVar
-testRunAgent :: IO () -> AgentConfig -> PluginSet -> ((a -> Agent ()) -> Agent ()) -> IO a
+testRunAgent :: NFData a => IO () -> AgentConfig -> PluginSet -> ((a -> Agent ()) -> Agent ()) -> IO a
 testRunAgent doSetup config' plugins' ma = do
     doSetup
     result <- newEmptyMVar
     runAgentServers config' plugins' (ma (putMVar result))
     threadDelay 15000 -- so we dont get open port errors
-    takeMVar result
+    catchAnyDeep (takeMVar result) $ \ e -> throwIO e
 
 setup :: IO ()
 setup = void $ system ("rm -rf " ++ (convert $ appConfig^.dbPath))
 
 nosetup :: IO ()
 nosetup = return ()
+
+-- common test fixture
+checkTCP :: CheckTCP
+checkTCP = CheckTCP  "localhost" 53

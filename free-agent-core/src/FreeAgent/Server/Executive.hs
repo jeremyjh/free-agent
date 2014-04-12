@@ -19,6 +19,7 @@ module FreeAgent.Server.Executive
     , registerAction
     , unregisterAction
     , executeRegistered
+    , executeRegisteredAsync
     , executeAction
     , addListener
     , matchAction
@@ -46,7 +47,6 @@ import qualified Data.Map.Strict                                     as Map
 import           Control.Distributed.Static                          (unclosure)
 import           Control.Error                                       hiding (err)
 import           Data.Default                          (Default(..))
-import Data.Acid.Advanced (query')
 
 -- -----------------------------
 -- Types
@@ -139,6 +139,11 @@ executeRegistered :: (MonadProcess m)
 executeRegistered target key' =
     callExecutive target $ ExecuteRegistered key'
 
+executeRegisteredAsync :: (MonadProcess m)
+                       => Target -> Key -> m (Either CallFail ())
+executeRegisteredAsync target key' =
+    castServer serverName target $ ExecuteRegistered key'
+
 executeAction :: (MonadProcess m, Actionable a b)
               => Target -> a -> m (Either ExecFail Result)
 executeAction target action' =
@@ -197,14 +202,19 @@ execServer =
 
                      , handleRpcChan $ agentAsyncCallHandlerET $ \cmd -> doRegistration cmd
 
-                     , handleCast $ agentCastHandler $ \ (AddListener cl) -> do
-                         rt <- viewConfig remoteTable
-                         case unclosure rt cl of
-                             Left msg -> [qwarn|AddListener failed! Could not evaluate
-                                              new listener closure: #{msg}|]
-                             Right listener -> do
-                                 listeners %= (:) listener
-                                 update (PutListener cl)
+                     , handleCast $ agentCastHandlerET $ \ cmd ->
+                           case cmd of
+                               (AddListener cl) -> do
+                                   rt <- viewConfig remoteTable
+                                   case unclosure rt cl of
+                                       Left msg -> [qwarn|AddListener failed! Could not evaluate
+                                                        new listener closure: #{msg}|]
+                                       Right listener -> do
+                                           listeners %= (:) listener
+                                           update (PutListener cl)
+                               (ExecuteRegistered k) -> void $ spawnLocal $
+                                   void $ doExecuteRegistered k
+                               _ -> $(err "illegal pattern match")
                      ]
                  }
   where initExec = do

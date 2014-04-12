@@ -41,13 +41,10 @@ import           Control.Distributed.Backend.P2P(getCapable, peerController,make
 import           Control.Error (runEitherT, (!?), hoistEither, EitherT)
 import           Control.DeepSeq.TH (deriveNFData)
 import           Data.UUID.V1 (nextUUID)
-import           Data.Acid.Advanced (query')
 
-
--- ---------------------------
+-- ---------Types-------------
 -- Types
 -- ---------------------------
-
 
 data CallFail = RoutingFailed | ServerCrash String
         deriving (Show, Eq, Typeable, Generic)
@@ -81,11 +78,17 @@ data PeerCommand = DiscoverPeers
 instance Binary PeerCommand
 instance NFData PeerCommand
 
+
+-- ---------Acidic------------
+-- Acidic Methods
+-- ---------------------------
+
 getPersist :: Query PeerPersist PeerPersist
 getPersist = ask
 
 $(makeAcidic ''PeerPersist ['getPersist])
--- ---------------------------
+
+-- ---------API---------------
 -- API
 -- ---------------------------
 
@@ -132,7 +135,7 @@ castServer name' target command = runEitherT $ do
     pid <- resolve (target, name') !? RoutingFailed
     cast pid command
 
--- ---------------------------
+-- -------Implementation------
 -- Implementation
 -- ---------------------------
 
@@ -210,9 +213,7 @@ doRegisterPeer peer respond = do
     when respond $ do
         [qdebug| Sending self: #{self'} To peer: #{_peerProcessId self'} |]
         cast (peer^.processId) (RespondRegisterPeer self')
-  where updateFriends peers
-            | Set.member peer peers = Set.insert peer (Set.delete peer peers)
-            | otherwise = Set.insert peer peers
+  where updateFriends peers = Set.insert peer peers
 
 doQueryPeerServers :: MonadState PeerState m
                   => String -> Set Context -> Set Zone -> m (Set Peer)
