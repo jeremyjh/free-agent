@@ -194,15 +194,15 @@ execServer =
                  initExec
                  defaultProcess {
                      apiHandlers =
-                     [ handleRpcChan $ agentAsyncCallHandlerET $
+                     [ agentRpcAsyncHandlerET $
                            \cmd -> case cmd of
                                ExecuteAction act -> doExecuteAction act
                                ExecuteRegistered k -> doExecuteRegistered k
                                _ -> $(err "illegal pattern match")
 
-                     , handleRpcChan $ agentAsyncCallHandlerET $ \cmd -> doRegistration cmd
+                     , agentRpcAsyncHandlerET $ \cmd -> doRegistration cmd
 
-                     , handleCast $ agentCastHandlerET $ \ cmd ->
+                     , agentCastHandlerET $ \ cmd ->
                            case cmd of
                                (AddListener cl) -> do
                                    rt <- viewConfig remoteTable

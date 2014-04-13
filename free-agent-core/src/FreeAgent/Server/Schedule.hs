@@ -221,20 +221,18 @@ scheduleServer =
                  initSchedule
                  defaultProcess {
                      apiHandlers =
-                     [ handleRpcChan $ agentCallHandlerET $
-                           \ cmd ->
+                     [ agentRpcHandlerET $ \ cmd ->
                            case cmd of
                                (CmdAddEvent sched) ->
                                    doAddSchedule sched
                                (CmdRemoveEvent key') ->
                                    doRemoveSchedule key'
                                _ -> $(err "illegal pattern match")
-                     , handleRpcChan $ agentCallHandler $
-                           \ (CmdFindEvent key') ->
-                               query (FindEventA key')
+                     , agentRpcHandler $ \ (CmdFindEvent key') ->
+                           query (FindEventA key')
                      ],
                      infoHandlers =
-                     [ handleInfo $ agentCastHandler $ \ Tick -> onTick
+                     [ agentInfoHandler $ \ Tick -> onTick
                      ],
                      shutdownHandler =
                          \ s _ ->

@@ -97,12 +97,12 @@ historyServerImpl backend@HistoryBackend{..} =
                  doInit
                  defaultProcess {
                      apiHandlers =
-                     [ handleCast $ agentCastHandler $
+                     [ agentCastHandler $
                            \cmd -> case cmd of
                                WriteResult r -> doWriteResult r
                                _ -> $(err "illegal pattern match")
 
-                     , handleRpcChan $ agentCallHandlerET $
+                     , agentRpcHandlerET $
                            \cmd -> case cmd of
                                AllResultsFrom time -> doAllResultsFrom time
                                ActionResultsFrom key' time -> doActionResultsFrom key' time

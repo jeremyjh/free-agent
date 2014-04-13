@@ -145,7 +145,7 @@ peerServer =
                  initState
                  defaultProcess {
                      apiHandlers =
-                     [ handleCast $ agentCastHandler $ \ cmd ->
+                     [ agentCastHandler $ \ cmd ->
                          -- registration is async to avoid possiblity of deadlock
                          case cmd of
                              DiscoverPeers -> doDiscoverPeers
@@ -154,14 +154,10 @@ peerServer =
                              RegisterServer name' pid -> doRegisterServer name' pid
                              _ -> $(err "illegal pattern match")
 
-                     , handleRpcChan $ \
-                           state'@( AgentState _ (PeerState _ peers _))
-                           port
-                           QueryPeerCount ->
-                               sendChan port (length peers) >> continue state'
+                     , agentRpcHandler $ \ QueryPeerCount -> uses friends length
 
-                     , handleRpcChan $ agentCallHandler $
-                         \ (QueryPeerServers n c z) -> doQueryPeerServers n c z
+                     , agentRpcHandler $ \ (QueryPeerServers n c z) ->
+                           doQueryPeerServers n c z
                      ]
                  }
 
