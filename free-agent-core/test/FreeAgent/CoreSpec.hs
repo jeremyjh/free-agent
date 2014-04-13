@@ -32,7 +32,7 @@ spec = do
             it "can do basic Process messaging" $ do
                 testAgent $ \ result -> do
                     parent <- getSelfPid
-                    child <-  spawnLocal $ do
+                    child <- spawnLocal $ do
                         saysee <- texpect :: Agent ByteString
                         send parent ("I said: " ++ saysee)
                     send child ("foo" :: ByteString)
@@ -45,7 +45,7 @@ spec = do
                 testAgent $ \ result -> do
                     catchAny $ do
                         parent <- getSelfPid
-                        child <-  spawnLocal $ do
+                        child <- spawnLocal $ do
                             action <- texpect :: Agent Action
                             (Right nr) <- exec action
                             let Just (NagiosResult _ OK) = extract nr
@@ -64,7 +64,7 @@ spec = do
                         parent <- getSelfPid
                         child <- spawnLocal $ do
                             wr <- texpect :: Agent Result
-                            let Just (NagiosResult _ OK)= extract wr
+                            let Just (NagiosResult _ OK) = extract wr
                             send parent ("Got OK" :: Text)
                         send child nr
                         confirm <- texpect :: Agent Text
@@ -72,7 +72,6 @@ spec = do
                     $ \exception ->
                         result $ throw exception
                 `shouldReturn` "Got OK"
-
 
     describe "Json (de)serialization of existential Action type" $ do
             it "works about the same as Binary" $ do
@@ -91,11 +90,3 @@ spec = do
                 `shouldReturn` Action checkTCP
 
 testAgent ma = testRunAgent setup appConfig appPlugins ma
-
--- for testing - useful to throw an exception if we "never" get the value we're expecting
-texpect :: (MonadProcess m, Monad m) => forall a. NFSerializable a => m a
-texpect = do
-    gotit <- expectTimeout 50000 -- 100ms may as well be never
-    case gotit of
-        Nothing -> error "Timed out in test expect"
-        Just v -> return v

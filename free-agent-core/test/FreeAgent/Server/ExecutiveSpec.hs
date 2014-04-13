@@ -108,9 +108,9 @@ spec = do
                     threadDelay 1000
                     pid <- getSelfPid
                     nsend "ExecSpecActionListener" ("ask-result-count" :: String, pid)
-                    actionCount <- expect :: Agent Int
+                    actionCount <- texpect :: Agent Int
                     nsend "ExecSpecResultListener" ("ask-result-count" :: String, pid)
-                    resultCount <- expect :: Agent Int
+                    resultCount <- texpect :: Agent Int
                     result (actionCount, resultCount)
                 $ \exception ->
                     result $ throw exception
@@ -125,7 +125,7 @@ spec = do
                     Right () <- addListener Local matcher
                     threadDelay 10000
                     Right _ <- executeAction Local checkTCP
-                    nr <- expect :: Agent Result
+                    nr <- texpect :: Agent Result
                     let Just (NagiosResult _ status) = extract nr
                     result status
                 $ \exception ->
@@ -145,7 +145,7 @@ spec = do
                     liftProcess $ kill expid "testing"
                     threadDelay 10000
                     Right _ <- executeAction Local checkTCP
-                    nr <- expect :: Agent Result
+                    nr <- texpect :: Agent Result
                     let Just (NagiosResult _ status) = extract nr
                     result status
                 $ \exception ->
@@ -156,7 +156,7 @@ spec = do
                 catchAny $ do
                     getSelfPid >>= register listenerName
                     Right _ <- executeAction Local checkTCP
-                    nr <- expect :: Agent Result
+                    nr <- texpect :: Agent Result
                     let Just (NagiosResult _ status) = extract nr
                     result status
                 $ \exception ->
@@ -191,15 +191,6 @@ testAgentNoSetup ma = testRunAgent nosetup appConfig appPlugins ma
 
 
 testAgentNL ma = testRunAgent setup appConfigNL appPlugins ma
-
-
--- for testing - useful to throw an exception if we "never" get the value we're expecting
-texpect :: (MonadProcess m, Monad m) => forall a. NFSerializable a => m a
-texpect = do
-    gotit <- expectTimeout 10000 -- 100ms may as well be never
-    case gotit of
-        Nothing -> error "Timed out in test expect"
-        Just v -> return v
 
 listenerName :: String
 listenerName = "listener:test"

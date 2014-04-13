@@ -6,11 +6,13 @@ module FreeAgent.TestHelper
     , setup
     , nosetup
     , checkTCP
+    , texpect
     ) where
 
 import FreeAgent
 import FreeAgent.Lenses
 import FreeAgent.Server
+import FreeAgent.Process
 -- import all your plugins here
 import FreeAgent.Plugins.Nagios as Nagios
 import Control.Concurrent.Lifted (threadDelay)
@@ -49,3 +51,11 @@ nosetup = return ()
 -- common test fixture
 checkTCP :: CheckTCP
 checkTCP = CheckTCP  "localhost" 53
+
+-- for testing - useful to throw an exception if we "never" get the value we're expecting
+texpect :: (MonadProcess m, Monad m) => NFSerializable a => m a
+texpect = do
+    gotit <- expectTimeout 50000 -- 100ms may as well be never
+    case gotit of
+        Nothing -> error "Timed out in test expect"
+        Just v -> return v

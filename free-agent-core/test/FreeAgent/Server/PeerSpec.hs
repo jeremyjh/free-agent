@@ -93,7 +93,7 @@ spec =
                     Right res <- executeAction (Route [def] [Zone "TX"])
                                                checkTCP
 
-                    nr <- expect :: Agent Result
+                    nr <- texpect :: Agent Result
                     let Just (NagiosResult _ status) = extract nr
 
                     let aname = res ^.to summary.resultOf.to key
