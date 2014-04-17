@@ -15,6 +15,7 @@ module FreeAgent.Process
     , NFSerializable
     , localNodeId
     , ChildSpec
+    , Async, AsyncResult(..)
     )
 where
 
@@ -40,6 +41,9 @@ import Control.Distributed.Process.Platform
        (NFSerializable, Addressable, Routable(..), Resolvable)
 import           Control.Distributed.Process.Serializable              (Serializable)
 import qualified Control.Distributed.Process.Platform                  as Base
+import Control.Distributed.Process.Platform.Async
+       (Async, AsyncResult(..))
+import qualified Control.Distributed.Process.Platform.Async            as Base
 import qualified Control.Distributed.Process.Platform.UnsafePrimitives as NF
 import qualified Control.Distributed.Process.Platform.ManagedProcess.UnsafeClient   as Managed
 import           Control.Distributed.Process.Platform.Supervisor (ChildSpec)
@@ -163,3 +167,10 @@ waitRegistration sname = loop
 resolve :: (MonadProcess m, Resolvable addr)
         => addr -> m (Maybe ProcessId)
 resolve = liftProcess . Base.resolve
+
+async :: (Serializable a, MonadProcess m) => m a -> m (Async a)
+async = mapProcess Base.async
+
+wait :: MonadProcess process
+     => Async a -> process (AsyncResult a)
+wait = liftProcess . Base.wait

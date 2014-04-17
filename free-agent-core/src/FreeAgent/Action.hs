@@ -43,6 +43,9 @@ import qualified Data.Aeson  as Aeson
 deriving instance Eq ResultSummary
 deriveSerializers ''ResultSummary
 
+instance Stashable ResultSummary where
+    key (ResultSummary time _ _) = Cereal.encode time
+
 instance Binary Action where
     put (Action a) = Binary.put $ wrap a
     get = do

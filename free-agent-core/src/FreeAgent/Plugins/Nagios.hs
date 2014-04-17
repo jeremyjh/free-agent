@@ -28,7 +28,6 @@ import           System.Process    (readProcessWithExitCode)
 
 import           Control.Error (runEitherT, hoistEither)
 import           Data.Default      (Default (..))
-import qualified Data.Serialize as Cereal (encode)
 
 
 
@@ -84,7 +83,7 @@ extractConfig' :: (ContextReader m) => m NagiosConfig
 extractConfig' = extractConfig $ pluginDef def ^.name
 
 instance Stashable NagiosResult where
-    key (NagiosResult (ResultSummary time _ _) _) = Cereal.encode time
+    key = key . summary
 
 instance Resulting NagiosResult where
     summary (NagiosResult s _) = s

@@ -317,6 +317,7 @@ data ResultSummary
                   , _resultResultOf  :: Action
                   } deriving (Show, Typeable, Generic)
 
+
 data ActionHistory = ActionHistory deriving (Show, Eq, Typeable, Generic)
 
 data AgentServer = AgentServer { _serverName :: String
