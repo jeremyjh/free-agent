@@ -110,7 +110,8 @@ instance NFData Action where
 
 -- | Class for types that will result from some action and can
 -- be boxed as 'Result'.
-class (NFSerializable result, Stashable result, FromJSON result, ToJSON result) => Resulting result where
+class (NFSerializable result, Stashable result, FromJSON result, ToJSON result)
+    => Resulting result where
     -- | extract the concrete result - if you know what type it is
     extract :: (Typeable a) => result -> Maybe a
     -- | provide a 'ResultSummary'
