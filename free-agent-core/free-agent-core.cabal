@@ -44,6 +44,7 @@ library
                    , containers >= 0.5.0.0
                    , data-default
                    , distributed-process
+                   , distributed-process-monad-control
                    , distributed-process-platform
                    , distributed-process-p2p >= 0.1.2.2
                    , distributed-static

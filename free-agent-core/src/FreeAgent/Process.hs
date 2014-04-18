@@ -36,11 +36,11 @@ import           Control.Distributed.Process.Node                      (localNod
 import qualified Control.Distributed.Process.Node                      as Node
 import qualified Control.Distributed.Process.Platform as Platform (__remoteTable)
 import           Control.Distributed.Process.Closure                   (mkClosure, remotable)
-import           Control.Distributed.Process.Internal.Types            (Process(..), LocalProcess(..))
 import Control.Distributed.Process.Platform
        (NFSerializable, Addressable, Routable(..), Resolvable)
 import           Control.Distributed.Process.Serializable              (Serializable)
 import qualified Control.Distributed.Process.Platform                  as Base
+import           Control.Distributed.Process.MonadBaseControl          ()
 import Control.Distributed.Process.Platform.Async
        (Async, AsyncResult(..))
 import qualified Control.Distributed.Process.Platform.Async            as Base
@@ -48,15 +48,7 @@ import qualified Control.Distributed.Process.Platform.UnsafePrimitives as NF
 import qualified Control.Distributed.Process.Platform.ManagedProcess.UnsafeClient   as Managed
 import           Control.Distributed.Process.Platform.Supervisor (ChildSpec)
 import           Control.Error                                         (EitherT, mapEitherT)
-import           Control.Monad.Base                                    (MonadBase(..))
 import           Control.Monad.Trans.Control                           (MonadBaseControl(..))
-
-deriving instance MonadBase IO Process
-
-instance MonadBaseControl IO Process where
-  newtype StM Process a = StProcess {unSTProcess :: StM (ReaderT LocalProcess IO) a}
-  restoreM (StProcess m) = Process $ restoreM m
-  liftBaseWith f = Process $ liftBaseWith $ \ rib -> f (fmap StProcess . rib . unProcess)
 
 -- lifted versions of Process functions
 class (MonadIO m, MonadBaseControl IO m) => MonadProcess m where
