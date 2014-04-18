@@ -108,16 +108,17 @@ instance NFData Action where
     rnf (Action a) = rnf a
 
 
--- | Class for types that will be boxed as Result
-class (NFSerializable a, Stashable a, FromJSON a, ToJSON a) => Resulting a where
+-- | Class for types that will result from some action and can
+-- be boxed as 'Result'.
+class (NFSerializable result, Stashable result, FromJSON result, ToJSON result) => Resulting result where
     -- | extract the concrete result - if you know what type it is
-    extract :: (Typeable b) => a -> Maybe b
+    extract :: (Typeable a) => result -> Maybe a
     -- | provide a 'ResultSummary'
-    summary :: a -> ResultSummary
+    summary :: result -> ResultSummary
     -- | Create a generalized ResultMatcher function - see 'Core.resultMatcher'
-    matchR :: (Typeable b) => (b -> Bool) -> a -> Bool
+    matchR :: (Typeable a) => (a -> Bool) -> result -> Bool
 
-    matchR f a = maybe False f (cast a)
+    matchR predicate result' = maybe False predicate (cast result')
     extract = cast
 
 -- Result
@@ -302,13 +303,25 @@ data RunnableFail =
                   | UnknownResponse Text
     deriving (Show, Eq, Typeable, Generic)
 
-class (NFSerializable a, NFSerializable b, Stashable a, Stashable b, Resulting b)
-     => Runnable a b | a -> b where
-    exec :: (MonadAgent m) => a -> m (Either RunnableFail b)
+-- | This is the core class of the 'Actionable' type. Concrete
+-- instances are wrapped in the 'Action' existential type for compatibility
+-- with all the basic plumbing implemented in FreeAgent Servers.
+class ( NFSerializable action, Stashable action
+      , NFSerializable result, Stashable result, Resulting result)
+     => Runnable action result | action -> result where
+     -- | Perform the Action - implementing 'exec' is the minimum viable
+     -- instance.
+    exec :: (MonadAgent agent)
+         => action -> agent (Either RunnableFail result)
+    -- | Exec with some 'Result' - the default instance ignores
+    -- the argument and calls exec.
+    execWith :: (MonadAgent agent)
+             => Result -> action -> agent (Either RunnableFail result)
     -- | Create a generalized ActionMatcher function - see 'Core.actionMatcher'
-    matchA :: (Typeable c) => (c -> Bool) -> a -> Bool
+    matchA :: (Typeable a) => (a -> Bool) -> action -> Bool
 
-    matchA f a = maybe False f (cast a)
+    matchA predicate action' = maybe False predicate (cast action')
+    execWith _ = exec
 
 
 data ResultSummary
