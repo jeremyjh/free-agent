@@ -5,19 +5,15 @@
    * update quasi-quotes to populate source from Loc
 
   Executive: 
-   * Listeners for events - for example Schedule should
+   * Triggers - an Action to run when a matching Action or Result <event> takes place - a
+     generalization of current listener functionality  - for example Schedule should
      be notified when an Action is unregistered
 
-  Managed Agent:
-   * refactor common code in agent handlers
-  
   Command Line Interface
    * File Action Definitions (json/yaml)
       * startup load file definitions - update AgentDB actions IF newer
   
   Actions: 
-   * Composites / Wrappers:
-     * CompositeAction - list of Actions to exec together
 
    * Core Action definitions:
       * Command (shell/createProcess) (pull out of Nagios)
@@ -34,7 +30,6 @@
   Actions: 
    * MetaAction (provides Metadata to ... Executive? more routing?)
      * or just a Runnable member "meta :: [MetaInfo]"
-          * CompositeAction - list of Actions to exec together
   
 1.0.0: 
 

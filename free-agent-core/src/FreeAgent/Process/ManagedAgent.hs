@@ -40,7 +40,6 @@ import           Control.Distributed.Process.Platform.ManagedProcess as Managed
 import           Control.Distributed.Process.Platform (linkOnFailure, Addressable)
 import           Control.Distributed.Process.Platform.Supervisor    as Supervisor
 import           Control.Distributed.Process.Platform.Time          (Delay(..), milliSeconds)
-import           Control.Error                                       (EitherT, runEitherT)
 
 data AgentState a = AgentState AgentContext a
 

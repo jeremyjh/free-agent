@@ -15,6 +15,8 @@ module FreeAgent.Action
     ( toAction
     , register, actionType
     , registerPluginMaps
+    , tryExec, tryExecWith
+    , tryExecET, tryExecWithET
     )
 where
 
@@ -30,6 +32,7 @@ import qualified Data.Map                    as Map
 import qualified Prelude                     as P
 import           System.IO.Unsafe            (unsafePerformIO)
 
+import Control.Error (hoistEither)
 import           Data.SafeCopy
 import Data.Serialize (Serialize, runPut, runGet)
 import qualified Data.Serialize              as Cereal
@@ -45,6 +48,14 @@ deriveSerializers ''ResultSummary
 
 instance Stashable ResultSummary where
     key (ResultSummary time _ _) = Cereal.encode time
+
+deriveSerializers ''FailResult
+
+instance Stashable FailResult where
+    key (FailResult _ summ) = key summ
+
+instance Resulting FailResult where
+    summary (FailResult _ summ) = summ
 
 instance Binary Action where
     put (Action a) = Binary.put $ wrap a
@@ -117,10 +128,16 @@ instance Resulting Result where
     matchR f (Result a)  = maybe False f (cast a)
 
 instance Runnable Action Result where
-    exec (Action a) = do
-        execR <- exec a
+    exec (Action action') = do
+        execR <- exec action'
         return $ flip fmap execR $ \result ->
                 Result result
+
+    execWith (Action action') result' = do
+        execR <- execWith action' result'
+        return $ flip fmap execR $ \result ->
+                Result result
+
     matchA f (Action a)  = maybe False f (cast a)
 
 instance Stashable Result where
@@ -150,6 +167,28 @@ register action' = tell [
 actionType :: (Actionable a b) => a
 actionType = error "actionType should never be evaluated! Only pass it \
                    \ to register which takes the TypeRep but does not evaluate it."
+
+-- | Does tryAny on exec and converts SomeException to RunnableFail.
+tryExec :: (Runnable action result, MonadAgent agent)
+          => action -> agent (Either RunnableFail result)
+tryExec action' =
+    tryAny (exec action') >>= return . either (Left . convert) id
+
+-- | Does tryAny on execWith and converts SomeException to RunnableFail.
+tryExecWith :: (Runnable action result, MonadAgent agent)
+          => action -> Result -> agent (Either RunnableFail result)
+tryExecWith action' result' =
+    tryAny (execWith action' result') >>= return . either (Left . convert) id
+
+-- | Like tryExec but hoists into an EitherT monad.
+tryExecET :: (Runnable action result, MonadAgent agent)
+          => action -> EitherT RunnableFail agent result
+tryExecET = tryExec >=> hoistEither
+
+-- | Like tryExecWith but hoists into an EitherT monad.
+tryExecWithET :: (Runnable action result, MonadAgent agent)
+          => action -> Result -> EitherT RunnableFail agent result
+tryExecWithET action' = tryExecWith action' >=> hoistEither
 
 -- | Unwrap a concrete type into an Action
 --

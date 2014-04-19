@@ -40,9 +40,9 @@ spec =
             testAgent $ \result -> do
                 catchAny $ do
                     Right () <- schedule Local $
-                                         Event (key checkTCP) "@hourly" Never
+                                         Event (key testAction) "@hourly" Never
 
-                    Right _ <- findEvent Local (key checkTCP)
+                    Right _ <- findEvent Local (key testAction)
                     result True
                 $ \exception ->
                     result $ throw exception
@@ -52,11 +52,11 @@ spec =
             testAgentNL $ \result -> do
                 catchAny $ do
                     Left (CronParseFail _) <- schedule Local $
-                                                       Event (key checkTCP)
+                                                       Event (key testAction)
                                                              "whatever man"
                                                              Never
 
-                    Left (EventNotFound _) <- findEvent Local (key checkTCP)
+                    Left (EventNotFound _) <- findEvent Local (key testAction)
                     result True -- no exception
                 $ \exception ->
                     result $ throw exception
@@ -88,12 +88,12 @@ spec =
         it "executes a cron scheduled action" $ do
             testAgent $ \result -> do
                 catchAny $ do
-                    Right () <- registerAction Local checkTCP
-                    Right () <- schedule Local $ Event (key checkTCP)
+                    Right () <- registerAction Local testAction
+                    Right () <- schedule Local $ Event (key testAction)
                                                        "* * * * *"
                                                        Never
                     send scheduleServer Tick
-                    threadDelay 30000
+                    threadDelay 10000
                     Right results' <- allResultsFrom Local
                                                      (convert (0::Int))
                     result (length results')

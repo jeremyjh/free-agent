@@ -62,9 +62,9 @@ spec = do
         it "can execute a registered action asynchronously" $ do
             testAgent $ \result -> do
                 catchAny $ do
-                    Right _ <-registerAction Local checkTCP
-                    Right _ <- executeRegisteredAsync Local $ key checkTCP
-                    threadDelay 10000
+                    Right _ <-registerAction Local testAction
+                    Right _ <- executeRegisteredAsync Local $ key testAction
+                    threadDelay 1000
                     -- confirm results were written
                     Right results' <- allResultsFrom Local
                                                      (convert (0::Int))
@@ -76,8 +76,8 @@ spec = do
         it "will fail to execute a non-registered action" $ do
             testAgentNL $ \result -> do
                 catchAny $ do
-                    Right () <- unregisterAction Local (key checkTCP)
-                    Left (ActionNotFound _) <- executeRegistered Local $ key checkTCP
+                    Right () <- unregisterAction Local (key testAction)
+                    Left (ActionNotFound _) <- executeRegistered Local $ key testAction
                     result True -- no match failure
                 $ \exception ->
                     result $ throw exception

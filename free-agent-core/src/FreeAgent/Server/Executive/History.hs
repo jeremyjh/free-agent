@@ -32,7 +32,6 @@ import           Data.Time.Clock (UTCTime)
 import           Data.Binary (Binary)
 import           Control.Monad.State (StateT)
 import           Control.DeepSeq.TH (deriveNFData)
-import Control.Error (EitherT)
 
 -- -----------------------------
 -- Types

@@ -38,7 +38,7 @@ import qualified Control.Distributed.Process.Platform as Platform
 import           Control.Monad.State                            as State (StateT, MonadState)
 import           Control.Monad.Reader (ask)
 import           Control.Distributed.Backend.P2P(getCapable, peerController,makeNodeId)
-import           Control.Error (runEitherT, (!?), hoistEither, EitherT)
+import           Control.Error ((!?), hoistEither)
 import           Control.DeepSeq.TH (deriveNFData)
 import           Data.UUID.V1 (nextUUID)
 

@@ -28,7 +28,7 @@ import           Control.Monad.Reader (ask)
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import           Control.Monad.State (StateT)
-import           Control.Error (note, EitherT)
+import           Control.Error (note)
 
 import           Control.Distributed.Process.Platform.Time
 import           Control.Distributed.Process.Platform.Timer
@@ -217,29 +217,30 @@ type ScheduleAgentET a = EitherT ScheduleFail (StateT ScheduleState Agent) a
 
 scheduleServer :: AgentServer
 scheduleServer =
-    defineServer serverName
-                 initSchedule
-                 defaultProcess {
-                     apiHandlers =
-                     [ agentRpcHandlerET $ \ cmd ->
-                           case cmd of
-                               (CmdAddEvent sched) ->
-                                   doAddSchedule sched
-                               (CmdRemoveEvent key') ->
-                                   doRemoveSchedule key'
-                               _ -> $(err "illegal pattern match")
-                     , agentRpcHandler $ \ (CmdFindEvent key') ->
-                           query (FindEventA key')
-                     ],
-                     infoHandlers =
-                     [ agentInfoHandler $ \ Tick -> onTick
-                     ],
-                     shutdownHandler =
-                         \ s _ ->
-                         case s^.serverState.tickerRef of
-                            Just ref -> cancelTimer ref
-                            Nothing -> return ()
-                 }
+    defineServer
+        serverName
+        initSchedule
+        defaultProcess {
+            apiHandlers =
+            [ agentRpcHandlerET $ \ cmd ->
+                  case cmd of
+                      (CmdAddEvent sched) ->
+                          doAddSchedule sched
+                      (CmdRemoveEvent key') ->
+                          doRemoveSchedule key'
+                      _ -> $(err "illegal pattern match")
+            , agentRpcHandler $ \ (CmdFindEvent key') ->
+                  query (FindEventA key')
+            ],
+            infoHandlers =
+            [ agentInfoHandler $ \ Tick -> onTick
+            ],
+            shutdownHandler =
+                \ s _ ->
+                case s^.serverState.tickerRef of
+                   Just ref -> cancelTimer ref
+                   Nothing -> return ()
+        }
   where initSchedule = do
             acid' <- openOrGetDb "agent-schedule" def def
             pid <- getSelfPid

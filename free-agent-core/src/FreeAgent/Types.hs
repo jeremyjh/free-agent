@@ -41,7 +41,6 @@ import           Data.Typeable                      (cast)
 
 import           Control.DeepSeq                    (NFData (..))
 import Control.DeepSeq.TH (deriveNFData)
-import           Control.Error                      (EitherT)
 import           FreeAgent.Process (MonadProcess(..), Process
                                                     ,ProcessId, NFSerializable
                                                     ,ChildSpec, RemoteTable
@@ -293,7 +292,7 @@ data RunnableFail =
                   -- | Action-specific general failure to exec
                      GeneralFailure Text
                   -- | An unhandled IOException message
-                  | RIOException Text
+                  | RSomeException Text
                   -- | Could not execute due to missing (local) dependency
                   -- (e.g. 'ruby' not found)
                   | DependencyFailure Text
@@ -303,6 +302,12 @@ data RunnableFail =
                   -- | Dependency response unexpected
                   | UnknownResponse Text
     deriving (Show, Eq, Typeable, Generic)
+
+instance Convertible SomeException RunnableFail where
+    safeConvert = return . RSomeException . tshow
+
+data FailResult = FailResult RunnableFail ResultSummary
+        deriving (Show,  Typeable, Generic)
 
 -- | This is the core class of the 'Actionable' type. Concrete
 -- instances are wrapped in the 'Action' existential type for compatibility
@@ -315,15 +320,14 @@ class ( NFSerializable action, Stashable action
     exec :: (MonadAgent agent)
          => action -> agent (Either RunnableFail result)
     -- | Exec with some 'Result' - the default instance ignores
-    -- the argument and calls exec.
+    -- the result and calls exec
     execWith :: (MonadAgent agent)
-             => Result -> action -> agent (Either RunnableFail result)
+             =>  action -> Result -> agent (Either RunnableFail result)
     -- | Create a generalized ActionMatcher function - see 'Core.actionMatcher'
     matchA :: (Typeable a) => (a -> Bool) -> action -> Bool
 
     matchA predicate action' = maybe False predicate (cast action')
-    execWith _ = exec
-
+    execWith action' _ = exec action'
 
 data ResultSummary
   = ResultSummary { _resultTimestamp :: UTCTime

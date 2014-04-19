@@ -33,19 +33,19 @@ import           AgentPrelude
 import           FreeAgent.Action
 import           FreeAgent.Database.AcidState
 import           FreeAgent.Lenses
-import           FreeAgent.Process                                   as Process
+import           FreeAgent.Process                     as Process
 import           FreeAgent.Process.ManagedAgent
-import           FreeAgent.Server.Executive.History                  hiding (serverName)
+import           FreeAgent.Server.Executive.History    hiding (serverName)
 import           FreeAgent.Server.Peer
 
-import           Control.DeepSeq.TH                                  (deriveNFData)
-import           Control.Monad.State                                 (StateT)
+import           Control.DeepSeq.TH                    (deriveNFData)
+import           Control.Monad.State                   (StateT)
 import Control.Monad.Reader (ask)
 import           Data.Binary
-import qualified Data.Map.Strict                                     as Map
+import qualified Data.Map.Strict                       as Map
 
-import           Control.Distributed.Static                          (unclosure)
-import           Control.Error                                       hiding (err)
+import           Control.Distributed.Static            (unclosure)
+import           Control.Error                         ((!?))
 import           Data.Default                          (Default(..))
 
 -- -----------------------------
@@ -88,7 +88,6 @@ data ExecutiveCommand =
       | UnregisterAction Key
       | ExecuteAction Action
       | ExecuteRegistered Key
-      {-| QueryActionHistory (ScanQuery ActionHistory [ActionHistory])-}
       | TerminateExecutive
       | AddListener (Closure Listener)
       deriving (Show, Typeable, Generic)
@@ -190,33 +189,34 @@ callExecutive target command = do
 
 execServer :: AgentServer
 execServer =
-    defineServer serverName
-                 initExec
-                 defaultProcess {
-                     apiHandlers =
-                     [ agentRpcAsyncHandlerET $
-                           \cmd -> case cmd of
-                               ExecuteAction act -> doExecuteAction act
-                               ExecuteRegistered k -> doExecuteRegistered k
-                               _ -> $(err "illegal pattern match")
+    defineServer
+        serverName
+        initExec
+        defaultProcess {
+            apiHandlers =
+            [ agentRpcAsyncHandlerET $
+                  \cmd -> case cmd of
+                      ExecuteAction act -> doExecuteAction act
+                      ExecuteRegistered k -> doExecuteRegistered k
+                      _ -> $(err "illegal pattern match")
 
-                     , agentRpcAsyncHandlerET $ \cmd -> doRegistration cmd
+            , agentRpcAsyncHandlerET $ \cmd -> doRegistration cmd
 
-                     , agentCastHandlerET $ \ cmd ->
-                           case cmd of
-                               (AddListener cl) -> do
-                                   rt <- viewConfig remoteTable
-                                   case unclosure rt cl of
-                                       Left msg -> [qwarn|AddListener failed! Could not evaluate
-                                                        new listener closure: #{msg}|]
-                                       Right listener -> do
-                                           listeners %= (:) listener
-                                           update (PutListener cl)
-                               (ExecuteRegistered k) -> void $ spawnLocal $
-                                   void $ doExecuteRegistered k
-                               _ -> $(err "illegal pattern match")
-                     ]
-                 }
+            , agentCastHandlerET $ \ cmd ->
+                  case cmd of
+                      (AddListener cl) -> do
+                          rt <- viewConfig remoteTable
+                          case unclosure rt cl of
+                              Left msg -> [qwarn|AddListener failed! Could not evaluate
+                                            new listener closure: #{msg}|]
+                              Right listener -> do
+                                  listeners %= (:) listener
+                                  update (PutListener cl)
+                      (ExecuteRegistered k) -> void $ spawnLocal $
+                          void $ doExecuteRegistered k
+                      _ -> $(err "illegal pattern match")
+            ]
+        }
   where initExec = do
             listeners' <- join $ viewContext $ plugins.listeners
             acid' <- openOrGetDb "agent-executive" def def
@@ -249,7 +249,7 @@ doExecuteRegistered key' = do
 
 doExec :: Action -> ExecAgent Result
 doExec action' = do
-    result <- exec action' >>= convEitherT
+    result <- tryExec action' >>= convEitherT
     storeResult result >>= notifyListeners
   where
     storeResult result = do

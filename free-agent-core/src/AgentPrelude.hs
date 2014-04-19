@@ -18,6 +18,7 @@ module AgentPrelude
     , FilePathS
     , debug, dbg, err
     , convert
+    , EitherT, runEitherT
     , convEither, convEitherT
     , Convertible(..)
     , def
@@ -37,7 +38,7 @@ import           ClassyPrelude                 hiding (undefined)
 import qualified Prelude                       as P
 
 import           Control.DeepSeq.TH            (deriveNFData)
-import           Control.Error                 (EitherT, hoistEither)
+import           Control.Error                 (EitherT, runEitherT, hoistEither)
 import           Control.Monad.Logger          (MonadLogger(..), logDebug, logInfo, logWarn, logError)
 import           Control.Monad.Logger.Quote    (qdebug, qinfo, qwarn, qerror, qdebugNS)
 import           Data.Binary                   as Binary (Binary (..))

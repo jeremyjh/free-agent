@@ -26,7 +26,6 @@ import           Data.Time.Clock   (getCurrentTime)
 import           System.Exit       (ExitCode (..))
 import           System.Process    (readProcessWithExitCode)
 
-import           Control.Error (runEitherT, hoistEither)
 import           Data.Default      (Default (..))
 
 
@@ -90,18 +89,14 @@ instance Resulting NagiosResult where
 
 instance Runnable Command NagiosResult where
     exec cmd =
-        catchAny (
-             do cmdPath <- commandPath
-                (rc, result', _) <- liftIO $ readProcessWithExitCode cmdPath makeArgs []
-                case rc of
-                    ExitSuccess   -> completeAs OK result'
-                    ExitFailure 1 -> completeAs Warning result'
-                    ExitFailure 2 -> completeAs Critical result'
-                    ExitFailure i -> return $
-                        Left $ UnknownResponse $ tshow i ++ ": " ++ convert result' )
-             (\ exception -> do
-                putStrLn $ "Command exec threw exception: " ++ tshow exception
-                return $ Left $ RIOException $ tshow exception )
+     do cmdPath <- commandPath
+        (rc, result', _) <- liftIO $ readProcessWithExitCode cmdPath makeArgs []
+        case rc of
+            ExitSuccess   -> completeAs OK result'
+            ExitFailure 1 -> completeAs Warning result'
+            ExitFailure 2 -> completeAs Critical result'
+            ExitFailure i -> return $
+                Left $ UnknownResponse $ tshow i ++ ": " ++ convert result'
       where
         makeArgs = ["-H", convert $ cmd^.host, "-p", portS $ cmd^.port]
         portS (Just p) = show p
@@ -120,6 +115,5 @@ instance Stashable CheckTCP where
 
 instance Runnable CheckTCP NagiosResult where
     exec cmd = runEitherT $ do
-        result' <- exec (Command (cmd^.host) (Just $ cmd^.port) "check_tcp")
-                   >>= hoistEither
+        result' <- tryExecET (Command (cmd^.host) (Just $ cmd^.port) "check_tcp")
         return $ result' & resultSummary.resultOf .~ Action cmd

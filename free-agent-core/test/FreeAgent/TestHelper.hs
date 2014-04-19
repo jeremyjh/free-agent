@@ -1,4 +1,8 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies #-}
+{-# LANGUAGE TemplateHaskell #-}
+
 module FreeAgent.TestHelper
     ( appConfig
     , appPlugins
@@ -7,6 +11,9 @@ module FreeAgent.TestHelper
     , nosetup
     , checkTCP
     , texpect
+    , TestAction(..)
+    , testAction
+    , slowTestAction
     ) where
 
 import FreeAgent
@@ -17,6 +24,7 @@ import FreeAgent.Process
 import FreeAgent.Plugins.Nagios as Nagios
 import Control.Concurrent.Lifted (threadDelay)
 import System.Process (system)
+import Data.Time.Clock (getCurrentTime)
 
 -- |App Config Section
 -- use record syntax to over-ride default configuration values
@@ -48,10 +56,6 @@ setup = void $ system ("rm -rf " ++ (convert $ appConfig^.dbPath))
 nosetup :: IO ()
 nosetup = return ()
 
--- common test fixture
-checkTCP :: CheckTCP
-checkTCP = CheckTCP  "localhost" 53
-
 -- for testing - useful to throw an exception if we "never" get the value we're expecting
 texpect :: (MonadProcess m, Monad m) => NFSerializable a => m a
 texpect = do
@@ -59,3 +63,38 @@ texpect = do
     case gotit of
         Nothing -> error "Timed out in test expect"
         Just v -> return v
+
+data TestAction = TestAction Text Int
+    deriving (Show, Eq, Typeable, Generic)
+
+data TestResult = TestResult ResultSummary
+    deriving (Show, Eq, Typeable, Generic)
+
+instance Stashable TestAction where
+    key (TestAction text' _) = convert text'
+
+instance Stashable TestResult where
+    key (TestResult summ) = key summ
+
+instance Resulting TestResult where
+    summary (TestResult summ) = summ
+
+instance Runnable TestAction TestResult where
+    exec ta@(TestAction text' delay) = do
+        threadDelay delay
+        time' <- liftIO getCurrentTime
+        return $ Right $ TestResult (ResultSummary time' text' (toAction ta))
+
+-- common test fixture
+checkTCP :: CheckTCP
+checkTCP = CheckTCP  "localhost" 53
+
+testAction :: TestAction
+testAction = TestAction "test action" 0
+
+-- test with delay
+slowTestAction :: TestAction
+slowTestAction = TestAction "slow test action" 10000
+
+deriveSerializers ''TestAction
+deriveSerializers ''TestResult

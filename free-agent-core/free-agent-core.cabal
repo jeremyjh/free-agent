@@ -27,6 +27,7 @@ library
                    , FreeAgent.Server.Executive.History
                    , FreeAgent.Server.Schedule
                    , FreeAgent.Action
+                   , FreeAgent.Action.Composition
                    , FreeAgent.Plugins.Nagios
                    , Control.Monad.Logger.Quote
 
@@ -98,3 +99,4 @@ test-suite spec
                    , binary
                    , aeson
                    , yaml
+                   , time
