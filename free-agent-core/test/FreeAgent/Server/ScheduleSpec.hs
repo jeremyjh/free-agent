@@ -15,6 +15,7 @@ import           FreeAgent.Server.Executive (registerAction)
 
 import           FreeAgent.TestHelper hiding (appConfig)
 import qualified FreeAgent.TestHelper as Helper
+import           FreeAgent.Fixtures
 
 import           Control.Exception (throw)
 import           Control.Concurrent.Lifted (threadDelay)
@@ -25,7 +26,7 @@ main :: IO ()
 main = hspec spec
 
 spec :: Spec
-spec =
+spec = do --parallel $
     describe "Basic scheduler operations" $ do
         it "is started by Core supervisor" $ do
             testAgent $ \result -> do
@@ -49,18 +50,17 @@ spec =
             `shouldReturn` True
 
         it "won't schedule a bogus cron format" $ do
-            testAgentNL $ \result -> do
+            testAgent $ \result -> do
                 catchAny $ do
-                    Left (CronParseFail _) <- schedule Local $
-                                                       Event (key testAction)
-                                                             "whatever man"
-                                                             Never
-
+                    Right () <- schedule Local $
+                                         Event (key testAction)
+                                               "whatever man"
+                                               Never
                     Left (EventNotFound _) <- findEvent Local (key testAction)
-                    result True -- no exception
+                    result "" -- no exception
                 $ \exception ->
-                    result $ throw exception
-            `shouldThrow` anyException
+                    result $ show exception
+            `shouldReturn` "Unable to parse cron formatted literal: whatever man"
 
         it "won't find an absent event" $ do
             testAgent $ \result -> do
@@ -101,11 +101,14 @@ spec =
                     result $ throw exception
             `shouldReturn` 1
 
-testAgent ma = testRunAgent setup appConfig appPlugins ma
+testAgent ma = quickRunAgent ("4122"
+                             , appConfig & nodePort .~ "4122"
+                             , appPlugins
+                             ) ma
 
-testAgentNL ma = testRunAgent setup appConfigNL appPlugins ma
+{-testAgentNL ma = testRunAgent setup appConfigNL appPlugins ma-}
 
 appConfig :: AgentConfig
 appConfig = Helper.appConfig
       {-& minLogLevel .~ LevelDebug-}
-appConfigNL = Helper.appConfig & minLogLevel .~ LevelOther ""
+{-appConfigNL = Helper.appConfig & minLogLevel .~ LevelOther ""-}

@@ -2,29 +2,35 @@
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module FreeAgent.TestHelper
     ( appConfig
     , appPlugins
     , testRunAgent
+    , quickRunAgent
     , setup
     , nosetup
-    , checkTCP
     , texpect
-    , TestAction(..)
-    , testAction
-    , slowTestAction
     ) where
 
 import FreeAgent
 import FreeAgent.Lenses
 import FreeAgent.Server
 import FreeAgent.Process
--- import all your plugins here
+
+import FreeAgent.Fixtures (testPluginDef)
+
+import Data.Map.Strict as Map
+
 import FreeAgent.Plugins.Nagios as Nagios
-import Control.Concurrent.Lifted (threadDelay)
+import Control.Concurrent.Lifted (threadDelay, fork)
+import Control.Distributed.Process.Node (forkProcess)
 import System.Process (system)
-import Data.Time.Clock (getCurrentTime)
+import System.IO.Unsafe (unsafePerformIO)
 
 -- |App Config Section
 -- use record syntax to over-ride default configuration values
@@ -35,6 +41,7 @@ appConfig = def & dbPath .~ "/tmp/leveltest"
 appPlugins :: PluginSet
 appPlugins =
     pluginSet $ do
+        addPlugin $ testPluginDef
         addPlugin $ Nagios.pluginDef def {
             -- override default plugin-specific config
             nagiosPluginsPath = "/usr/lib/nagios/plugins"
@@ -50,8 +57,48 @@ testRunAgent doSetup config' plugins' ma = do
     threadDelay 15000 -- so we dont get open port errors
     catchAnyDeep (takeMVar result) $ \ e -> throwIO e
 
+type CachedContext = (Text, AgentConfig, PluginSet)
+
+quickRunAgent :: NFData a => CachedContext -> ((a -> Agent ()) -> Agent ()) -> IO a
+quickRunAgent cached@(name', _ , _) ma = do
+    result <- newEmptyMVar
+    contexts' <- readMVar cachedContexts
+    context' <- case Map.lookup name' contexts' of
+                    Just context' -> return context'
+                    Nothing -> createContext cached
+    void $ forkProcess (context'^.processNode) $
+        withAgent context' (ma (putMVar result))
+    catchAnyDeep (takeMVar result) $ \ e -> throwIO e
+
+cachedContexts :: MVar (Map Text AgentContext)
+cachedContexts = unsafePerformIO (newMVar mempty)
+{-# NOINLINE cachedContexts #-}
+
+createContext :: CachedContext -> IO AgentContext
+createContext (name', config', plugins') = do
+    setupConfig config'
+    contextsMap <- takeMVar cachedContexts
+    case Map.lookup name' contextsMap of
+        Just context' -> do
+            -- | lost race to create this particular context
+            putMVar cachedContexts contextsMap
+            return context'
+        Nothing -> do
+            void . fork $ runAgentServers config' plugins' $ do
+                context' <- askContext
+                putMVar cachedContexts (Map.insert name' context' contextsMap)
+                "the end" <- expect :: Agent String
+                return ()
+            contexts' <- readMVar cachedContexts
+            return $ fromMaybe (error "couldn't create Context!")
+                               (Map.lookup name' contexts')
+
+
 setup :: IO ()
 setup = void $ system ("rm -rf " ++ (convert $ appConfig^.dbPath))
+
+setupConfig :: AgentConfig -> IO ()
+setupConfig config' = void $ system ("rm -rf " ++ (convert $ config'^.dbPath))
 
 nosetup :: IO ()
 nosetup = return ()
@@ -63,38 +110,3 @@ texpect = do
     case gotit of
         Nothing -> error "Timed out in test expect"
         Just v -> return v
-
-data TestAction = TestAction Text Int
-    deriving (Show, Eq, Typeable, Generic)
-
-data TestResult = TestResult ResultSummary
-    deriving (Show, Eq, Typeable, Generic)
-
-instance Stashable TestAction where
-    key (TestAction text' _) = convert text'
-
-instance Stashable TestResult where
-    key (TestResult summ) = key summ
-
-instance Resulting TestResult where
-    summary (TestResult summ) = summ
-
-instance Runnable TestAction TestResult where
-    exec ta@(TestAction text' delay) = do
-        threadDelay delay
-        time' <- liftIO getCurrentTime
-        return $ Right $ TestResult (ResultSummary time' text' (toAction ta))
-
--- common test fixture
-checkTCP :: CheckTCP
-checkTCP = CheckTCP  "localhost" 53
-
-testAction :: TestAction
-testAction = TestAction "test action" 0
-
--- test with delay
-slowTestAction :: TestAction
-slowTestAction = TestAction "slow test action" 10000
-
-deriveSerializers ''TestAction
-deriveSerializers ''TestResult

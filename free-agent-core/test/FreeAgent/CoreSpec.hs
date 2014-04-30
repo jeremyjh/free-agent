@@ -11,6 +11,7 @@ import           FreeAgent.Lenses
 import           FreeAgent.Plugins.Nagios
 
 import           FreeAgent.TestHelper
+import           FreeAgent.Fixtures
 
 import qualified Data.Yaml  as Yaml
 import           FreeAgent.Process

@@ -20,6 +20,7 @@ import           FreeAgent.Server.Executive as Exec
 
 import           FreeAgent.TestHelper hiding (appConfig, appPlugins)
 import qualified FreeAgent.TestHelper as Helper
+import           FreeAgent.Fixtures
 
 import           Control.Concurrent.Lifted
 import           FreeAgent.Process as Process
@@ -71,7 +72,7 @@ spec = do
                     result $ length results'
                 $ \exception ->
                     result $ throw exception
-            `shouldReturn` 1
+            `shouldReturn` 2
 
         it "will fail to execute a non-registered action" $ do
             testAgentNL $ \result -> do
@@ -95,7 +96,7 @@ spec = do
                     result $ length results'
                 $ \exception ->
                     result $ throw exception
-            `shouldReturn` 1
+            `shouldReturn` 2
 
     describe "Listener notifications" $ do
         it "will invoke any configured listeners" $ do
@@ -114,7 +115,7 @@ spec = do
                     result (actionCount, resultCount)
                 $ \exception ->
                     result $ throw exception
-            `shouldReturn` (3,3)
+            `shouldReturn` (5,5)
 
         it "can subscribe listeners at runtime" $ do
             testAgent $ \result -> do
@@ -152,11 +153,12 @@ spec = do
                     result $ throw exception
 
             -- recovery with state from disk when launching new agent
-            result'' <- testAgentNoSetup $ \result -> do
+            result'' <- testAgent $ \result -> do
                 catchAny $ do
-                    getSelfPid >>= register listenerName
-                    Right _ <- executeAction Local checkTCP
-                    nr <- texpect :: Agent Result
+                    nr <- liftProcess $ do
+                        getSelfPid >>= register listenerName
+                        Right _ <- executeAction Local checkTCP
+                        texpect :: Process Result
                     let Just (NagiosResult _ status) = extract nr
                     result status
                 $ \exception ->
@@ -185,9 +187,12 @@ spec = do
 
 
 
-testAgent ma = testRunAgent setup appConfig appPlugins ma
+testAgent ma = quickRunAgent ("4120"
+                             , appConfig & nodePort .~ "4120"
+                             , appPlugins
+                             ) ma
 
-testAgentNoSetup ma = testRunAgent nosetup appConfig appPlugins ma
+{-testAgentNoSetup ma = testRunAgent nosetup appConfig appPlugins ma-}
 
 
 testAgentNL ma = testRunAgent setup appConfigNL appPlugins ma

@@ -22,8 +22,8 @@ import Control.Distributed.Process.Platform.Supervisor
 runAgentServers :: AgentConfig -> PluginSet -> Agent () -> IO ()
 runAgentServers config' plugins' ma =
     let pservers = pluginServers plugins'
-        cservers = filter (inPlugins pservers) coreServers in
-    runAgent config' plugins' $ startSuper (join [pservers, cservers]) >> ma
+        cservers = filter (inPlugins pservers) coreServers
+    in runAgent config' plugins' $ startSuper (join [pservers, cservers]) >> ma
   where inPlugins pservers cserver =
             all (\s -> s^.name /= cserver^.name) pservers
 

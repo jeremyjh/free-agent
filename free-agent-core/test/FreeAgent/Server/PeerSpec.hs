@@ -17,6 +17,7 @@ import           FreeAgent.Server.Peer
 
 import           FreeAgent.TestHelper hiding (appConfig, setup)
 import qualified FreeAgent.TestHelper as Helper
+import           FreeAgent.Fixtures
 
 import qualified Data.Set as Set
 

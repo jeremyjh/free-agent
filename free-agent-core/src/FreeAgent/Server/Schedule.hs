@@ -11,6 +11,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE BangPatterns #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -46,16 +47,16 @@ import           System.Cron.Parser (cronSchedule)
 -- ---------------------------
 
 data Event
-  = Event { schedKey :: Key
-                  , schedRecur :: ScheduleRecurrence
-                  , schedRetry :: RetryOption
-                  }
+  = Event { schedKey   :: !Key
+          , schedRecur :: !ScheduleRecurrence
+          , schedRetry :: !RetryOption
+          }
     deriving (Show, Eq, Typeable, Generic)
 
 data ScheduleRecurrence
-  = RecurCron CronSchedule Text -- ^ execute when schedule matches
-  | RecurInterval Int           -- ^ execute every n milliseconds
-  | OnceAt UTCTime
+  = RecurCron !CronSchedule !Text -- ^ execute when schedule matches
+  | RecurInterval !Int           -- ^ execute every n milliseconds
+  | OnceAt !UTCTime
   deriving (Show, Eq, Typeable, Generic)
 
 
@@ -180,7 +181,7 @@ $(makeAcidic ''SchedulePersist ['getPersist, 'addEvent, 'findEventA
 schedule :: MonadProcess m
               => Target -> Event
               -> m (Either ScheduleFail ())
-schedule target event = do
+schedule target !event = do --TODO - why is call not forcing evaluation of NFData Event?
     efail <- callServer serverName target (CmdAddEvent event)
     case efail of
         Right result' -> return result'
