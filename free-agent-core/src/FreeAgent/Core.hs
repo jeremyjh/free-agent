@@ -8,6 +8,7 @@
 module FreeAgent.Core
     ( runAgent
     , withAgent
+    , forkAgent
     , spawnAgent
     , extractConfig
     , definePlugin
@@ -34,7 +35,8 @@ import           Data.Dynamic                     (fromDynamic, toDyn )
 import qualified Data.Map                         as Map
 
 import           Control.Concurrent.Lifted        (threadDelay)
-import           Control.Distributed.Process.Node (newLocalNode, runProcess)
+import Control.Distributed.Process.Node
+       (newLocalNode, runProcess, forkProcess)
 import           Control.Distributed.Process.Management
 import           Network.Transport                (closeTransport)
 import           Network.Transport.TCP
@@ -101,6 +103,11 @@ withAgent ctxt ma =
              $ \exception -> do
                  putStrLn $ "Exception in withAgent: " ++ tshow exception
                  throwIO exception
+
+-- | 'forkProcess' analogue for the Agent monad
+forkAgent :: AgentContext -> Agent () -> IO ProcessId
+forkAgent context' =
+    forkProcess (context'^.processNode) . withAgent context'
 
 -- | Spawn a new process in the Agent monad.
 spawnAgent :: AgentContext -> Agent a -> Process ProcessId

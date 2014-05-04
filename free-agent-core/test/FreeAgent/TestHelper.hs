@@ -3,6 +3,7 @@
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE BangPatterns #-}
 
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -28,7 +29,7 @@ import Data.Map.Strict as Map
 
 import FreeAgent.Plugins.Nagios as Nagios
 import Control.Concurrent.Lifted (threadDelay, fork)
-import Control.Distributed.Process.Node (forkProcess)
+import Control.Exception (throw)
 import System.Process (system)
 import System.IO.Unsafe (unsafePerformIO)
 
@@ -49,26 +50,34 @@ appPlugins =
 
 -- helper for running agent and getting results out of
 -- the Process through partially applied putMVar
-testRunAgent :: NFData a => IO () -> AgentConfig -> PluginSet -> ((a -> Agent ()) -> Agent ()) -> IO a
+testRunAgent :: NFData a => IO () -> AgentConfig -> PluginSet -> Agent a -> IO a
 testRunAgent doSetup config' plugins' ma = do
     doSetup
-    result <- newEmptyMVar
-    runAgentServers config' plugins' (ma (putMVar result))
+    result <- returnFromAgent ma (runAgentServers config' plugins')
     threadDelay 15000 -- so we dont get open port errors
-    catchAnyDeep (takeMVar result) $ \ e -> throwIO e
+    return result
 
 type CachedContext = (Text, AgentConfig, PluginSet)
 
-quickRunAgent :: NFData a => CachedContext -> ((a -> Agent ()) -> Agent ()) -> IO a
+quickRunAgent :: NFData a => CachedContext -> Agent a -> IO a
 quickRunAgent cached@(name', _ , _) ma = do
-    result <- newEmptyMVar
     contexts' <- readMVar cachedContexts
     context' <- case Map.lookup name' contexts' of
                     Just context' -> return context'
                     Nothing -> createContext cached
-    void $ forkProcess (context'^.processNode) $
-        withAgent context' (ma (putMVar result))
-    catchAnyDeep (takeMVar result) $ \ e -> throwIO e
+    returnFromAgent ma (void . forkAgent context')
+
+returnFromAgent :: (NFData a, MonadBase IO io)
+                => Agent a -> (Agent () -> io ()) -> io a
+returnFromAgent ma agentFn = do
+    resultMV <- newEmptyMVar
+    agentFn $ do
+        eresult <- tryAnyDeep ma
+        case eresult of
+            Right result -> putMVar resultMV result
+            Left exception -> putMVar resultMV (throw exception)
+    !result <- takeMVar resultMV
+    return result
 
 cachedContexts :: MVar (Map Text AgentContext)
 cachedContexts = unsafePerformIO (newMVar mempty)

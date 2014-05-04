@@ -24,7 +24,6 @@ import qualified Data.Set as Set
 
 import           Control.Concurrent.Lifted
 
-import           Control.Exception
 import           Test.Hspec
 import System.Process (system)
 
@@ -42,77 +41,71 @@ spec :: Spec
 spec =
     describe "FreeAgent.Peer" $ do
         it "is started by Core supervisor" $ do
-            testAgent $ \result -> do
-                catchAny $ do
-                    Just _ <- whereis $ peerServer^.name
-                    result True
-                $ \exception ->
-                    result $ throw exception
+            testAgent $ do
+                Just _ <- whereis $ peerServer^.name
+                return True
             `shouldReturn` True
 
         it "can find services offered on peers" $ do
         -- one giant mega-spec b/c there is so much overhead in spinning up
         -- the peer swarm
-            testAgent $ \result -> do
-                catchAny $ do
-                    -- create a couple "remotes"
-                    void $ fork $ liftIO $
-                        runAgentServers appConfig2 appPlugins $ do
-                            getSelfPid >>= register "waiter"
-                            "waithere" <- expect :: Agent String
-                            return ()
+            testAgent $ do
+                -- create a couple "remotes"
+                void $ fork $ liftIO $
+                    runAgentServers appConfig2 appPlugins $ do
+                        getSelfPid >>= register "waiter"
+                        "waithere" <- expect :: Agent String
+                        return ()
 
-                    void $ fork $ liftIO $
-                        runAgentServers appConfigTX appPlugins $ do
-                            getSelfPid >>= register "waiter"
-                            "waithere" <- expect :: Agent String
-                            return ()
+                void $ fork $ liftIO $
+                    runAgentServers appConfigTX appPlugins $ do
+                        getSelfPid >>= register "waiter"
+                        "waithere" <- expect :: Agent String
+                        return ()
 
 
-                    -- wait for swarm to stabilize
-                    let waitFor3 = do
-                            count <- queryPeerCount
-                            when (count < 3) (threadDelay 10000 >> waitFor3)
-                    waitFor3
+                -- wait for swarm to stabilize
+                let waitFor3 = do
+                        count <- queryPeerCount
+                        when (count < 3) (threadDelay 10000 >> waitFor3)
+                waitFor3
 
-                    -- it "can count peers"
-                    count <- queryPeerCount
+                -- it "can count peers"
+                count <- queryPeerCount
 
-                    -- it "can query for a Set of matching Peers"
-                    peers <- queryPeerServers Exec.serverName (Set.fromList [def] )
-                                                              (Set.fromList [Zone "TX"] )
+                -- it "can query for a Set of matching Peers"
+                peers <- queryPeerServers Exec.serverName (Set.fromList [def] )
+                                                          (Set.fromList [Zone "TX"] )
 
-                    -- it "can register remote listeners"
-                    let tx:_ = Set.toList peers
-                    getSelfPid >>= register listenerName
-                    nodeid <- thisNodeId
-                    let matcher = $(mkClosure 'matchRemoteHostName) (nodeid, listenerName)
-                    Right () <- addListener (Remote tx) matcher
-                    threadDelay 10000
+                -- it "can register remote listeners"
+                let tx:_ = Set.toList peers
+                getSelfPid >>= register listenerName
+                nodeid <- thisNodeId
+                let matcher = $(mkClosure 'matchRemoteHostName) (nodeid, listenerName)
+                Right () <- addListener (Remote tx) matcher
+                threadDelay 10000
 
-                    -- it "can route an action to a remote Node"
-                    Right res <- executeAction (Route [def] [Zone "TX"])
-                                               checkTCP
+                -- it "can route an action to a remote Node"
+                Right res <- executeAction (Route [def] [Zone "TX"])
+                                           checkTCP
 
-                    nr <- texpect :: Agent Result
-                    let Just (NagiosResult _ status) = extract nr
+                nr <- texpect :: Agent Result
+                let Just (NagiosResult _ status) = extract nr
 
-                    let aname = res ^.to summary.resultOf.to key
+                let aname = res ^.to summary.resultOf.to key
 
-                    -- we're done, tell the two "remotes" to exit
-                    all3 <- queryPeerServers serverName (Set.fromList[def])
-                                                        (Set.fromList[def])
-                    forM_ all3 $ \peer' -> do
-                        mpid <- resolve (peer', ("waiter"::String))
-                        case mpid of
-                            Nothing -> return ()
-                            Just pid -> do
-                                send pid ("waithere" :: String)
-                    threadDelay 10000
+                -- we're done, tell the two "remotes" to exit
+                all3 <- queryPeerServers serverName (Set.fromList[def])
+                                                    (Set.fromList[def])
+                forM_ all3 $ \peer' -> do
+                    mpid <- resolve (peer', ("waiter"::String))
+                    case mpid of
+                        Nothing -> return ()
+                        Just pid -> do
+                            send pid ("waithere" :: String)
+                threadDelay 10000
 
-                    result (count, length peers,aname, status)
-                $ \exception ->
-                    result $ throw exception
+                return (count, length peers,aname, status)
             `shouldReturn` (3, 1, "localhost:53", OK)
 
 

@@ -25,7 +25,6 @@ import           FreeAgent.Fixtures
 import           Control.Concurrent.Lifted
 import           FreeAgent.Process as Process
 
-import Control.Exception (throw)
 
 matchRemoteHostName :: (NodeId, String) -> Listener
 matchRemoteHostName (nodeid, name') = matchAction (\c -> _checktcpHost c == "localhost") nodeid name'
@@ -39,104 +38,82 @@ spec = do
     describe "Basic executive operations" $ do
 
         it "is started by Core supervisor" $ do
-            testAgent $ \result -> do
-                catchAny $ do
-                    Just _ <- resolve execServer
-                    result True
-                $ \exception ->
-                    result $ throw exception
+            testAgent $ do
+                Just _ <- resolve execServer
+                return True
             `shouldReturn` True
 
         it "can execute a registered action" $ do
-            testAgent $ \result -> do
-                catchAny $ do
-                    Right _ <-registerAction Local checkTCP
-                    (Right _) <- executeRegistered Local $ key checkTCP
-                    -- confirm results were written
-                    Right results' <- allResultsFrom Local
-                                                     (convert (0::Int))
-                    result $ length results'
-                $ \exception ->
-                    result $ throw exception
+            testAgent $ do
+                Right _ <-registerAction Local checkTCP
+                (Right _) <- executeRegistered Local $ key checkTCP
+                -- confirm results were written
+                Right results' <- allResultsFrom Local
+                                                 (convert (0::Int))
+                return $ length results'
             `shouldReturn` 1
 
         it "can execute a registered action asynchronously" $ do
-            testAgent $ \result -> do
-                catchAny $ do
-                    Right _ <-registerAction Local testAction
-                    Right _ <- executeRegisteredAsync Local $ key testAction
-                    threadDelay 1000
-                    -- confirm results were written
-                    Right results' <- allResultsFrom Local
-                                                     (convert (0::Int))
-                    result $ length results'
-                $ \exception ->
-                    result $ throw exception
+            testAgent $ do
+                Right _ <-registerAction Local testAction
+                Right _ <- executeRegisteredAsync Local $ key testAction
+                threadDelay 1000
+                -- confirm results were written
+                Right results' <- allResultsFrom Local
+                                                 (convert (0::Int))
+                return $ length results'
             `shouldReturn` 2
 
         it "will fail to execute a non-registered action" $ do
-            testAgentNL $ \result -> do
-                catchAny $ do
-                    Right () <- unregisterAction Local (key testAction)
-                    Left (ActionNotFound _) <- executeRegistered Local $ key testAction
-                    result True -- no match failure
-                $ \exception ->
-                    result $ throw exception
+            testAgentNL $ do
+                Right () <- unregisterAction Local (key testAction)
+                Left (ActionNotFound _) <- executeRegistered Local $ key testAction
+                return True -- no match failure
             `shouldReturn` True
 
         it "can execute a supplied action" $ do
-            testAgent $ \result -> do
-                catchAny $ do
-                    (Right nr) <- executeAction Local checkTCP
-                    let Just (NagiosResult _ OK) = extract nr
-                    -- confirm results were written
-                    Right results' <- actionResultsFrom Local
-                                                        "localhost:53"
-                                                        (convert (0::Int))
-                    result $ length results'
-                $ \exception ->
-                    result $ throw exception
+            testAgent $ do
+                (Right nr) <- executeAction Local checkTCP
+                let Just (NagiosResult _ OK) = extract nr
+                -- confirm results were written
+                Right results' <- actionResultsFrom Local
+                                                    "localhost:53"
+                                                    (convert (0::Int))
+                return $ length results'
             `shouldReturn` 2
 
     describe "Listener notifications" $ do
         it "will invoke any configured listeners" $ do
-            testAgent $ \result -> do
-                catchAny $ do
-                    -- generate some results to hear about
-                    forM_ [0..2] $ \_ ->
-                        executeAction Local checkTCP
-                    -- make sure he's been listening
-                    threadDelay 1000
-                    pid <- getSelfPid
-                    nsend "ExecSpecActionListener" ("ask-result-count" :: String, pid)
-                    actionCount <- texpect :: Agent Int
-                    nsend "ExecSpecResultListener" ("ask-result-count" :: String, pid)
-                    resultCount <- texpect :: Agent Int
-                    result (actionCount, resultCount)
-                $ \exception ->
-                    result $ throw exception
+            testAgent $ do
+                -- generate some results to hear about
+                forM_ [0..2] $ \_ ->
+                    executeAction Local checkTCP
+                -- make sure he's been listening
+                threadDelay 1000
+                pid <- getSelfPid
+                nsend "ExecSpecActionListener" ("ask-result-count" :: String, pid)
+                actionCount <- texpect :: Agent Int
+                nsend "ExecSpecResultListener" ("ask-result-count" :: String, pid)
+                resultCount <- texpect :: Agent Int
+                return (actionCount, resultCount)
             `shouldReturn` (5,5)
 
         it "can subscribe listeners at runtime" $ do
-            testAgent $ \result -> do
-                catchAny $ do
-                    nodeid <- thisNodeId
-                    getSelfPid >>= register listenerName
-                    let matcher = $(mkClosure 'matchRemoteHostName) (nodeid, listenerName)
-                    Right () <- addListener Local matcher
-                    threadDelay 10000
-                    Right _ <- executeAction Local checkTCP
-                    nr <- texpect :: Agent Result
-                    let Just (NagiosResult _ status) = extract nr
-                    result status
-                $ \exception ->
-                    result $ throw exception
+            testAgent $ do
+                nodeid <- thisNodeId
+                getSelfPid >>= register listenerName
+                let matcher = $(mkClosure 'matchRemoteHostName) (nodeid, listenerName)
+                Right () <- addListener Local matcher
+                threadDelay 10000
+                Right _ <- executeAction Local checkTCP
+                nr <- texpect :: Agent Result
+                let Just (NagiosResult _ status) = extract nr
+                return status
             `shouldReturn` OK
 
         it "will persist its listeners across restarts" $ do
             -- recover with state in memory after Supervisor restarts
-            result' <- testAgent $ \result -> do
-                catchAny $ do
+            result' <- testAgent $ do
                     nodeid <- thisNodeId
                     getSelfPid >>= register listenerName
                     let matcher = $(mkClosure 'matchRemoteHostName) (nodeid, listenerName)
@@ -148,41 +125,30 @@ spec = do
                     Right _ <- executeAction Local checkTCP
                     nr <- texpect :: Agent Result
                     let Just (NagiosResult _ status) = extract nr
-                    result status
-                $ \exception ->
-                    result $ throw exception
+                    return status
 
             -- recovery with state from disk when launching new agent
-            result'' <- testAgent $ \result -> do
-                catchAny $ do
-                    nr <- liftProcess $ do
-                        getSelfPid >>= register listenerName
-                        Right _ <- executeAction Local checkTCP
-                        texpect :: Process Result
-                    let Just (NagiosResult _ status) = extract nr
-                    result status
-                $ \exception ->
-                    result $ throw exception
-
+            result'' <- testAgent $ do
+                nr <- liftProcess $ do
+                    getSelfPid >>= register listenerName
+                    Right _ <- executeAction Local checkTCP
+                    texpect :: Process Result
+                let Just (NagiosResult _ status) = extract nr
+                return status
             return (result' == result'')
             `shouldReturn` True
 
     describe "Routing features supplied by Peer" $ do
         it "it won't deliver a routed Action for an unknown context or zone" $ do
-            testAgentNL $ \result -> do
-                catchAny $ do
-                    Left (ECallFailed RoutingFailed)
-                        <- executeAction (Route [Context "unkown"] [def])
-                                         checkTCP
+            testAgentNL $ do
+                Left (ECallFailed RoutingFailed)
+                    <- executeAction (Route [Context "unkown"] [def])
+                                     checkTCP
 
-                    Left (ECallFailed RoutingFailed)
-                        <- executeAction (Route [def] [Zone "unkown"])
-                                         checkTCP
-
-
-                    result $ True -- no exceptions
-                $ \exception ->
-                    result $ throw exception
+                Left (ECallFailed RoutingFailed)
+                    <- executeAction (Route [def] [Zone "unkown"])
+                                     checkTCP
+                return  True -- no exceptions
             `shouldReturn` True
 
 
