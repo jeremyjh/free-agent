@@ -13,7 +13,6 @@
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
 
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module FreeAgent.Types
  ( module FreeAgent.Types
@@ -30,6 +29,7 @@ module FreeAgent.Types
 where
 
 import           AgentPrelude
+import           FreeAgent.Orphans                  ()
 import qualified Prelude                            as P
 
 import           Control.Monad.Reader               (ReaderT, ask, mapReaderT)
@@ -47,7 +47,7 @@ import           FreeAgent.Process (MonadProcess(..), Process
                                                     ,initRemoteTable, whereis
                                                     ,processNodeId)
 import           Control.Distributed.Process.Node   (LocalNode)
-import           Control.Distributed.Process (NodeId, Closure)
+import           Control.Distributed.Process (NodeId)
 import           Control.Distributed.Process.Platform (Resolvable(..))
 import           Control.Monad.Base                 (MonadBase)
 import           Control.Monad.Logger               (LogLevel (..), LoggingT,
@@ -60,10 +60,7 @@ import Data.Aeson (FromJSON(..), ToJSON(..), Value)
 import           Data.Default                       (Default (..))
 import qualified Data.Set                           as Set
 import           Data.UUID                          (UUID)
-import           Data.SafeCopy
-       (SafeCopy(..), Contained, contain, safePut, safeGet, base)
-import           Data.Serialize                     (Serialize)
-import qualified Data.Serialize                     as Cereal
+import           Data.SafeCopy (SafeCopy)
 
 
 
@@ -376,29 +373,7 @@ data Target =   Local
               | Remote Peer
               | Route [Context] [Zone]
 
--- create safecopy instances for Binary types - this
--- is unsafe since migrations are impossible
-class Binary a => UnsafeCopy a where
-    unsafeGet :: Contained (Cereal.Get a)
-    unsafePut :: a -> Contained Cereal.Put
 
-    unsafeGet = contain $ safeGet >>= return . Binary.decode
-    unsafePut = contain . safePut . Binary.encode
-
-instance Typeable a => UnsafeCopy (Closure a)
-
-instance Typeable a => SafeCopy (Closure a) where
-    version = 1
-    kind = base
-    errorTypeName _ = "Control.Distributed.Static.Closure"
-    putCopy = unsafePut
-    getCopy = unsafeGet
-
-instance Typeable a => Serialize (Closure a) where
-    get = safeGet
-    put = safePut
-
-deriveSafeStore ''UUID
 deriveSerializers ''Context
 deriveSerializers ''Zone
 deriveSerializers ''Wrapped

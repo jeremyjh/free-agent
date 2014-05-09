@@ -9,11 +9,9 @@
 {-# LANGUAGE TemplateHaskell        #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE BangPatterns #-}
 
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module FreeAgent.Server.Schedule where
 
@@ -22,6 +20,7 @@ import           FreeAgent.Database.AcidState
 import           FreeAgent.Lenses
 import           FreeAgent.Server.Peer (callServer, CallFail(..))
 import           FreeAgent.Server.Executive (executeRegisteredAsync)
+import           FreeAgent.Orphans ()
 import           FreeAgent.Process
 import           FreeAgent.Process.ManagedAgent
 
@@ -50,8 +49,7 @@ data Event
   = Event { schedKey   :: !Key
           , schedRecur :: !ScheduleRecurrence
           , schedRetry :: !RetryOption
-          }
-    deriving (Show, Eq, Typeable, Generic)
+          } deriving (Show, Eq, Typeable, Generic)
 
 data ScheduleRecurrence
   = RecurCron !CronSchedule !Text -- ^ execute when schedule matches
@@ -307,21 +305,3 @@ deriveNFData ''ScheduleFail
 deriveSerializers ''ScheduleRecurrence
 deriveSerializers ''Event
 deriveSafeStore ''SchedulePersist
-
--- orphans from System.Cron
-deriving instance Typeable CronSchedule
-
-deriving instance Generic CronField
-deriveSerializers ''CronField
-deriving instance Generic DayOfWeekSpec
-deriveSerializers ''DayOfWeekSpec
-deriving instance Generic DayOfMonthSpec
-deriveSerializers ''DayOfMonthSpec
-deriving instance Generic MinuteSpec
-deriveSerializers ''MinuteSpec
-deriving instance Generic HourSpec
-deriveSerializers ''HourSpec
-deriving instance Generic MonthSpec
-deriveSerializers ''MonthSpec
-deriving instance Generic CronSchedule
-deriveSerializers ''CronSchedule

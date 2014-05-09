@@ -1,13 +1,8 @@
-{-# LANGUAGE CPP               #-}
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 -- | Extensions to ClassyPrelude that are useful to most modules & plugins in Dash
 -- This module should NOT import from any Dash modules and anything
@@ -39,16 +34,12 @@ import qualified Prelude                       as P
 
 import           Control.DeepSeq.TH            (deriveNFData)
 import           Control.Error                 (EitherT, runEitherT, hoistEither)
-import           Control.Monad.Logger          (MonadLogger(..), logDebug, logInfo, logWarn, logError)
+import           Control.Monad.Logger          (logDebug, logInfo, logWarn, logError)
 import           Control.Monad.Logger.Quote    (qdebug, qinfo, qwarn, qerror, qdebugNS)
 import           Data.Binary                   as Binary (Binary (..))
-import qualified Data.Binary                   as Binary
 import           Data.Convertible              (Convertible(..), convert)
 import           Data.Default                  (def)
-import qualified Data.Text.Encoding            as Text (decodeUtf8, encodeUtf8)
-import           Data.Time                     (UTCTime(..),Day(..))
 import           Data.Typeable
-import qualified Data.Serialize                as Cereal
 import           GHC.Generics                  (Generic)
 import           Language.Haskell.TH           (Dec, Name, Q)
 import           Language.Haskell.TH.Lib       (conT)
@@ -58,50 +49,23 @@ import           Data.SafeCopy
        (Version, deriveSafeCopy, base, extension)
 import           FileLocation                  (dbg, debug, err)
 
-instance MonadLogger m => MonadLogger (EitherT e m) where
-    monadLoggerLog a b c d = lift $ monadLoggerLog a b c d
 
 type FilePathS = P.FilePath
 
-instance Convertible Text ByteString where
-    safeConvert = return . Text.encodeUtf8
 
-instance Convertible ByteString Text where
-    safeConvert = return . Text.decodeUtf8
+fqName :: (Typeable a) => a -> Text
+fqName typee =  modName ++ "." ++ name
+  where
+    name = pack . P.show $ typeOf typee
+    modName = pack . tyConModule . typeRepTyCon $ typeOf typee
 
-instance Convertible String FilePath where
-    safeConvert = return . fpFromString
+convEither :: Convertible e f => Either e a -> Either f a
+convEither (Right result) = Right result
+convEither (Left reason) = Left $ convert reason
 
-instance Convertible FilePath String where
-    safeConvert = return . fpToString
-
-instance Convertible Text FilePath where
-    safeConvert = return . fpFromText
-
-instance Convertible FilePath Text where
-    safeConvert = return . fpToText
-
-instance Binary.Binary Text where
-    put = Binary.put . Text.encodeUtf8
-    get = Text.decodeUtf8 <$> Binary.get
-
-instance Binary UTCTime where
- put (UTCTime (ModifiedJulianDay d) t) = do
-        put d
-        put (toRational t)
- get = do
-        d <- get
-        t <- get
-        return $ UTCTime (ModifiedJulianDay d) (fromRational t)
-
-instance Cereal.Serialize UTCTime where
- put (UTCTime (ModifiedJulianDay d) t) = do
-        Cereal.put d
-        Cereal.put (toRational t)
- get = do
-        d <- Cereal.get
-        t <- Cereal.get
-        return $ UTCTime (ModifiedJulianDay d) (fromRational t)
+convEitherT :: (Convertible e f, Monad m)
+            => Either e a -> EitherT f m a
+convEitherT = hoistEither . convEither
 
 -- | TemplateHaskell function to generate required serializers and related
 -- instances for Actions/Results.
@@ -121,20 +85,6 @@ deriveSerializersVersion ver name = do
                instance FromJSON $(conT name)
                instance ToJSON   $(conT name) |]
     return $ sc ++ nf ++ gen
-
-fqName :: (Typeable a) => a -> Text
-fqName typee =  modName ++ "." ++ name
-  where
-    name = pack . P.show $ typeOf typee
-    modName = pack . tyConModule . typeRepTyCon $ typeOf typee
-
-convEither :: Convertible e f => Either e a -> Either f a
-convEither (Right result) = Right result
-convEither (Left reason) = Left $ convert reason
-
-convEitherT :: (Convertible e f, Monad m)
-            => Either e a -> EitherT f m a
-convEitherT = hoistEither . convEither
 
 -- | Template haskell function to create the Serialize and SafeCopy
 -- instances for a given type

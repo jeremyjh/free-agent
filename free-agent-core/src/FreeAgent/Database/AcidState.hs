@@ -11,7 +11,6 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
 
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module FreeAgent.Database.AcidState
     ( module FreeAgent.Database.AcidState
@@ -37,12 +36,9 @@ import           Data.Acid.Local      ( createCheckpointAndClose)
 import           Data.Acid.Advanced (query', update', MethodState)
 import           Data.Default (Default(..))
 
-import Data.Typeable
-
 data AcidBase = AcidBase {_baseAcid :: ()}
 makeFields ''AcidBase
 
-deriving instance Typeable1 AcidState
 
 data AcidOptions = AcidOptions {checkPointOnClose :: Bool}
 

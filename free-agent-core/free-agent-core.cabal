@@ -17,6 +17,7 @@ library
                    , FreeAgent 
                    , FreeAgent.Database.AcidState
                    , FreeAgent.Types
+                   , FreeAgent.Orphans
                    , FreeAgent.Lenses
                    , FreeAgent.Process
                    , FreeAgent.Process.ManagedAgent

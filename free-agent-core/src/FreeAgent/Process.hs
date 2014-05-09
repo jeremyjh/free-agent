@@ -4,7 +4,6 @@
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TypeFamilies               #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 -- | Provides MonadProcess typeclass and lifted versions of commonly used
 -- functions
