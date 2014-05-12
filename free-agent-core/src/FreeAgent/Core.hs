@@ -21,7 +21,10 @@ module FreeAgent.Core
     ) where
 
 import           AgentPrelude
-import           FreeAgent.Action                 (registerPluginMaps)
+import           FreeAgent.Action
+    (registerPluginMaps, register, actionType)
+import           FreeAgent.Action.ShellCommand    (ShellCommand)
+import           FreeAgent.Action.Composition     (ActionPlan)
 import           FreeAgent.Lenses
 import           FreeAgent.Process
     ( spawnLocal, receiveWait, match
@@ -129,7 +132,7 @@ extractConfig configName = do
 -- | Define the plugins to use in this program.
 pluginSet :: PluginWriter -> PluginSet
 pluginSet pluginWriter =
-    let plugs = execWriter pluginWriter
+    let plugs = (execWriter pluginWriter) <> [pluginDef]
         unwrappers = concatMap _plugindefActionUnwrappers plugs
         aconfigs = map buildConfigs plugs
         uwMap = buildPluginMaps unwrappers in
@@ -148,8 +151,8 @@ pluginSet pluginWriter =
                                     , ("Result:" ++ resultTypeName uw, uw) ) )
                                 unwrappers
             amap = Map.fromList (fst pairs)
-            rmap = Map.fromList (snd pairs) in
-        amap ++ rmap
+            rmap = Map.fromList (snd pairs)
+        in amap ++ rmap
     buildListeners = foldM appendListener []
     appendListener acc = _plugindefListeners >=> return . (++ acc)
 
@@ -228,7 +231,13 @@ lookupResource name' = do
 
 closeResources :: (MonadBase IO m, MonadIO m)
                => MVar (Map Text ManagedResource) -> m ()
-closeResources statesMV = do
-    handles <-  takeMVar statesMV
+closeResources statesMV =
+ do handles <-  takeMVar statesMV
     forM_ handles $ \ (ManagedResource _ closeFn) ->
         liftIO $ closeFn
+
+-- | Register the Core Actions
+pluginDef :: PluginDef
+pluginDef = definePlugin "Core" () (return []) [] $
+ do register (actionType :: ShellCommand)
+    register (actionType :: ActionPlan)

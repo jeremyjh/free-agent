@@ -18,13 +18,12 @@ module FreeAgent.Plugins.Nagios
     ) where
 
 import           FreeAgent.Action
+import           FreeAgent.Action.ShellCommand
 import           FreeAgent.Core
 import           FreeAgent.Lenses
 import           AgentPrelude
 
-import           Data.Time.Clock   (getCurrentTime)
-import           System.Exit       (ExitCode (..))
-import           System.Process    (readProcessWithExitCode)
+
 
 import           Data.Default      (Default (..))
 
@@ -42,7 +41,7 @@ makeFields ''NagiosConfig
 -- | Supported Actions
 data Command = Command { _commandHost         :: Text
                        , _commandPort         :: Maybe Int
-                       , _commandShellCommand :: Text
+                       , _commandShellCom     :: Text
                        } deriving (Show, Eq, Typeable, Generic)
 makeFields ''Command
 deriveSerializers ''Command
@@ -90,25 +89,26 @@ instance Resulting NagiosResult where
 instance Runnable Command NagiosResult where
     exec cmd =
      do cmdPath <- commandPath
-        (rc, result', _) <- liftIO $ readProcessWithExitCode cmdPath makeArgs []
-        case rc of
-            ExitSuccess   -> completeAs OK result'
-            ExitFailure 1 -> completeAs Warning result'
-            ExitFailure 2 -> completeAs Critical result'
-            ExitFailure i -> return $
-                Left $ UnknownResponse $ tshow i ++ ": " ++ convert result'
+        let shell = defaultShellCommand {
+                      shellCommand      = cmdPath
+                    , shellArgs         = makeArgs
+                    , shellSuccessCodes = [0,1,2]
+                    }
+        runEitherT $
+         do result' <- tryExecET shell
+            let nagresult = NagiosResult (summary result')
+            return $ case shellExitCode result' of
+                0 -> nagresult OK
+                1 -> nagresult Warning
+                2 -> nagresult Critical
+                _ -> error "ShellCommand should have failed ExitCode match."
       where
-        makeArgs = ["-H", convert $ cmd^.host, "-p", portS $ cmd^.port]
-        portS (Just p) = show p
+        makeArgs = ["-H", cmd^.host, "-p", portS $ cmd^.port]
+        portS (Just p) = tshow p
         portS Nothing = ""
-        completeAs cmdres result' = do
-            time <- liftIO getCurrentTime
-            let summ = ResultSummary time (convert result') (Action cmd)
-            return $ Right $ NagiosResult summ cmdres
         commandPath = do
             nagconf <- extractConfig'
-            let cmdPath = (nagiosPluginsPath nagconf) </> convert (cmd^.shellCommand)
-            return $ fpToString cmdPath
+            return $ (nagiosPluginsPath nagconf) </> convert (cmd^.shellCom)
 
 instance Stashable CheckTCP where
     key c = convert $ c^.host ++ ":" ++ tshow (c^.port)

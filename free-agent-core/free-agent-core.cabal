@@ -29,6 +29,7 @@ library
                    , FreeAgent.Server.Schedule
                    , FreeAgent.Action
                    , FreeAgent.Action.Composition
+                   , FreeAgent.Action.ShellCommand
                    , FreeAgent.Plugins.Nagios
                    , Control.Monad.Logger.Quote
 
@@ -74,6 +75,7 @@ library
                    , cron
                    , attoparsec
                    , shelly
+                   , regex-compat
 
 test-suite spec
   ghc-options:       -threaded -with-rtsopts=-N

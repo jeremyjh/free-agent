@@ -2,6 +2,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 
 -- | Extensions to ClassyPrelude that are useful to most modules & plugins in Dash
@@ -15,6 +16,7 @@ module AgentPrelude
     , convert
     , EitherT, runEitherT
     , convEither, convEitherT
+    , tryAnyConvT
     , Convertible(..)
     , def
     , P.undefined --classy undefined is obnoxious
@@ -26,6 +28,7 @@ module AgentPrelude
     , logDebug, logInfo, logWarn, logError
     , deriveSafeStore
     , deriveSafeStoreVersion
+    , getCurrentTime
     , (!??)
     ) where
 
@@ -36,6 +39,7 @@ import           Control.DeepSeq.TH            (deriveNFData)
 import           Control.Error                 (EitherT, runEitherT, hoistEither)
 import           Control.Monad.Logger          (logDebug, logInfo, logWarn, logError)
 import           Control.Monad.Logger.Quote    (qdebug, qinfo, qwarn, qerror, qdebugNS)
+import Control.Monad.Trans.Control (MonadBaseControl)
 import           Data.Binary                   as Binary (Binary (..))
 import           Data.Convertible              (Convertible(..), convert)
 import           Data.Default                  (def)
@@ -45,6 +49,8 @@ import           Language.Haskell.TH           (Dec, Name, Q)
 import           Language.Haskell.TH.Lib       (conT)
 
 import           Data.Aeson                    (FromJSON(..), ToJSON)
+import           Data.Time.Clock               (UTCTime)
+import qualified Data.Time.Clock as            Time
 import           Data.SafeCopy
        (Version, deriveSafeCopy, base, extension)
 import           FileLocation                  (dbg, debug, err)
@@ -114,3 +120,10 @@ deriveSafeStoreVersion ver name = do
   where toeither Nothing = Left e
         toeither (Just a) = Right a
 
+tryAnyConvT :: (MonadBaseControl IO io, Convertible SomeException e)
+            => io a -> EitherT e io a
+tryAnyConvT ma = lift (tryAny ma) >>= convEitherT
+
+
+getCurrentTime :: MonadIO io => io UTCTime
+getCurrentTime = liftIO Time.getCurrentTime

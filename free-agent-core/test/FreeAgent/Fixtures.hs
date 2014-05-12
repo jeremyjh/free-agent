@@ -19,7 +19,6 @@ import FreeAgent
 -- import all your plugins here
 import FreeAgent.Plugins.Nagios as Nagios
 import Control.Concurrent.Lifted (threadDelay)
-import Data.Time.Clock (getCurrentTime)
 
 data TestAction = TestAction Text Int
     deriving (Show, Eq, Typeable, Generic)
@@ -45,7 +44,7 @@ instance Resulting TestResult where
 instance Runnable TestAction TestResult where
     exec ta@(TestAction text' delay) = do
         threadDelay delay
-        time' <- liftIO getCurrentTime
+        time' <- getCurrentTime
         return $ Right $ TestResult (ResultSummary time' text' (toAction ta))
 
     execWith action' _ = do
@@ -55,14 +54,8 @@ instance Runnable TestFailAction TestResult where
     exec (TestFailAction text') = return $ Left (GeneralFailure (text'))
 
     execWith action' _ = do
-        summ <- resultSummaryNow "onFailure called" action'
+        summ <- resultNow "onFailure called" action'
         return $ Right (TestResult summ)
-
-resultSummaryNow :: (MonadAgent agent, Actionable action result)
-          => Text -> action -> agent ResultSummary
-resultSummaryNow text' action' = do
-    time' <- liftIO getCurrentTime
-    return $ ResultSummary time' text' (toAction action')
 
 -- common test fixture
 checkTCP :: CheckTCP

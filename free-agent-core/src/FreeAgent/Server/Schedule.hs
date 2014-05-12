@@ -36,7 +36,7 @@ import           Control.Distributed.Process.Platform.Timer
 import Control.DeepSeq.TH (deriveNFData)
 import           Data.Default (Default(..))
 import           Data.Attoparsec.Text (parseOnly)
-import           Data.Time.Clock (getCurrentTime, UTCTime, addUTCTime, diffUTCTime)
+import           Data.Time.Clock (UTCTime, addUTCTime, diffUTCTime)
 import Data.Binary (Binary)
 import           System.Cron
 import           System.Cron.Parser (cronSchedule)
@@ -248,7 +248,7 @@ scheduleServer =
 
 onTick :: ScheduleAgent ()
 onTick = do
-    now <- liftIO getCurrentTime
+    now <- getCurrentTime
     events' <- update (ReadyToRun now)
     forM_ events' $ \ (_, event') ->
         executeRegisteredAsync Local (key event')
@@ -261,7 +261,7 @@ scheduleNextTick = do
         Nothing -> return ()
         Just minTime -> do
             pid <- getSelfPid
-            diff <- liftIO getCurrentTime >>= return . diffUTCTime minTime
+            diff <- getCurrentTime >>= return . diffUTCTime minTime
             tickAt pid diff
   where tickAt pid diff
           | (diff <= 0) = do
@@ -274,7 +274,7 @@ scheduleNextTick = do
 
 doAddSchedule :: Event -> ScheduleAgentET ()
 doAddSchedule event = do
-    now <- liftIO getCurrentTime
+    now <- getCurrentTime
     () <- update (AddEvent $ calcNextScheduled now event)
     lift scheduleNextTick
 

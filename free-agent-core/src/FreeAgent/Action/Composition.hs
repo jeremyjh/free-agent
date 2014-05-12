@@ -15,7 +15,6 @@ import           AgentPrelude
 import           FreeAgent.Lenses
 import           FreeAgent.Action
 import           FreeAgent.Process
-import Data.Time.Clock (getCurrentTime)
 
 
 -- | A composite 'Action', can be constructed with combinators
@@ -41,7 +40,8 @@ instance Semigroup ActionPlan where
     (<>) = Sequential
 
 instance Stashable ActionPlan where
-    key (Exec action') = key action'
+    --TODO: this is crazy
+    key (Exec action') = "ActionPlan:" <> key action'
     key (Sequential plan _) = key plan
     key (Parallel plan _) = key plan
     key (OnFailure plan _) = key plan
@@ -110,8 +110,7 @@ instance Runnable ActionPlan ResultList where
         result' <- tryExec plan1
         case result' of
             Left reason -> do
-                time <- liftIO getCurrentTime
-                let summary' = ResultSummary time (tshow reason) (Action plan1)
+                summary' <- resultNow (tshow reason) plan1
                 tryExecWith plan2 (failResult reason summary')
             _ -> return result'
 
@@ -143,8 +142,7 @@ instance Runnable ActionPlan ResultList where
         result1 <- tryExecWith plan1 result
         case result1 of
             Left reason -> do
-                time <- liftIO getCurrentTime
-                let summary' = ResultSummary time (tshow reason) (Action plan1)
+                summary' <- resultNow (tshow reason) plan1
                 execWith plan2 (failResult reason summary')
             _ -> return result1
 

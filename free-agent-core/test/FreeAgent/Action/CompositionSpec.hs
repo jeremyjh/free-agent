@@ -13,6 +13,8 @@ import           FreeAgent.Action.Composition
 import           FreeAgent.TestHelper
 import           FreeAgent.Fixtures
 
+import qualified Data.Binary as Binary
+
 import Control.Distributed.Process.Platform.Time
        (microsecondsToNominalDiffTime)
 import           Test.Hspec
@@ -22,8 +24,17 @@ main :: IO ()
 main = hspec spec
 
 spec :: Spec
-spec = parallel $
+spec = parallel $ do
+    describe "ActionPlan" $ do
+        it "can serialize and deserialize existentially" $ do
+            testAgent $
+                let plan = Action $ planExec checkTCP `thenExec` checkTCP
+                    bytes = Binary.encode plan
+                in return (Binary.decode bytes)
+            `shouldReturn` (Action $ planExec checkTCP `thenExec` checkTCP)
+
     describe "ActionPlan combinators" $ do
+
         it "can execute some actions sequentially" $ do
             testAgent $ do
                 Right results <- exec $

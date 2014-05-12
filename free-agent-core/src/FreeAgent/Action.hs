@@ -13,6 +13,7 @@
 
 module FreeAgent.Action
     ( toAction
+    , resultNow
     , register, actionType
     , registerPluginMaps
     , tryExec, tryExecWith
@@ -149,6 +150,12 @@ instance Stashable Result where
 -- | Wrap a concrete action in existential unless it is already an Action
 toAction :: (Actionable a b) => a -> Action
 toAction act = fromMaybe (Action act) (cast act)
+
+resultNow :: (MonadIO io, Actionable action b)
+          => Text -> action -> io ResultSummary
+resultNow text' action = do
+    time <- getCurrentTime
+    return (ResultSummary time text' (toAction action))
 
 -- | Use to register your Action types so they can be
 -- deserialized dynamically at runtime; invoke as:
