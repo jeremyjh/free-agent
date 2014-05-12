@@ -106,7 +106,7 @@ spec =
                 threadDelay 10000
 
                 return (count, length peers,aname, status)
-            `shouldReturn` (3, 1, "localhost:53", OK)
+            `shouldReturn` (3, 1, key checkTCP, OK)
 
 
 

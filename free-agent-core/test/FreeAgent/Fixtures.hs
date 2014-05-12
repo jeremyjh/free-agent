@@ -66,7 +66,7 @@ resultSummaryNow text' action' = do
 
 -- common test fixture
 checkTCP :: CheckTCP
-checkTCP = CheckTCP  "localhost" 53
+checkTCP = CheckTCP  "localhost" 631
 
 testAction :: TestAction
 testAction = TestAction "test action" 0

@@ -51,6 +51,9 @@ instance Stashable ResultSummary where
 
 deriveSerializers ''FailResult
 
+instance Resulting ResultSummary where
+    summary summ = summ
+
 instance Stashable FailResult where
     key (FailResult _ summ) = key summ
 

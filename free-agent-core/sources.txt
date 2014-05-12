@@ -1,5 +1,5 @@
 ./
-../higher-leveldb
+../../higher-leveldb
 https://github.com/jeremyjh/distributed-process-monad-control master
 https://github.com/haskell-distributed/distributed-process mx-agent-recv
 https://github.com/haskell-distributed/distributed-process-platform development 

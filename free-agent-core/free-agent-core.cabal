@@ -73,6 +73,7 @@ library
                    , yaml
                    , cron
                    , attoparsec
+                   , shelly
 
 test-suite spec
   ghc-options:       -threaded -with-rtsopts=-N

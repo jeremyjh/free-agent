@@ -77,7 +77,7 @@ spec = do
                 let Just (NagiosResult _ OK) = extract nr
                 -- confirm results were written
                 Right results' <- actionResultsFrom Local
-                                                    "localhost:53"
+                                                    (key checkTCP)
                                                     (convert (0::Int))
                 return $ length results'
             `shouldReturn` 2
