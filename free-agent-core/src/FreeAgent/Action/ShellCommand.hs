@@ -93,7 +93,7 @@ instance Stashable ShellResult where
 instance Resulting ShellResult where
     summary ShellResult{..} =
         ResultSummary shellTimestamp
-                      ("stdout:" <> shellStdout <> "\nstderr:" <> shellStderr)
+                      shellStdout
                       (Action shellResultOf)
 
 instance Runnable ShellCommand ShellResult where
@@ -108,14 +108,14 @@ instance Runnable ShellCommand ShellResult where
                 exitCode <- lift lastExitCode
                 case (shellSuccessCodes, shellFailCodes) of
                     ([], []) ->
-                        when (exitCode /= 0)
-                            (left (UnknownResponse $ " Unknown exit code: " <> tshow exitCode))
+                        when (exitCode /= 0) $
+                            left (UnknownResponse $ " Unknown exit code: " <> tshow exitCode)
                     ([], fails) ->
-                        when (exitCode `elem` fails)
-                            (left (GeneralFailure $ " Fails on exit code: " <> tshow exitCode))
+                        when (exitCode `elem` fails) $
+                            left (GeneralFailure $ " Fails on exit code: " <> tshow exitCode)
                     (passes, _) ->
-                        when (exitCode `notElem` passes)
-                            (left (GeneralFailure $ " Fails on exit code: " <> tshow exitCode))
+                        when (exitCode `notElem` passes) $
+                            left (GeneralFailure $ " Fails on exit code: " <> tshow exitCode)
                 if checkMatch (convert cmdStdout) (convert cmdStderr) shellRegexMatch
                 then
                     do time <- getCurrentTime
