@@ -128,9 +128,9 @@ findEventA :: Key -> Query SchedulePersist (Maybe Event)
 findEventA key' = views events $ Map.lookup key'
 
 allCronEvents :: Query SchedulePersist [(CronSchedule, Key)]
-allCronEvents = view events >>= return . Map.foldr crons []
+allCronEvents = Map.foldr crons [] <$> view events
   where crons event'@Event{..} acc
-          | isCron schedRecur == True = (cronFrom schedRecur, schedKey) : acc
+          | isCron schedRecur = (cronFrom schedRecur, schedKey) : acc
           | otherwise = acc
           where isCron (RecurCron _ _) = True
                 isCron _ = False
@@ -156,15 +156,14 @@ addEvent next@(_, event) = do
 removeEvent :: Key -> Update SchedulePersist ()
 removeEvent key' = do
     events %= Map.delete key'
-    nextScheduled %= Set.filter (\ (_, ev) -> (key ev) /= key')
+    nextScheduled %= Set.filter (\ (_, ev) -> key ev /= key')
 
 nextScheduledTime :: Query SchedulePersist (Maybe UTCTime)
 nextScheduledTime = do
     scheduled <- view nextScheduled
-    return $ case Set.null scheduled of
-        False -> let (time',_) = Set.findMin scheduled
-                in Just time'
-        True -> Nothing
+    return $ if Set.null scheduled
+             then Nothing
+             else let (time',_) = Set.findMin scheduled in Just time'
 
 -- we have to make the splices near the top of the file
 $(makeAcidic ''SchedulePersist ['getPersist, 'addEvent, 'findEventA
@@ -261,16 +260,16 @@ scheduleNextTick = do
         Nothing -> return ()
         Just minTime -> do
             pid <- getSelfPid
-            diff <- getCurrentTime >>= return . diffUTCTime minTime
+            diff <- diffUTCTime minTime <$> getCurrentTime
             tickAt pid diff
   where tickAt pid diff
-          | (diff <= 0) = do
+          | diff <= 0 = do
               send pid Tick
               tickerRef .= Nothing
           | otherwise = do
-            let interval = (diffTimeToTimeInterval diff)
+            let interval = diffTimeToTimeInterval diff
             ref <- liftProcess $ sendAfter interval pid Tick
-            tickerRef .= (Just ref)
+            tickerRef .= Just ref
 
 doAddSchedule :: Event -> ScheduleAgentET ()
 doAddSchedule event = do
@@ -279,7 +278,7 @@ doAddSchedule event = do
     lift scheduleNextTick
 
 doRemoveSchedule :: Key -> ScheduleAgentET ()
-doRemoveSchedule key' = do
+doRemoveSchedule key' =
     update (RemoveEvent key')
 
 cronEvent :: Text -> Either String ScheduleRecurrence
@@ -294,7 +293,7 @@ instance IsString ScheduleRecurrence where
         case cronEvent (pack format) of
             Right cron' -> cron'
             _ -> error $ "Unable to parse cron formatted literal: "
-                         ++ (unpack format)
+                         ++ unpack format
 
 deriveSerializers ''ScheduleCommand
 deriveSerializers ''RetryOption

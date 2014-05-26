@@ -88,8 +88,7 @@ instance Stashable Wrapped where
 type Actionable a b = (Stashable a, Stashable b, Resulting b, Runnable a b, NFData a, NFData b, Eq a, FromJSON a, FromJSON b, ToJSON a, ToJSON b)
 
 data Action = forall a b. (Actionable a b) => Action a
-
-deriving instance Typeable Action
+        deriving Typeable
 
 instance Eq Action where
     (Action a) == (Action b) = maybe False (a ==) (cast b)

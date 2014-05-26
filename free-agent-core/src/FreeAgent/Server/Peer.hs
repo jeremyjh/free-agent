@@ -209,7 +209,7 @@ doRegisterPeer peer respond = do
     when respond $ do
         [qdebug| Sending self: #{self'} To peer: #{_peerProcessId self'} |]
         cast (peer^.processId) (RespondRegisterPeer self')
-  where updateFriends peers = Set.insert peer peers
+  where updateFriends = Set.insert peer
 
 doQueryPeerServers :: MonadState PeerState m
                   => String -> Set Context -> Set Zone -> m (Set Peer)

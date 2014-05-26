@@ -103,8 +103,8 @@ instance Runnable ActionPlan ResultList where
             AsyncDone (Right result1) ->
                 case aresult2 of
                     AsyncDone (Right result2) -> Right $ result1 <> result2
-                    reason -> Left (GeneralFailure $ "Async exec failed: " ++ (tshow reason ))
-            reason -> Left (GeneralFailure $ "Async exec failed: " ++ (tshow reason ))
+                    reason -> Left (GeneralFailure $ "Async exec failed: " ++ tshow reason )
+            reason -> Left (GeneralFailure $ "Async exec failed: " ++ tshow reason )
 
     exec (OnFailure plan1 plan2) = do
         result' <- tryExec plan1
@@ -135,8 +135,8 @@ instance Runnable ActionPlan ResultList where
             AsyncDone (Right result1) ->
                 case aresult2 of
                     AsyncDone (Right result2) -> Right $ result1 <> result2
-                    reason -> Left (GeneralFailure $ "Async operation failed: " ++ (tshow reason ))
-            reason -> Left (GeneralFailure $ "Async operation failed: " ++ (tshow reason ))
+                    reason -> Left (GeneralFailure $ "Async operation failed: " ++ tshow reason)
+            reason -> Left (GeneralFailure $ "Async operation failed: " ++ tshow reason)
 
     execWith (OnFailure plan1 plan2) result = do
         result1 <- tryExecWith plan1 result

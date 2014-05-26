@@ -19,7 +19,7 @@ main :: IO ()
 main = hspec spec
 
 spec :: Spec
-spec = parallel $ do
+spec = do
     describe "ShellCommand - as used by CheckTCP" $ do
         it "'succeeds' on RC 3 - Nagios Critical" $ do
             testAgent $ do

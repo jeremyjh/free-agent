@@ -132,7 +132,7 @@ extractConfig configName = do
 -- | Define the plugins to use in this program.
 pluginSet :: PluginWriter -> PluginSet
 pluginSet pluginWriter =
-    let plugs = (execWriter pluginWriter) <> [pluginDef]
+    let plugs = execWriter pluginWriter <> [pluginDef]
         unwrappers = concatMap _plugindefActionUnwrappers plugs
         aconfigs = map buildConfigs plugs
         uwMap = buildPluginMaps unwrappers in
@@ -234,7 +234,7 @@ closeResources :: (MonadBase IO m, MonadIO m)
 closeResources statesMV =
  do handles <-  takeMVar statesMV
     forM_ handles $ \ (ManagedResource _ closeFn) ->
-        liftIO $ closeFn
+        liftIO closeFn
 
 -- | Register the Core Actions
 pluginDef :: PluginDef

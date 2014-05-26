@@ -118,8 +118,8 @@ instance Runnable ShellCommand ShellResult where
                             left (GeneralFailure $ " Fails on exit code: " <> tshow exitCode)
                 if checkMatch (convert cmdStdout) (convert cmdStderr) shellRegexMatch
                 then
-                    do time <- getCurrentTime
-                       right $ ShellResult cmdStdout cmdStderr exitCode time cmd
+                 do time <- getCurrentTime
+                    right $ ShellResult cmdStdout cmdStderr exitCode time cmd
                 else left (GeneralFailure $ "Did not match: " <> tshow shellRegexMatch
                                          <> "\n In output: " <> cmdStdout
                                          <> "\n" <> cmdStderr )

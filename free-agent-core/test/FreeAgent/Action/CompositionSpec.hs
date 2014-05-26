@@ -24,7 +24,7 @@ main :: IO ()
 main = hspec spec
 
 spec :: Spec
-spec = parallel $ do
+spec = do
     describe "ActionPlan" $ do
         it "can serialize and deserialize existentially" $ do
             testAgent $

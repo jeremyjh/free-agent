@@ -104,7 +104,7 @@ class Binary a => UnsafeCopy a where
     unsafeGet :: Contained (Cereal.Get a)
     unsafePut :: a -> Contained Cereal.Put
 
-    unsafeGet = contain $ safeGet >>= return . Binary.decode
+    unsafeGet = contain $ Binary.decode <$> safeGet
     unsafePut = contain . safePut . Binary.encode
 
 instance Typeable a => UnsafeCopy (Closure a)

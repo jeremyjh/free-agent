@@ -44,7 +44,7 @@ import           Control.Distributed.Process.Platform.Time          (Delay(..), 
 data AgentState a = AgentState AgentContext a
 
 serverState :: Lens' (AgentState a) a
-serverState f (AgentState c a) = fmap (\a' -> AgentState c a') (f a)
+serverState f (AgentState c a) = fmap (AgentState c) (f a)
 
 defineServer :: String -- ^ server name
              -> Agent st -- ^ state intialization
@@ -147,7 +147,7 @@ agentInfoHandler fn =
 runAgentStateT :: (NFSerializable a)
                => AgentState s
                -> (a -> Agent ())
-               -> (StateT s Agent a)
+               -> StateT s Agent a
                -> Process (ProcessAction (AgentState s) )
 runAgentStateT (AgentState ctxt ustate) respond ma = do
     newState <- withAgent ctxt $ do
@@ -159,7 +159,7 @@ runAgentStateT (AgentState ctxt ustate) respond ma = do
 runAgentStateTAsync :: (NFSerializable a)
                     => AgentState s
                     -> (a -> Agent ())
-                    -> (StateT s Agent a)
+                    -> StateT s Agent a
                     -> Process (ProcessAction (AgentState s) )
 runAgentStateTAsync state'@(AgentState ctxt ustate) respond ma = do
     pid <- spawnAgent ctxt $ do

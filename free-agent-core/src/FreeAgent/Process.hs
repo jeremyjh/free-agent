@@ -1,8 +1,6 @@
 {-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE RankNTypes                 #-}
-{-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TypeFamilies               #-}
 
 -- | Provides MonadProcess typeclass and lifted versions of commonly used

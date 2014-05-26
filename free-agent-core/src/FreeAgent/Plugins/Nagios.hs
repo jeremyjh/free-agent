@@ -108,7 +108,7 @@ instance Runnable Command NagiosResult where
         portS Nothing = ""
         commandPath = do
             nagconf <- extractConfig'
-            return $ (nagiosPluginsPath nagconf) </> convert (cmd^.shellCom)
+            return $ nagiosPluginsPath nagconf </> convert (cmd^.shellCom)
 
 instance Stashable CheckTCP where
     key c = convert $ c^.host ++ ":" ++ tshow (c^.port)
