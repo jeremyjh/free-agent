@@ -204,12 +204,11 @@ doRegisterServer sname pid = do
 doRegisterPeer ::  Peer -> Bool -> PeerAgent ()
 doRegisterPeer peer respond = do
     [qdebug| Received Registration for #{peer}|]
-    friends %= updateFriends
+    friends %= Set.insert peer
     self' <- use self
     when respond $ do
         [qdebug| Sending self: #{self'} To peer: #{_peerProcessId self'} |]
         cast (peer^.processId) (RespondRegisterPeer self')
-  where updateFriends = Set.insert peer
 
 doQueryPeerServers :: MonadState PeerState m
                   => String -> Set Context -> Set Zone -> m (Set Peer)

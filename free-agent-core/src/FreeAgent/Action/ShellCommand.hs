@@ -120,7 +120,7 @@ instance Runnable ShellCommand ShellResult where
                 then
                  do time <- getCurrentTime
                     right $ ShellResult cmdStdout cmdStderr exitCode time cmd
-                else left (GeneralFailure $ "Did not match: " <> tshow shellRegexMatch
+                else left (GeneralFailure $ "Match failed: " <> tshow shellRegexMatch
                                          <> "\n In output: " <> cmdStdout
                                          <> "\n" <> cmdStderr )
       where
