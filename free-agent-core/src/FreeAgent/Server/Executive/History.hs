@@ -66,26 +66,27 @@ instance Binary HistoryCommand
 -- API
 -- -----------------------------
 
-writeResult        :: (MonadProcess m)
-                   => Target -> Result -> m (Either CallFail ())
-writeResult target = castServer serverName target . WriteResult
+writeResult        :: (MonadAgent agent)
+                   => Result -> agent (Either CallFail ())
+writeResult result' =
+    castServer serverName $ WriteResult result'
 
-allResultsFrom :: (MonadProcess m)
-                   => Target -> UTCTime -> m (Either HistoryFail [Result])
-allResultsFrom target = callHistory target . AllResultsFrom
+allResultsFrom :: (MonadAgent agent)
+                   => UTCTime -> agent (Either HistoryFail [Result])
+allResultsFrom = callHistory . AllResultsFrom
 
-actionResultsFrom:: (MonadProcess m)
-                   => Target -> Key -> UTCTime -> m (Either HistoryFail [Result])
-actionResultsFrom target key' = callHistory target . ActionResultsFrom key'
+actionResultsFrom:: (MonadAgent agent)
+                   => Key -> UTCTime -> agent (Either HistoryFail [Result])
+actionResultsFrom key' = callHistory . ActionResultsFrom key'
 
 
 serverName :: String
 serverName = "agent:executive:history"
 
-callHistory :: (NFSerializable a, MonadProcess m)
-            => Target -> HistoryCommand -> m (Either HistoryFail a)
-callHistory target command = do
-    eresult <- callServer serverName target command
+callHistory :: (NFSerializable a, MonadAgent agent)
+            => HistoryCommand -> agent (Either HistoryFail a)
+callHistory command = do
+    eresult <- callServer serverName command
     case eresult of
         Right result' -> return result'
         Left cf -> return (Left $ HCallFailed cf)

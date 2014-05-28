@@ -2,11 +2,8 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE FlexibleInstances #-}
 
 
 module FreeAgent.Action.Composition where
@@ -60,19 +57,19 @@ instance Semigroup ResultList where
     (ResultList summ results1) <> (ResultList _ results2) =
         ResultList summ (results1 <> results2)
 
-planExec :: Actionable a b => a -> ActionPlan
+planExec :: Runnable a b => a -> ActionPlan
 planExec = Exec . toAction
 
-thenExec :: Actionable a b => ActionPlan -> a -> ActionPlan
+thenExec :: Runnable a b => ActionPlan -> a -> ActionPlan
 thenExec = combinePlan Sequential
 
-whileExec :: Actionable a b => ActionPlan -> a -> ActionPlan
+whileExec :: Runnable a b => ActionPlan -> a -> ActionPlan
 whileExec = combinePlan Parallel
 
-onFailure :: Actionable a b => ActionPlan -> a -> ActionPlan
+onFailure :: Runnable a b => ActionPlan -> a -> ActionPlan
 onFailure = combinePlan OnFailure
 
-combinePlan :: Actionable action result
+combinePlan :: Runnable action result
              => (ActionPlan -> ActionPlan -> ActionPlan)
              -> ActionPlan -> action -> ActionPlan
 combinePlan fn plan action' = fn plan (planExec action')

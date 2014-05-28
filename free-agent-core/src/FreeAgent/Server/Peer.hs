@@ -92,7 +92,7 @@ $(makeAcidic ''PeerPersist ['getPersist])
 -- API
 -- ---------------------------
 
--- | Advertise a Server on the local peer
+-- | Advertise a Server on the peer
 registerServer :: (MonadProcess m)
                => AgentServer -> ProcessId -> m ()
 registerServer s pid = cast peerServer $ RegisterServer (s^.name) pid
@@ -123,15 +123,17 @@ instance Platform.Resolvable (Target, String) where
 tryAnyT :: (MonadBaseControl IO m) => m a -> EitherT SomeException m a
 tryAnyT ma = lift (tryAny ma) >>= hoistEither
 
-callServer :: (MonadProcess m, NFSerializable a, NFSerializable b)
-           => String -> Target -> a -> m (Either CallFail b)
-callServer name' target command = runEitherT $ do
+callServer :: (MonadAgent agent, NFSerializable a, NFSerializable b)
+           => String -> a -> agent (Either CallFail b)
+callServer name' command = runEitherT $ do
+    target <- viewContext targetServer
     pid <- resolve (target, name') !? RoutingFailed
     tryAny (syncCallChan pid command) >>= convEitherT
 
-castServer :: (MonadProcess m, NFSerializable a)
-           => String -> Target -> a -> m (Either CallFail ())
-castServer name' target command = runEitherT $ do
+castServer :: (MonadAgent agent, NFSerializable a)
+           => String -> a -> agent (Either CallFail ())
+castServer name' command = runEitherT $ do
+    target <- viewContext targetServer
     pid <- resolve (target, name') !? RoutingFailed
     cast pid command
 

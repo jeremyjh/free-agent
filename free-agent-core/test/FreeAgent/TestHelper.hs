@@ -50,34 +50,50 @@ appPlugins =
 
 -- helper for running agent and getting results out of
 -- the Process through partially applied putMVar
-testRunAgent :: NFData a => IO () -> AgentConfig -> PluginSet -> Agent a -> IO a
-testRunAgent doSetup config' plugins' ma = do
+testRunAgent :: NFData a
+             => IO () -- ^ setup action
+             -> Int -- ^ milliseconds delay
+             -> AgentConfig -- ^ can use 'appConfig'
+             -> PluginSet -- ^ can use  'appPlugins'
+             -> Agent a -- monad action to execute
+             -> IO a
+testRunAgent doSetup timeout config' plugins' ma = do
     doSetup
-    result <- returnFromAgent ma (runAgentServers config' plugins')
+    result <- returnFromAgent timeout ma (runAgentServers config' plugins')
     threadDelay 15000 -- so we dont get open port errors
     return result
 
+-- | Given (t, c, p) provide a lookup t with which to cache an
+-- 'AgentContext' created from 'AgentConfig' c and 'PluginSet' p
 type CachedContext = (Text, AgentConfig, PluginSet)
 
-quickRunAgent :: NFData a => CachedContext -> Agent a -> IO a
-quickRunAgent cached@(name', _ , _) ma = do
+quickRunAgent :: NFData a => Int -> CachedContext -> Agent a -> IO a
+quickRunAgent timeout cached@(name', _ , _) ma = do
     contexts' <- readMVar cachedContexts
     context' <- case Map.lookup name' contexts' of
                     Just context' -> return context'
                     Nothing -> createContext cached
-    returnFromAgent ma (void . forkAgent context')
+    returnFromAgent timeout ma (void . forkAgent context')
 
-returnFromAgent :: (NFData a, MonadBase IO io)
-                => Agent a -> (Agent () -> io ()) -> io a
-returnFromAgent ma agentFn = do
+returnFromAgent :: (NFData a, MonadBaseControl IO io)
+                => Int -> Agent a -> (Agent () -> io ()) -> io a
+returnFromAgent timeout ma agentFn = do
     resultMV <- newEmptyMVar
-    agentFn $ do
+    void . fork $ agentFn $ do
         eresult <- tryAnyDeep ma
         case eresult of
             Right result -> putMVar resultMV result
             Left exception -> putMVar resultMV (throw exception)
-    !result <- takeMVar resultMV
+    !result <- waitMVar resultMV
     return result
+  where
+    waitMVar mv = loop 0
+      where loop lapsed
+              | lapsed < timeout =
+                  tryTakeMVar mv >>= maybe (delay >> loop (lapsed + 1))
+                                           return
+              | otherwise = error "Execution of Agent test action timed-out."
+            delay = threadDelay 1000
 
 cachedContexts :: MVar (Map Text AgentContext)
 cachedContexts = unsafePerformIO (newMVar mempty)

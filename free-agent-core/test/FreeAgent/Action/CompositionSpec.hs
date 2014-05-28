@@ -69,7 +69,8 @@ spec = do
             `shouldReturn` "onFailure called"
 
 
-testAgent ma = quickRunAgent ("4121"
+testAgent ma = quickRunAgent 500
+                             ("4121"
                              , appConfig & nodePort .~ "4121"
                              , appPlugins
                              ) ma

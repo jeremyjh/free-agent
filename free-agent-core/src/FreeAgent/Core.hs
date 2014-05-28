@@ -1,9 +1,9 @@
-{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE ConstraintKinds #-}
+
+{-# OPTIONS_GHC -fno-warn-orphans #-} -- Default PluginSet
 
 module FreeAgent.Core
     ( runAgent
@@ -18,6 +18,7 @@ module FreeAgent.Core
     , thisNodeId
     , manageResource
     , lookupResource
+    , withTarget
     ) where
 
 import           AgentPrelude
@@ -32,10 +33,11 @@ import           FreeAgent.Process
     , say, DiedReason(..), RemoteTable
     , localNodeId, NodeId)
 
-import           Control.Monad.Reader             (runReaderT)
+import           Control.Monad.Reader (runReaderT)
 import           Control.Monad.Writer             (execWriter, tell)
 import           Data.Dynamic                     (fromDynamic, toDyn )
 import qualified Data.Map                         as Map
+import Data.Default (Default)
 
 import           Control.Concurrent.Lifted        (threadDelay)
 import Control.Distributed.Process.Node
@@ -44,8 +46,12 @@ import           Control.Distributed.Process.Management
 import           Network.Transport                (closeTransport)
 import           Network.Transport.TCP
 
-
 import Control.Monad.Logger (runStdoutLoggingT)
+
+-- need this here so we include Core.pluginDef by default
+instance Default PluginSet where
+    def = pluginSet (return ())
+
 -- | Execute the agent - main entry point
 runAgent :: AgentConfig -> PluginSet -> Agent () -> IO ()
 runAgent config' plugins' ma =
@@ -60,6 +66,7 @@ runAgent config' plugins' ma =
                                           , _contextPlugins = plugins'
                                           , _contextProcessNode = node
                                           , _contextOpenResources = statesMV
+                                          , _contextTargetServer = Local
                                           }
                        let proc = runStdoutLoggingT $
                                      runReaderT (unAgent ma) context'
@@ -136,6 +143,7 @@ extractConfig configName = do
                   return
                   (fromDynamic dynconf)
 
+
 -- | Define the plugins to use in this program.
 pluginSet :: PluginWriter -> PluginSet
 pluginSet pluginWriter =
@@ -199,7 +207,7 @@ globalMonitor = do
 -- | Add a module's __remotetable to the RemoteTable that will
 -- be used to activate the node
 appendRemoteTable :: (RemoteTable -> RemoteTable) -> AgentConfig -> AgentConfig
-appendRemoteTable table config' = config' & remoteTable %~ table
+appendRemoteTable table = remoteTable %~ table
 
 -- | NodeId for this Agent
 thisNodeId :: (ContextReader m) => m NodeId
@@ -236,9 +244,13 @@ lookupResource name' = do
   where value (ManagedResource v _) = v
         qualifiedName = fqName (undefined::a) ++ name'
 
-
 -- | Register the Core Actions
 pluginDef :: PluginDef
 pluginDef = definePlugin "Core" () (return []) [] $
  do register (actionType :: ShellCommand)
     register (actionType :: ActionPlan)
+
+
+withTarget :: MonadAgent agent => Target -> agent a -> agent a
+withTarget target =
+    withAgentContext (targetServer .~ target)

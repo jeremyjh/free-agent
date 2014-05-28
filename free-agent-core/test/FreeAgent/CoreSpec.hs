@@ -80,4 +80,4 @@ spec = do
                     return action'
                 `shouldReturn` Action checkTCP
 
-testAgent ma = testRunAgent setup appConfig appPlugins ma
+testAgent ma = testRunAgent setup 1000 appConfig appPlugins ma

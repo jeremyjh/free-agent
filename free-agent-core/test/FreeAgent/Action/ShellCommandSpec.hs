@@ -62,7 +62,8 @@ spec =
                 return $ take 36 (show res)
             `shouldReturn` "ShellResult {shellStdout = \"/usr/bin"
 
-testAgent ma = quickRunAgent ("4122"
+testAgent ma = quickRunAgent 500
+                             ("4122"
                              , appConfig & nodePort .~ "4122"
                              , appPlugins
                              ) ma

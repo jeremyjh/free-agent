@@ -1,6 +1,4 @@
-{-# LANGUAGE ConstraintKinds       #-}
 {-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude     #-}
 {-# LANGUAGE OverloadedStrings     #-}
@@ -25,7 +23,7 @@ import           AgentPrelude
 import           FreeAgent.Lenses hiding ((.=))
 
 import           Control.Monad.Writer        (tell)
-import Control.Monad (mzero)
+import           Control.Monad (mzero)
 import           Data.Binary                 (Binary)
 import qualified Data.Binary                 as Binary
 import           Data.Dynamic                (cast)
@@ -33,9 +31,9 @@ import qualified Data.Map                    as Map
 import qualified Prelude                     as P
 import           System.IO.Unsafe            (unsafePerformIO)
 
-import Control.Error (hoistEither)
+import           Control.Error (hoistEither)
 import           Data.SafeCopy
-import Data.Serialize (Serialize, runPut, runGet)
+import           Data.Serialize (Serialize, runPut, runGet)
 import qualified Data.Serialize              as Cereal
 
 import           Data.Aeson (Value(..), fromJSON, (.=), (.:))
@@ -148,10 +146,10 @@ instance Stashable Result where
     key (Result a) = key a
 
 -- | Wrap a concrete action in existential unless it is already an Action
-toAction :: (Actionable a b) => a -> Action
+toAction :: (Runnable a b) => a -> Action
 toAction act = fromMaybe (Action act) (cast act)
 
-resultNow :: (MonadIO io, Actionable action b)
+resultNow :: (MonadIO io, Runnable action b)
           => Text -> action -> io ResultSummary
 resultNow text' action = do
     time <- getCurrentTime
@@ -161,7 +159,7 @@ resultNow text' action = do
 -- deserialized dynamically at runtime; invoke as:
 --
 -- > register (actiontype :: MyType)
-register :: forall a b. (Actionable a b, Resulting b)
+register :: forall a b. (Runnable a b, Resulting b)
          => a -> ActionsWriter
 register action' = tell [
     ActionUnwrappers (fqName action')
@@ -174,7 +172,7 @@ register action' = tell [
 
 -- | Used only to fix the type passed to 'register' - this should not
 -- ever be evaluated and will throw an error if it is
-actionType :: (Actionable a b) => a
+actionType :: (Runnable a b) => a
 actionType = error "actionType should never be evaluated! Only pass it \
                    \ to register which takes the TypeRep but does not evaluate it."
 
@@ -202,11 +200,11 @@ tryExecWithET action' = tryExecWith action' >=> hoistEither
 
 -- | Unwrap a concrete type into an Action
 --
-unwrapAction :: (Actionable a b)
+unwrapAction :: (Runnable a b)
              => Unwrapper a -> Wrapped -> FetchAction
 unwrapAction uw wrapped = Action <$> uw wrapped
 
-unwrapJsonAction :: (Actionable a b)
+unwrapJsonAction :: (Runnable a b)
              => JsonUnwrapper a -> Value -> FetchAction
 unwrapJsonAction uw wrapped = Action <$> uw wrapped
 

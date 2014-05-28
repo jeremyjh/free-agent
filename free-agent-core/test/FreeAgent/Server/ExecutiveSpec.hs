@@ -45,39 +45,37 @@ spec = do
 
         it "can execute a registered action" $ do
             testAgent $ do
-                Right _ <-registerAction Local checkTCP
-                (Right _) <- executeRegistered Local $ key checkTCP
+                Right _ <-registerAction checkTCP
+                (Right _) <- executeRegistered $ key checkTCP
                 -- confirm results were written
-                Right results' <- allResultsFrom Local
-                                                 (convert (0::Int))
+                Right results' <- allResultsFrom (convert (0::Int))
                 return $ length results'
             `shouldReturn` 1
 
         it "can execute a registered action asynchronously" $ do
             testAgent $ do
-                Right _ <-registerAction Local testAction
-                Right _ <- executeRegisteredAsync Local $ key testAction
+                Right _ <-registerAction testAction
+                Right _ <- executeRegisteredAsync $ key testAction
                 threadDelay 1000
                 -- confirm results were written
-                Right results' <- allResultsFrom Local
-                                                 (convert (0::Int))
+                Right results' <- allResultsFrom (convert (0::Int))
                 return $ length results'
             `shouldReturn` 2
 
         it "will fail to execute a non-registered action" $ do
             testAgentNL $ do
-                Right () <- unregisterAction Local (key testAction)
-                Left (ActionNotFound _) <- executeRegistered Local $ key testAction
+                Right () <- unregisterAction (key testAction)
+                Left (ActionNotFound _) <- executeRegistered $ key testAction
                 return True -- no match failure
             `shouldReturn` True
 
         it "can execute a supplied action" $ do
             testAgent $ do
-                (Right nr) <- executeAction Local checkTCP
+                (Right nr) <- executeAction checkTCP
                 let Just (NagiosResult _ OK) = extract nr
                 -- confirm results were written
-                Right results' <- actionResultsFrom Local
-                                                    (key checkTCP)
+
+                Right results' <- actionResultsFrom (key checkTCP)
                                                     (convert (0::Int))
                 return $ length results'
             `shouldReturn` 2
@@ -87,7 +85,7 @@ spec = do
             testAgent $ do
                 -- generate some results to hear about
                 forM_ [0..2] $ \_ ->
-                    executeAction Local checkTCP
+                    executeAction checkTCP
                 -- make sure he's been listening
                 threadDelay 1000
                 pid <- getSelfPid
@@ -103,9 +101,9 @@ spec = do
                 nodeid <- thisNodeId
                 getSelfPid >>= register listenerName
                 let matcher = $(mkClosure 'matchRemoteHostName) (nodeid, listenerName)
-                Right () <- addListener Local matcher
+                Right () <- addListener matcher
                 threadDelay 10000
-                Right _ <- executeAction Local checkTCP
+                Right _ <- executeAction checkTCP
                 nr <- texpect :: Agent Result
                 let Just (NagiosResult _ status) = extract nr
                 return status
@@ -117,22 +115,21 @@ spec = do
                     nodeid <- thisNodeId
                     getSelfPid >>= register listenerName
                     let matcher = $(mkClosure 'matchRemoteHostName) (nodeid, listenerName)
-                    Right () <- addListener Local matcher
+                    Right () <- addListener matcher
                     threadDelay 10000
                     Just expid <- whereis $ execServer^.name
                     liftProcess $ kill expid "testing"
                     threadDelay 10000
-                    Right _ <- executeAction Local checkTCP
+                    Right _ <- executeAction checkTCP
                     nr <- texpect :: Agent Result
                     let Just (NagiosResult _ status) = extract nr
                     return status
 
             -- recovery with state from disk when launching new agent
             result'' <- testAgent $ do
-                nr <- liftProcess $ do
-                    getSelfPid >>= register listenerName
-                    Right _ <- executeAction Local checkTCP
-                    texpect :: Process Result
+                getSelfPid >>= register listenerName
+                Right _ <- executeAction checkTCP
+                nr <- texpect :: Agent Result
                 let Just (NagiosResult _ status) = extract nr
                 return status
             return (result' == result'')
@@ -142,18 +139,19 @@ spec = do
         it "it won't deliver a routed Action for an unknown context or zone" $ do
             testAgentNL $ do
                 Left (ECallFailed RoutingFailed)
-                    <- executeAction (Route [Context "unkown"] [def])
-                                     checkTCP
+                    <- withTarget (Route [Context "unkown"] [def]) $
+                          executeAction checkTCP
 
                 Left (ECallFailed RoutingFailed)
-                    <- executeAction (Route [def] [Zone "unkown"])
-                                     checkTCP
+                    <- withTarget (Route [def] [Zone "unkown"]) $
+                          executeAction checkTCP
                 return  True -- no exceptions
             `shouldReturn` True
 
 
 
-testAgent ma = quickRunAgent ("4120"
+testAgent ma = quickRunAgent 500
+                             ("4120"
                              , appConfig & nodePort .~ "4120"
                              , appPlugins
                              ) ma
@@ -161,7 +159,7 @@ testAgent ma = quickRunAgent ("4120"
 {-testAgentNoSetup ma = testRunAgent nosetup appConfig appPlugins ma-}
 
 
-testAgentNL ma = testRunAgent setup appConfigNL appPlugins ma
+testAgentNL ma = testRunAgent setup 1000 appConfigNL appPlugins ma
 
 listenerName :: String
 listenerName = "listener:test"

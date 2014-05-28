@@ -1,4 +1,3 @@
-{-# LANGUAGE ConstraintKinds            #-}
 {-# LANGUAGE DeriveDataTypeable         #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE ExistentialQuantification  #-}
@@ -32,7 +31,7 @@ import           AgentPrelude
 import           FreeAgent.Orphans                  ()
 import qualified Prelude                            as P
 
-import           Control.Monad.Reader               (ReaderT, ask, mapReaderT)
+import Control.Monad.Reader (ReaderT, ask, mapReaderT, local)
 import           Control.Monad.Writer               (Writer)
 import           Data.Binary                        as Binary
 import           Data.Dynamic                       (Dynamic)
@@ -55,7 +54,8 @@ import           Control.Monad.Logger               (LogLevel (..), LoggingT,
                                                      runStdoutLoggingT,
                                                      withChannelLogger)
 import           Control.Monad.Trans.Control
-import           Control.Monad.State (StateT)
+import Control.Monad.State (StateT, mapStateT)
+import Control.Error (mapEitherT)
 import Data.Aeson (FromJSON(..), ToJSON(..), Value)
 import           Data.Default                       (Default (..))
 import qualified Data.Set                           as Set
@@ -64,12 +64,11 @@ import           Data.SafeCopy (SafeCopy)
 
 
 
-type SafeStore a = (SafeCopy a, Show a, Typeable a)
-
 type Key = ByteString
+
 -- | Types that can be serialized, stored and retrieved
 --
-class (SafeStore a) => Stashable a where
+class (SafeCopy a, Show a, Typeable a) => Stashable a where
     key :: a -> Key
 
 -- Wrapped
@@ -85,9 +84,7 @@ data Wrapped
 instance Stashable Wrapped where
     key = wrappedKey
 
-type Actionable a b = (Stashable a, Stashable b, Resulting b, Runnable a b, NFData a, NFData b, Eq a, FromJSON a, FromJSON b, ToJSON a, ToJSON b)
-
-data Action = forall a b. (Actionable a b) => Action a
+data Action = forall a b. (Runnable a b) => Action a
         deriving Typeable
 
 instance Eq Action where
@@ -208,6 +205,10 @@ instance Default AgentConfig where
 -- the Context(s) in which it will execute
 data Context = Context !Text deriving (Show, Eq, Ord, Typeable, Generic)
 
+data Target =   Local
+              | Remote Peer
+              | Route [Context] [Zone]
+
 instance Default Context where def = Context "default"
 
 instance Default (Set Context) where def = Set.fromList [def]
@@ -226,9 +227,9 @@ data AgentContext
   = AgentContext { _contextAgentConfig     :: !AgentConfig
                  , _contextPlugins         :: !PluginSet
                  , _contextProcessNode     :: !LocalNode
-                 , _contextOpenResources :: MVar (Map Text ManagedResource)
+                 , _contextOpenResources   :: MVar (Map Text ManagedResource)
+                 , _contextTargetServer    :: Target -- ^ Target to which 'AgentServer' clients will send commands
                  }
-
 
 
 class (Functor m, Applicative m, Monad m)
@@ -246,15 +247,27 @@ instance (ContextReader m)
 instance ContextReader m => ContextReader (EitherT e m) where
     askContext = lift askContext
 
--- Agent Monad
+-- | Typeclass for any monad stack based on 'Agent'
+class ( Applicative agent, Monad agent, MonadIO agent, MonadBase IO agent, MonadBaseControl IO agent
+      , ContextReader agent, MonadProcess agent, MonadLogger agent)
+      => MonadAgent agent where
+    withAgentContext :: (AgentContext -> AgentContext) -> agent a -> agent a
 
-type AgentBase m = (Applicative m, Monad m, MonadIO m, MonadBase IO m, MonadBaseControl IO m)
-type MonadAgent m = (AgentBase m, ContextReader m, MonadProcess m, MonadLogger m)
+instance (MonadAgent agent)
+      => MonadAgent (StateT a agent) where
+    withAgentContext f = mapStateT (withAgentContext f)
+
+instance MonadAgent agent => MonadAgent (EitherT fail agent) where
+    withAgentContext f = mapEitherT (withAgentContext f)
 
 newtype Agent a = Agent { unAgent :: ReaderT AgentContext (LoggingT Process) a}
             deriving ( Functor, Applicative, Monad, MonadBase IO
                      , ContextReader, MonadIO
                      )
+
+instance MonadAgent Agent where
+    withAgentContext f ma = Agent $ local f (unAgent ma)
+
 instance MonadBaseControl IO Agent where
   newtype StM Agent a = StAgent {unSTAgent :: StM (ReaderT AgentContext (LoggingT Process)) a}
   restoreM (StAgent m) = Agent $ restoreM m
@@ -277,7 +290,6 @@ instance MonadProcess Agent where
         mapReaderT (mapLoggingT debugCount f) (unAgent ma)
       where
         mapLoggingT conf f' = lift . f' . runAgentLoggingT conf
-
 
 
 -- | Failure modes for exec method of Runnable
@@ -305,11 +317,12 @@ instance Convertible SomeException RunnableFail where
 data FailResult = FailResult RunnableFail ResultSummary
         deriving (Show,  Typeable, Generic)
 
--- | This is the core class of the 'Actionable' type. Concrete
+-- | This is the core class of the 'Runnable' type. Concrete
 -- instances are wrapped in the 'Action' existential type for compatibility
 -- with all the basic plumbing implemented in FreeAgent Servers.
 class ( NFSerializable action, Stashable action
-      , NFSerializable result, Stashable result, Resulting result)
+      , NFSerializable result, Stashable result, Resulting result
+      , Eq action, FromJSON action, FromJSON result, ToJSON action, ToJSON result)
      => Runnable action result | action -> result where
      -- | Perform the Action - implementing 'exec' is the minimum viable
      -- instance.
@@ -367,10 +380,6 @@ instance Resolvable Peer where
 instance Resolvable (Peer, String) where
     resolve (peer,sname) = resolve (nodeid, sname)
       where nodeid = processNodeId (_peerProcessId peer)
-
-data Target =   Local
-              | Remote Peer
-              | Route [Context] [Zone]
 
 
 deriveSerializers ''Context

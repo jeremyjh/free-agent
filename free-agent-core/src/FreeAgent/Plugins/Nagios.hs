@@ -24,10 +24,7 @@ import           FreeAgent.Lenses
 import           AgentPrelude
 
 
-
 import           Data.Default      (Default (..))
-
-
 
 -- | Plugin-specific configuration
 data NagiosConfig = NagiosConfig {nagiosPluginsPath :: FilePath}
@@ -114,6 +111,6 @@ instance Stashable CheckTCP where
     key c = convert $ c^.host ++ ":" ++ tshow (c^.port)
 
 instance Runnable CheckTCP NagiosResult where
-    exec cmd = runEitherT $ do
-        result' <- tryExecET (Command (cmd^.host) (Just $ cmd^.port) "check_tcp")
-        return $ result' & resultSummary.resultOf .~ Action cmd
+    exec cmd = runEitherT $
+        (resultSummary.resultOf .~ Action cmd) <$>
+            tryExecET (Command (cmd^.host) (Just $ cmd^.port) "check_tcp")

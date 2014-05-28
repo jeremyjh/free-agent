@@ -82,12 +82,12 @@ spec =
                 getSelfPid >>= register listenerName
                 nodeid <- thisNodeId
                 let matcher = $(mkClosure 'matchRemoteHostName) (nodeid, listenerName)
-                Right () <- addListener (Remote tx) matcher
+                Right () <- withTarget (Remote tx) $ addListener matcher
                 threadDelay 10000
 
                 -- it "can route an action to a remote Node"
-                Right res <- executeAction (Route [def] [Zone "TX"])
-                                           checkTCP
+                Right res <- withTarget (Route [def] [Zone "TX"]) $
+                                executeAction checkTCP
 
                 nr <- texpect :: Agent Result
                 let Just (NagiosResult _ status) = extract nr
@@ -110,7 +110,7 @@ spec =
 
 
 
-testAgent ma = testRunAgent setup appConfig appPlugins ma
+testAgent ma = testRunAgent setup 1000 appConfig appPlugins ma
 
 setup :: IO ()
 setup = do

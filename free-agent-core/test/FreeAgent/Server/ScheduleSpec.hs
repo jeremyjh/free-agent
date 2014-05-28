@@ -1,6 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 
 module FreeAgent.Server.ScheduleSpec (main, spec) where
@@ -25,7 +24,7 @@ main :: IO ()
 main = hspec spec
 
 spec :: Spec
-spec = do --parallel $
+spec =  --parallel $
     describe "Basic scheduler operations" $ do
         it "is started by Core supervisor" $ do
             testAgent $ do
@@ -35,53 +34,50 @@ spec = do --parallel $
 
         it "can schedule and find an event" $ do
             testAgent $ do
-                Right () <- schedule Local $
-                                     Event (key testAction) "@hourly" Never
-                Right _ <- findEvent Local (key testAction)
+                Right () <- schedule $ Event (key testAction) "@hourly" Never
+                Right _ <- findEvent (key testAction)
                 return True
             `shouldReturn` True
 
         it "won't schedule a bogus cron format" $ do
             testAgent $ do
-                Right () <- schedule Local $
-                                     Event (key testAction)
-                                           "whatever man"
-                                           Never
-                Left (EventNotFound _) <- findEvent Local (key testAction)
+                Right () <- schedule $ Event (key testAction)
+                                             "whatever man"
+                                             Never
+                Left (EventNotFound _) <- findEvent (key testAction)
                 return ()
             `shouldThrow` errorCall "Unable to parse cron formatted literal: whatever man"
 
         it "won't find an absent event" $ do
             testAgent $ do
-                Left (EventNotFound key') <- findEvent Local "not here"
+                Left (EventNotFound key') <- findEvent "not here"
                 return key'
             `shouldReturn` "not here"
 
         it "can remove an event" $ do
             testAgent $ do
-                Right () <- schedule Local $
-                                     Event ("will delete") "@hourly" Never
+                Right () <- schedule $ Event ("will delete") "@hourly" Never
 
-                Right _ <- findEvent Local "will delete"
-                Right () <- unschedule Local "will delete"
-                Left (EventNotFound key') <- findEvent Local "will delete"
+                Right _ <- findEvent "will delete"
+                Right () <- unschedule "will delete"
+                Left (EventNotFound key') <- findEvent "will delete"
                 return key'
             `shouldReturn` "will delete"
 
         it "executes a cron scheduled action" $ do
             testAgent $ do
-                Right () <- registerAction Local testAction
-                Right () <- schedule Local $ Event (key testAction)
-                                                   "* * * * *"
-                                                   Never
+                Right () <- registerAction testAction
+                Right () <- schedule $ Event (key testAction)
+                                            "* * * * *"
+                                            Never
                 send scheduleServer Tick
                 threadDelay 10000
-                Right results' <- allResultsFrom Local
-                                                 (convert (0::Int))
+                Right results' <- allResultsFrom (convert (0::Int))
                 return (length results')
             `shouldReturn` 1
 
-testAgent ma = quickRunAgent ("4122"
+testAgent ma = quickRunAgent 500
+                             ("4122"
                              , appConfig & nodePort .~ "4122"
                              , appPlugins
                              ) ma

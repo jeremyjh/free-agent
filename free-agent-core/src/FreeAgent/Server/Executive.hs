@@ -1,4 +1,3 @@
-{-# LANGUAGE ConstraintKinds        #-}
 {-# LANGUAGE DeriveDataTypeable     #-}
 {-# LANGUAGE DeriveGeneric          #-}
 {-# LANGUAGE FlexibleContexts       #-}
@@ -124,35 +123,36 @@ $(makeAcidic ''ExecPersist ['putAction, 'getAction, 'deleteAction, 'putListener
 -- API
 -- -----------------------------
 
-registerAction :: (MonadProcess m, Actionable a b)
-               => Target -> a -> m (Either ExecFail ())
-registerAction target action' =
-    callExecutive target $ RegisterAction (toAction action')
+registerAction :: (MonadAgent agent, Runnable action b)
+               => action -> agent (Either ExecFail ())
+registerAction action' =
+    callExecutive $ RegisterAction (toAction action')
 
-unregisterAction :: (MonadProcess m) => Target -> Key -> m (Either ExecFail ())
-unregisterAction target key' =
-    callExecutive target $ UnregisterAction key'
+unregisterAction :: (MonadAgent agent) => Key -> agent (Either ExecFail ())
+unregisterAction key' =
+    callExecutive $ UnregisterAction key'
 
-executeRegistered :: (MonadProcess m)
-                  => Target -> Key -> m (Either ExecFail Result)
-executeRegistered target key' =
-    callExecutive target $ ExecuteRegistered key'
+executeRegistered :: (MonadAgent agent)
+                  => Key -> agent (Either ExecFail Result)
+executeRegistered key' =
+    callExecutive $ ExecuteRegistered key'
 
-executeRegisteredAsync :: (MonadProcess m)
-                       => Target -> Key -> m (Either CallFail ())
-executeRegisteredAsync target key' =
-    castServer serverName target $ ExecuteRegistered key'
+executeRegisteredAsync :: (MonadAgent agent)
+                       => Key -> agent (Either CallFail ())
+executeRegisteredAsync key' =
+    castServer serverName $ ExecuteRegistered key'
 
-executeAction :: (MonadProcess m, Actionable a b)
-              => Target -> a -> m (Either ExecFail Result)
-executeAction target action' =
-    callExecutive target $ ExecuteAction (toAction action')
+executeAction :: (MonadAgent agent, Runnable a b)
+              => a -> agent (Either ExecFail Result)
+executeAction action' =
+    callExecutive $ ExecuteAction (toAction action')
 
 -- | Asynchronously subscribe to a local or remote Executive service
 -- Throws an exception if a Route is supplied which cannot be resolved
-addListener :: (MonadProcess m)
-            => Target -> Closure Listener -> m (Either CallFail ())
-addListener target cl = castServer serverName target (AddListener cl)
+addListener :: (MonadAgent agent)
+            => Closure Listener -> agent (Either CallFail ())
+addListener cl =
+    castServer serverName (AddListener cl)
 
 -- | Used with 'addListener' - defines a 'Listener' that will
 -- receive a 'Result' for each 'Action' executed that matches the typed predicate
@@ -175,10 +175,10 @@ serverName :: String
 serverName = "agent:executive"
 
 
-callExecutive :: (NFSerializable a, MonadProcess m)
-            => Target -> ExecutiveCommand -> m (Either ExecFail a)
-callExecutive target command = do
-    eresult <- callServer serverName target command
+callExecutive :: (NFSerializable a, MonadAgent agent)
+            => ExecutiveCommand -> agent (Either ExecFail a)
+callExecutive command = do
+    eresult <- callServer serverName command
     case eresult of
         Right result' -> return result'
         Left cf -> return (Left $ ECallFailed cf)
@@ -254,7 +254,7 @@ doExec action' = do
   where
     storeResult result = do
         [qdebug| Storing result: #{result}|]
-        writeResult Local result >>= convEitherT
+        writeResult result >>= convEitherT
         return result
     notifyListeners result = do
         listeners' <- uses listeners (filter fst . map exMatch)

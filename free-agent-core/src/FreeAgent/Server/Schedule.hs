@@ -1,4 +1,3 @@
-{-# LANGUAGE ConstraintKinds        #-}
 {-# LANGUAGE DeriveDataTypeable     #-}
 {-# LANGUAGE DeriveGeneric          #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -175,30 +174,28 @@ $(makeAcidic ''SchedulePersist ['getPersist, 'addEvent, 'findEventA
 -- ---------------------------
 
 -- | Advertise a Server on the local peer
-schedule :: MonadProcess m
-              => Target -> Event
-              -> m (Either ScheduleFail ())
-schedule target !event = do --TODO - why is call not forcing evaluation of NFData Event?
-    efail <- callServer serverName target (CmdAddEvent event)
+schedule :: MonadAgent agent
+         => Event -> agent (Either ScheduleFail ())
+schedule !event = do --TODO - why is call not forcing evaluation of NFData Event?
+    efail <- callServer serverName (CmdAddEvent event)
     case efail of
         Right result' -> return result'
         Left failed -> return $ Left (SCallFailed failed)
 
 -- | Advertise a Server on the local peer
-unschedule :: MonadProcess m
-              => Target -> Key
-              -> m (Either ScheduleFail ())
-unschedule target key' = do
-    efail <- callServer serverName target (CmdRemoveEvent key')
+unschedule :: MonadAgent agent
+              => Key
+              -> agent (Either ScheduleFail ())
+unschedule key' = do
+    efail <- callServer serverName (CmdRemoveEvent key')
     case efail of
         Right result' -> return result'
         Left failed -> return $ Left (SCallFailed failed)
 
-findEvent :: MonadProcess m
-          => Target -> Key
-          -> m (Either ScheduleFail Event)
-findEvent target key' = do
-    emevent <- callServer serverName target (CmdFindEvent key')
+findEvent :: MonadAgent agent
+          => Key -> agent (Either ScheduleFail Event)
+findEvent key' = do
+    emevent <- callServer serverName (CmdFindEvent key')
     case emevent of
         Right mevent -> return $ note (EventNotFound key') mevent
         Left failed -> return $ Left (SCallFailed failed)
@@ -250,7 +247,7 @@ onTick = do
     now <- getCurrentTime
     events' <- update (ReadyToRun now)
     forM_ events' $ \ (_, event') ->
-        executeRegisteredAsync Local (key event')
+        executeRegisteredAsync (key event')
     scheduleNextTick
 
 scheduleNextTick :: ScheduleAgent ()
