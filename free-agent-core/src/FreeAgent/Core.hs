@@ -50,34 +50,41 @@ import Control.Monad.Logger (runStdoutLoggingT)
 runAgent :: AgentConfig -> PluginSet -> Agent () -> IO ()
 runAgent config' plugins' ma =
     catchAny
-          ( do registerPluginMaps (plugins'^.unwrappersMap)
-               statesMV <- newMVar mempty
-               eithertcp <- createTransport (config'^.nodeHost)
-                                            (config'^.nodePort)
-                                            defaultTCPParameters
-               (node, tcp) <- case eithertcp of
-                   Right tcp -> do
-                       node <- newLocalNode tcp $ config'^.remoteTable
-                       return (node, tcp)
-                   Left msg -> throwIO msg
+        ( do registerPluginMaps (plugins'^.unwrappersMap)
+             statesMV <- newMVar mempty
+             bracket openTransport (closeResources statesMV)
+                 (\ tcp ->
+                    do node <- newLocalNode tcp (config'^.remoteTable)
+                       let context' = AgentContext
+                                          { _contextAgentConfig = config'
+                                          , _contextPlugins = plugins'
+                                          , _contextProcessNode = node
+                                          , _contextOpenResources = statesMV
+                                          }
+                       let proc = runStdoutLoggingT $
+                                     runReaderT (unAgent ma) context'
 
-               let context' = AgentContext
-                                 { _contextAgentConfig = config'
-                                 , _contextPlugins = plugins'
-                                 , _contextProcessNode = node
-                                 , _contextOpenResources = statesMV
-                                 }
-
-               let proc   = runStdoutLoggingT $ runReaderT (unAgent ma) context'
-
-               runProcess node $ initLogger context' >> globalMonitor >> proc
-               closeTransport tcp
-               closeResources statesMV )
-
-        ( \exception -> do
+                       runProcess node $ do
+                                    initLogger context'
+                                    globalMonitor
+                                    proc
+                 )
+        )
+        (\ exception -> do
             putStrLn $ "Exception in runAgent: " ++ tshow exception
-            return () )
+            return ()
+        )
   where
+    openTransport = do
+        etcp <- createTransport (config'^.nodeHost) (config'^.nodePort) defaultTCPParameters
+        case etcp of
+            Right tcp -> return tcp
+            Left msg -> throwIO msg
+    closeResources statesMV tcp = do
+        closeTransport tcp
+        handles <-  takeMVar statesMV
+        forM_ handles $ \ (ManagedResource _ closeFn) ->
+            liftIO closeFn
    -- overrides default Process logger to use Agent's logging framework
     initLogger context' = do
         pid <- spawnLocal logger
@@ -229,12 +236,6 @@ lookupResource name' = do
   where value (ManagedResource v _) = v
         qualifiedName = fqName (undefined::a) ++ name'
 
-closeResources :: (MonadBase IO m, MonadIO m)
-               => MVar (Map Text ManagedResource) -> m ()
-closeResources statesMV =
- do handles <-  takeMVar statesMV
-    forM_ handles $ \ (ManagedResource _ closeFn) ->
-        liftIO closeFn
 
 -- | Register the Core Actions
 pluginDef :: PluginDef
