@@ -66,15 +66,15 @@ spec =
 
                 -- wait for swarm to stabilize
                 let waitFor3 = do
-                        count <- queryPeerCount
+                        Right count <- queryPeerCount
                         when (count < 3) (threadDelay 10000 >> waitFor3)
                 waitFor3
 
                 -- it "can count peers"
-                count <- queryPeerCount
+                Right count <- queryPeerCount
 
                 -- it "can query for a Set of matching Peers"
-                peers <- queryPeerServers Exec.serverName (Set.fromList [def] )
+                Right peers <- queryPeerServers Exec.serverName (Set.fromList [def] )
                                                           (Set.fromList [Zone "TX"] )
 
                 -- it "can register remote listeners"
@@ -95,7 +95,7 @@ spec =
                 let aname = res ^.to summary.resultOf.to key
 
                 -- we're done, tell the two "remotes" to exit
-                all3 <- queryPeerServers serverName (Set.fromList[def])
+                Right all3 <- queryPeerServers serverName (Set.fromList[def])
                                                     (Set.fromList[def])
                 forM_ all3 $ \peer' -> do
                     mpid <- resolve (peer', ("waiter"::String))

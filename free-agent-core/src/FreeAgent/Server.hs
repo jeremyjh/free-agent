@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude      #-}
 {-# LANGUAGE OverloadedStrings      #-}
+
 module FreeAgent.Server
     ( runAgentServers
     , execServer
@@ -36,14 +37,13 @@ startSuper servers' = do
     {-liftProcess $ do-}
         {-cspecs <- sequence $ fmap (childFrom context') servers'-}
         {-void $ start restartOne ParallelShutdown cspecs-}
-        {-pid <- waitRegistration $ (server'^.name)-}
-        {-registerServer server' pid-}
-    forM_ servers' $ \server' -> liftProcess $ do
-        child' <- childFrom context' server'
-        void $ start restartOne ParallelShutdown [child']
-        when (server'^.name /= peerServer^.name) $ do
-            pid <- waitRegistration $ server'^.name
-            registerServer server' pid
+    forM_ servers' $ \server' -> do
+        pid <- liftProcess $ do
+            child' <- childFrom context' server'
+            void $ start restartOne ParallelShutdown [child']
+            waitRegistration $ server'^.name
+        Right () <- registerServer server' pid
+        return ()
   where childFrom context' (AgentServer _ child) = child context'
 
 -- | Servers that are required for most use cases

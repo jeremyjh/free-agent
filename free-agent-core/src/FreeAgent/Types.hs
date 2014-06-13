@@ -208,6 +208,7 @@ data Context = Context !Text deriving (Show, Eq, Ord, Typeable, Generic)
 data Target =   Local
               | Remote Peer
               | Route [Context] [Zone]
+              deriving (Show)
 
 instance Default Context where def = Context "default"
 

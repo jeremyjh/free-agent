@@ -93,32 +93,39 @@ $(makeAcidic ''PeerPersist ['getPersist])
 -- ---------------------------
 
 -- | Advertise a Server on the peer
-registerServer :: (MonadProcess m)
-               => AgentServer -> ProcessId -> m ()
-registerServer s pid = cast peerServer $ RegisterServer (s^.name) pid
+registerServer :: (MonadAgent agent)
+               => AgentServer -> ProcessId -> agent (Either CallFail ())
+registerServer (AgentServer sname _) pid =
+    castServer serverName $ RegisterServer sname pid
 
 -- | Get a list of Peers (from local Peer's cache)
 -- which have the requested Server registered
 -- Contexts and Zones
-queryPeerServers :: MonadProcess m
-                => String -> Set Context -> Set Zone -> m (Set Peer)
-queryPeerServers s c z = syncCallChan peerServer $ QueryPeerServers s c z
+queryPeerServers :: MonadAgent agent
+                => String -> Set Context -> Set Zone
+                -> agent (Either CallFail (Set Peer))
+queryPeerServers s c z = callServer serverName $ QueryPeerServers s c z
 
 -- | Returns the number of Peer Agent processes this node is connected to
-queryPeerCount :: MonadProcess m => m Int
-queryPeerCount = syncCallChan peerServer QueryPeerCount
+queryPeerCount :: MonadAgent agent => agent (Either CallFail Int)
+queryPeerCount = callServer serverName QueryPeerCount
 
 instance Platform.Resolvable (Target, String) where
     resolve (Local, name') = resolve name'
     resolve (Remote peer, name') = resolve (peer, name')
     resolve (Route contexts' zones', name') = do
-        peers <- queryPeerServers name'
+        peers <- queryLocalPeerServers name'
                                   (Set.fromList contexts')
                                   (Set.fromList zones')
         foundPeer peers
       where foundPeer peers
                 | peers == Set.empty = return Nothing
                 | otherwise = let peer:_ = Set.toList peers in resolve (peer, name')
+
+queryLocalPeerServers :: MonadProcess process
+                => String -> Set Context -> Set Zone
+                -> process (Set Peer)
+queryLocalPeerServers s c z = syncCallChan peerServer $ QueryPeerServers s c z
 
 tryAnyT :: (MonadBaseControl IO m) => m a -> EitherT SomeException m a
 tryAnyT ma = lift (tryAny ma) >>= hoistEither
@@ -141,9 +148,12 @@ castServer name' command = runEitherT $ do
 -- Implementation
 -- ---------------------------
 
+serverName :: String
+serverName = "agent:peer"
+
 peerServer :: AgentServer
 peerServer =
-    defineServer "agent:peer"
+    defineServer serverName
                  initState
                  defaultProcess {
                      apiHandlers =
