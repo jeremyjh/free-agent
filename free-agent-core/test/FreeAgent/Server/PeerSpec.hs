@@ -28,7 +28,7 @@ import           Test.Hspec
 import System.Process (system)
 
 matchRemoteHostName :: (NodeId, String) -> Listener
-matchRemoteHostName (nodeid, name') = matchAction (\c -> _checktcpHost c == "localhost") nodeid name'
+matchRemoteHostName (nodeid, name') = matchAction (\(TestCheckTCP host' _) -> host' == "localhost") nodeid name'
 remotable ['matchRemoteHostName]
 
 main :: IO ()

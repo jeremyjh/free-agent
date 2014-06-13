@@ -8,11 +8,14 @@
 
 module FreeAgent.Fixtures
     ( checkTCP
+    , realCheckTCP
+    , TestCheckTCP(..)
     , TestAction(..)
     , testAction
     , testFailAction
     , slowTestAction
     , testPluginDef
+    , summaryNow
     ) where
 
 import FreeAgent
@@ -57,9 +60,23 @@ instance Runnable TestFailAction TestResult where
         summ <- resultNow "onFailure called" action'
         return $ Right (TestResult summ)
 
+data TestCheckTCP = TestCheckTCP Text Int
+    deriving (Show, Eq, Typeable, Generic)
+
+instance Stashable TestCheckTCP where
+    key (TestCheckTCP host' port')= convert $ host' ++ ":" ++ tshow port'
+
+instance Runnable TestCheckTCP NagiosResult where
+    exec action' = do
+        summ <- summaryNow "Test succeed."  action'
+        return $ Right (NagiosResult summ OK)
+
 -- common test fixture
-checkTCP :: CheckTCP
-checkTCP = CheckTCP  "localhost" 631
+checkTCP :: TestCheckTCP
+checkTCP = TestCheckTCP "localhost" 631
+
+realCheckTCP :: CheckTCP
+realCheckTCP = CheckTCP "localhost" 631
 
 testAction :: TestAction
 testAction = TestAction "test action" 0
@@ -75,7 +92,15 @@ testPluginDef :: PluginDef
 testPluginDef = definePlugin "FixturesPlugin" () (return []) [] $
  do register (actionType :: TestAction)
     register (actionType :: TestFailAction)
+    register (actionType :: TestCheckTCP)
+
+summaryNow :: (Runnable action b, MonadIO io)
+           => Text -> action -> io ResultSummary
+summaryNow msg resultOf' = do
+    now <- getCurrentTime
+    return $ ResultSummary now msg (toAction resultOf')
 
 deriveSerializers ''TestAction
 deriveSerializers ''TestFailAction
 deriveSerializers ''TestResult
+deriveSerializers ''TestCheckTCP

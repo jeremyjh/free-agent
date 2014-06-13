@@ -23,7 +23,7 @@ spec =
     describe "ShellCommand - as used by CheckTCP" $ do
         it "'succeeds' on RC 3 - Nagios Critical" $ do
             testAgent $ do
-                Right (NagiosResult _ status) <- exec $ checkTCP {_checktcpPort = 632}
+                Right (NagiosResult _ status) <- exec $ realCheckTCP {_checktcpPort = 632}
                 return status
             `shouldReturn` Critical
 
