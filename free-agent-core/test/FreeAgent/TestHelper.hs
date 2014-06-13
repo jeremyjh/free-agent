@@ -92,7 +92,7 @@ returnFromAgent timeout ma agentFn = do
               | lapsed < timeout =
                   tryTakeMVar mv >>= maybe (delay >> loop (lapsed + 1))
                                            return
-              | otherwise = error "Execution of Agent test action timed-out."
+              | otherwise = error "Execution of Agent test timed-out."
             delay = threadDelay 1000
 
 cachedContexts :: MVar (Map Text AgentContext)
