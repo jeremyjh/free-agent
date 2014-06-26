@@ -7,7 +7,7 @@ module FreeAgent.CoreSpec (main, spec) where
 import           AgentPrelude
 import           Test.Hspec
 
-import           FreeAgent.Lenses
+import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Plugins.Nagios
 
 import           FreeAgent.TestHelper

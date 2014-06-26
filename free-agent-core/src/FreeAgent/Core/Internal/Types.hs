@@ -13,8 +13,8 @@
 {-# LANGUAGE TypeFamilies               #-}
 
 
-module FreeAgent.Types
- ( module FreeAgent.Types
+module FreeAgent.Core.Internal.Types
+ ( module FreeAgent.Core.Internal.Types
  , MonadProcess
  , NFSerializable, Process, ProcessId
  , MonadBase

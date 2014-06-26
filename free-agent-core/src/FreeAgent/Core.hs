@@ -22,11 +22,11 @@ module FreeAgent.Core
     ) where
 
 import           AgentPrelude
-import           FreeAgent.Action
+import           FreeAgent.Core.Action
     (registerPluginMaps, register, actionType)
-import           FreeAgent.Action.ShellCommand    (ShellCommand)
-import           FreeAgent.Action.Composition     (ActionPlan)
-import           FreeAgent.Lenses
+import           FreeAgent.Core.Action.ShellCommand    (ShellCommand)
+import           FreeAgent.Core.Action.Composition     (ActionPlan)
+import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Process
     ( spawnLocal, receiveWait, match
     , sendChan, SendPort, reregister

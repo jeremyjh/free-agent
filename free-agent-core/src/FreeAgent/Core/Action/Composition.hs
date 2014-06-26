@@ -6,11 +6,11 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 
-module FreeAgent.Action.Composition where
+module FreeAgent.Core.Action.Composition where
 
 import           AgentPrelude
-import           FreeAgent.Lenses
-import           FreeAgent.Action
+import           FreeAgent.Core.Internal.Lenses
+import           FreeAgent.Core.Action
 import           FreeAgent.Process
 
 

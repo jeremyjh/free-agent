@@ -8,15 +8,15 @@
 
 -- Tuck away all the lens classes and instances - also export
 -- types for convenience - modules that needs lenses should only import lenses
-module FreeAgent.Lenses
+module FreeAgent.Core.Internal.Lenses
 ( module Control.Lens
-, module FreeAgent.Types
-, module FreeAgent.Lenses
+, module FreeAgent.Core.Internal.Types
+, module FreeAgent.Core.Internal.Lenses
 )
 where
 
 import           AgentPrelude
-import           FreeAgent.Types
+import           FreeAgent.Core.Internal.Types
 
 import Control.Lens
        ( makeFields, makeLenses, Getting, use, uses, view, views, (&)

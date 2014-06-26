@@ -6,8 +6,8 @@ module FreeAgent
 
 
 import           AgentPrelude as X
-import           FreeAgent.Types as X
-import           FreeAgent.Action as X
+import           FreeAgent.Core.Internal.Types as X
+import           FreeAgent.Core.Action as X
 import           FreeAgent.Core as X
 import           FreeAgent.Process as Process
 

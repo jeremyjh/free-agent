@@ -16,20 +16,20 @@ library
   exposed-modules:   AgentPrelude
                    , FreeAgent 
                    , FreeAgent.Database.AcidState
-                   , FreeAgent.Types
+                   , FreeAgent.Core.Internal.Types
                    , FreeAgent.Orphans
-                   , FreeAgent.Lenses
+                   , FreeAgent.Core.Internal.Lenses
                    , FreeAgent.Process
-                   , FreeAgent.Process.ManagedAgent
                    , FreeAgent.Core
                    , FreeAgent.Server
+                   , FreeAgent.Server.ManagedAgent
                    , FreeAgent.Server.Peer
                    , FreeAgent.Server.Executive
                    , FreeAgent.Server.Executive.History
                    , FreeAgent.Server.Schedule
-                   , FreeAgent.Action
-                   , FreeAgent.Action.Composition
-                   , FreeAgent.Action.ShellCommand
+                   , FreeAgent.Core.Action
+                   , FreeAgent.Core.Action.Composition
+                   , FreeAgent.Core.Action.ShellCommand
                    , FreeAgent.Plugins.Nagios
                    , Control.Monad.Logger.Quote
 

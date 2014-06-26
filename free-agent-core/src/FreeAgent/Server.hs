@@ -12,7 +12,7 @@ module FreeAgent.Server
 where
 
 import AgentPrelude
-import FreeAgent.Lenses
+import FreeAgent.Core.Internal.Lenses
 import FreeAgent.Process
 import FreeAgent.Core (runAgent)
 import FreeAgent.Server.Executive (execServer)

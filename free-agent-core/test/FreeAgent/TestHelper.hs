@@ -19,7 +19,7 @@ module FreeAgent.TestHelper
     ) where
 
 import FreeAgent
-import FreeAgent.Lenses
+import FreeAgent.Core.Internal.Lenses
 import FreeAgent.Server
 import FreeAgent.Process
 

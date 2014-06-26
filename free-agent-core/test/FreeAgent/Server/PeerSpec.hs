@@ -10,7 +10,7 @@ import qualified Prelude as P
 import           FreeAgent.Core
 import           FreeAgent.Process
 import           FreeAgent.Server.Executive as Exec
-import           FreeAgent.Lenses
+import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Plugins.Nagios as Nagios
 import           FreeAgent.Server (runAgentServers)
 import           FreeAgent.Server.Peer

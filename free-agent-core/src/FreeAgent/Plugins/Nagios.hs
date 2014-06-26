@@ -17,10 +17,10 @@ module FreeAgent.Plugins.Nagios
     , pluginDef
     ) where
 
-import           FreeAgent.Action
-import           FreeAgent.Action.ShellCommand
+import           FreeAgent.Core.Action
+import           FreeAgent.Core.Action.ShellCommand
 import           FreeAgent.Core
-import           FreeAgent.Lenses
+import           FreeAgent.Core.Internal.Lenses
 import           AgentPrelude
 
 

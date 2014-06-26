@@ -16,8 +16,8 @@ module FreeAgent.Database.AcidState
 where
 
 import           AgentPrelude
-import           FreeAgent.Lenses
-import           FreeAgent.Action     ()
+import           FreeAgent.Core.Internal.Lenses
+import           FreeAgent.Core.Action     ()
 import           FreeAgent.Core
 
 import           Control.Monad.State  (MonadState)

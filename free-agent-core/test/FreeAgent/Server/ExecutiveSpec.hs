@@ -11,7 +11,7 @@ module FreeAgent.Server.ExecutiveSpec (main, spec) where
 import           Test.Hspec
 
 import           AgentPrelude
-import           FreeAgent.Lenses
+import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Core
 import           FreeAgent.Server.Peer (CallFail(..))
 import           FreeAgent.Server.Executive.History

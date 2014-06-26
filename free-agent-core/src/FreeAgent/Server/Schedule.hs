@@ -16,12 +16,12 @@ module FreeAgent.Server.Schedule where
 
 import           AgentPrelude
 import           FreeAgent.Database.AcidState
-import           FreeAgent.Lenses
+import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Server.Peer (callServer, CallFail(..))
 import           FreeAgent.Server.Executive (executeRegisteredAsync)
 import           FreeAgent.Orphans ()
 import           FreeAgent.Process
-import           FreeAgent.Process.ManagedAgent
+import           FreeAgent.Server.ManagedAgent
 
 import           Control.Monad.Reader (ask)
 import qualified Data.Map.Strict as Map

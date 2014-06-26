@@ -9,7 +9,7 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module FreeAgent.Action
+module FreeAgent.Core.Action
     ( toAction
     , resultNow
     , register, actionType
@@ -20,7 +20,7 @@ module FreeAgent.Action
 where
 
 import           AgentPrelude
-import           FreeAgent.Lenses hiding ((.=))
+import           FreeAgent.Core.Internal.Lenses hiding ((.=))
 
 import           Control.Monad.Writer        (tell)
 import           Control.Monad (mzero)

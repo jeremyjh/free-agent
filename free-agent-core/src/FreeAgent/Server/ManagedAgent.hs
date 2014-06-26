@@ -3,7 +3,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 
 
-module FreeAgent.Process.ManagedAgent
+module FreeAgent.Server.ManagedAgent
     ( module Managed
     , module Supervisor
     , AgentState(..)
@@ -27,7 +27,7 @@ where
 
 import           AgentPrelude
 import           FreeAgent.Core                                      (spawnAgent, withAgent)
-import           FreeAgent.Lenses
+import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Process
 
 import           Control.Monad.State                                 (StateT, evalStateT

@@ -26,10 +26,10 @@ module FreeAgent.Server.Peer
 where
 
 import           AgentPrelude
-import           FreeAgent.Lenses
+import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Process
 import           FreeAgent.Database.AcidState
-import           FreeAgent.Process.ManagedAgent
+import           FreeAgent.Server.ManagedAgent
 
 import           Data.Binary
 import qualified Data.Set as Set

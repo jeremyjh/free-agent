@@ -8,7 +8,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE FlexibleContexts #-}
 
-module FreeAgent.Action.ShellCommand
+module FreeAgent.Core.Action.ShellCommand
     ( ShellCommand(..)
     , ShellResult(..)
     , RegexMatch (..)
@@ -18,8 +18,8 @@ module FreeAgent.Action.ShellCommand
 where
 
 import           AgentPrelude
-import           FreeAgent.Lenses
-import           FreeAgent.Action ()
+import           FreeAgent.Core.Internal.Lenses
+import           FreeAgent.Core.Action ()
 import           FreeAgent.Orphans ()
 
 import           Data.Default (Default(..))
