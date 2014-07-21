@@ -8,16 +8,15 @@
    * Triggers - an Action to run when a matching Action or Result <event> takes place - a
      generalization of current listener functionality  - for example Schedule should
      be notified when an Action is unregistered
+   * executeRegistered return (Resulting a) by extracting Result
 
   Command Line Interface
    * File Action Definitions (json/yaml)
       * startup load file definitions - update AgentDB actions IF newer
   
   Actions: 
+  * Remove unwrapping in deserialization instances, losing unsafe; Unwrap only on exec/extract
 
-   * Core Action definitions:
-      * Command (shell/createProcess) (pull out of Nagios)
-  
   Result Alerting
   * Generic Listener - AgentServer w/ pluggable backend like History
   * Result Alerting Rules

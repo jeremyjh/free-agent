@@ -65,7 +65,7 @@ data ShellCommand
 instance Default ShellCommand where
     def = ShellCommand {
               shellCommand      = mempty
-            , shellChdir        = mempty
+            , shellChdir        = "./"
             , shellArgs         = mempty
             , shellEnv          = mempty
             , shellSuccessCodes = mempty
