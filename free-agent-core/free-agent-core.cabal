@@ -73,9 +73,12 @@ library
                    , aeson
                    , yaml
                    , cron
-                   , attoparsec
+                   , attoparsec >= 0.11.3.4
                    , shelly
                    , regex-compat
+                   , unordered-containers
+                   , scientific
+
 
 test-suite spec
   ghc-options:       -threaded -with-rtsopts=-N

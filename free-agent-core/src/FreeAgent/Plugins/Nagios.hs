@@ -83,6 +83,9 @@ instance Stashable NagiosResult where
 instance Resulting NagiosResult where
     summary (NagiosResult s _) = s
 
+instance Extractable Command
+instance Extractable NagiosResult
+
 instance Runnable Command NagiosResult where
     exec cmd =
      do cmdPath <- commandPath
@@ -109,6 +112,8 @@ instance Runnable Command NagiosResult where
 
 instance Stashable CheckTCP where
     key c = convert $ c^.host ++ ":" ++ tshow (c^.port)
+
+instance Extractable CheckTCP
 
 instance Runnable CheckTCP NagiosResult where
     exec cmd = runEitherT $

@@ -39,10 +39,10 @@ import qualified Data.Serialize              as Cereal
 import           Data.Aeson (Value(..), fromJSON, (.=), (.:))
 import qualified Data.Aeson  as Aeson
 
+
 -- Serialization instances for Action are all this module as they require specialized
 -- and sensitive functions we want to keep encapsulated e.g. (readPluginMaps)
 
-deriving instance Eq ResultSummary
 deriveSerializers ''ResultSummary
 
 instance Stashable ResultSummary where
@@ -50,19 +50,28 @@ instance Stashable ResultSummary where
 
 deriveSerializers ''FailResult
 
+instance Extractable ResultSummary
+
 instance Resulting ResultSummary where
     summary summ = summ
 
 instance Stashable FailResult where
     key (FailResult _ summ) = key summ
 
+instance Extractable FailResult
+
 instance Resulting FailResult where
     summary (FailResult _ summ) = summ
 
 instance Binary Action where
-    put (Action a) = Binary.put $ wrap a
+    put (Action action) =
+        let env = ActionEnvelope
+                  { envelopeWrapped = wrap action
+                  , envelopeMeta = mempty --TODO:implement meta
+                  }
+        in Binary.put env
     get = do
-        wrapped <- Binary.get
+        ActionEnvelope wrapped _ <- Binary.get
         return $ decodeAction' readPluginMaps wrapped
 
 instance Serialize Action where
@@ -123,11 +132,15 @@ instance ToJSON Result where
     toJSON (Result result') =
         Aeson.object ["type" .= fqName result', "result" .= toJSON result']
 
+instance Extractable Result where
+    extract (Result a) = cast a
 
 instance Resulting Result where
-    extract (Result a) = cast a
     summary (Result a) = summary a
     matchR f (Result a)  = maybe False f (cast a)
+
+instance Extractable Action where
+    extract (Action a) = cast a
 
 instance Runnable Action Result where
     exec (Action action') = do

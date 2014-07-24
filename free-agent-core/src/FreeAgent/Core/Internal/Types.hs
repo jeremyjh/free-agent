@@ -56,7 +56,7 @@ import           Control.Monad.Logger               (LogLevel (..), LoggingT,
 import           Control.Monad.Trans.Control
 import Control.Monad.State (StateT, mapStateT)
 import Control.Error (mapEitherT)
-import Data.Aeson (FromJSON(..), ToJSON(..), Value)
+import           Data.Aeson (FromJSON(..), ToJSON(..), Value, Object)
 import           Data.Default                       (Default (..))
 import qualified Data.Set                           as Set
 import           Data.UUID                          (UUID)
@@ -72,17 +72,28 @@ class (SafeCopy a, Show a, Typeable a) => Stashable a where
     key :: a -> Key
 
 -- Wrapped
--- | Wrapped lets us store an Action and recover it using
--- TODO: fix this comment: the type name in 'registerUnwrappers'
+-- | Wrapped lets us store an Action or Result and recover it using
+-- it's registered Unwrapper
 data Wrapped
   = Wrapped { wrappedKey        :: Key
             , wrappedTypeName   :: Text
             , wrappedValue      :: ByteString
             } deriving (Show, Eq, Typeable, Generic)
 
-
 instance Stashable Wrapped where
     key = wrappedKey
+
+-- ActionEnvelope
+-- | A general type for transit of Actions through an agent network which
+-- may not have the required plugins available to deserialize the
+-- wrapped value.
+data ActionEnvelope = ActionEnvelope
+    { envelopeWrapped :: Wrapped
+    , envelopeMeta    :: Object
+    } deriving (Show, Eq, Typeable, Generic)
+
+instance Stashable ActionEnvelope where
+    key = wrappedKey . envelopeWrapped
 
 data Action = forall a b. (Runnable a b) => Action a
         deriving Typeable
@@ -99,20 +110,17 @@ instance P.Show Action where
 instance NFData Action where
     rnf (Action a) = rnf a
 
-
 -- | Class for types that will result from some action and can
 -- be boxed as 'Result'.
-class (NFSerializable result, Stashable result, FromJSON result, ToJSON result)
+class ( NFSerializable result,  FromJSON result, ToJSON result
+      , Stashable result, Extractable result)
     => Resulting result where
-    -- | extract the concrete result - if you know what type it is
-    extract :: (Typeable a) => result -> Maybe a
     -- | provide a 'ResultSummary'
     summary :: result -> ResultSummary
     -- | Create a generalized ResultMatcher function - see 'Core.resultMatcher'
     matchR :: (Typeable a) => (a -> Bool) -> result -> Bool
 
     matchR predicate result' = maybe False predicate (cast result')
-    extract = cast
 
 -- Result
 -- | Box for returning results from 'Action' exec.
@@ -318,12 +326,18 @@ instance Convertible SomeException RunnableFail where
 data FailResult = FailResult RunnableFail ResultSummary
         deriving (Show,  Typeable, Generic)
 
--- | This is the core class of the 'Runnable' type. Concrete
--- instances are wrapped in the 'Action' existential type for compatibility
+-- | extract the concrete type under an Existential
+class Typeable x => Extractable x where
+    extract :: (Typeable a) => x -> Maybe a
+    extract = cast
+
+-- | Types which can be executed in the FreeAgent framework. Concrete
+-- instances may be wrapped in the 'Action' existential type for compatibility
 -- with all the basic plumbing implemented in FreeAgent Servers.
-class ( NFSerializable action, Stashable action
-      , NFSerializable result, Stashable result, Resulting result
-      , Eq action, FromJSON action, FromJSON result, ToJSON action, ToJSON result)
+class ( NFSerializable action, NFSerializable result
+      , Stashable action, Stashable result, Resulting result
+      , Extractable action, Eq action
+      , FromJSON action, FromJSON result, ToJSON action, ToJSON result)
      => Runnable action result | action -> result where
      -- | Perform the Action - implementing 'exec' is the minimum viable
      -- instance.
@@ -343,8 +357,7 @@ data ResultSummary
   = ResultSummary { _resultTimestamp :: UTCTime
                   , _resultText      :: Text
                   , _resultResultOf  :: Action
-                  } deriving (Show, Typeable, Generic)
-
+                  } deriving (Show, Eq, Typeable, Generic)
 
 data ActionHistory = ActionHistory deriving (Show, Eq, Typeable, Generic)
 
@@ -385,7 +398,15 @@ instance Resolvable (Peer, String) where
 
 deriveSerializers ''Context
 deriveSerializers ''Zone
-deriveSerializers ''Wrapped
+
+deriveSafeStore ''Wrapped
+deriveNFData ''Wrapped
+instance Binary Wrapped
+
+deriveSafeStore ''ActionEnvelope
+deriveNFData ''ActionEnvelope
+instance Binary ActionEnvelope
+
 deriveSerializers ''RunnableFail
 
 deriveNFData ''ServerRef

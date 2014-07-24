@@ -292,12 +292,18 @@ instance IsString ScheduleRecurrence where
             _ -> error $ "Unable to parse cron formatted literal: "
                          ++ unpack format
 
-deriveSerializers ''ScheduleCommand
+instance Binary ScheduleCommand
+deriveNFData ''ScheduleCommand
+
 deriveSerializers ''RetryOption
 
 instance Binary ScheduleFail
 deriveNFData ''ScheduleFail
 
 deriveSerializers ''ScheduleRecurrence
-deriveSerializers ''Event
+
+instance Binary Event
+deriveNFData ''Event
+deriveSafeStore ''Event
+
 deriveSafeStore ''SchedulePersist

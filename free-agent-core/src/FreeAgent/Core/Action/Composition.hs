@@ -50,6 +50,8 @@ data ResultList
 instance Stashable ResultList where
     key = key . summary
 
+instance Extractable ResultList
+
 instance Resulting ResultList where
     summary (ResultList summ _) = summ
 
@@ -77,6 +79,8 @@ combinePlan fn plan action' = fn plan (planExec action')
 
 failResult :: RunnableFail -> ResultSummary -> Result
 failResult reason summary' = Result $ FailResult reason summary'
+
+instance Extractable ActionPlan
 
 instance Runnable ActionPlan ResultList where
     exec (Exec action') =

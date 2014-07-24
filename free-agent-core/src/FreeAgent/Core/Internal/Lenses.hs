@@ -21,10 +21,10 @@ import           FreeAgent.Core.Internal.Types
 import Control.Lens
        ( makeFields, makeLenses, Getting, use, uses, view, views, (&)
        , (.~), (^.), _1, _2, set, to, _Right, (%=), (%~), (.=)
-       , Profunctor, Lens')
+       , Profunctor, Lens', Optical)
 
-import Control.Lens.Type (Overloading)
-import Control.Lens.Getter (Accessor)
+import Control.Applicative(Const)
+
 
 
 makeFields ''AgentContext
@@ -43,10 +43,10 @@ viewConfig lens = view (agentConfig.lens) <$> askContext
 viewContext :: (ContextReader m) => Getting a AgentContext a -> m a
 viewContext lens = view lens <$> askContext
 
-viewsConfig :: (Profunctor p, ContextReader f)
-            => Overloading p (->) (Accessor r) AgentConfig AgentConfig a a
-            -> p a r -> f r
+viewsConfig :: forall f p r a. (ContextReader f, Profunctor p)
+            => (p a (Const r a) -> AgentConfig -> Const r AgentConfig) -> p a r -> f r
 viewsConfig lens f = views (agentConfig.lens) f <$> askContext
 
-viewsContext :: (Profunctor p, ContextReader f) => Overloading p (->) (Accessor r) AgentContext AgentContext a a -> p a r -> f r
+viewsContext :: forall f p r a. (ContextReader f, Profunctor p)
+             => Optical p (->) (Const r) AgentContext AgentContext a a -> p a r -> f r
 viewsContext lens f = views lens f <$> askContext

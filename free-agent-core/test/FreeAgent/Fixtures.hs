@@ -41,8 +41,13 @@ instance Stashable TestAction where
 instance Stashable TestResult where
     key (TestResult summ) = key summ
 
+instance Extractable TestResult
+
 instance Resulting TestResult where
     summary (TestResult summ) = summ
+
+
+instance Extractable TestAction
 
 instance Runnable TestAction TestResult where
     exec ta@(TestAction text' delay) = do
@@ -52,6 +57,8 @@ instance Runnable TestAction TestResult where
 
     execWith action' _ = do
         exec action'
+
+instance Extractable TestFailAction
 
 instance Runnable TestFailAction TestResult where
     exec (TestFailAction text') = return $ Left (GeneralFailure (text'))
@@ -65,6 +72,8 @@ data TestCheckTCP = TestCheckTCP Text Int
 
 instance Stashable TestCheckTCP where
     key (TestCheckTCP host' port')= convert $ host' ++ ":" ++ tshow port'
+
+instance Extractable TestCheckTCP
 
 instance Runnable TestCheckTCP NagiosResult where
     exec action' = do

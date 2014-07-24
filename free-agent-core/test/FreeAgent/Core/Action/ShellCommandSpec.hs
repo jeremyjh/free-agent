@@ -24,8 +24,6 @@ spec =
         it "'succeeds' on RC 3 - Nagios Critical" $ do
             testAgent $ do
                 Right (NagiosResult _ status) <- exec $ realCheckTCP {_checktcpPort = 632}
-                {-res <- exec $ realCheckTCP {_checktcpPort = 632}-}
-                {-print res-}
                 return status
             `shouldReturn` Critical
 

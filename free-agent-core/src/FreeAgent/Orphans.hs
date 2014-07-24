@@ -21,13 +21,16 @@ import           Data.Binary(Binary)
 import qualified Data.Binary as Binary
 
 import           Data.SafeCopy
-import           Data.Aeson
+import           Data.Aeson as Aeson
+import           Data.HashMap.Strict as H
+import           Data.Scientific (Scientific)
 
 import           System.Cron
 
 import           Control.Monad.Logger          (MonadLogger(..))
 import qualified Data.Serialize                as Cereal
 import qualified Data.ByteString.Char8         as BS
+import qualified Data.ByteString.Lazy.Char8    as LBS
 import qualified Data.Text.Encoding            as Text (decodeUtf8, encodeUtf8)
 import           Data.Time                     (UTCTime(..),Day(..))
 
@@ -55,6 +58,12 @@ instance Convertible Text ByteString where
 
 instance Convertible ByteString Text where
     safeConvert = return . Text.decodeUtf8
+
+instance Convertible LByteString String where
+    safeConvert = return . LBS.unpack
+
+instance Convertible String LByteString where
+    safeConvert = return . LBS.pack
 
 instance Convertible String FilePath where
     safeConvert = return . fpFromString
@@ -139,6 +148,26 @@ instance FromJSON FilePath where
 instance ToJSON FilePath where
     toJSON path =
         object ["filepath" .= fpToText path]
+
+deriveSafeStore ''Value
+deriveSafeStore ''Scientific
+
+-- | An instance of SafeCopy for the Object Value.
+instance (SafeCopy a, Eq a, Hashable a, SafeCopy b) => SafeCopy (H.HashMap a b) where
+    getCopy = contain $ fmap H.fromList safeGet
+    putCopy = contain . safePut . H.toList
+
+instance (Binary a, Binary b, Hashable a, Eq a) => Binary (H.HashMap a b) where
+    get = H.fromList <$> Binary.get
+    put = Binary.put . H.toList
+
+instance Binary.Binary Aeson.Value where
+    put = Binary.put . Aeson.encode
+    get =
+     do bs <- Binary.get
+        case Aeson.decode bs of
+            Just v -> return v
+            Nothing -> error $ "Could not decode to Aeson.Value a BytesString: " ++ convert bs
 
 -- orphans from cron
 deriving instance Typeable CronSchedule
