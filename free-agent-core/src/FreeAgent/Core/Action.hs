@@ -46,7 +46,7 @@ import qualified Data.Aeson  as Aeson
 deriveSerializers ''ResultSummary
 
 instance Stashable ResultSummary where
-    key (ResultSummary time _ _) = Cereal.encode time
+    key (ResultSummary time _ action') = key action' ++ ":" ++ tshow time
 
 deriveSerializers ''FailResult
 

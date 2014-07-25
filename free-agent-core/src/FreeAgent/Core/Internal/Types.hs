@@ -64,7 +64,7 @@ import           Data.SafeCopy (SafeCopy)
 
 
 
-type Key = ByteString
+type Key = Text
 
 -- | Types that can be serialized, stored and retrieved
 --
@@ -82,6 +82,17 @@ data Wrapped
 
 instance Stashable Wrapped where
     key = wrappedKey
+
+{-instance FromJSON Wrapped where-}
+    {-parseJSON (Object value') = do-}
+        {-type'  <- value' .: "type"-}
+        {-action' <- value' .: "action"-}
+        {-return $ decodeJsonAction readPluginMaps type' action'-}
+    {-parseJSON _ = mzero-}
+
+{-instance ToJSON Wrapped where-}
+    {-toJSON (Action action') =-}
+        {-Aeson.object ["type" .= fqName action', "action" .= toJSON action']-}
 
 -- ActionEnvelope
 -- | A general type for transit of Actions through an agent network which

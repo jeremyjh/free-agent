@@ -85,7 +85,7 @@ data ShellResult
                } deriving (Show, Eq, Typeable, Generic)
 
 instance Stashable ShellCommand where
-    key = convert . fpToText . shellCommand
+    key = fpToText . shellCommand
 
 instance Stashable ShellResult where
     key = key . shellResultOf

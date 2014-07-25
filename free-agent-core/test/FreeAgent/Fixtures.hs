@@ -30,13 +30,13 @@ data TestFailAction = TestFailAction Text
     deriving (Show, Eq, Typeable, Generic)
 
 instance Stashable TestFailAction where
-    key (TestFailAction text') = convert text'
+    key (TestFailAction text') = text'
 
 data TestResult = TestResult ResultSummary
     deriving (Show, Eq, Typeable, Generic)
 
 instance Stashable TestAction where
-    key (TestAction text' _) = convert text'
+    key (TestAction text' _) = text'
 
 instance Stashable TestResult where
     key (TestResult summ) = key summ
@@ -71,7 +71,7 @@ data TestCheckTCP = TestCheckTCP Text Int
     deriving (Show, Eq, Typeable, Generic)
 
 instance Stashable TestCheckTCP where
-    key (TestCheckTCP host' port')= convert $ host' ++ ":" ++ tshow port'
+    key (TestCheckTCP host' port')= host' ++ ":" ++ tshow port'
 
 instance Extractable TestCheckTCP
 

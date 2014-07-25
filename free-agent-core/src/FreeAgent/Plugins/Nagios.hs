@@ -44,7 +44,7 @@ makeFields ''Command
 deriveSerializers ''Command
 
 instance Stashable Command where
-    key cmd = convert $ cmd^.host
+    key cmd = cmd^.host
 
 data CommandResult = OK | Warning | Critical | Unknown
     deriving (Show, Eq, Typeable, Generic)
@@ -111,7 +111,7 @@ instance Runnable Command NagiosResult where
             return $ nagiosPluginsPath nagconf </> convert (cmd^.shellCom)
 
 instance Stashable CheckTCP where
-    key c = convert $ c^.host ++ ":" ++ tshow (c^.port)
+    key c = c^.host ++ ":" ++ tshow (c^.port)
 
 instance Extractable CheckTCP
 
