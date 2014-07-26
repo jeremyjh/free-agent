@@ -6,6 +6,7 @@
 {-# LANGUAGE StandaloneDeriving    #-}
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -33,10 +34,9 @@ import           System.IO.Unsafe            (unsafePerformIO)
 
 import           Control.Error (hoistEither)
 import           Data.SafeCopy
-import           Data.Serialize (Serialize, runPut, runGet)
-import qualified Data.Serialize              as Cereal
+import           Data.Serialize (runPut, runGet)
 
-import           Data.Aeson (Value(..), fromJSON, (.=), (.:))
+import Data.Aeson (Value(..), fromJSON, (.=), (.:))
 import qualified Data.Aeson  as Aeson
 
 
@@ -63,29 +63,47 @@ instance Extractable FailResult
 instance Resulting FailResult where
     summary (FailResult _ summ) = summ
 
-instance Binary Action where
-    put (Action action) =
-        let env = ActionEnvelope
-                  { envelopeWrapped = wrap action
-                  , envelopeMeta = mempty --TODO:implement meta
-                  }
-        in Binary.put env
-    get = do
-        ActionEnvelope wrapped _ <- Binary.get
-        return $ decodeAction' readPluginMaps wrapped
+-- ActionEnvelope
+-- | A general type for transit of Actions through an agent network which
+-- may not have the required plugins available to deserialize the
+-- wrapped value.
+data ActionEnvelope = ActionEnvelope
+    { envelopeWrapped :: Wrapped
+    , envelopeMeta    :: Aeson.Object
+    } deriving (Show, Eq, Typeable, Generic)
 
-instance Serialize Action where
-    put = safePut
-    get = safeGet
+instance Stashable ActionEnvelope where
+    key = wrappedKey . envelopeWrapped
+instance Extractable ActionEnvelope
+instance Runnable ActionEnvelope Result where
+    exec (ActionEnvelope wrapped _) =
+        case decodeAction readPluginMaps wrapped of
+            Just action' -> exec action'
+            Nothing -> return $ Left DeserializationFailure
+
+instance Binary Action where
+    put (Action action) = Binary.put (seal action)
+    get = unseal Binary.get
 
 instance SafeCopy Action where
     version = 1
     kind = base
     errorTypeName _ = "FreeAgent.Type.Action"
-    putCopy (Action a) = contain $ safePut $ wrap a
-    getCopy = contain $ do
-        wrapped <- safeGet
-        return $ decodeAction' readPluginMaps wrapped
+    putCopy (Action action) = contain (safePut $ seal action)
+    getCopy = contain $ unseal safeGet
+
+seal :: Runnable action b => action -> ActionEnvelope
+seal action = ActionEnvelope
+                { envelopeWrapped = wrap action
+                , envelopeMeta = mempty --TODO:implement meta
+                }
+
+unseal :: Monad m => m ActionEnvelope -> m Action
+unseal mget =
+     do env@(ActionEnvelope wrapped _) <- mget
+        case decodeAction readPluginMaps wrapped of
+            Just action' -> return action'
+            Nothing -> return (Action env)
 
 instance Stashable Action where
     key (Action a) = key a
@@ -107,10 +125,6 @@ instance Binary Result where
     get = do
         wrapped <- Binary.get
         return $ decodeResult' readPluginMaps wrapped
-
-instance Serialize Result where
-    put = safePut
-    get = safeGet
 
 instance SafeCopy Result where
     version = 1
@@ -249,15 +263,15 @@ unWrapJson jwrapped = case fromJSON jwrapped of
     Aeson.Error msg -> Left msg
     Aeson.Success value' -> Right value'
 
---used in serialization instances - throws an exception since Binary decode is no maybe
-decodeAction' :: UnwrappersMap -> Wrapped -> Action
-decodeAction' pluginMap wrapped@(Wrapped _ type' _) =
+--used in serialization instances
+decodeAction :: UnwrappersMap -> Wrapped -> Maybe Action
+decodeAction pluginMap wrapped@(Wrapped _ type' _) =
     case Map.lookup ("Action:" ++ type') pluginMap of
-        Just uwMap -> case actionUnwrapper uwMap wrapped of
-            Right act -> act
-            Left s -> error $ "Error deserializing wrapper: " ++ s
-        Nothing -> error $ "Type Name: " ++ convert type'
-                    ++ " not matched! Is your plugin registered?"
+        Just uwMap ->
+            case actionUnwrapper uwMap wrapped of
+                Right act -> Just act
+                Left _ -> Nothing
+        Nothing -> Nothing
 
 decodeJsonAction :: UnwrappersMap -> Text -> Value -> Action
 decodeJsonAction pluginMap type' action' =
@@ -279,7 +293,8 @@ globalPluginMaps = unsafePerformIO $ newIORef (Map.fromList [])
 -- Yes...this is not transparent. This is necessary to deserialize
 -- Actions and Results defined in Plugins. There are workarounds for
 -- most cases but to receive an Action in a Cloud Haskell 'expect' we must be
--- able to deserialize in a pure Binary getter.
+-- able to deserialize in a pure Binary getter. This also makes persistence
+-- of existentials in AcidState a lot cleaner in the client code.
 readPluginMaps :: UnwrappersMap
 readPluginMaps = unsafePerformIO $ readIORef globalPluginMaps
 {-# NOINLINE readPluginMaps #-}
@@ -302,3 +317,4 @@ decodeJsonResult pluginMap type' value' =
             Left s -> error $ "Error deserializing wrapper: " ++ s
         Nothing -> error $ "Type Name: " ++ convert type'
                     ++ " not matched! Is your plugin registered?"
+deriveSerializers ''ActionEnvelope

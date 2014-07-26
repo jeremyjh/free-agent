@@ -78,6 +78,7 @@ library
                    , regex-compat
                    , unordered-containers
                    , scientific
+                   , base64-bytestring
 
 
 test-suite spec

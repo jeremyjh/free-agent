@@ -9,6 +9,7 @@
 {-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
 
@@ -55,8 +56,10 @@ import           Control.Monad.Logger               (LogLevel (..), LoggingT,
                                                      withChannelLogger)
 import           Control.Monad.Trans.Control
 import Control.Monad.State (StateT, mapStateT)
+import Control.Monad (mzero)
 import Control.Error (mapEitherT)
-import           Data.Aeson (FromJSON(..), ToJSON(..), Value, Object)
+import           Data.Aeson (FromJSON(..), ToJSON(..), Value(..), (.:), (.=), object)
+import qualified Data.ByteString.Base64             as B64
 import           Data.Default                       (Default (..))
 import qualified Data.Set                           as Set
 import           Data.UUID                          (UUID)
@@ -83,28 +86,19 @@ data Wrapped
 instance Stashable Wrapped where
     key = wrappedKey
 
-{-instance FromJSON Wrapped where-}
-    {-parseJSON (Object value') = do-}
-        {-type'  <- value' .: "type"-}
-        {-action' <- value' .: "action"-}
-        {-return $ decodeJsonAction readPluginMaps type' action'-}
-    {-parseJSON _ = mzero-}
+instance FromJSON Wrapped where
+    parseJSON (Object value') = do
+        key' <- value' .: "key"
+        typeName <- value' .: "typeName"
+        b64T :: Text <- value' .: "value"
+        return (Wrapped key' typeName (B64.decodeLenient (convert b64T)))
+    parseJSON _ = mzero
 
-{-instance ToJSON Wrapped where-}
-    {-toJSON (Action action') =-}
-        {-Aeson.object ["type" .= fqName action', "action" .= toJSON action']-}
+instance ToJSON Wrapped where
+    toJSON (Wrapped key' typeName value') =
+        let b64T = (convert $ B64.encode value') :: Text
+        in object ["key" .= key', "typeName" .= typeName, "value" .= b64T]
 
--- ActionEnvelope
--- | A general type for transit of Actions through an agent network which
--- may not have the required plugins available to deserialize the
--- wrapped value.
-data ActionEnvelope = ActionEnvelope
-    { envelopeWrapped :: Wrapped
-    , envelopeMeta    :: Object
-    } deriving (Show, Eq, Typeable, Generic)
-
-instance Stashable ActionEnvelope where
-    key = wrappedKey . envelopeWrapped
 
 data Action = forall a b. (Runnable a b) => Action a
         deriving Typeable
@@ -175,14 +169,10 @@ data Listener = ActionMatching ActionMatcher NodeId String
               | ResultMatching ActionMatcher ResultMatcher NodeId String
               deriving (Typeable)
 
--- | Dynamic wrapper around an open 'AcidState' and a function
--- which will close it - used with functions from
--- 'FreeAgent.Database.AcidState'
-
-
+-- | Dynamic wrapper around an open resource (e.g. 'AcidState')
+-- and a function which will close it
 data ManagedResource =
     ManagedResource Dynamic (IO ())
-
 
 data PluginDef
   = PluginDef { _plugindefName      :: !Text
@@ -319,6 +309,8 @@ instance MonadProcess Agent where
 data RunnableFail =
                   -- | Action-specific general failure to exec
                      GeneralFailure Text
+                  -- | Deserialization failure - plugin unregistered?
+                  | DeserializationFailure
                   -- | An unhandled IOException message
                   | RSomeException Text
                   -- | Could not execute due to missing (local) dependency
@@ -413,10 +405,6 @@ deriveSerializers ''Zone
 deriveSafeStore ''Wrapped
 deriveNFData ''Wrapped
 instance Binary Wrapped
-
-deriveSafeStore ''ActionEnvelope
-deriveNFData ''ActionEnvelope
-instance Binary ActionEnvelope
 
 deriveSerializers ''RunnableFail
 

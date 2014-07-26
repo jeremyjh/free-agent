@@ -143,7 +143,6 @@ extractConfig configName = do
                   return
                   (fromDynamic dynconf)
 
-
 -- | Define the plugins to use in this program.
 pluginSet :: PluginWriter -> PluginSet
 pluginSet pluginWriter =
@@ -151,7 +150,6 @@ pluginSet pluginWriter =
         unwrappers = concatMap _plugindefActionUnwrappers plugs
         aconfigs = map buildConfigs plugs
         uwMap = buildPluginMaps unwrappers in
-
     PluginSet { _pluginsetUnwrappersMap = uwMap
               , _pluginsetListeners = buildListeners plugs
               , _pluginsetConfigs = Map.fromList aconfigs
@@ -249,7 +247,6 @@ pluginDef :: PluginDef
 pluginDef = definePlugin "Core" () (return []) [] $
  do register (actionType :: ShellCommand)
     register (actionType :: ActionPlan)
-
 
 withTarget :: MonadAgent agent => Target -> agent a -> agent a
 withTarget target =
