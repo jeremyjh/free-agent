@@ -175,32 +175,32 @@ data ManagedResource =
     ManagedResource Dynamic (IO ())
 
 data PluginDef
-  = PluginDef { _plugindefName      :: !Text
-              , _plugindefContext   :: !Dynamic
-              , _plugindefActionUnwrappers :: ![ActionUnwrappers]
-              , _plugindefListeners :: Agent [Listener]
-              , _plugindefServers   :: [AgentServer]
+  = PluginDef { plugindefName      :: !Text
+              , plugindefContext   :: !Dynamic
+              , plugindefActionUnwrappers :: ![ActionUnwrappers]
+              , plugindefListeners :: Agent [Listener]
+              , plugindefServers   :: [AgentServer]
               }
 
 data PluginSet
-  = PluginSet { _pluginsetUnwrappersMap   :: !UnwrappersMap
-              , _pluginsetListeners       :: Agent [Listener]
-              , _pluginsetConfigs         :: !PluginConfigs
-              , _pluginsetPlugins         :: ![PluginDef]
+  = PluginSet { pluginsetUnwrappersMap   :: !UnwrappersMap
+              , pluginsetListeners       :: Agent [Listener]
+              , pluginsetConfigs         :: !PluginConfigs
+              , pluginsetPlugins         :: ![PluginDef]
               }
 
 -- | AgentConfig data is set at startup and does not change while
 -- the process is running
 data AgentConfig
-  = AgentConfig  { _configDbPath         :: !FilePath
-                 , _configNodeHost       :: !String
-                 , _configNodePort       :: !String
-                 , _configDebugLogCount  :: !Int
-                 , _configMinLogLevel    :: !LogLevel
-                 , _configContexts       :: Set Context
-                 , _configZones          :: Set Zone
-                 , _configPeerNodeSeeds  :: [String]
-                 , _configRemoteTable   :: !RemoteTable
+  = AgentConfig  { configDbPath         :: !FilePath
+                 , configNodeHost       :: !String
+                 , configNodePort       :: !String
+                 , configDebugLogCount  :: !Int
+                 , configMinLogLevel    :: !LogLevel
+                 , configContexts       :: Set Context
+                 , configZones          :: Set Zone
+                 , configPeerNodeSeeds  :: [String]
+                 , configRemoteTable   :: !RemoteTable
                  }
 
 instance Default AgentConfig where
@@ -234,11 +234,11 @@ instance Default Zone where def = Zone "default"
 -- | AgentContext may be initialized during startup but is more
 -- dynamic than config and may change and/or provide communications
 data AgentContext
-  = AgentContext { _contextAgentConfig     :: !AgentConfig
-                 , _contextPlugins         :: !PluginSet
-                 , _contextProcessNode     :: !LocalNode
-                 , _contextOpenResources   :: MVar (Map Text ManagedResource)
-                 , _contextTargetServer    :: Target -- ^ Target to which 'AgentServer' clients will send commands
+  = AgentContext { contextAgentConfig     :: !AgentConfig
+                 , contextPlugins         :: !PluginSet
+                 , contextProcessNode     :: !LocalNode
+                 , contextOpenResources   :: MVar (Map Text ManagedResource)
+                 , contextTargetServer    :: Target -- ^ Target to which 'AgentServer' clients will send commands
                  }
 
 
@@ -285,7 +285,7 @@ instance MonadBaseControl IO Agent where
 
 instance MonadLogger (Agent) where
     monadLoggerLog a b level d =
-        (_configMinLogLevel . _contextAgentConfig) <$> askContext >>= doLog
+        (configMinLogLevel . contextAgentConfig) <$> askContext >>= doLog
       where doLog minlev
               | level >= minlev = runStdoutLoggingT $ monadLoggerLog a b level d
               | otherwise = return ()
@@ -296,11 +296,10 @@ runAgentLoggingT debugCount = runStdoutLoggingT . withChannelLogger debugCount
 instance MonadProcess Agent where
     liftProcess ma = Agent . lift $ lift ma
     mapProcess f ma = Agent $ do
-        debugCount <- (_configDebugLogCount . _contextAgentConfig) <$> askContext
+        debugCount <- (configDebugLogCount . contextAgentConfig) <$> askContext
         mapReaderT (mapLoggingT debugCount f) (unAgent ma)
       where
         mapLoggingT conf f' = lift . f' . runAgentLoggingT conf
-
 
 -- | Failure modes for exec method of Runnable
 -- A failure should mean that the action could not
@@ -357,15 +356,15 @@ class ( NFSerializable action, NFSerializable result
     execWith action' _ = exec action'
 
 data ResultSummary
-  = ResultSummary { _resultTimestamp :: UTCTime
-                  , _resultText      :: Text
-                  , _resultResultOf  :: Action
+  = ResultSummary { resultTimestamp :: UTCTime
+                  , resultText      :: Text
+                  , resultResultOf  :: Action
                   } deriving (Show, Eq, Typeable, Generic)
 
 data ActionHistory = ActionHistory deriving (Show, Eq, Typeable, Generic)
 
-data AgentServer = AgentServer { _serverName :: String
-                               , _serverchildSpec :: AgentContext -> Process ChildSpec
+data AgentServer = AgentServer { aserverName :: String
+                               , aserverchildSpec :: AgentContext -> Process ChildSpec
                                }
 
 instance Resolvable AgentServer where
@@ -379,24 +378,24 @@ instance Binary ServerRef
 instance Ord ServerRef where
     ServerRef a _ `compare` ServerRef b _ = a `compare` b
 
-data Peer = Peer { _peerUuid      :: UUID
-                 , _peerProcessId :: !ProcessId
-                 , _peerContexts  :: Set Context
-                 , _peerZones     :: Set Zone
-                 , _peerServers   :: Set ServerRef
+data Peer = Peer { peerUuid      :: UUID
+                 , peerProcessId :: !ProcessId
+                 , peerContexts  :: Set Context
+                 , peerZones     :: Set Zone
+                 , peerServers   :: Set ServerRef
                  } deriving (Show, Eq, Typeable, Generic)
 
 instance Binary Peer
 
 instance Ord Peer where
-    a `compare` b = _peerUuid a `compare` _peerUuid b
+    a `compare` b = peerUuid a `compare` peerUuid b
 
 instance Resolvable Peer where
-    resolve = return . Just . _peerProcessId
+    resolve = return . Just . peerProcessId
 
 instance Resolvable (Peer, String) where
     resolve (peer,sname) = resolve (nodeid, sname)
-      where nodeid = processNodeId (_peerProcessId peer)
+      where nodeid = processNodeId (peerProcessId peer)
 
 
 deriveSerializers ''Context

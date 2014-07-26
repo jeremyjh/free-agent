@@ -62,11 +62,11 @@ runAgent config' plugins' ma =
                  (\ tcp ->
                     do node <- newLocalNode tcp (config'^.remoteTable)
                        let context' = AgentContext
-                                          { _contextAgentConfig = config'
-                                          , _contextPlugins = plugins'
-                                          , _contextProcessNode = node
-                                          , _contextOpenResources = statesMV
-                                          , _contextTargetServer = Local
+                                          { contextAgentConfig = config'
+                                          , contextPlugins = plugins'
+                                          , contextProcessNode = node
+                                          , contextOpenResources = statesMV
+                                          , contextTargetServer = Local
                                           }
                        let proc = runStdoutLoggingT $
                                      runReaderT (unAgent ma) context'
@@ -147,17 +147,17 @@ extractConfig configName = do
 pluginSet :: PluginWriter -> PluginSet
 pluginSet pluginWriter =
     let plugs = execWriter pluginWriter <> [pluginDef]
-        unwrappers = concatMap _plugindefActionUnwrappers plugs
+        unwrappers = concatMap plugindefActionUnwrappers plugs
         aconfigs = map buildConfigs plugs
         uwMap = buildPluginMaps unwrappers in
-    PluginSet { _pluginsetUnwrappersMap = uwMap
-              , _pluginsetListeners = buildListeners plugs
-              , _pluginsetConfigs = Map.fromList aconfigs
-              , _pluginsetPlugins = plugs
+    PluginSet { pluginsetUnwrappersMap = uwMap
+              , pluginsetListeners = buildListeners plugs
+              , pluginsetConfigs = Map.fromList aconfigs
+              , pluginsetPlugins = plugs
               }
   where
     buildConfigs plugin =
-        (_plugindefName plugin, _plugindefContext plugin)
+        (plugindefName plugin, plugindefContext plugin)
     buildPluginMaps unwrappers =
         let pairs = unzip $ map (\uw ->
                                     ( ("Action:" ++ actionTypeName uw, uw)
@@ -167,7 +167,7 @@ pluginSet pluginWriter =
             rmap = Map.fromList (snd pairs)
         in amap ++ rmap
     buildListeners = foldM appendListener []
-    appendListener acc = _plugindefListeners >=> return . (++ acc)
+    appendListener acc = plugindefListeners >=> return . (++ acc)
 
 -- | Add one particular plugin - call this in the 'PluginWriter'
 -- opened by 'pluginSet'.

@@ -101,7 +101,8 @@ seal action = ActionEnvelope
 unseal :: Monad m => m ActionEnvelope -> m Action
 unseal mget =
      do env@(ActionEnvelope wrapped _) <- mget
-        case decodeAction readPluginMaps wrapped of
+        let pm = unsafePerformIO $ readIORef globalPluginMaps
+        case decodeAction pm wrapped of
             Just action' -> return action'
             Nothing -> return (Action env)
 

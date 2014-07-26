@@ -219,7 +219,7 @@ doRegisterPeer peer respond = do
     friends %= Set.insert peer
     self' <- use self
     when respond $ do
-        [qdebug| Sending self: #{self'} To peer: #{_peerProcessId self'} |]
+        [qdebug| Sending self: #{self'} To peer: #{peerProcessId self'} |]
         cast (peer^.processId) (RespondRegisterPeer self')
 
 doQueryPeerServers :: MonadState PeerState m
