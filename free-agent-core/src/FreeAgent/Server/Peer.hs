@@ -18,6 +18,7 @@ module FreeAgent.Server.Peer
     , registerServer
     , queryPeerServers
     , queryPeerCount
+    , request
     , callServer
     , castServer
     , CallFail(..)
@@ -130,6 +131,11 @@ queryLocalPeerServers s c z = syncCallChan peerServer $ QueryPeerServers s c z
 tryAnyT :: (MonadBaseControl IO m) => m a -> EitherT SomeException m a
 tryAnyT ma = lift (tryAny ma) >>= hoistEither
 
+request :: (ServerRequest req res st, MonadAgent agent
+                 ,NFSerializable req, NFSerializable res)
+              => req -> agent (Either CallFail res)
+request req = callServer (requestServer req) req
+
 callServer :: (MonadAgent agent, NFSerializable a, NFSerializable b)
            => String -> a -> agent (Either CallFail b)
 callServer name' command = runEitherT $ do
@@ -214,11 +220,11 @@ doRegisterServer sname pid = do
   where sref = ServerRef sname pid
 
 doRegisterPeer ::  Peer -> Bool -> PeerAgent ()
-doRegisterPeer peer respond = do
+doRegisterPeer peer respond' = do
     [qdebug| Received Registration for #{peer}|]
     friends %= Set.insert peer
     self' <- use self
-    when respond $ do
+    when respond' $ do
         [qdebug| Sending self: #{self'} To peer: #{peerProcessId self'} |]
         cast (peer^.processId) (RespondRegisterPeer self')
 
@@ -238,6 +244,5 @@ doQueryPeerServers fname fcontexts fzones = do
             Set.filter (\p -> Set.intersection (p^.zones) fzones /= Set.empty) peers
         intersectService = let fservers = Set.fromList [ServerRef fname undefined] in
             Set.filter (\p -> Set.intersection (p^.servers) fservers /= Set.empty) peers
-
 
 deriveNFData ''CallFail

@@ -15,8 +15,8 @@
 
 module FreeAgent.Server.Executive
     ( execServer
-    , registerAction
-    , unregisterAction
+    , RegisterAction(..)
+    , UnregisterAction(..)
     , executeRegistered
     , executeRegisteredAsync
     , executeAction
@@ -83,13 +83,12 @@ instance Convertible CallFail ExecFail where
     safeConvert = return . ECallFailed
 
 data ExecutiveCommand =
-        RegisterAction Action
-      | UnregisterAction Key
-      | ExecuteAction Action
+        ExecuteAction Action
       | ExecuteRegistered Key
       | TerminateExecutive
       | AddListener (Closure Listener)
       deriving (Show, Typeable, Generic)
+
 
 instance Binary ExecutiveCommand where
 instance NFData ExecutiveCommand where
@@ -123,14 +122,25 @@ $(makeAcidic ''ExecPersist ['putAction, 'getAction, 'deleteAction, 'putListener
 -- API
 -- -----------------------------
 
-registerAction :: (MonadAgent agent, Runnable action b)
-               => action -> agent (Either ExecFail ())
-registerAction action' =
-    callExecutive $ RegisterAction (toAction action')
+data RegisterAction = RegisterAction Action
+      deriving (Show, Typeable, Generic)
 
-unregisterAction :: (MonadAgent agent) => Key -> agent (Either ExecFail ())
-unregisterAction key' =
-    callExecutive $ UnregisterAction key'
+instance Binary RegisterAction
+
+instance ServerRequest RegisterAction () ExecState where
+    requestServer _ = serverName
+    respond (RegisterAction action')  =
+        update (PutAction action')
+
+data UnregisterAction = UnregisterAction Key
+      deriving (Show, Typeable, Generic)
+
+instance Binary UnregisterAction
+
+instance ServerRequest UnregisterAction () ExecState where
+    requestServer _ = serverName
+    respond (UnregisterAction key')  =
+        update (DeleteAction key')
 
 executeRegistered :: (MonadAgent agent)
                   => Key -> agent (Either ExecFail Result)
@@ -174,7 +184,6 @@ matchResult af rf = ResultMatching af (matchR rf)
 serverName :: String
 serverName = "agent:executive"
 
-
 callExecutive :: (NFSerializable a, MonadAgent agent)
             => ExecutiveCommand -> agent (Either ExecFail a)
 callExecutive command = do
@@ -200,7 +209,8 @@ execServer =
                       ExecuteRegistered k -> doExecuteRegistered k
                       _ -> $(err "illegal pattern match")
 
-            , agentRpcAsyncHandlerET $ \cmd -> doRegistration cmd
+            , registerRequest (Proxy :: Proxy RegisterAction)
+            , registerRequest (Proxy :: Proxy UnregisterAction)
 
             , agentCastHandlerET $ \ cmd ->
                   case cmd of
@@ -232,12 +242,6 @@ type ExecAgent a = EitherT ExecFail (StateT ExecState Agent) a
 -- Executive command realizations
 -- -----------------------------
 
-doRegistration :: ExecutiveCommand -> ExecAgent ()
-doRegistration (RegisterAction action')  =
-    update (PutAction action')
-doRegistration (UnregisterAction key') =
-    update (DeleteAction key')
-doRegistration _ = $(err "illegal pattern match")
 
 doExecuteAction :: Action -> ExecAgent Result
 doExecuteAction = doExec
@@ -273,3 +277,5 @@ doExec action' = do
 deriveSafeStore ''ExecPersist
 makeFields ''ExecState
 deriveNFData ''ExecFail
+deriveNFData ''RegisterAction
+deriveNFData ''UnregisterAction

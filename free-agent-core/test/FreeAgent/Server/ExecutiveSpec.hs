@@ -13,7 +13,7 @@ import           Test.Hspec
 import           AgentPrelude
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Core
-import           FreeAgent.Server.Peer (CallFail(..))
+import           FreeAgent.Server.Peer (CallFail(..), request)
 import           FreeAgent.Server.Executive.History
 import           FreeAgent.Plugins.Nagios as Nagios
 import           FreeAgent.Server.Executive as Exec
@@ -45,7 +45,7 @@ spec = do
 
         it "can execute a registered action" $ do
             testAgent $ do
-                Right _ <-registerAction checkTCP
+                Right _ <-request $ RegisterAction (Action checkTCP)
                 (Right _) <- executeRegistered $ key checkTCP
                 -- confirm results were written
                 Right results' <- allResultsFrom (convert (0::Int))
@@ -54,7 +54,7 @@ spec = do
 
         it "can execute a registered action asynchronously" $ do
             testAgent $ do
-                Right _ <-registerAction testAction
+                Right _ <- request $ RegisterAction (Action testAction)
                 Right _ <- executeRegisteredAsync $ key testAction
                 threadDelay 1000
                 -- confirm results were written
@@ -64,7 +64,7 @@ spec = do
 
         it "will fail to execute a non-registered action" $ do
             testAgentNL $ do
-                Right () <- unregisterAction (key testAction)
+                Right () <- request $ UnregisterAction (key testAction)
                 Left (ActionNotFound _) <- executeRegistered $ key testAction
                 return True -- no match failure
             `shouldReturn` True

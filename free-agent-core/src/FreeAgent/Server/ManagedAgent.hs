@@ -1,11 +1,17 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 
 module FreeAgent.Server.ManagedAgent
     ( module Managed
     , module Supervisor
+    , ServerRequest(..)
+    , Proxy(..)
+    , registerRequest
     , AgentState(..)
     , defineServer
     , agentCastHandler
@@ -42,6 +48,19 @@ import           Control.Distributed.Process.Platform.Supervisor    as Superviso
 import           Control.Distributed.Process.Platform.Time          (Delay(..), milliSeconds)
 
 data AgentState a = AgentState AgentContext a
+
+class ServerRequest request response state
+                  | request -> response, request -> state where
+    respond :: request -> StateT state Agent response
+    requestServer :: request -> String
+
+data Proxy a = Proxy
+
+registerRequest :: forall req res st. ( ServerRequest req res st
+                   , NFSerializable req, NFSerializable res
+                   , Show req )
+                => Proxy req -> Dispatcher (AgentState st)
+registerRequest _ = agentRpcHandler (respond :: req -> StateT st Agent res)
 
 serverState :: Lens' (AgentState a) a
 serverState f (AgentState c a) = fmap (AgentState c) (f a)
@@ -149,10 +168,10 @@ runAgentStateT :: (NFSerializable a)
                -> (a -> Agent ())
                -> StateT s Agent a
                -> Process (ProcessAction (AgentState s) )
-runAgentStateT (AgentState ctxt ustate) respond ma = do
+runAgentStateT (AgentState ctxt ustate) respond' ma = do
     newState <- withAgent ctxt $ do
         (result, newState) <- runStateT ma ustate
-        respond result
+        respond' result
         return newState
     continue $ AgentState ctxt newState
 
@@ -161,10 +180,10 @@ runAgentStateTAsync :: (NFSerializable a)
                     -> (a -> Agent ())
                     -> StateT s Agent a
                     -> Process (ProcessAction (AgentState s) )
-runAgentStateTAsync state'@(AgentState ctxt ustate) respond ma = do
+runAgentStateTAsync state'@(AgentState ctxt ustate) respond' ma = do
     pid <- spawnAgent ctxt $ do
         threadDelay 1000 -- so we have time to setup a link in parent
-        evalStateT ma ustate >>= respond
+        evalStateT ma ustate >>= respond'
     -- TODO: This will prevent the client call from hanging forever
     -- on an exception/crash but it would be better for executive to monitor child process
     -- and send an exit to the sendPortProcessId

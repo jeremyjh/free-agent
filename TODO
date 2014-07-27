@@ -1,6 +1,10 @@
 0.2.0:
 
   Common/Core:
+   * ServerRequest 
+	class ServerRequest request response state | request -> response
+            request :: (ServerRequest request response, MonadAgent agent) => request -> agent Either CallFail response
+            respond :: (ServerRequest request response, MonadAgent agent) => state -> request -> agent response
    * switch logging to hslogger or DP platform logger 
    * update quasi-quotes to populate source from Loc
 
@@ -9,6 +13,7 @@
      generalization of current listener functionality  - for example Schedule should
      be notified when an Action is unregistered
    * executeRegistered return (Resulting a) by extracting Result
+  
 
   Command Line Interface
    * File Action Definitions (json/yaml)
