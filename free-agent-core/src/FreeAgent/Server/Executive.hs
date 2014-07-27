@@ -126,8 +126,8 @@ data RegisterAction = RegisterAction Action
 
 instance Binary RegisterAction
 
-instance ServerRequest RegisterAction () ExecState where
-    requestServer _ = serverName
+instance ServerCall RegisterAction () ExecState where
+    callName _ = serverName
     respond (RegisterAction action')  =
         update (PutAction action')
 
@@ -136,19 +136,20 @@ data UnregisterAction = UnregisterAction Key
 
 instance Binary UnregisterAction
 
-instance ServerRequest UnregisterAction () ExecState where
-    requestServer _ = serverName
+instance ServerCall UnregisterAction () ExecState where
+    callName _ = serverName
     respond (UnregisterAction key')  =
         update (DeleteAction key')
 
 data AddListener = AddListener (Closure Listener)
     deriving (Show, Typeable, Generic)
+
 instance Binary AddListener
 instance NFData AddListener
 
-instance ServerRequest AddListener () ExecState where
-    requestServer _ = serverName
-    respond (AddListener cl) =
+instance ServerCast AddListener ExecState where
+    castName _ = serverName
+    handle (AddListener cl) =
      do rt <- viewConfig remoteTable
         case unclosure rt cl of
             Left msg -> [qwarn|AddListener failed! Could not evaluate
@@ -218,9 +219,9 @@ execServer =
                       ExecuteRegistered k -> doExecuteRegistered k
                       _ -> $(err "illegal pattern match")
 
-            , registerRequest (Proxy :: Proxy RegisterAction)
-            , registerRequest (Proxy :: Proxy UnregisterAction)
-            , registerCastRequest (Proxy :: Proxy AddListener)
+            , registerCall (Proxy :: Proxy RegisterAction)
+            , registerCall (Proxy :: Proxy UnregisterAction)
+            , registerCast (Proxy :: Proxy AddListener)
 
             , agentCastHandlerET $ \ cmd ->
                   case cmd of

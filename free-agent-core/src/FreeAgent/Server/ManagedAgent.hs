@@ -4,16 +4,16 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE FlexibleContexts #-}
 
 
 module FreeAgent.Server.ManagedAgent
     ( module Managed
     , module Supervisor
-    , ServerRequest(..)
+    , ServerCall(..)
+    , ServerCast(..)
     , Proxy(..)
-    , registerRequest
-    , registerCastRequest
+    , registerCall
+    , registerCast
     , AgentState(..)
     , defineServer
     , agentCastHandler
@@ -51,25 +51,29 @@ import           Control.Distributed.Process.Platform.Time          (Delay(..), 
 
 data AgentState a = AgentState AgentContext a
 
-class ServerRequest request response state
+class ServerCall request response state
                   | request -> response, request -> state where
     respond :: request -> StateT state Agent response
-    requestServer :: request -> String
+    callName :: request -> String
+
+class ServerCast request state | request -> state where
+    handle :: request -> StateT state Agent ()
+    castName :: request -> String
 
 data Proxy a = Proxy
 
-registerRequest :: forall req res st.
-                   (ServerRequest req res st
+registerCall :: forall req res st.
+                   (ServerCall req res st
                    ,NFSerializable req, NFSerializable res
                    ,Show req)
                 => Proxy req -> Dispatcher (AgentState st)
-registerRequest _ = agentRpcHandler (respond :: req -> StateT st Agent res)
+registerCall _ = agentRpcHandler (respond :: req -> StateT st Agent res)
 
-registerCastRequest :: forall req st.
-                       (ServerRequest req () st
+registerCast :: forall req st.
+                       (ServerCast req st
                        ,NFSerializable req, Show req )
                     => Proxy req -> Dispatcher (AgentState st)
-registerCastRequest _ = agentCastHandler (respond :: req -> StateT st Agent ())
+registerCast _ = agentCastHandler (handle :: req -> StateT st Agent ())
 
 serverState :: Lens' (AgentState a) a
 serverState f (AgentState c a) = fmap (AgentState c) (f a)

@@ -18,8 +18,8 @@ module FreeAgent.Server.Peer
     , registerServer
     , queryPeerServers
     , queryPeerCount
-    , request
-    , castRequest
+    , callServ
+    , castServ
     , callServer
     , castServer
     , CallFail(..)
@@ -132,10 +132,10 @@ queryLocalPeerServers s c z = syncCallChan peerServer $ QueryPeerServers s c z
 tryAnyT :: (MonadBaseControl IO m) => m a -> EitherT SomeException m a
 tryAnyT ma = lift (tryAny ma) >>= hoistEither
 
-request :: (ServerRequest req res st, MonadAgent agent
+callServ :: (ServerCall req res st, MonadAgent agent
                  ,NFSerializable req, NFSerializable res)
               => req -> agent (Either CallFail res)
-request req = callServer (requestServer req) req
+callServ req = callServer (callName req) req
 
 callServer :: (MonadAgent agent, NFSerializable a, NFSerializable b)
            => String -> a -> agent (Either CallFail b)
@@ -145,10 +145,10 @@ callServer name' command = runEitherT $ do
     tryAny (syncCallChan pid command) >>= convEitherT
 
 -- | Async version of 'request', using 'cast'
-castRequest :: (ServerRequest req () st, MonadAgent agent
+castServ :: (ServerCast req st, MonadAgent agent
                ,NFSerializable req)
               => req -> agent (Either CallFail ())
-castRequest req = castServer (requestServer req) req
+castServ req = castServer (castName req) req
 
 castServer :: (MonadAgent agent, NFSerializable a)
            => String -> a -> agent (Either CallFail ())

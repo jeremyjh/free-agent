@@ -83,7 +83,7 @@ spec =
                 nodeid <- thisNodeId
                 let matcher = $(mkClosure 'matchRemoteHostName) (nodeid, listenerName)
                 Right () <- withTarget (Remote tx) $
-                                castRequest (AddListener matcher)
+                                castServ (AddListener matcher)
                 threadDelay 10000
 
                 -- it "can route an action to a remote Node"
