@@ -17,10 +17,10 @@ module FreeAgent.Server.Executive
     ( execServer
     , RegisterAction(..)
     , UnregisterAction(..)
+    , AddListener(..)
     , executeRegistered
     , executeRegisteredAsync
     , executeAction
-    , addListener
     , matchAction
     , matchResult
     , serverName
@@ -86,7 +86,6 @@ data ExecutiveCommand =
         ExecuteAction Action
       | ExecuteRegistered Key
       | TerminateExecutive
-      | AddListener (Closure Listener)
       deriving (Show, Typeable, Generic)
 
 
@@ -142,6 +141,23 @@ instance ServerRequest UnregisterAction () ExecState where
     respond (UnregisterAction key')  =
         update (DeleteAction key')
 
+data AddListener = AddListener (Closure Listener)
+    deriving (Show, Typeable, Generic)
+instance Binary AddListener
+instance NFData AddListener
+
+instance ServerRequest AddListener () ExecState where
+    requestServer _ = serverName
+    respond (AddListener cl) =
+     do rt <- viewConfig remoteTable
+        case unclosure rt cl of
+            Left msg -> [qwarn|AddListener failed! Could not evaluate
+                          new listener closure: #{msg}|]
+            Right listener -> do
+                listeners %= (:) listener
+                update (PutListener cl)
+
+
 executeRegistered :: (MonadAgent agent)
                   => Key -> agent (Either ExecFail Result)
 executeRegistered key' =
@@ -156,13 +172,6 @@ executeAction :: (MonadAgent agent, Runnable a b)
               => a -> agent (Either ExecFail Result)
 executeAction action' =
     callExecutive $ ExecuteAction (toAction action')
-
--- | Asynchronously subscribe to a local or remote Executive service
--- Throws an exception if a Route is supplied which cannot be resolved
-addListener :: (MonadAgent agent)
-            => Closure Listener -> agent (Either CallFail ())
-addListener cl =
-    castServer serverName (AddListener cl)
 
 -- | Used with 'addListener' - defines a 'Listener' that will
 -- receive a 'Result' for each 'Action' executed that matches the typed predicate
@@ -211,17 +220,10 @@ execServer =
 
             , registerRequest (Proxy :: Proxy RegisterAction)
             , registerRequest (Proxy :: Proxy UnregisterAction)
+            , registerCastRequest (Proxy :: Proxy AddListener)
 
             , agentCastHandlerET $ \ cmd ->
                   case cmd of
-                      (AddListener cl) -> do
-                          rt <- viewConfig remoteTable
-                          case unclosure rt cl of
-                              Left msg -> [qwarn|AddListener failed! Could not evaluate
-                                            new listener closure: #{msg}|]
-                              Right listener -> do
-                                  listeners %= (:) listener
-                                  update (PutListener cl)
                       (ExecuteRegistered k) -> void $ spawnLocal $
                           void $ doExecuteRegistered k
                       _ -> $(err "illegal pattern match")

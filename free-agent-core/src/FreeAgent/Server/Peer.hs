@@ -19,6 +19,7 @@ module FreeAgent.Server.Peer
     , queryPeerServers
     , queryPeerCount
     , request
+    , castRequest
     , callServer
     , castServer
     , CallFail(..)
@@ -142,6 +143,12 @@ callServer name' command = runEitherT $ do
     target <- viewContext targetServer
     pid <- resolve (target, name') !? RoutingFailed
     tryAny (syncCallChan pid command) >>= convEitherT
+
+-- | Async version of 'request', using 'cast'
+castRequest :: (ServerRequest req () st, MonadAgent agent
+               ,NFSerializable req)
+              => req -> agent (Either CallFail ())
+castRequest req = castServer (requestServer req) req
 
 castServer :: (MonadAgent agent, NFSerializable a)
            => String -> a -> agent (Either CallFail ())

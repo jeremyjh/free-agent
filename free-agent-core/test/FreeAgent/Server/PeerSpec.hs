@@ -82,7 +82,8 @@ spec =
                 getSelfPid >>= register listenerName
                 nodeid <- thisNodeId
                 let matcher = $(mkClosure 'matchRemoteHostName) (nodeid, listenerName)
-                Right () <- withTarget (Remote tx) $ addListener matcher
+                Right () <- withTarget (Remote tx) $
+                                castRequest (AddListener matcher)
                 threadDelay 10000
 
                 -- it "can route an action to a remote Node"

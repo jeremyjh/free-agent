@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 
 module FreeAgent.Server.ManagedAgent
@@ -12,6 +13,7 @@ module FreeAgent.Server.ManagedAgent
     , ServerRequest(..)
     , Proxy(..)
     , registerRequest
+    , registerCastRequest
     , AgentState(..)
     , defineServer
     , agentCastHandler
@@ -56,11 +58,18 @@ class ServerRequest request response state
 
 data Proxy a = Proxy
 
-registerRequest :: forall req res st. ( ServerRequest req res st
-                   , NFSerializable req, NFSerializable res
-                   , Show req )
+registerRequest :: forall req res st.
+                   (ServerRequest req res st
+                   ,NFSerializable req, NFSerializable res
+                   ,Show req)
                 => Proxy req -> Dispatcher (AgentState st)
 registerRequest _ = agentRpcHandler (respond :: req -> StateT st Agent res)
+
+registerCastRequest :: forall req st.
+                       (ServerRequest req () st
+                       ,NFSerializable req, Show req )
+                    => Proxy req -> Dispatcher (AgentState st)
+registerCastRequest _ = agentCastHandler (respond :: req -> StateT st Agent ())
 
 serverState :: Lens' (AgentState a) a
 serverState f (AgentState c a) = fmap (AgentState c) (f a)

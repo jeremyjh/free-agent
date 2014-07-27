@@ -13,7 +13,7 @@ import           Test.Hspec
 import           AgentPrelude
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Core
-import           FreeAgent.Server.Peer (CallFail(..), request)
+import           FreeAgent.Server.Peer (CallFail(..), request, castRequest)
 import           FreeAgent.Server.Executive.History
 import           FreeAgent.Plugins.Nagios as Nagios
 import           FreeAgent.Server.Executive as Exec
@@ -101,7 +101,7 @@ spec = do
                 nodeid <- thisNodeId
                 getSelfPid >>= register listenerName
                 let matcher = $(mkClosure 'matchRemoteHostName) (nodeid, listenerName)
-                Right () <- addListener matcher
+                Right () <- castRequest (AddListener matcher)
                 threadDelay 10000
                 Right _ <- executeAction checkTCP
                 nr <- texpect :: Agent Result
@@ -115,7 +115,7 @@ spec = do
                     nodeid <- thisNodeId
                     getSelfPid >>= register listenerName
                     let matcher = $(mkClosure 'matchRemoteHostName) (nodeid, listenerName)
-                    Right () <- addListener matcher
+                    Right () <- castRequest (AddListener matcher)
                     threadDelay 10000
                     Just expid <- whereis $ execServer^.name
                     liftProcess $ kill expid "testing"
