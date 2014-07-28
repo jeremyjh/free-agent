@@ -35,7 +35,6 @@ import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Process                     as Process
 import           FreeAgent.Server.ManagedAgent
 import           FreeAgent.Server.Executive.History    hiding (serverName)
-import           FreeAgent.Server.Peer
 
 import           Control.DeepSeq.TH                    (deriveNFData)
 import           Control.Monad.State                   (StateT)

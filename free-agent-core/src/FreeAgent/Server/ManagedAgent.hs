@@ -16,6 +16,11 @@ module FreeAgent.Server.ManagedAgent
     , registerCast
     , AgentState(..)
     , defineServer
+    , CallFail(..)
+    , callServ
+    , castServ
+    , callServer
+    , castServer
     , agentCastHandler
     , agentCastHandlerET
     , agentRpcHandler
@@ -37,6 +42,7 @@ import           AgentPrelude
 import           FreeAgent.Core                                      (spawnAgent, withAgent)
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Process
+import {-# SOURCE #-} FreeAgent.Server.Peer (CallFail(..), callServer, castServer)
 
 import           Control.Monad.State                                 (StateT, evalStateT
                                                                      , execStateT, runStateT)
@@ -50,6 +56,7 @@ import           Control.Distributed.Process.Platform.Supervisor    as Superviso
 import           Control.Distributed.Process.Platform.Time          (Delay(..), milliSeconds)
 
 data AgentState a = AgentState AgentContext a
+
 
 class ServerCall request response state
                   | request -> response, request -> state where
@@ -74,6 +81,16 @@ registerCast :: forall req st.
                        ,NFSerializable req, Show req )
                     => Proxy req -> Dispatcher (AgentState st)
 registerCast _ = agentCastHandler (handle :: req -> StateT st Agent ())
+
+callServ :: (ServerCall req res st, MonadAgent agent
+                 ,NFSerializable req, NFSerializable res)
+              => req -> agent (Either CallFail res)
+callServ req = callServer (callName req) req
+
+castServ :: (ServerCast req st, MonadAgent agent
+               ,NFSerializable req)
+              => req -> agent (Either CallFail ())
+castServ req = castServer (castName req) req
 
 serverState :: Lens' (AgentState a) a
 serverState f (AgentState c a) = fmap (AgentState c) (f a)
@@ -223,3 +240,4 @@ agentExitHandler fn (AgentState ctxt ustate) pid reason = do
         [qdebug| Handling exit reason #{reason}|]
         execStateT (fn pid reason) ustate
     continue $ AgentState ctxt newState
+

@@ -14,6 +14,7 @@ import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Plugins.Nagios as Nagios
 import           FreeAgent.Server (runAgentServers)
 import           FreeAgent.Server.Peer
+import           FreeAgent.Server.ManagedAgent
 
 import           FreeAgent.TestHelper hiding (appConfig, setup)
 import qualified FreeAgent.TestHelper as Helper

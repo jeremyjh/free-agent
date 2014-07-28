@@ -18,8 +18,6 @@ module FreeAgent.Server.Peer
     , registerServer
     , queryPeerServers
     , queryPeerCount
-    , callServ
-    , castServ
     , callServer
     , castServer
     , CallFail(..)
@@ -48,10 +46,11 @@ import           Data.UUID.V1 (nextUUID)
 -- Types
 -- ---------------------------
 
+
 data CallFail = RoutingFailed | ServerCrash String
         deriving (Show, Eq, Typeable, Generic)
-instance Binary CallFail
 
+instance Binary CallFail
 instance Convertible SomeException CallFail where
     safeConvert e = return $ ServerCrash (show e)
 
@@ -132,10 +131,6 @@ queryLocalPeerServers s c z = syncCallChan peerServer $ QueryPeerServers s c z
 tryAnyT :: (MonadBaseControl IO m) => m a -> EitherT SomeException m a
 tryAnyT ma = lift (tryAny ma) >>= hoistEither
 
-callServ :: (ServerCall req res st, MonadAgent agent
-                 ,NFSerializable req, NFSerializable res)
-              => req -> agent (Either CallFail res)
-callServ req = callServer (callName req) req
 
 callServer :: (MonadAgent agent, NFSerializable a, NFSerializable b)
            => String -> a -> agent (Either CallFail b)
@@ -143,12 +138,6 @@ callServer name' command = runEitherT $ do
     target <- viewContext targetServer
     pid <- resolve (target, name') !? RoutingFailed
     tryAny (syncCallChan pid command) >>= convEitherT
-
--- | Async version of 'request', using 'cast'
-castServ :: (ServerCast req st, MonadAgent agent
-               ,NFSerializable req)
-              => req -> agent (Either CallFail ())
-castServ req = castServer (castName req) req
 
 castServer :: (MonadAgent agent, NFSerializable a)
            => String -> a -> agent (Either CallFail ())

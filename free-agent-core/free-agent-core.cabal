@@ -36,7 +36,7 @@ library
   build-depends:     base == 4.*
                    , process
                    , text
-                   , classy-prelude == 0.6.*
+                   , classy-prelude
                    , bytestring
                    , mtl
                    , file-location

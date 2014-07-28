@@ -247,7 +247,7 @@ onTick = do
     now <- getCurrentTime
     events' <- update (ReadyToRun now)
     forM_ events' $ \ (_, event') ->
-        executeRegisteredAsync (key event')
+        void $ executeRegisteredAsync (key event')
     scheduleNextTick
 
 scheduleNextTick :: ScheduleAgent ()

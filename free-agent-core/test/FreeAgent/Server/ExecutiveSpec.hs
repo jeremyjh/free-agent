@@ -13,7 +13,7 @@ import           Test.Hspec
 import           AgentPrelude
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Core
-import           FreeAgent.Server.Peer (CallFail(..), callServ, castServ)
+import           FreeAgent.Server.ManagedAgent
 import           FreeAgent.Server.Executive.History
 import           FreeAgent.Plugins.Nagios as Nagios
 import           FreeAgent.Server.Executive as Exec
@@ -85,7 +85,7 @@ spec = do
             testAgent $ do
                 -- generate some results to hear about
                 forM_ [0..2] $ \_ ->
-                    executeAction checkTCP
+                    void $ executeAction checkTCP
                 -- make sure he's been listening
                 threadDelay 1000
                 pid <- getSelfPid

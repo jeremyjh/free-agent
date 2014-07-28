@@ -32,7 +32,7 @@ module AgentPrelude
     , (!??)
     ) where
 
-import           ClassyPrelude                 hiding (undefined, handle)
+import           ClassyPrelude                 hiding (undefined, handle, getCurrentTime)
 import qualified Prelude                       as P
 
 import           Control.DeepSeq.TH            (deriveNFData)
