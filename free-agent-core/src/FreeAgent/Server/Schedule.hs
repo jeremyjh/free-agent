@@ -14,10 +14,9 @@
 
 module FreeAgent.Server.Schedule where
 
-import           AgentPrelude
+import           FreeAgent.AgentPrelude
 import           FreeAgent.Database.AcidState
 import           FreeAgent.Core.Internal.Lenses
-import           FreeAgent.Server.Peer (callServer, CallFail(..))
 import           FreeAgent.Server.Executive (executeRegisteredAsync)
 import           FreeAgent.Orphans ()
 import           FreeAgent.Process
@@ -35,7 +34,7 @@ import           Control.Distributed.Process.Platform.Timer
 import Control.DeepSeq.TH (deriveNFData)
 import           Data.Default (Default(..))
 import           Data.Attoparsec.Text (parseOnly)
-import           Data.Time.Clock (UTCTime, addUTCTime, diffUTCTime)
+import           Data.Time.Clock (addUTCTime, diffUTCTime)
 import Data.Binary (Binary)
 import           System.Cron
 import           System.Cron.Parser (cronSchedule)
@@ -128,7 +127,7 @@ findEventA key' = views events $ Map.lookup key'
 
 allCronEvents :: Query SchedulePersist [(CronSchedule, Key)]
 allCronEvents = Map.foldr crons [] <$> view events
-  where crons event'@Event{..} acc
+  where crons Event{..} acc
           | isCron schedRecur = (cronFrom schedRecur, schedKey) : acc
           | otherwise = acc
           where isCron (RecurCron _ _) = True

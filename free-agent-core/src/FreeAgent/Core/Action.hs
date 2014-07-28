@@ -20,16 +20,14 @@ module FreeAgent.Core.Action
     )
 where
 
-import           AgentPrelude
+import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Internal.Lenses hiding ((.=))
 
 import           Control.Monad.Writer        (tell)
-import           Control.Monad (mzero)
 import           Data.Binary                 (Binary)
 import qualified Data.Binary                 as Binary
 import           Data.Dynamic                (cast)
 import qualified Data.Map                    as Map
-import qualified Prelude                     as P
 import           System.IO.Unsafe            (unsafePerformIO)
 
 import           Control.Error (hoistEither)
@@ -208,13 +206,13 @@ actionType = error "actionType should never be evaluated! Only pass it \
 tryExec :: (Runnable action result, MonadAgent agent)
           => action -> agent (Either RunnableFail result)
 tryExec action' =
-    tryAny (exec action') >>= return . either (Left . convert) id
+    either (Left . convert) id <$> tryAny (exec action')
 
 -- | Does tryAny on execWith and converts SomeException to RunnableFail.
 tryExecWith :: (Runnable action result, MonadAgent agent)
           => action -> Result -> agent (Either RunnableFail result)
 tryExecWith action' result' =
-    tryAny (execWith action' result') >>= return . either (Left . convert) id
+    either (Left . convert) id <$> tryAny (execWith action' result')
 
 -- | Like tryExec but hoists into an EitherT monad.
 tryExecET :: (Runnable action result, MonadAgent agent)

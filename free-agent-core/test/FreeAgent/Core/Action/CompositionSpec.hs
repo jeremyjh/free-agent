@@ -5,7 +5,7 @@
 
 module FreeAgent.Core.Action.CompositionSpec (main, spec) where
 
-import           AgentPrelude
+import           FreeAgent.AgentPrelude
 import qualified Prelude as P
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Core.Action.Composition

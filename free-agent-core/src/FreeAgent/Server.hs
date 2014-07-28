@@ -11,7 +11,7 @@ module FreeAgent.Server
     )
 where
 
-import AgentPrelude
+import FreeAgent.AgentPrelude
 import FreeAgent.Core.Internal.Lenses
 import FreeAgent.Process
 import FreeAgent.Core (runAgent)

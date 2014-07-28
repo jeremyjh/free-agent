@@ -22,13 +22,11 @@ module FreeAgent.Server.Executive.History
     , HistoryBackend
     ) where
 
-import           AgentPrelude
+import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Internal.Lenses
-import           FreeAgent.Server.Peer (castServer, callServer, CallFail)
 import           FreeAgent.Database.AcidState
 import           FreeAgent.Server.ManagedAgent
 
-import           Data.Time.Clock (UTCTime)
 import           Data.Binary (Binary)
 import           Control.Monad.State (StateT)
 import           Control.DeepSeq.TH (deriveNFData)
@@ -92,7 +90,7 @@ callHistory command = do
         Left cf -> return (Left $ HCallFailed cf)
 
 historyServerImpl :: HistoryBackend st -> AgentServer
-historyServerImpl backend@HistoryBackend{..} =
+historyServerImpl HistoryBackend{..} =
     defineServer serverName
                  doInit
                  defaultProcess {

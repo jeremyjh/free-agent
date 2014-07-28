@@ -15,7 +15,7 @@ module FreeAgent.Database.AcidState
 
 where
 
-import           AgentPrelude
+import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Core.Action     ()
 import           FreeAgent.Core

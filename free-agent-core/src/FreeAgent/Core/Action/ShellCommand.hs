@@ -17,13 +17,12 @@ module FreeAgent.Core.Action.ShellCommand
 
 where
 
-import           AgentPrelude
+import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Core.Action ()
 import           FreeAgent.Orphans ()
 
 import           Data.Default (Default(..))
-import Data.Time.Clock (UTCTime)
 import           Shelly
     ( run, shelly, chdir, setenv, silently
     , errExit, lastExitCode, lastStderr)

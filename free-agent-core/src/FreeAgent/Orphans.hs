@@ -14,9 +14,8 @@
 -- we have to define for types in other libraries
 module FreeAgent.Orphans where
 
-import           AgentPrelude
+import           FreeAgent.AgentPrelude
 
-import           Control.Monad (mzero)
 import           Data.Binary(Binary)
 import qualified Data.Binary as Binary
 
@@ -32,15 +31,13 @@ import qualified Data.Serialize                as Cereal
 import qualified Data.ByteString.Char8         as BS
 import qualified Data.ByteString.Lazy.Char8    as LBS
 import qualified Data.Text.Encoding            as Text (decodeUtf8, encodeUtf8)
-import           Data.Time                     (UTCTime(..),Day(..))
 
 import Data.UUID (UUID)
 import Data.Acid (AcidState)
-import Data.Typeable (Typeable1)
 
 import           Control.Distributed.Process (Closure)
 
-deriving instance Typeable1 AcidState
+deriving instance Typeable AcidState
 
 --orphans from monad-logger
 instance MonadLogger m => MonadLogger (EitherT e m) where

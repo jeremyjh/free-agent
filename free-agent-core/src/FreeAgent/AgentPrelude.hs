@@ -8,7 +8,7 @@
 -- | Extensions to ClassyPrelude that are useful to most modules & plugins in Dash
 -- This module should NOT import from any Dash modules and anything
 -- exported here should be used in at least two Dash modules
-module AgentPrelude
+module FreeAgent.AgentPrelude
     (
       module ClassyPrelude
     , FilePathS
@@ -20,7 +20,6 @@ module AgentPrelude
     , Convertible(..)
     , def
     , P.undefined --classy undefined is obnoxious
-    , Generic
     , deriveSerializers
     , fqName
     , qdebug, qinfo, qwarn, qerror
@@ -44,12 +43,10 @@ import           Data.Binary                   as Binary (Binary (..))
 import           Data.Convertible              (Convertible(..), convert)
 import           Data.Default                  (def)
 import           Data.Typeable
-import           GHC.Generics                  (Generic)
 import           Language.Haskell.TH           (Dec, Name, Q)
 import           Language.Haskell.TH.Lib       (conT)
 
 import           Data.Aeson                    (FromJSON(..), ToJSON)
-import           Data.Time.Clock               (UTCTime)
 import qualified Data.Time.Clock as            Time
 import           Data.SafeCopy
        (Version, deriveSafeCopy, base, extension)

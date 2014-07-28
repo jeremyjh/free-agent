@@ -28,7 +28,7 @@ module FreeAgent.Core.Internal.Types
 
 where
 
-import           AgentPrelude
+import           FreeAgent.AgentPrelude
 import           FreeAgent.Orphans                  ()
 import qualified Prelude                            as P
 
@@ -36,7 +36,6 @@ import Control.Monad.Reader (ReaderT, ask, mapReaderT, local)
 import           Control.Monad.Writer               (Writer)
 import           Data.Binary                        as Binary
 import           Data.Dynamic                       (Dynamic)
-import           Data.Time.Clock                    (UTCTime)
 import           Data.Typeable                      (cast)
 
 import           Control.DeepSeq                    (NFData (..))
@@ -56,7 +55,6 @@ import           Control.Monad.Logger               (LogLevel (..), LoggingT,
                                                      withChannelLogger)
 import           Control.Monad.Trans.Control
 import Control.Monad.State (StateT, mapStateT)
-import Control.Monad (mzero)
 import Control.Error (mapEitherT)
 import           Data.Aeson (FromJSON(..), ToJSON(..), Value(..), (.:), (.=), object)
 import qualified Data.ByteString.Base64             as B64

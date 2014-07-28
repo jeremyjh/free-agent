@@ -21,7 +21,7 @@ import           FreeAgent.Core.Action
 import           FreeAgent.Core.Action.ShellCommand
 import           FreeAgent.Core
 import           FreeAgent.Core.Internal.Lenses
-import           AgentPrelude
+import           FreeAgent.AgentPrelude
 
 
 import           Data.Default      (Default (..))

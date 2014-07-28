@@ -8,7 +8,7 @@
 
 module FreeAgent.Core.Action.Composition where
 
-import           AgentPrelude
+import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Core.Action
 import           FreeAgent.Process

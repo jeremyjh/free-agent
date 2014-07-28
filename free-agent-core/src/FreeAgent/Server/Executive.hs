@@ -28,7 +28,7 @@ module FreeAgent.Server.Executive
     )
 where
 
-import           AgentPrelude
+import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Action
 import           FreeAgent.Database.AcidState
 import           FreeAgent.Core.Internal.Lenses

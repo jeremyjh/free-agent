@@ -25,7 +25,7 @@ module FreeAgent.Server.Peer
 
 where
 
-import           AgentPrelude
+import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Process
 import           FreeAgent.Database.AcidState
@@ -38,7 +38,7 @@ import qualified Control.Distributed.Process.Platform as Platform
 import           Control.Monad.State                            as State (StateT, MonadState)
 import           Control.Monad.Reader (ask)
 import           Control.Distributed.Backend.P2P(getCapable, peerController,makeNodeId)
-import           Control.Error ((!?), hoistEither)
+import           Control.Error ((!?))
 import           Control.DeepSeq.TH (deriveNFData)
 import           Data.UUID.V1 (nextUUID)
 
@@ -127,10 +127,6 @@ queryLocalPeerServers :: MonadProcess process
                 => String -> Set Context -> Set Zone
                 -> process (Set Peer)
 queryLocalPeerServers s c z = syncCallChan peerServer $ QueryPeerServers s c z
-
-tryAnyT :: (MonadBaseControl IO m) => m a -> EitherT SomeException m a
-tryAnyT ma = lift (tryAny ma) >>= hoistEither
-
 
 callServer :: (MonadAgent agent, NFSerializable a, NFSerializable b)
            => String -> a -> agent (Either CallFail b)

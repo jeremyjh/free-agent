@@ -8,13 +8,15 @@ module FreeAgent.Server.Peer
 
 where
 
-import           AgentPrelude
+import           FreeAgent.AgentPrelude
 import           FreeAgent.Process
 import           FreeAgent.Core.Internal.Types
 import           Data.Binary (Binary)
 
 data CallFail = RoutingFailed | ServerCrash String
+
 instance Show CallFail
+instance Eq CallFail
 instance Binary CallFail
 instance Typeable CallFail
 instance NFData CallFail

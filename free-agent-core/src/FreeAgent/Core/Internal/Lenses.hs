@@ -15,7 +15,7 @@ module FreeAgent.Core.Internal.Lenses
 )
 where
 
-import           AgentPrelude
+import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Internal.Types
 
 import Control.Lens

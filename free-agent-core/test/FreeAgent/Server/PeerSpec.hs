@@ -5,7 +5,7 @@
 
 module FreeAgent.Server.PeerSpec (main, spec) where
 
-import           AgentPrelude
+import           FreeAgent.AgentPrelude
 import qualified Prelude as P
 import           FreeAgent.Core
 import           FreeAgent.Process

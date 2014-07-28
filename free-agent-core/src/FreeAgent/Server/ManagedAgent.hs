@@ -38,7 +38,7 @@ module FreeAgent.Server.ManagedAgent
 
 where
 
-import           AgentPrelude
+import           FreeAgent.AgentPrelude
 import           FreeAgent.Core                                      (spawnAgent, withAgent)
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Process

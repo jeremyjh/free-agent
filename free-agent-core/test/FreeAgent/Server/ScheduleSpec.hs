@@ -4,7 +4,7 @@
 
 module FreeAgent.Server.ScheduleSpec (main, spec) where
 
-import           AgentPrelude
+import           FreeAgent.AgentPrelude
 import qualified Prelude as P
 import           FreeAgent.Process
 import           FreeAgent.Core.Internal.Lenses

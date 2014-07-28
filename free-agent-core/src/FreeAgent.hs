@@ -5,7 +5,7 @@ module FreeAgent
     ) where
 
 
-import           AgentPrelude as X
+import           FreeAgent.AgentPrelude as X
 import           FreeAgent.Core.Internal.Types as X
 import           FreeAgent.Core.Action as X
 import           FreeAgent.Core as X

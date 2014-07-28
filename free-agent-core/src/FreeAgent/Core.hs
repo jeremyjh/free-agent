@@ -21,7 +21,7 @@ module FreeAgent.Core
     , withTarget
     ) where
 
-import           AgentPrelude
+import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Action
     (registerPluginMaps, register, actionType)
 import           FreeAgent.Core.Action.ShellCommand    (ShellCommand)

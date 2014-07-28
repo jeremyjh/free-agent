@@ -4,7 +4,7 @@
 
 module FreeAgent.CoreSpec (main, spec) where
 
-import           AgentPrelude
+import           FreeAgent.AgentPrelude
 import           Test.Hspec
 
 import           FreeAgent.Core.Internal.Lenses

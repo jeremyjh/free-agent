@@ -10,7 +10,7 @@ module FreeAgent.Server.ExecutiveSpec (main, spec) where
 
 import           Test.Hspec
 
-import           AgentPrelude
+import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Core
 import           FreeAgent.Server.ManagedAgent
