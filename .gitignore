@@ -1,6 +1,8 @@
 dist
 cabal-dev
 vendor/
+.cabal-sandbox
+cabal.sandbox.config
 *.o
 *.hi
 *.chi
@@ -13,4 +15,5 @@ report.html
 .shelly
 spec.*
 tags
+tags (Case Conflict)
 TAGS

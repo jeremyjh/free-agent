@@ -131,7 +131,7 @@ nosetup = return ()
 -- for testing - useful to throw an exception if we "never" get the value we're expecting
 texpect :: (MonadProcess m, Monad m) => NFSerializable a => m a
 texpect = do
-    gotit <- expectTimeout 50000 -- 100ms may as well be never
+    gotit <- expectTimeout 75000 -- 100ms may as well be never
     case gotit of
         Nothing -> error "Timed out in test expect"
         Just v -> return v
