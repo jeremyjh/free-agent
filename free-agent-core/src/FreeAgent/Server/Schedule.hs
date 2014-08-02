@@ -176,7 +176,7 @@ $(makeAcidic ''SchedulePersist ['getPersist, 'addEvent, 'findEventA
 schedule :: MonadAgent agent
          => Event -> agent (Either ScheduleFail ())
 schedule !event = do --TODO - why is call not forcing evaluation of NFData Event?
-    efail <- callServer serverName (CmdAddEvent event)
+    efail <- callTarget serverName (CmdAddEvent event)
     case efail of
         Right result' -> return result'
         Left failed -> return $ Left (SCallFailed failed)
@@ -186,7 +186,7 @@ unschedule :: MonadAgent agent
               => Key
               -> agent (Either ScheduleFail ())
 unschedule key' = do
-    efail <- callServer serverName (CmdRemoveEvent key')
+    efail <- callTarget serverName (CmdRemoveEvent key')
     case efail of
         Right result' -> return result'
         Left failed -> return $ Left (SCallFailed failed)
@@ -194,7 +194,7 @@ unschedule key' = do
 findEvent :: MonadAgent agent
           => Key -> agent (Either ScheduleFail Event)
 findEvent key' = do
-    emevent <- callServer serverName (CmdFindEvent key')
+    emevent <- callTarget serverName (CmdFindEvent key')
     case emevent of
         Right mevent -> return $ note (EventNotFound key') mevent
         Left failed -> return $ Left (SCallFailed failed)

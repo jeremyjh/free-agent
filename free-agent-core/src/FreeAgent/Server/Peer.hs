@@ -11,48 +11,27 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeFamilies #-}
 
-{-# OPTIONS_GHC -fno-warn-orphans #-} -- Resolvable (Target,String)
 
 module FreeAgent.Server.Peer
     ( peerServer
-    , registerServer
-    , queryPeerServers
-    , queryPeerCount
-    , callServer
-    , castServer
-    , CallFail(..)
     )
 
 where
 
 import           FreeAgent.AgentPrelude
+import           FreeAgent.Client.Peer
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Process
 import           FreeAgent.Database.AcidState
 import           FreeAgent.Server.ManagedAgent
 
-import           Data.Binary
 import qualified Data.Set as Set
 
-import qualified Control.Distributed.Process.Platform as Platform
 import           Control.Monad.State                            as State (StateT, MonadState)
 import           Control.Monad.Reader (ask)
 import           Control.Distributed.Backend.P2P(getCapable, peerController,makeNodeId)
-import           Control.Error ((!?))
-import           Control.DeepSeq.TH (deriveNFData)
 import           Data.UUID.V1 (nextUUID)
 
--- ---------Types-------------
--- Types
--- ---------------------------
-
-
-data CallFail = RoutingFailed | ServerCrash String
-        deriving (Show, Eq, Typeable, Generic)
-
-instance Binary CallFail
-instance Convertible SomeException CallFail where
-    safeConvert e = return $ ServerCrash (show e)
 
 data PeerPersist = PeerPersist {_persistUuid :: UUID}
      deriving (Show, Eq, Typeable, Generic)
@@ -68,18 +47,6 @@ makeFields ''PeerState
 
 type PeerAgent = StateT PeerState Agent
 
-data PeerCommand = DiscoverPeers
-                   | QueryPeerCount
-                   | RegisterPeer Peer
-                   | RespondRegisterPeer Peer
-                   | RegisterServer String ProcessId
-                   | QueryPeerServers String (Set Context) (Set Zone)
-    deriving (Show, Typeable, Generic)
-
-instance Binary PeerCommand
-instance NFData PeerCommand
-
-
 -- ---------Acidic------------
 -- Acidic Methods
 -- ---------------------------
@@ -89,69 +56,14 @@ getPersist = ask
 
 $(makeAcidic ''PeerPersist ['getPersist])
 
--- ---------API---------------
--- API
--- ---------------------------
-
--- | Advertise a Server on the peer
-registerServer :: (MonadAgent agent)
-               => AgentServer -> ProcessId -> agent (Either CallFail ())
-registerServer (AgentServer sname _) pid =
-    castServer serverName $ RegisterServer sname pid
-
--- | Get a list of Peers (from local Peer's cache)
--- which have the requested Server registered
--- Contexts and Zones
-queryPeerServers :: MonadAgent agent
-                => String -> Set Context -> Set Zone
-                -> agent (Either CallFail (Set Peer))
-queryPeerServers s c z = callServer serverName $ QueryPeerServers s c z
-
--- | Returns the number of Peer Agent processes this node is connected to
-queryPeerCount :: MonadAgent agent => agent (Either CallFail Int)
-queryPeerCount = callServer serverName QueryPeerCount
-
-instance Platform.Resolvable (Target, String) where
-    resolve (Local, name') = resolve name'
-    resolve (Remote peer, name') = resolve (peer, name')
-    resolve (Route contexts' zones', name') = do
-        peers <- queryLocalPeerServers name'
-                                  (Set.fromList contexts')
-                                  (Set.fromList zones')
-        foundPeer peers
-      where foundPeer peers
-                | peers == Set.empty = return Nothing
-                | otherwise = let peer:_ = Set.toList peers in resolve (peer, name')
-
-queryLocalPeerServers :: MonadProcess process
-                => String -> Set Context -> Set Zone
-                -> process (Set Peer)
-queryLocalPeerServers s c z = syncCallChan peerServer $ QueryPeerServers s c z
-
-callServer :: (MonadAgent agent, NFSerializable a, NFSerializable b)
-           => String -> a -> agent (Either CallFail b)
-callServer name' command = runEitherT $ do
-    target <- viewContext targetServer
-    pid <- resolve (target, name') !? RoutingFailed
-    tryAny (syncCallChan pid command) >>= convEitherT
-
-castServer :: (MonadAgent agent, NFSerializable a)
-           => String -> a -> agent (Either CallFail ())
-castServer name' command = runEitherT $ do
-    target <- viewContext targetServer
-    pid <- resolve (target, name') !? RoutingFailed
-    cast pid command
 
 -- -------Implementation------
 -- Implementation
 -- ---------------------------
 
-serverName :: String
-serverName = "agent:peer"
-
 peerServer :: AgentServer
 peerServer =
-    defineServer serverName
+    defineServer peerServerName
                  initState
                  defaultProcess {
                      apiHandlers =
@@ -237,4 +149,3 @@ doQueryPeerServers fname fcontexts fzones = do
         intersectService = let fservers = Set.fromList [ServerRef fname undefined] in
             Set.filter (\p -> Set.intersection (p^.servers) fservers /= Set.empty) peers
 
-deriveNFData ''CallFail

@@ -19,8 +19,8 @@ module FreeAgent.Server.ManagedAgent
     , CallFail(..)
     , callServ
     , castServ
-    , callServer
-    , castServer
+    , callTarget
+    , castTarget
     , agentCastHandler
     , agentCastHandlerET
     , agentRpcHandler
@@ -42,7 +42,7 @@ import           FreeAgent.AgentPrelude
 import           FreeAgent.Core                                      (spawnAgent, withAgent)
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Process
-import {-# SOURCE #-} FreeAgent.Server.Peer (CallFail(..), callServer, castServer)
+import           FreeAgent.Client.Peer (CallFail(..), callTarget, castTarget)
 
 import           Control.Monad.State                                 (StateT, evalStateT
                                                                      , execStateT, runStateT)
@@ -85,12 +85,12 @@ registerCast _ = agentCastHandler (handle :: req -> StateT st Agent ())
 callServ :: (ServerCall req res st, MonadAgent agent
                  ,NFSerializable req, NFSerializable res)
               => req -> agent (Either CallFail res)
-callServ req = callServer (callName req) req
+callServ req = callTarget (callName req) req
 
 castServ :: (ServerCast req st, MonadAgent agent
                ,NFSerializable req)
               => req -> agent (Either CallFail ())
-castServ req = castServer (castName req) req
+castServ req = castTarget (castName req) req
 
 serverState :: Lens' (AgentState a) a
 serverState f (AgentState c a) = fmap (AgentState c) (f a)

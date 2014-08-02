@@ -67,7 +67,7 @@ instance Binary HistoryCommand
 writeResult        :: (MonadAgent agent)
                    => Result -> agent (Either CallFail ())
 writeResult result' =
-    castServer serverName $ WriteResult result'
+    castTarget serverName $ WriteResult result'
 
 allResultsFrom :: (MonadAgent agent)
                    => UTCTime -> agent (Either HistoryFail [Result])
@@ -84,7 +84,7 @@ serverName = "agent:executive:history"
 callHistory :: (NFSerializable a, MonadAgent agent)
             => HistoryCommand -> agent (Either HistoryFail a)
 callHistory command = do
-    eresult <- callServer serverName command
+    eresult <- callTarget serverName command
     case eresult of
         Right result' -> return result'
         Left cf -> return (Left $ HCallFailed cf)

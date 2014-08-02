@@ -21,6 +21,7 @@ library
                    , FreeAgent.Core.Internal.Lenses
                    , FreeAgent.Process
                    , FreeAgent.Core
+                   , FreeAgent.Client.Peer
                    , FreeAgent.Server
                    , FreeAgent.Server.ManagedAgent
                    , FreeAgent.Server.Peer

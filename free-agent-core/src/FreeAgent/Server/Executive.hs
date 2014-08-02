@@ -166,7 +166,7 @@ executeRegistered key' =
 executeRegisteredAsync :: (MonadAgent agent)
                        => Key -> agent (Either CallFail ())
 executeRegisteredAsync key' =
-    castServer serverName $ ExecuteRegistered key'
+    castTarget serverName $ ExecuteRegistered key'
 
 executeAction :: (MonadAgent agent, Runnable a b)
               => a -> agent (Either ExecFail Result)
@@ -196,7 +196,7 @@ serverName = "agent:executive"
 callExecutive :: (NFSerializable a, MonadAgent agent)
             => ExecutiveCommand -> agent (Either ExecFail a)
 callExecutive command = do
-    eresult <- callServer serverName command
+    eresult <- callTarget serverName command
     case eresult of
         Right result' -> return result'
         Left cf -> return (Left $ ECallFailed cf)
