@@ -369,12 +369,16 @@ instance Resolvable AgentServer where
     resolve (AgentServer sname _) = whereis sname
 
 data ServerRef = ServerRef String ProcessId
+               | PartialRef String -- ^ use only for Set filters
                  deriving (Show, Eq, Generic)
 
 instance Binary ServerRef
 
 instance Ord ServerRef where
     ServerRef a _ `compare` ServerRef b _ = a `compare` b
+    ServerRef a _ `compare` PartialRef b  = a `compare` b
+    PartialRef a  `compare` PartialRef b  = a `compare` b
+    PartialRef a  `compare` ServerRef b _  = a `compare` b
 
 data Peer = Peer { peerUuid      :: UUID
                  , peerProcessId :: !ProcessId

@@ -138,7 +138,7 @@ allCronEvents = Map.foldr crons [] <$> view events
 readyToRun :: UTCTime -> Update SchedulePersist (Set (UTCTime, Event))
 readyToRun now = do
     nextScheduled' <- use nextScheduled
-    let splitEvent = (now, Event "" undefined undefined)
+    let splitEvent = (now, Event "" (RecurInterval 0) Never)
         (ready, waiting) = Set.split splitEvent nextScheduled'
         nextAfter = Set.map (\(_, ev) ->
                                 calcNextScheduled (addMinutes 1 now) ev

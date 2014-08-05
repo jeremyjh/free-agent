@@ -18,7 +18,6 @@ where
 
 import           Control.Monad.Reader                                  (ReaderT, mapReaderT)
 import           Control.Monad.Trans                                   (lift, MonadIO)
-import           Control.Monad.RWS                                     (RWST, Monoid)
 import           Control.Monad.State                                   (StateT, mapStateT)
 
 import           Control.Concurrent.Lifted                             (threadDelay)
@@ -82,19 +81,6 @@ instance MonadProcess m => MonadProcess (EitherT e m) where
                 Right a -> do
                     b <- mapProcess f (return a)
                     return $ Right b
-
--- example transformer implementation
-instance (Monoid w, Monad m, MonadProcess m) => MonadProcess (RWST r w s m) where
-    liftProcess = lift . liftProcess
-    mapProcess = undefined
-    {-f ma = -}
-        {-flip mapRWST (trace "hit map1" ma) $-}
-        {-\ma' -> do-}
-            {-(a, s, w) <- (trace "hit map2" ma')-}
-            {-b <- mapProcess (trace "hit map3" f) (return a)-}
-            {-return (b, s, w)-}
-
-
 
 initRemoteTable :: RemoteTable
 initRemoteTable = Platform.__remoteTable Node.initRemoteTable

@@ -1,8 +1,10 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 
 -- | Extensions to ClassyPrelude that are useful to most modules & plugins in Dash
@@ -19,19 +21,19 @@ module FreeAgent.AgentPrelude
     , tryAnyConvT
     , Convertible(..)
     , def
-    , P.undefined --classy undefined is obnoxious
     , deriveSerializers
-    , fqName
+    , fqName, proxyFqName
     , qdebug, qinfo, qwarn, qerror
     , qdebugNS
     , logDebug, logInfo, logWarn, logError
+    , Proxy(..)
     , deriveSafeStore
     , deriveSafeStoreVersion
     , getCurrentTime
     , (!??)
     ) where
 
-import           ClassyPrelude                 hiding (undefined, handle, getCurrentTime)
+import           ClassyPrelude                 hiding (handle, getCurrentTime)
 import qualified Prelude                       as P
 
 import           Control.DeepSeq.TH            (deriveNFData)
@@ -52,15 +54,24 @@ import           Data.SafeCopy
        (Version, deriveSafeCopy, base, extension)
 import           FileLocation                  (dbg, debug, err)
 
+#if __GLASGOW_HASKELL__ < 708
+data Proxy a = Proxy
+#endif
 
 type FilePathS = P.FilePath
-
 
 fqName :: (Typeable a) => a -> Text
 fqName typee =  modName ++ "." ++ name
   where
     name = pack . P.show $ typeOf typee
     modName = pack . tyConModule . typeRepTyCon $ typeOf typee
+
+proxyFqName :: (Typeable a) => Proxy a -> Text
+proxyFqName typee =  modName ++ "." ++ name
+  where
+    name = pack . P.show $ subtype
+    subtype = let (_ , [t]) = (splitTyConApp $ typeOf typee) in t
+    modName = pack . tyConModule $ typeRepTyCon subtype
 
 convEither :: Convertible e f => Either e a -> Either f a
 convEither (Right result) = Right result

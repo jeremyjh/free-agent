@@ -99,9 +99,9 @@ slowTestAction = TestAction "slow test action" 10000
 
 testPluginDef :: PluginDef
 testPluginDef = definePlugin "FixturesPlugin" () (return []) [] $
- do register (actionType :: TestAction)
-    register (actionType :: TestFailAction)
-    register (actionType :: TestCheckTCP)
+ do register (actionType :: Proxy TestAction )
+    register (actionType :: Proxy TestFailAction)
+    register (actionType :: Proxy TestCheckTCP)
 
 summaryNow :: (Runnable action b, MonadIO io)
            => Text -> action -> io ResultSummary

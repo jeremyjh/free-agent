@@ -146,6 +146,6 @@ doQueryPeerServers fname fcontexts fzones = do
             Set.filter (\p -> Set.intersection (p^.contexts) fcontexts /= Set.empty) peers
         intersectZones =
             Set.filter (\p -> Set.intersection (p^.zones) fzones /= Set.empty) peers
-        intersectService = let fservers = Set.fromList [ServerRef fname undefined] in
+        intersectService = let fservers = Set.fromList [PartialRef fname] in
             Set.filter (\p -> Set.intersection (p^.servers) fservers /= Set.empty) peers
 

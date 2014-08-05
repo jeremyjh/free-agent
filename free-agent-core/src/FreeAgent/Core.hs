@@ -240,13 +240,13 @@ lookupResource name' = do
                    fromDynamic
                    (value <$> Map.lookup qualifiedName states)
   where value (ManagedResource v _) = v
-        qualifiedName = fqName (undefined::a) ++ name'
+        qualifiedName = proxyFqName (Proxy :: Proxy a) ++ name'
 
 -- | Register the Core Actions
 pluginDef :: PluginDef
 pluginDef = definePlugin "Core" () (return []) [] $
- do register (actionType :: ShellCommand)
-    register (actionType :: ActionPlan)
+ do register (actionType :: Proxy ShellCommand)
+    register (actionType :: Proxy ActionPlan)
 
 withTarget :: MonadAgent agent => Target -> agent a -> agent a
 withTarget target =

@@ -186,21 +186,20 @@ resultNow text' action = do
 --
 -- > register (actiontype :: MyType)
 register :: forall a b. (Runnable a b, Resulting b)
-         => a -> ActionsWriter
+         => Proxy a -> ActionsWriter
 register action' = tell [
-    ActionUnwrappers (fqName action')
+    ActionUnwrappers (proxyFqName action')
                      (unwrapAction (unWrap :: Unwrapper a))
                      (unwrapJsonAction (unWrapJson :: JsonUnwrapper a))
-                     (fqName (undefined :: b))
+                     (proxyFqName (Proxy :: Proxy b))
                      (unwrapResult (unWrap :: Unwrapper b))
                      (unwrapJsonResult (unWrapJson :: JsonUnwrapper b))
     ]
 
 -- | Used only to fix the type passed to 'register' - this should not
 -- ever be evaluated and will throw an error if it is
-actionType :: (Runnable a b) => a
-actionType = error "actionType should never be evaluated! Only pass it \
-                   \ to register which takes the TypeRep but does not evaluate it."
+actionType :: (Runnable a b) => Proxy a
+actionType = Proxy :: Proxy a
 
 -- | Does tryAny on exec and converts SomeException to RunnableFail.
 tryExec :: (Runnable action result, MonadAgent agent)

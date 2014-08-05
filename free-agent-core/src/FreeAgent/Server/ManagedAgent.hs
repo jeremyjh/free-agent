@@ -11,7 +11,6 @@ module FreeAgent.Server.ManagedAgent
     , module Supervisor
     , ServerCall(..)
     , ServerCast(..)
-    , Proxy(..)
     , registerCall
     , registerCast
     , AgentState(..)
@@ -67,7 +66,6 @@ class ServerCast request state | request -> state where
     handle :: request -> StateT state Agent ()
     castName :: request -> String
 
-data Proxy a = Proxy
 
 registerCall :: forall req res st.
                    (ServerCall req res st
