@@ -17,9 +17,9 @@ module FreeAgent.Server.Executive
     ( execServer
     , RegisterAction(..)
     , UnregisterAction(..)
+    , ExecuteRegistered(..)
     , AddListener(..)
     , executeRegistered
-    , executeRegisteredAsync
     , executeAction
     , matchAction
     , matchResult
@@ -83,7 +83,6 @@ instance Convertible CallFail ExecFail where
 
 data ExecutiveCommand =
         ExecuteAction Action
-      | ExecuteRegistered Key
       | TerminateExecutive
       deriving (Show, Typeable, Generic)
 
@@ -130,7 +129,7 @@ instance ServerCall RegisterAction () ExecState where
     respond (RegisterAction action')  =
         update (PutAction action')
 
-data UnregisterAction = UnregisterAction Key
+data UnregisterAction = UnregisterAction !Key
       deriving (Show, Typeable, Generic)
 
 instance Binary UnregisterAction
@@ -139,6 +138,22 @@ instance ServerCall UnregisterAction () ExecState where
     callName _ = serverName
     respond (UnregisterAction key')  =
         update (DeleteAction key')
+
+
+data ExecuteRegistered = ExecuteRegistered !Key
+    deriving (Show, Typeable, Generic)
+
+instance Binary ExecuteRegistered
+
+instance ServerCall ExecuteRegistered (Either ExecFail Result) ExecState where
+    callName _ = serverName
+    respond = handleET $ \(ExecuteRegistered key') ->
+     do action' <-  query (GetAction key') !? ActionNotFound key'
+        doExec action'
+
+instance ServerCast ExecuteRegistered ExecState where
+    castName _ = serverName
+    handle = void . respond
 
 data AddListener = AddListener (Closure Listener)
     deriving (Show, Typeable, Generic)
@@ -161,12 +176,11 @@ instance ServerCast AddListener ExecState where
 executeRegistered :: (MonadAgent agent)
                   => Key -> agent (Either ExecFail Result)
 executeRegistered key' =
-    callExecutive $ ExecuteRegistered key'
+ do eresult <- callServ $ ExecuteRegistered key'
+    case eresult of
+        Right result' -> return result'
+        Left cf -> return (Left $ ECallFailed cf)
 
-executeRegisteredAsync :: (MonadAgent agent)
-                       => Key -> agent (Either CallFail ())
-executeRegisteredAsync key' =
-    castTarget serverName $ ExecuteRegistered key'
 
 executeAction :: (MonadAgent agent, Runnable a b)
               => a -> agent (Either ExecFail Result)
@@ -215,18 +229,13 @@ execServer =
             [ agentRpcAsyncHandlerET $
                   \cmd -> case cmd of
                       ExecuteAction act -> doExecuteAction act
-                      ExecuteRegistered k -> doExecuteRegistered k
                       _ -> $(err "illegal pattern match")
 
             , registerCall (Proxy :: Proxy RegisterAction)
             , registerCall (Proxy :: Proxy UnregisterAction)
+            , registerCall (Proxy :: Proxy ExecuteRegistered)
+            , registerCast (Proxy :: Proxy ExecuteRegistered)
             , registerCast (Proxy :: Proxy AddListener)
-
-            , agentCastHandlerET $ \ cmd ->
-                  case cmd of
-                      (ExecuteRegistered k) -> void $ spawnLocal $
-                          void $ doExecuteRegistered k
-                      _ -> $(err "illegal pattern match")
             ]
         }
   where initExec = do
@@ -247,11 +256,6 @@ type ExecAgent a = EitherT ExecFail (StateT ExecState Agent) a
 
 doExecuteAction :: Action -> ExecAgent Result
 doExecuteAction = doExec
-
-doExecuteRegistered :: Key -> ExecAgent Result
-doExecuteRegistered key' = do
-    action' <-  query (GetAction key') !? ActionNotFound key'
-    doExec action'
 
 doExec :: Action -> ExecAgent Result
 doExec action' = do
@@ -281,3 +285,4 @@ makeFields ''ExecState
 deriveNFData ''ExecFail
 deriveNFData ''RegisterAction
 deriveNFData ''UnregisterAction
+deriveNFData ''ExecuteRegistered

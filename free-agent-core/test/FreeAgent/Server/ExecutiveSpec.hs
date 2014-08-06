@@ -55,7 +55,8 @@ spec = do
         it "can execute a registered action asynchronously" $ do
             testAgent $ do
                 Right _ <- callServ $ RegisterAction (Action testAction)
-                Right _ <- executeRegisteredAsync $ key testAction
+                Right _ <- castServ $ ExecuteRegistered (key testAction)
+
                 threadDelay 1000
                 -- confirm results were written
                 Right results' <- allResultsFrom (convert (0::Int))

@@ -17,10 +17,10 @@ module FreeAgent.Server.Schedule where
 import           FreeAgent.AgentPrelude
 import           FreeAgent.Database.AcidState
 import           FreeAgent.Core.Internal.Lenses
-import           FreeAgent.Server.Executive (executeRegisteredAsync)
 import           FreeAgent.Orphans ()
 import           FreeAgent.Process
 import           FreeAgent.Server.ManagedAgent
+import           FreeAgent.Server.Executive (ExecuteRegistered(..))
 
 import           Control.Monad.Reader (ask)
 import qualified Data.Map.Strict as Map
@@ -245,8 +245,9 @@ onTick :: ScheduleAgent ()
 onTick = do
     now <- getCurrentTime
     events' <- update (ReadyToRun now)
-    forM_ events' $ \ (_, event') ->
-        void $ executeRegisteredAsync (key event')
+    forM_ events' $ \ (_, event') -> do
+        Right () <- castServ $ ExecuteRegistered (key event')
+        return ()
     scheduleNextTick
 
 scheduleNextTick :: ScheduleAgent ()

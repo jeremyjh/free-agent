@@ -20,6 +20,7 @@ module FreeAgent.Server.ManagedAgent
     , castServ
     , callTarget
     , castTarget
+    , handleET
     , agentCastHandler
     , agentCastHandlerET
     , agentRpcHandler
