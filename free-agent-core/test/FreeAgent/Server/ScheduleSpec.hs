@@ -10,7 +10,7 @@ import           FreeAgent.Process
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Server.Schedule as Schedule
 import           FreeAgent.Server.Executive.History (allResultsFrom)
-import           FreeAgent.Server.Executive (RegisterAction(..))
+import           FreeAgent.Server.Executive (StoreAction(..))
 import           FreeAgent.Server.ManagedAgent (callServ)
 
 import           FreeAgent.TestHelper hiding (appConfig)
@@ -67,7 +67,7 @@ spec =  --parallel $
 
         it "executes a cron scheduled action" $ do
             testAgent $ do
-                Right () <- callServ $ RegisterAction (Action testAction)
+                Right () <- callServ $ StoreAction (Action testAction)
                 Right () <- schedule $ Event (key testAction)
                                             "* * * * *"
                                             Never

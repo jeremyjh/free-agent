@@ -15,11 +15,11 @@
 
 module FreeAgent.Server.Executive
     ( execServer
-    , RegisterAction(..)
+    , StoreAction(..)
     , UnregisterAction(..)
-    , ExecuteRegistered(..)
+    , ExecuteStored(..)
     , AddListener(..)
-    , executeRegistered
+    , executeStored
     , executeAction
     , matchAction
     , matchResult
@@ -119,14 +119,14 @@ $(makeAcidic ''ExecPersist ['putAction, 'getAction, 'deleteAction, 'putListener
 -- API
 -- -----------------------------
 
-data RegisterAction = RegisterAction Action
+data StoreAction = StoreAction Action
       deriving (Show, Typeable, Generic)
 
-instance Binary RegisterAction
+instance Binary StoreAction
 
-instance ServerCall RegisterAction () ExecState where
+instance ServerCall StoreAction () ExecState where
     callName _ = serverName
-    respond (RegisterAction action')  =
+    respond (StoreAction action')  =
         update (PutAction action')
 
 data UnregisterAction = UnregisterAction !Key
@@ -140,18 +140,18 @@ instance ServerCall UnregisterAction () ExecState where
         update (DeleteAction key')
 
 
-data ExecuteRegistered = ExecuteRegistered !Key
+data ExecuteStored = ExecuteStored !Key
     deriving (Show, Typeable, Generic)
 
-instance Binary ExecuteRegistered
+instance Binary ExecuteStored
 
-instance ServerCall ExecuteRegistered (Either ExecFail Result) ExecState where
+instance ServerCall ExecuteStored (Either ExecFail Result) ExecState where
     callName _ = serverName
-    respond = handleET $ \(ExecuteRegistered key') ->
+    respond = handleET $ \(ExecuteStored key') ->
      do action' <-  query (GetAction key') !? ActionNotFound key'
         doExec action'
 
-instance ServerCast ExecuteRegistered ExecState where
+instance ServerCast ExecuteStored ExecState where
     castName _ = serverName
     handle = void . respond
 
@@ -173,10 +173,10 @@ instance ServerCast AddListener ExecState where
                 update (PutListener cl)
 
 
-executeRegistered :: (MonadAgent agent)
+executeStored :: (MonadAgent agent)
                   => Key -> agent (Either ExecFail Result)
-executeRegistered key' =
- do eresult <- callServ $ ExecuteRegistered key'
+executeStored key' =
+ do eresult <- callServ $ ExecuteStored key'
     case eresult of
         Right result' -> return result'
         Left cf -> return (Left $ ECallFailed cf)
@@ -231,10 +231,10 @@ execServer =
                       ExecuteAction act -> doExecuteAction act
                       _ -> $(err "illegal pattern match")
 
-            , registerCall (Proxy :: Proxy RegisterAction)
+            , registerCall (Proxy :: Proxy StoreAction)
             , registerCall (Proxy :: Proxy UnregisterAction)
-            , registerCall (Proxy :: Proxy ExecuteRegistered)
-            , registerCast (Proxy :: Proxy ExecuteRegistered)
+            , registerCall (Proxy :: Proxy ExecuteStored)
+            , registerCast (Proxy :: Proxy ExecuteStored)
             , registerCast (Proxy :: Proxy AddListener)
             ]
         }
@@ -283,6 +283,6 @@ doExec action' = do
 deriveSafeStore ''ExecPersist
 makeFields ''ExecState
 deriveNFData ''ExecFail
-deriveNFData ''RegisterAction
+deriveNFData ''StoreAction
 deriveNFData ''UnregisterAction
-deriveNFData ''ExecuteRegistered
+deriveNFData ''ExecuteStored

@@ -45,8 +45,8 @@ spec = do
 
         it "can execute a registered action" $ do
             testAgent $ do
-                Right _ <- callServ $ RegisterAction (Action checkTCP)
-                (Right _) <- executeRegistered $ key checkTCP
+                Right _ <- callServ $ StoreAction (Action checkTCP)
+                (Right _) <- executeStored $ key checkTCP
                 -- confirm results were written
                 Right results' <- allResultsFrom (convert (0::Int))
                 return $ length results'
@@ -54,8 +54,8 @@ spec = do
 
         it "can execute a registered action asynchronously" $ do
             testAgent $ do
-                Right _ <- callServ $ RegisterAction (Action testAction)
-                Right _ <- castServ $ ExecuteRegistered (key testAction)
+                Right _ <- callServ $ StoreAction (Action testAction)
+                Right _ <- castServ $ ExecuteStored (key testAction)
 
                 threadDelay 1000
                 -- confirm results were written
@@ -66,7 +66,7 @@ spec = do
         it "will fail to execute a non-registered action" $ do
             testAgentNL $ do
                 Right () <- callServ $ UnregisterAction (key testAction)
-                Left (ActionNotFound _) <- executeRegistered $ key testAction
+                Left (ActionNotFound _) <- executeStored $ key testAction
                 return True -- no match failure
             `shouldReturn` True
 

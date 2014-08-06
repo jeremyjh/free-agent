@@ -20,7 +20,7 @@ import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Orphans ()
 import           FreeAgent.Process
 import           FreeAgent.Server.ManagedAgent
-import           FreeAgent.Server.Executive (ExecuteRegistered(..))
+import           FreeAgent.Server.Executive (ExecuteStored(..))
 
 import           Control.Monad.Reader (ask)
 import qualified Data.Map.Strict as Map
@@ -246,7 +246,7 @@ onTick = do
     now <- getCurrentTime
     events' <- update (ReadyToRun now)
     forM_ events' $ \ (_, event') -> do
-        Right () <- castServ $ ExecuteRegistered (key event')
+        Right () <- castServ $ ExecuteStored (key event')
         return ()
     scheduleNextTick
 
