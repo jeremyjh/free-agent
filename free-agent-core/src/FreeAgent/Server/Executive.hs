@@ -38,12 +38,12 @@ import           FreeAgent.Server.Executive.History    hiding (serverName)
 
 import           Control.DeepSeq.TH                    (deriveNFData)
 import           Control.Monad.State                   (StateT)
-import Control.Monad.Reader (ask)
+import           Control.Monad.Reader (ask)
 import           Data.Binary
 import qualified Data.Map.Strict                       as Map
 
 import           Control.Distributed.Static            (unclosure)
-import           Control.Error                         ((!?))
+import           Control.Error                         ((!?), hoistEither, (??))
 import           Data.Default                          (Default(..))
 
 -- -----------------------------
@@ -68,6 +68,7 @@ data ExecState
               } deriving (Typeable, Generic)
 
 data ExecFail = ECallFailed CallFail
+              | EDeserializationFailure Text
               | ActionNotFound Key
               | ActionFailed !Text
               | DBException !Text
@@ -85,7 +86,6 @@ data ExecutiveCommand =
         ExecuteAction Action
       | TerminateExecutive
       deriving (Show, Typeable, Generic)
-
 
 instance Binary ExecutiveCommand where
 instance NFData ExecutiveCommand where
@@ -172,15 +172,16 @@ instance ServerCast AddListener ExecState where
                 listeners %= (:) listener
                 update (PutListener cl)
 
-
-executeStored :: (MonadAgent agent)
-                  => Key -> agent (Either ExecFail Result)
+-- | Execute 'Action' corresponding to 'Key' with the current
+-- target server and extract the concrete result (if possible) to
+-- the expected type.
+executeStored :: (MonadAgent agent, Resulting result)
+                  => Key -> agent (Either ExecFail result)
 executeStored key' =
- do eresult <- callServ $ ExecuteStored key'
-    case eresult of
-        Right result' -> return result'
-        Left cf -> return (Left $ ECallFailed cf)
-
+    runEitherT $
+     do result' <- callResult >>= convEitherT >>= hoistEither
+        extract result' ?? EDeserializationFailure (tshow result')
+  where callResult = lift $ callServ $ ExecuteStored key'
 
 executeAction :: (MonadAgent agent, Runnable a b)
               => a -> agent (Either ExecFail Result)

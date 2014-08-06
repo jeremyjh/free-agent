@@ -46,7 +46,7 @@ spec = do
         it "can execute a registered action" $ do
             testAgent $ do
                 Right _ <- callServ $ StoreAction (Action checkTCP)
-                (Right _) <- executeStored $ key checkTCP
+                (Right (_ :: NagiosResult ) ) <- executeStored $ key checkTCP
                 -- confirm results were written
                 Right results' <- allResultsFrom (convert (0::Int))
                 return $ length results'
@@ -66,7 +66,7 @@ spec = do
         it "will fail to execute a non-registered action" $ do
             testAgentNL $ do
                 Right () <- callServ $ UnregisterAction (key testAction)
-                Left (ActionNotFound _) <- executeStored $ key testAction
+                Right (Left (ActionNotFound _)) <- callServ $ ExecuteStored (key testAction)
                 return True -- no match failure
             `shouldReturn` True
 
