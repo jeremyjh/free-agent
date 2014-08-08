@@ -38,8 +38,6 @@ import           Data.Binary                        as Binary
 import           Data.Dynamic                       (Dynamic)
 import           Data.Typeable                      (cast)
 
-import           Control.DeepSeq                    (NFData (..))
-import Control.DeepSeq.TH (deriveNFData)
 import           FreeAgent.Process (MonadProcess(..), Process
                                                     ,ProcessId, NFSerializable
                                                     ,ChildSpec, RemoteTable
@@ -404,10 +402,10 @@ deriveSerializers ''Context
 deriveSerializers ''Zone
 
 deriveSafeStore ''Wrapped
-deriveNFData ''Wrapped
+instance NFData Wrapped where rnf = genericRnf
 instance Binary Wrapped
 
 deriveSerializers ''RunnableFail
 
-deriveNFData ''ServerRef
-deriveNFData ''Peer
+instance NFData ServerRef where rnf = genericRnf
+instance NFData Peer where rnf = genericRnf

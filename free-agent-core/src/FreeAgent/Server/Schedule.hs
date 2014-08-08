@@ -31,7 +31,7 @@ import           Control.Error (note)
 import           Control.Distributed.Process.Platform.Time
 import           Control.Distributed.Process.Platform.Timer
        (Tick(..), cancelTimer, TimerRef, sendAfter)
-import Control.DeepSeq.TH (deriveNFData)
+
 import           Data.Default (Default(..))
 import           Data.Attoparsec.Text (parseOnly)
 import           Data.Time.Clock (addUTCTime, diffUTCTime)
@@ -293,17 +293,17 @@ instance IsString ScheduleRecurrence where
                          ++ unpack format
 
 instance Binary ScheduleCommand
-deriveNFData ''ScheduleCommand
+instance NFData ScheduleCommand where rnf = genericRnf
 
 deriveSerializers ''RetryOption
 
 instance Binary ScheduleFail
-deriveNFData ''ScheduleFail
+instance NFData ScheduleFail where rnf = genericRnf
 
 deriveSerializers ''ScheduleRecurrence
 
 instance Binary Event
-deriveNFData ''Event
+instance NFData Event where rnf = genericRnf
 deriveSafeStore ''Event
 
 deriveSafeStore ''SchedulePersist

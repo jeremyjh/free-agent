@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable     #-}
 {-# LANGUAGE DeriveGeneric          #-}
 {-# LANGUAGE NoImplicitPrelude      #-}
@@ -37,7 +38,12 @@ import Data.Acid (AcidState)
 
 import           Control.Distributed.Process (Closure)
 
+#if __GLASGOW_HASKELL__ < 708
+import           Data.Typeable(Typeable1)
+deriving instance Typeable1 AcidState
+#else
 deriving instance Typeable AcidState
+#endif
 
 --orphans from monad-logger
 instance MonadLogger m => MonadLogger (EitherT e m) where

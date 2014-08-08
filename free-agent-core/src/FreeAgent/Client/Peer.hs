@@ -26,7 +26,7 @@ import qualified Data.Set as Set
 import           Data.Binary
 
 import qualified Control.Distributed.Process.Platform as Platform
-import           Control.DeepSeq.TH (deriveNFData)
+
 import           Control.Error ((!?))
 
 data CallFail = RoutingFailed | ServerCrash String
@@ -99,4 +99,4 @@ queryLocalPeerServers :: MonadProcess process
                 -> process (Set Peer)
 queryLocalPeerServers s c z = syncCallChan (Local, peerServerName) $ QueryPeerServers s c z
 
-deriveNFData ''CallFail
+instance NFData CallFail where rnf = genericRnf

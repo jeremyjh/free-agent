@@ -29,7 +29,7 @@ import           FreeAgent.Server.ManagedAgent
 
 import           Data.Binary (Binary)
 import           Control.Monad.State (StateT)
-import           Control.DeepSeq.TH (deriveNFData)
+
 
 -- -----------------------------
 -- Types
@@ -149,5 +149,5 @@ defaultHistoryServer = historyServerImpl defaultBackend
 
 makeFields ''HistoryState
 deriveSafeStore ''HistoryPersist
-deriveNFData ''HistoryCommand
-deriveNFData ''HistoryFail
+instance NFData HistoryCommand where rnf = genericRnf
+instance NFData HistoryFail where rnf = genericRnf

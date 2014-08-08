@@ -36,7 +36,7 @@ import           FreeAgent.Process                     as Process
 import           FreeAgent.Server.ManagedAgent
 import           FreeAgent.Server.Executive.History    hiding (serverName)
 
-import           Control.DeepSeq.TH                    (deriveNFData)
+
 import           Control.Monad.State                   (StateT)
 import           Control.Monad.Reader (ask)
 import           Data.Binary
@@ -283,7 +283,7 @@ doExec action' = do
 
 deriveSafeStore ''ExecPersist
 makeFields ''ExecState
-deriveNFData ''ExecFail
-deriveNFData ''StoreAction
-deriveNFData ''UnregisterAction
-deriveNFData ''ExecuteStored
+instance NFData ExecFail where rnf = genericRnf
+instance NFData StoreAction where rnf = genericRnf
+instance NFData UnregisterAction where rnf = genericRnf
+instance NFData ExecuteStored where rnf = genericRnf

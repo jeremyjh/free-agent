@@ -5,6 +5,7 @@
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 
 
 -- | Extensions to ClassyPrelude that are useful to most modules & plugins in Dash
@@ -30,13 +31,14 @@ module FreeAgent.AgentPrelude
     , deriveSafeStore
     , deriveSafeStoreVersion
     , getCurrentTime
+    , NFData(..), genericRnf
     , (!??)
     ) where
 
 import           ClassyPrelude                 hiding (handle, getCurrentTime)
 import qualified Prelude                       as P
 
-import           Control.DeepSeq.TH            (deriveNFData)
+import           Control.DeepSeq.Generics      (NFData(..), genericRnf)
 import           Control.Error                 (EitherT, runEitherT, hoistEither)
 import           Control.Monad.Logger          (logDebug, logInfo, logWarn, logError)
 import           Control.Monad.Logger.Quote    (qdebug, qinfo, qwarn, qerror, qdebugNS)
@@ -55,7 +57,7 @@ import           Data.SafeCopy
 import           FileLocation                  (dbg, debug, err)
 
 #if __GLASGOW_HASKELL__ < 708
-data Proxy a = Proxy
+data Proxy a = Proxy deriving Typeable
 #endif
 
 type FilePathS = P.FilePath
@@ -94,11 +96,12 @@ deriveSerializers = deriveSerializersVersion 1
 deriveSerializersVersion :: Version a -> Name -> Q [Dec]
 deriveSerializersVersion ver name = do
     sc <- deriveSafeStoreVersion ver name
-    nf <- deriveNFData name
     gen <- [d| instance Binary   $(conT name)
                instance FromJSON $(conT name)
-               instance ToJSON   $(conT name) |]
-    return $ sc ++ nf ++ gen
+               instance ToJSON   $(conT name)
+               instance NFData   $(conT name)
+                   where rnf = genericRnf |]
+    return $ sc ++ gen
 
 -- | Template haskell function to create the Serialize and SafeCopy
 -- instances for a given type

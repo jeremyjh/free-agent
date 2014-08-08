@@ -63,7 +63,7 @@ library
                    , fast-logger == 2.*
                    , monad-logger
                    , deepseq
-                   , deepseq-th 
+                   , deepseq-generics
                    , uuid
                    , shakespeare
                    , transformers
