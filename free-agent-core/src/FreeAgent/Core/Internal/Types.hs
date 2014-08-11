@@ -196,7 +196,7 @@ data AgentConfig
                  , configContexts       :: Set Context
                  , configZones          :: Set Zone
                  , configPeerNodeSeeds  :: [String]
-                 , configRemoteTable   :: !RemoteTable
+                 , configRemoteTable    :: !RemoteTable
                  }
 
 instance Default AgentConfig where

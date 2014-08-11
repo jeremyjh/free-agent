@@ -19,6 +19,7 @@ module FreeAgent.Fixtures
     ) where
 
 import FreeAgent
+import FreeAgent.AgentPrelude
 -- import all your plugins here
 import FreeAgent.Plugins.Nagios as Nagios
 import Control.Concurrent.Lifted (threadDelay)
