@@ -8,28 +8,20 @@
    * Triggers - an Action to run when a matching Action or Result <event> takes place - a
      generalization of current listener functionality  - for example Schedule should
      be notified when an Action is unregistered
-   * executeRegistered return (Resulting a) by extracting Result
-  
 
   Command Line Interface
    * File Action Definitions (json/yaml)
       * startup load file definitions - update AgentDB actions IF newer
   
   Actions: 
-  * Remove unwrapping in deserialization instances, losing unsafe; Unwrap only on exec/extract
+   * Remove unwrapping in deserialization instances, losing unsafe; Unwrap only on exec/extract
 
   Result Alerting
-  * Generic Listener - AgentServer w/ pluggable backend like History
-  * Result Alerting Rules
-
-  Decisions
-  * Does Runnable get an "extract" method? This may be needed for MetaAction.
-
-  (maybe include)
+   * Generic Listener - AgentServer w/ pluggable backend like History
+   * Result Alerting Rules
 
   Actions: 
-   * MetaAction (provides Metadata to ... Executive? more routing?)
-     * or just a Runnable member "meta :: [MetaInfo]"
+   * ActionPlans
   
 1.0.0: 
 
@@ -48,7 +40,7 @@
 
   ScriptAction 
     * HaskellScript (using hint?)
-  	* defined json in/out interface
-          * ScriptAction type defines interpreter invocation (e.g. /usr/bin/ruby)
-          * Manage list of defined ScriptAction types in AgentDB
-          * Ruby implementation and examples
+    * defined json in/out interface
+      * ScriptAction type defines interpreter invocation (e.g. /usr/bin/ruby)
+      * Manage list of defined ScriptAction types in DB
+      * Ruby implementation and examples

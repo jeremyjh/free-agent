@@ -51,8 +51,10 @@ import           Data.Default                          (Default(..))
 -- -----------------------------
 type RunningActions = Map Key ProcessId
 
+type StoredAction = (Action, UTCTime)
+
 data ExecPersist
-  = ExecPersist { _persistActions :: Map Key Action
+  = ExecPersist { _persistActions :: Map Key StoredAction
                 , _persistListeners :: [Closure Listener]
                 } deriving (Show, Typeable)
 
@@ -94,15 +96,18 @@ instance NFData ExecutiveCommand where
 -- Persistent state functions
 -- -----------------------------
 
-putAction :: Action -> Update ExecPersist ()
-putAction action' =
-    actions %= Map.insert (key action') action'
+putAction :: StoredAction -> Update ExecPersist ()
+putAction stored@(action', _) =
+    actions %= Map.insertWith newer (key action') stored
+  where newer new@(_, ntime) old@(_,otime)
+          | ntime > otime = new
+          | otherwise = old
 
 deleteAction :: Key -> Update ExecPersist ()
 deleteAction key' =
     actions %= Map.delete key'
 
-getAction :: Key -> Query ExecPersist (Maybe Action)
+getAction :: Key -> Query ExecPersist (Maybe StoredAction)
 getAction key' = views actions (Map.lookup key')
 
 putListener :: Closure Listener -> Update ExecPersist ()
@@ -119,7 +124,7 @@ $(makeAcidic ''ExecPersist ['putAction, 'getAction, 'deleteAction, 'putListener
 -- API
 -- -----------------------------
 
-data StoreAction = StoreAction Action
+data StoreAction = StoreAction Action | StoreNewerAction Action UTCTime
       deriving (Show, Typeable, Generic)
 
 instance Binary StoreAction
@@ -127,7 +132,10 @@ instance Binary StoreAction
 instance ServerCall StoreAction () ExecState where
     callName _ = serverName
     respond (StoreAction action')  =
-        update (PutAction action')
+        do now <- getCurrentTime
+           update (PutAction (action',now))
+    respond (StoreNewerAction action' time) =
+        update (PutAction (action', time))
 
 data UnregisterAction = UnregisterAction !Key
       deriving (Show, Typeable, Generic)
@@ -148,7 +156,7 @@ instance Binary ExecuteStored
 instance ServerCall ExecuteStored (Either ExecFail Result) ExecState where
     callName _ = serverName
     respond = handleET $ \(ExecuteStored key') ->
-     do action' <-  query (GetAction key') !? ActionNotFound key'
+     do (action', _) <-  query (GetAction key') !? ActionNotFound key'
         doExec action'
 
 instance ServerCast ExecuteStored ExecState where
@@ -250,11 +258,6 @@ execServer =
 
 type ExecAgent a = EitherT ExecFail (StateT ExecState Agent) a
 
--- -----------------------------
--- Executive command realizations
--- -----------------------------
-
-
 doExecuteAction :: Action -> ExecAgent Result
 doExecuteAction = doExec
 
@@ -283,6 +286,7 @@ doExec action' = do
 
 deriveSafeStore ''ExecPersist
 makeFields ''ExecState
+
 instance NFData ExecFail where rnf = genericRnf
 instance NFData StoreAction where rnf = genericRnf
 instance NFData UnregisterAction where rnf = genericRnf

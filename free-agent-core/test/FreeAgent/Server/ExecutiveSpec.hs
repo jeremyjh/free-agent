@@ -13,6 +13,7 @@ import           Test.Hspec
 import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Core
+import           FreeAgent.Core.Action.ShellCommand
 import           FreeAgent.Server.ManagedAgent
 import           FreeAgent.Server.Executive.History
 import           FreeAgent.Plugins.Nagios as Nagios
@@ -43,7 +44,7 @@ spec = do
                 return True
             `shouldReturn` True
 
-        it "can execute a registered action" $ do
+        it "can execute a stored action" $ do
             testAgent $ do
                 Right _ <- callServ $ StoreAction (Action checkTCP)
                 (Right (_ :: NagiosResult ) ) <- executeStored $ key checkTCP
@@ -52,7 +53,20 @@ spec = do
                 return $ length results'
             `shouldReturn` 1
 
-        it "can execute a registered action asynchronously" $ do
+        it "will not update a newer action" $ do
+            testAgent $ do
+                let willWork = Action $ defaultShellCommand {shellCommand = "ls"}
+                    wontWork = Action $ defaultShellCommand {shellCommand = "ls"
+                                                            ,shellFailCodes = [0]}
+                before <- getCurrentTime
+                Right _ <- callServ $ StoreAction willWork
+                Right _ <- callServ $ StoreNewerAction wontWork before
+
+                Right (_ :: ShellResult)<- executeStored $ key willWork
+                return True
+            `shouldReturn` True
+
+        it "can execute a stored action asynchronously" $ do
             testAgent $ do
                 Right _ <- callServ $ StoreAction (Action testAction)
                 Right _ <- castServ $ ExecuteStored (key testAction)
@@ -61,7 +75,7 @@ spec = do
                 -- confirm results were written
                 Right results' <- allResultsFrom (convert (0::Int))
                 return $ length results'
-            `shouldReturn` 2
+            `shouldReturn` 3
 
         it "will fail to execute a non-registered action" $ do
             testAgentNL $ do
