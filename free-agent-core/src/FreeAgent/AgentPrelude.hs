@@ -33,7 +33,9 @@ module FreeAgent.AgentPrelude
     , getCurrentTime
     , NFData(..), genericRnf
     , (!??)
+    , zeroDate
     ) where
+
 
 import           ClassyPrelude                 hiding (handle, getCurrentTime)
 import qualified Prelude                       as P
@@ -138,3 +140,6 @@ tryAnyConvT ma = lift (tryAny ma) >>= convEitherT
 
 getCurrentTime :: MonadIO io => io UTCTime
 getCurrentTime = liftIO Time.getCurrentTime
+
+zeroDate ::UTCTime
+zeroDate = convert (0::Int)

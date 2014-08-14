@@ -10,6 +10,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 
 module FreeAgent.Server.Schedule where
@@ -47,6 +48,7 @@ data Event
   = Event { schedKey   :: !Key
           , schedRecur :: !ScheduleRecurrence
           , schedRetry :: !RetryOption
+          , schedModified :: !UTCTime
           } deriving (Show, Eq, Typeable, Generic)
 
 data ScheduleRecurrence
@@ -54,7 +56,6 @@ data ScheduleRecurrence
   | RecurInterval !Int           -- ^ execute every n milliseconds
   | OnceAt !UTCTime
   deriving (Show, Eq, Typeable, Generic)
-
 
 instance Stashable Event where
     key = schedKey
@@ -72,14 +73,7 @@ data RetryOption = Never
                  | Exponential Int Int
      deriving (Show, Eq, Typeable, Generic)
 
-data ScheduleCommand
-  = CmdAddEvent Event
-  | CmdRemoveEvent Key
-  | CmdFindEvent Key
-    deriving (Show, Eq, Typeable, Generic)
-
 data ScheduleFail = SCallFailed CallFail
-              | CronParseFail String
               | EventNotFound Key
               | SDBException !Text
               deriving (Show, Eq, Typeable, Generic)
@@ -122,8 +116,8 @@ addMinutes additional time' =
     let minute' = timeIntervalToDiffTime (minutes additional) in
     addUTCTime minute' time'
 
-findEventA :: Key -> Query SchedulePersist (Maybe Event)
-findEventA key' = views events $ Map.lookup key'
+scheduleLookupEvent :: Key -> Query SchedulePersist (Maybe Event)
+scheduleLookupEvent key' = views events $ Map.lookup key'
 
 allCronEvents :: Query SchedulePersist [(CronSchedule, Key)]
 allCronEvents = Map.foldr crons [] <$> view events
@@ -138,8 +132,8 @@ allCronEvents = Map.foldr crons [] <$> view events
 readyToRun :: UTCTime -> Update SchedulePersist (Set (UTCTime, Event))
 readyToRun now = do
     nextScheduled' <- use nextScheduled
-    let splitEvent = (now, Event "" (RecurInterval 0) Never)
-        (ready, waiting) = Set.split splitEvent nextScheduled'
+    let emptyEvent = (now, Event "" (RecurInterval 0) Never zeroDate)
+        (ready, waiting) = Set.split emptyEvent nextScheduled'
         nextAfter = Set.map (\(_, ev) ->
                                 calcNextScheduled (addMinutes 1 now) ev
                             ) ready
@@ -148,11 +142,14 @@ readyToRun now = do
 
 addEvent :: NextScheduled -> Update SchedulePersist ()
 addEvent next@(_, event) = do
-    events %= Map.insert (key event) event
+    events %= Map.insertWith newer (key event) event
     nextScheduled %= Set.insert next
+  where newer new old
+          | schedModified new > schedModified old = new
+          | otherwise = old
 
-removeEvent :: Key -> Update SchedulePersist ()
-removeEvent key' = do
+scheduleRemoveEvent :: Key -> Update SchedulePersist ()
+scheduleRemoveEvent key' = do
     events %= Map.delete key'
     nextScheduled %= Set.filter (\ (_, ev) -> key ev /= key')
 
@@ -164,9 +161,9 @@ nextScheduledTime = do
              else let (time',_) = Set.findMin scheduled in Just time'
 
 -- we have to make the splices near the top of the file
-$(makeAcidic ''SchedulePersist ['getPersist, 'addEvent, 'findEventA
+$(makeAcidic ''SchedulePersist ['getPersist, 'addEvent, 'scheduleLookupEvent
                                , 'allCronEvents, 'readyToRun, 'nextScheduledTime
-                               , 'removeEvent ])
+                               , 'scheduleRemoveEvent ])
 
 -- ---------API---------------
 -- API
@@ -174,9 +171,10 @@ $(makeAcidic ''SchedulePersist ['getPersist, 'addEvent, 'findEventA
 
 -- | Advertise a Server on the local peer
 schedule :: MonadAgent agent
-         => Event -> agent (Either ScheduleFail ())
-schedule !event = do --TODO - why is call not forcing evaluation of NFData Event?
-    efail <- callTarget serverName (CmdAddEvent event)
+         => Key -> ScheduleRecurrence -> RetryOption
+         -> agent (Either ScheduleFail ())
+schedule !key' !recur !retry = do --TODO - why is call not forcing evaluation of NFData Event?
+    efail <- callServ (ScheduleAddEvent key' recur retry)
     case efail of
         Right result' -> return result'
         Left failed -> return $ Left (SCallFailed failed)
@@ -186,15 +184,15 @@ unschedule :: MonadAgent agent
               => Key
               -> agent (Either ScheduleFail ())
 unschedule key' = do
-    efail <- callTarget serverName (CmdRemoveEvent key')
+    efail <- callServ (ScheduleRemoveEvent key')
     case efail of
         Right result' -> return result'
         Left failed -> return $ Left (SCallFailed failed)
 
-findEvent :: MonadAgent agent
+lookupEvent :: MonadAgent agent
           => Key -> agent (Either ScheduleFail Event)
-findEvent key' = do
-    emevent <- callTarget serverName (CmdFindEvent key')
+lookupEvent key' = do
+    emevent <- callServ (ScheduleLookupEvent key')
     case emevent of
         Right mevent -> return $ note (EventNotFound key') mevent
         Left failed -> return $ Left (SCallFailed failed)
@@ -202,6 +200,42 @@ findEvent key' = do
 -- -------Implementation------
 -- Implementation
 -- ---------------------------
+data ScheduleAddEvent
+    = ScheduleAddEvent Key ScheduleRecurrence RetryOption
+    | ScheduleAddNewerEvent Key ScheduleRecurrence RetryOption UTCTime
+    deriving (Show, Typeable, Generic)
+
+instance Binary ScheduleAddEvent
+instance NFData ScheduleAddEvent where rnf = genericRnf
+
+instance ServerCall ScheduleAddEvent (Either ScheduleFail ()) ScheduleState where
+    callName _ = serverName
+    respond (ScheduleAddEvent key' recur retry) =
+     do now <- getCurrentTime
+        respond (ScheduleAddNewerEvent key' recur retry now)
+    respond cmd@(ScheduleAddNewerEvent key' recur retry time) =
+        runLogEitherT cmd $
+         do let event = Event key' recur retry time
+            () <- update (AddEvent $ calcNextScheduled time event)
+            lift scheduleNextTick
+
+deriving instance Generic ScheduleLookupEvent
+deriving instance Show ScheduleLookupEvent
+instance NFData ScheduleLookupEvent where rnf = genericRnf
+instance Binary ScheduleLookupEvent
+
+instance ServerCall ScheduleLookupEvent (Maybe Event) ScheduleState where
+    callName _ = serverName
+    respond = query
+
+deriving instance Generic ScheduleRemoveEvent
+deriving instance Show ScheduleRemoveEvent
+instance Binary ScheduleRemoveEvent
+instance NFData ScheduleRemoveEvent where rnf = genericRnf
+
+instance ServerCall ScheduleRemoveEvent (Either ScheduleFail ()) ScheduleState where
+    callName _ = serverName
+    respond cmd = runLogEitherT cmd $ update cmd
 
 serverName :: String
 serverName = "agent:schedule"
@@ -216,15 +250,9 @@ scheduleServer =
         initSchedule
         defaultProcess {
             apiHandlers =
-            [ agentRpcHandlerET $ \ cmd ->
-                  case cmd of
-                      (CmdAddEvent sched) ->
-                          doAddSchedule sched
-                      (CmdRemoveEvent key') ->
-                          doRemoveSchedule key'
-                      _ -> $(err "illegal pattern match")
-            , agentRpcHandler $ \ (CmdFindEvent key') ->
-                  query (FindEventA key')
+            [ registerCall (Proxy :: Proxy ScheduleRemoveEvent)
+            , registerCall (Proxy :: Proxy ScheduleAddEvent)
+            , registerCall (Proxy :: Proxy ScheduleLookupEvent)
             ],
             infoHandlers =
             [ agentInfoHandler $ \ Tick -> onTick
@@ -276,14 +304,13 @@ doAddSchedule event = do
 
 doRemoveSchedule :: Key -> ScheduleAgentET ()
 doRemoveSchedule key' =
-    update (RemoveEvent key')
+    update (ScheduleRemoveEvent key')
 
 cronEvent :: Text -> Either String ScheduleRecurrence
 cronEvent format =
     case parseOnly cronSchedule format of
         Right sched -> Right $ RecurCron sched format
         Left msg -> Left msg
-
 
 instance IsString ScheduleRecurrence where
     fromString format =
@@ -292,8 +319,6 @@ instance IsString ScheduleRecurrence where
             _ -> error $ "Unable to parse cron formatted literal: "
                          ++ unpack format
 
-instance Binary ScheduleCommand
-instance NFData ScheduleCommand where rnf = genericRnf
 
 deriveSerializers ''RetryOption
 

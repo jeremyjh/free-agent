@@ -35,42 +35,52 @@ spec =  --parallel $
 
         it "can schedule and find an event" $ do
             testAgent $ do
-                Right () <- schedule $ Event (key testAction) "@hourly" Never
-                Right _ <- findEvent (key testAction)
+                Right () <- schedule (key testAction) "@hourly" Never
+                Right _ <- lookupEvent (key testAction)
                 return True
             `shouldReturn` True
 
+        it "won't schedule an older Event" $ do
+            testAgent $ do
+                Right () <- schedule "test older" "@hourly" Never
+                Right old <- lookupEvent "test older"
+                Right (Right ()) <- callServ $
+                                        ScheduleAddNewerEvent "test older"
+                                                              "@hourly"
+                                                              (Fixed 1 10)
+                                                              (schedModified old)
+                Right stillold <- lookupEvent "test older"
+                return (schedRetry stillold)
+            `shouldReturn` Never
+
         it "won't schedule a bogus cron format" $ do
             testAgent $ do
-                Right () <- schedule $ Event (key testAction)
-                                             "whatever man"
-                                             Never
-                Left (EventNotFound _) <- findEvent (key testAction)
+                Right () <- schedule (key testAction) "whatever man" Never
+                Left (EventNotFound _) <- lookupEvent (key testAction)
                 return ()
             `shouldThrow` errorCall "Unable to parse cron formatted literal: whatever man"
 
         it "won't find an absent event" $ do
             testAgent $ do
-                Left (EventNotFound key') <- findEvent "not here"
+                Left (EventNotFound key') <- lookupEvent "not here"
                 return key'
             `shouldReturn` "not here"
 
         it "can remove an event" $ do
             testAgent $ do
-                Right () <- schedule $ Event ("will delete") "@hourly" Never
+                Right () <- schedule ("will delete") "@hourly" Never
 
-                Right _ <- findEvent "will delete"
+                Right _ <- lookupEvent "will delete"
                 Right () <- unschedule "will delete"
-                Left (EventNotFound key') <- findEvent "will delete"
+                Left (EventNotFound key') <- lookupEvent "will delete"
                 return key'
             `shouldReturn` "will delete"
 
         it "executes a cron scheduled action" $ do
             testAgent $ do
                 Right () <- callServ $ StoreAction (Action testAction)
-                Right () <- schedule $ Event (key testAction)
-                                            "* * * * *"
-                                            Never
+                Right () <- schedule (key testAction) "* * * * *" Never
+
                 send scheduleServer Tick
                 threadDelay 10000
                 Right results' <- allResultsFrom (convert (0::Int))

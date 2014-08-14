@@ -155,9 +155,10 @@ instance Binary ExecuteStored
 
 instance ServerCall ExecuteStored (Either ExecFail Result) ExecState where
     callName _ = serverName
-    respond = handleET $ \(ExecuteStored key') ->
-     do (action', _) <-  query (GetAction key') !? ActionNotFound key'
-        doExec action'
+    respond cmd@(ExecuteStored key') =
+        runLogEitherT cmd $
+         do (action', _) <-  query (GetAction key') !? ActionNotFound key'
+            doExec action'
 
 instance ServerCast ExecuteStored ExecState where
     castName _ = serverName
