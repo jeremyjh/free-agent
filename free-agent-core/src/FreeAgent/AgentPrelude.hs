@@ -85,11 +85,28 @@ convEitherT :: (Convertible e f, Monad m)
             => Either e a -> EitherT f m a
 convEitherT = hoistEither . convEither
 
--- | TemplateHaskell function to generate required serializers and related
--- instances for Actions/Results.
--- This includes Cereal, SafeCopy, Binary and NFData.
-deriveSerializers :: Name -> Q [Dec]
-deriveSerializers = deriveSerializersVersion 1
+-- | Template haskell function to create the Serialize and SafeCopy
+-- instances for a given type - use this one to specify a later version
+-- (also will require a migration instance - see SafeCopy docs for more info )
+--
+-- > data MyDataV1 = MyDataV1 Int
+-- > data MyData = MyData Int String
+-- > deriveSafeStore ''MyDataV1
+-- > deriveSafeStoreVersion 2 ''MyData
+deriveSafeStoreVersion :: Version a -> Name -> Q [Dec]
+deriveSafeStoreVersion ver name = do
+    sc <- case ver of
+        1 -> deriveSafeCopy 1 'base name
+        _ -> deriveSafeCopy ver 'extension name
+    return $ sc
+
+-- | Template haskell function to create the Serialize and SafeCopy
+-- instances for a given type
+--
+-- > data MyData = MyData Int
+-- > deriveSafeStore ''MyData
+deriveSafeStore :: Name -> Q [Dec]
+deriveSafeStore = deriveSafeStoreVersion 1
 
 -- | Same as 'deriveSerializers' except that the 'SafeCopy' instance will be
 -- for an extension of the provided version. This would also require
@@ -105,28 +122,12 @@ deriveSerializersVersion ver name = do
                    where rnf = genericRnf |]
     return $ sc ++ gen
 
--- | Template haskell function to create the Serialize and SafeCopy
--- instances for a given type
---
--- > data MyData = MyData Int
--- > deriveSafeStore ''MyData
-deriveSafeStore :: Name -> Q [Dec]
-deriveSafeStore = deriveSafeStoreVersion 1
+-- | TemplateHaskell function to generate required serializers and related
+-- instances for Actions/Results.
+-- This includes Cereal, SafeCopy, Binary and NFData.
+deriveSerializers :: Name -> Q [Dec]
+deriveSerializers = deriveSerializersVersion 1
 
--- | Template haskell function to create the Serialize and SafeCopy
--- instances for a given type - use this one to specify a later version
--- (also will require a migration instance - see SafeCopy docs for more info )
---
--- > data MyDataV1 = MyDataV1 Int
--- > data MyData = MyData Int String
--- > deriveSafeStore ''MyDataV1
--- > deriveSafeStoreVersion 2 ''MyData
-deriveSafeStoreVersion :: Version a -> Name -> Q [Dec]
-deriveSafeStoreVersion ver name = do
-    sc <- case ver of
-        1 -> deriveSafeCopy 1 'base name
-        _ -> deriveSafeCopy ver 'extension name
-    return $ sc
 
 (!??) :: Applicative m => m (Maybe a) -> e -> m (Either e a)
 (!??) ma e = toeither <$> ma
