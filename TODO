@@ -14,7 +14,7 @@
       * startup load file definitions - update AgentDB actions IF newer
   
   Actions: 
-   * Remove unwrapping in deserialization instances, losing unsafe; Unwrap only on exec/extract
+   * do atomic insert to unwrapper map as plugins are added
 
   Result Alerting
    * Generic Listener - AgentServer w/ pluggable backend like History
