@@ -1,26 +1,26 @@
-{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE ScopedTypeVariables       #-}
 {-# LANGUAGE FlexibleInstances         #-}
 {-# LANGUAGE FunctionalDependencies    #-}
 {-# LANGUAGE MultiParamTypeClasses     #-}
 {-# LANGUAGE NoImplicitPrelude         #-}
-{-# LANGUAGE OverloadedStrings         #-}
 {-# LANGUAGE TemplateHaskell           #-}
+
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 -- Tuck away all the lens classes and instances - also export
 -- types for convenience - modules that needs lenses should only import lenses
 module FreeAgent.Core.Internal.Lenses
-( module Control.Lens
-, module FreeAgent.Core.Internal.Types
-, module FreeAgent.Core.Internal.Lenses
+( module FreeAgent.Core.Internal.Lenses
+, module X
 )
 where
 
 import           FreeAgent.AgentPrelude
-import           FreeAgent.Core.Internal.Types
+import           FreeAgent.Core.Lenses as X
+import           FreeAgent.Core.Internal.Types as X
 
-import Control.Lens
-       ( makeFields, makeLenses, Getting, use, uses, view, views, (&)
-       , (.~), (^.), _1, _2, set, to, _Right, (%=), (%~), (.=)
+import Control.Lens as X
+       ( makeLenses, Getting, use, uses, view, views, set
        , Profunctor, Lens', Optical)
 
 import Control.Applicative(Const)
@@ -28,8 +28,6 @@ import Control.Applicative(Const)
 
 
 makeFields ''AgentContext
-makeFields ''AgentConfig
-makeFields ''PluginDef
 makeFields ''ResultSummary
 makeFields ''Peer
 makeFields ''AgentServer

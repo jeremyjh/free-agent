@@ -64,6 +64,7 @@ library
         FreeAgent.Database.AcidState
         FreeAgent.Core.Internal.Types
         FreeAgent.Orphans
+        FreeAgent.Core.Lenses
         FreeAgent.Core.Internal.Lenses
         FreeAgent.Process
         FreeAgent.Core
