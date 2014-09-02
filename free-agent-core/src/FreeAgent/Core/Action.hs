@@ -13,7 +13,7 @@
 module FreeAgent.Core.Action
     ( toAction
     , resultNow
-    , register, actionType
+    , registerAction, actionType
     , registerPluginMaps
     , tryExec, tryExecWith
     , tryExecET, tryExecWithET
@@ -183,11 +183,9 @@ resultNow text' action = do
 
 -- | Use to register your Action types so they can be
 -- deserialized dynamically at runtime; invoke as:
---
--- > register (actiontype :: MyType)
-register :: forall a b. (Runnable a b, Resulting b)
-         => Proxy a -> ActionsWriter
-register action' = tell [
+registerAction :: forall a b. (Runnable a b, Resulting b)
+               => Proxy a -> ActionsWriter
+registerAction  action' = tell [
     ActionUnwrappers (proxyFqName action')
                      (unwrapAction (unWrap :: Unwrapper a))
                      (unwrapJsonAction (unWrapJson :: JsonUnwrapper a))

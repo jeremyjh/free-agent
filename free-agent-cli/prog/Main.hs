@@ -2,8 +2,8 @@
 
 module Main where
 
-import FreeAgent
 import FreeAgent.AgentPrelude
+import FreeAgent.Core
 import FreeAgent.Cli.CmdArgs
 
 main :: IO ()

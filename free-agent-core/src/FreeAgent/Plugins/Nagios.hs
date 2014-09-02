@@ -71,8 +71,8 @@ deriveSerializers ''NagiosResult
 
 pluginDef :: NagiosConfig -> PluginDef
 pluginDef conf = definePlugin "Nagios" conf (return []) [] $
- do register (actionType :: Proxy Command)
-    register (actionType :: Proxy CheckTCP)
+ do registerAction (actionType :: Proxy Command)
+    registerAction (actionType :: Proxy CheckTCP)
 
 extractConfig' :: (ContextReader m) => m NagiosConfig
 extractConfig' = extractConfig $ pluginDef def ^.name

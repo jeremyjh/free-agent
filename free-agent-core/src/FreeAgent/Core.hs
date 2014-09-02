@@ -19,11 +19,12 @@ module FreeAgent.Core
     , manageResource
     , lookupResource
     , withTarget
+    , module ReExport
     ) where
 
 import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Action
-    (registerPluginMaps, register, actionType)
+    (registerPluginMaps, registerAction, actionType)
 import           FreeAgent.Core.Action.ShellCommand    (ShellCommand)
 import           FreeAgent.Core.Action.Composition     (ActionPlan)
 import           FreeAgent.Core.Internal.Lenses
@@ -47,6 +48,30 @@ import           Network.Transport                (closeTransport)
 import           Network.Transport.TCP
 
 import Control.Monad.Logger (runStdoutLoggingT)
+
+import qualified FreeAgent.Core.Internal.Types as ReExport
+    ( --types and constructors
+      PluginDef(..)
+    , AgentConfig(..)
+
+    , Action(..)
+    , Result(..)
+    , ResultSummary(..)
+    , RunnableFail(..)
+
+    , Stashable(..)
+    , Extractable(..)
+    , Runnable(..)
+    , Resulting(..)
+
+    -- types only
+    , PluginSet
+    , Agent
+    , AgentContext
+    )
+import qualified FreeAgent.Core.Action as ReExport
+import qualified FreeAgent.Process as ReExport
+import FreeAgent.Client.Peer as ReExport
 
 -- need this here so we include Core.pluginDef by default
 instance Default PluginSet where
@@ -245,8 +270,8 @@ lookupResource name' = do
 -- | Register the Core Actions
 pluginDef :: PluginDef
 pluginDef = definePlugin "Core" () (return []) [] $
- do register (actionType :: Proxy ShellCommand)
-    register (actionType :: Proxy ActionPlan)
+ do registerAction (actionType :: Proxy ShellCommand)
+    registerAction (actionType :: Proxy ActionPlan)
 
 withTarget :: MonadAgent agent => Target -> agent a -> agent a
 withTarget target =

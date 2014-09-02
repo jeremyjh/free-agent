@@ -6,7 +6,8 @@ module FreeAgent.Core.Action.ShellCommandSpec (main, spec) where
 
 import           FreeAgent.AgentPrelude
 import qualified Prelude as P
-import           FreeAgent.Core.Internal.Lenses
+import           FreeAgent.Core
+import           FreeAgent.Core.Lenses
 import           FreeAgent.Plugins.Nagios
 import           FreeAgent.Core.Action.ShellCommand
 

@@ -16,3 +16,4 @@ import           Control.Lens (makeFields, (&), (.~), (^.), _1, _2, to, (%=), (%
 
 makeFields ''AgentConfig
 makeFields ''PluginDef
+makeFields ''ResultSummary

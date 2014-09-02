@@ -5,9 +5,10 @@
 module FreeAgent.CoreSpec (main, spec) where
 
 import           FreeAgent.AgentPrelude
+import           FreeAgent.Core
 import           Test.Hspec
 
-import           FreeAgent.Core.Internal.Lenses
+import           FreeAgent.Core.Lenses
 import           FreeAgent.Plugins.Nagios
 
 import           FreeAgent.TestHelper

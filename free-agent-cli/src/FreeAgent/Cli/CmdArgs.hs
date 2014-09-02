@@ -4,7 +4,7 @@
 module FreeAgent.Cli.CmdArgs (configArgs, Args(..)) where
 
 import FreeAgent.AgentPrelude
-import FreeAgent (AgentConfig(..))
+import FreeAgent.Core (AgentConfig(..))
 import FreeAgent.Core.Lenses hiding (name)
 
 import Data.List.Split (splitOn)

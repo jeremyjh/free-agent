@@ -18,7 +18,8 @@ module FreeAgent.Fixtures
     , summaryNow
     ) where
 
-import FreeAgent
+import FreeAgent.Core
+import FreeAgent.Core.Action
 import FreeAgent.AgentPrelude
 -- import all your plugins here
 import FreeAgent.Plugins.Nagios as Nagios
@@ -100,9 +101,9 @@ slowTestAction = TestAction "slow test action" 10000
 
 testPluginDef :: PluginDef
 testPluginDef = definePlugin "FixturesPlugin" () (return []) [] $
- do register (actionType :: Proxy TestAction )
-    register (actionType :: Proxy TestFailAction)
-    register (actionType :: Proxy TestCheckTCP)
+ do registerAction (actionType :: Proxy TestAction )
+    registerAction (actionType :: Proxy TestFailAction)
+    registerAction (actionType :: Proxy TestCheckTCP)
 
 summaryNow :: (Runnable action b, MonadIO io)
            => Text -> action -> io ResultSummary

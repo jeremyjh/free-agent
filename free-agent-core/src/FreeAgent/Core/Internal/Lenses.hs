@@ -28,7 +28,6 @@ import Control.Applicative(Const)
 
 
 makeFields ''AgentContext
-makeFields ''ResultSummary
 makeFields ''Peer
 makeFields ''AgentServer
 makeFields ''PluginSet

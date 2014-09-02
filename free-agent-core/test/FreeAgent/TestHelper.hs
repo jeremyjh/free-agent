@@ -18,7 +18,7 @@ module FreeAgent.TestHelper
     , texpect
     ) where
 
-import FreeAgent
+import FreeAgent.Core
 import FreeAgent.AgentPrelude
 import FreeAgent.Core.Internal.Lenses
 import FreeAgent.Server
