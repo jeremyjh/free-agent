@@ -1,10 +1,6 @@
-{-# LANGUAGE NoImplicitPrelude #-}
-
 module Main where
 
-import FreeAgent.AgentPrelude
-import FreeAgent.Core
-import FreeAgent.Cli.CmdArgs
+import FreeAgent.Cli.Main
 
 main :: IO ()
-main = configArgs def >>= print . configNodeHost . fst
+main = faMain def def

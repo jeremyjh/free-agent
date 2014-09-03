@@ -1,7 +1,10 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 
-module FreeAgent.Cli.CmdArgs (configArgs, Args(..)) where
+module FreeAgent.Cli.CmdArgs
+    ( configArgs
+    , Args(..)
+   ) where
 
 import FreeAgent.AgentPrelude
 import FreeAgent.Core (AgentConfig(..))
@@ -10,38 +13,64 @@ import FreeAgent.Core.Lenses hiding (name)
 import Data.List.Split (splitOn)
 import System.Console.CmdArgs.Implicit
 
+data Args =  Daemon { cHost :: String
+                    , cPort :: String
+                    , cDbPath :: String
+          }| Import { cHost :: String
+                    , cPort :: String
+                    , importPath :: String
+                    }
+    deriving (Show, Data, Typeable)
 
-data Args = Args {
-      argsHost :: String
-    , argsPort :: String
-    , argsDbPath :: String
-    , argsDaemon :: Bool
-    } deriving (Show, Data, Typeable)
 
 -- | Take an AgentConfig with initial values to use for default values when
 -- building args or showing help. Returns an AgentConfig which has been
 -- modified with any command args passed to the progam.
 configArgs :: AgentConfig -> IO (AgentConfig, Args)
-configArgs dconf = cmdArgs args >>= \ args' ->
-        return   ( dconf & nodeHost .~ argsHost args'
-                         & nodePort .~ argsPort args'
-                         & dbPath .~ convert (argsDbPath args')
-                 , args')
+configArgs dconf = cmdArgs configModes >>= \ args' ->
+        let commons = dconf & nodeHost .~ cHost args'
+                            & nodePort .~ cPort args'
+        in return (case args' of
+                      Daemon _ _ path' -> commons & dbPath .~ convert path'
+                      _                -> commons
+                  , args')
   where
-    args = Args { argsHost = host
+    configModes =
+        modes [ Import { cHost = host
                     &= explicit &= name "host" &= typ "ADDRESS"
                     &= help ("hostname or IP to listen on or connect to - default " ++ host)
-                , argsPort = port &= typ "NUM"
+                , cPort = port &= typ "NUM"
                     &= explicit &= name "port"
                     &= help ("service name or port to listen on or connect to - default " ++ port)
-                , argsDbPath = path &= typ "DIR"
+                , importPath = "./imports/"
+                    &= explicit &= name "import-path" &= typ "DIR"
+                    &= help "Path from which to import YAML files."
+              },Daemon { cHost = host
+                    &= explicit &= name "host" &= typ "ADDRESS"
+                    &= help ("hostname or IP to listen on or connect to - default " ++ host)
+                , cPort = port &= typ "NUM"
+                    &= explicit &= name "port"
+                    &= help ("service name or port to listen on or connect to - default " ++ port)
+                , cDbPath = path &= typ "DIR"
                     &= explicit &= name "db-path"
                     &= help ("database filepath (for daemon) - default " ++ path)
-                , argsDaemon = False
-                    &= explicit &= name "daemon"
-                    &= help "start a daemon listening on local host address and port"
-                }
-             &= summary "Free Agent command-line library."
+              }] &= program "fabin"
+
     host = dconf ^. nodeHost
     port = dconf ^. nodePort
     path = convert (dconf ^. dbPath)
+
+
+{-$(cmdArgsQuote [d| configModes = Daemon { cHost = host-}
+                                            {-&= explicit &= name "host" &= typ "ADDRESS"-}
+                                            {-&= help ("hostname or IP to listen on or connect to - default " ++ host)-}
+                                        {-, cPort = port &= typ "NUM"-}
+                                            {-&= explicit &= name "port"-}
+                                            {-&= help ("service name or port to listen on or connect to - default " ++ port)-}
+                                        {-, cDbPath = path &= typ "DIR"-}
+                                            {-&= explicit &= name "db-path"-}
+                                            {-&= help ("database filepath (for daemon) - default " ++ path)-}
+                                         {-}-}
+                   {-run = cmdArgs# configModes :: IO Args|])-}
+
+
