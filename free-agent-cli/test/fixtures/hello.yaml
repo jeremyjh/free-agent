@@ -1,0 +1,16 @@
+action:
+  shellFailCodes: []
+  shellChdir:
+    filepath: ./
+  shellRegexMatch:
+    tag: MatchStdioSuccess
+    contents: ^hello$
+  shellSuccessCodes: []
+  shellEnv: []
+  shellCommand:
+    filepath: bash
+  shellArgs:
+  - -c
+  - echo hello
+type: FreeAgent.Core.Action.ShellCommand.ShellCommand
+

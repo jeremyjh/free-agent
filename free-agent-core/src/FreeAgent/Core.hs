@@ -19,6 +19,7 @@ module FreeAgent.Core
     , manageResource
     , lookupResource
     , withTarget
+    , connectTarget
     , module ReExport
     ) where
 
@@ -41,6 +42,7 @@ import qualified Data.Map                         as Map
 import Data.Default (Default)
 
 import           Control.Concurrent.Lifted        (threadDelay)
+import           Control.Distributed.Backend.P2P  (makeNodeId)
 import Control.Distributed.Process.Node
        (newLocalNode, runProcess, forkProcess)
 import           Control.Distributed.Process.Management
@@ -272,6 +274,11 @@ pluginDef :: PluginDef
 pluginDef = definePlugin "Core" () (return []) [] $
  do registerAction (actionType :: Proxy ShellCommand)
     registerAction (actionType :: Proxy ActionPlan)
+
+-- | Connect to a remote node specified by "host:port" and execute
+-- an Agent computation with that node as the target
+connectTarget :: MonadAgent agent => String -> agent a -> agent a
+connectTarget = withTarget . ForeignNode . makeNodeId
 
 withTarget :: MonadAgent agent => Target -> agent a -> agent a
 withTarget target =

@@ -1,5 +1,4 @@
 {-# LANGUAGE NoImplicitPrelude      #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE DeriveDataTypeable #-}
@@ -84,6 +83,7 @@ queryPeerCount = callTarget peerServerName QueryPeerCount
 
 instance Platform.Resolvable (Target, String) where
     resolve (Local, name') = resolve name'
+    resolve (ForeignNode nodeId, name') = resolve (nodeId, name')
     resolve (Remote peer, name') = resolve (peer, name')
     resolve (Route contexts' zones', name') = do
         peers <- queryLocalPeerServers name'

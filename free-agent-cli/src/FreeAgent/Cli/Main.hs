@@ -1,5 +1,4 @@
-{-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 
 module FreeAgent.Cli.Main
     ( faMain
@@ -9,10 +8,11 @@ module FreeAgent.Cli.Main
     ) where
 
 import FreeAgent.AgentPrelude
-import FreeAgent.Cli.CmdArgs
-import FreeAgent.Core
+import FreeAgent.Cli.CmdArgs  (Args (..), configArgs)
+import FreeAgent.Cli.Import   (importActions)
+import FreeAgent.Core         (AgentConfig, PluginSet, runAgent, connectTarget)
 import FreeAgent.Core.Lenses
-import FreeAgent.Server
+import FreeAgent.Server       (runAgentServers)
 
 faMain :: AgentConfig -> PluginSet -> IO ()
 faMain config plugins =
@@ -35,8 +35,14 @@ clientMain :: AgentConfig -> PluginSet -> Args -> IO ()
 clientMain config plugins args =
     let config' = config & nodeHost .~ "localhost"
                          & nodePort .~ "3547"
-    in runAgent config' plugins $
+    in runAgent config' plugins $ connectTarget node $
          case args of
-            Import{} -> putStrLn "doing import"
+            Import _ _ path' ->
+             do eimported <- importActions (convert path')
+                case eimported of
+                    Right () -> putStrLn "Import successfull!"
+                    Left reason -> putStrLn ("Import failed: " ++ reason)
             _        -> error "mode not handled in clientMain"
+  where
+    node = cHost args ++ ":" ++ cPort args
 
