@@ -1,8 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude      #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude             #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-} -- Resolvable (Target,String)
 
@@ -18,15 +15,16 @@ module FreeAgent.Client.Peer
     ) where
 
 import           FreeAgent.AgentPrelude
-import           FreeAgent.Process
 import           FreeAgent.Core.Internal.Lenses
+import           FreeAgent.Process
 
-import qualified Data.Set as Set
 import           Data.Binary
+import qualified Data.Set                             as Set
 
+import           Control.Distributed.Backend.P2P      (makeNodeId)
 import qualified Control.Distributed.Process.Platform as Platform
 
-import           Control.Error ((!?))
+import           Control.Error                        ((!?))
 
 data CallFail = RoutingFailed | ServerCrash String
         deriving (Show, Eq, Typeable, Generic)
@@ -83,7 +81,18 @@ queryPeerCount = callTarget peerServerName QueryPeerCount
 
 instance Platform.Resolvable (Target, String) where
     resolve (Local, name') = resolve name'
-    resolve (ForeignNode nodeId, name') = resolve (nodeId, name')
+    resolve (RemoteCache nodestr, name') = do
+        mpid <- whereis $ nodestr ++ name'
+        case mpid of
+            Just _ -> return mpid
+            Nothing ->
+             do let nodeId = makeNodeId nodestr
+                mpid' <- resolve (nodeId, name')
+                case mpid' of
+                    Just pid ->
+                     do register (nodestr ++ name') pid
+                        return (Just pid)
+                    Nothing -> return Nothing
     resolve (Remote peer, name') = resolve (peer, name')
     resolve (Route contexts' zones', name') = do
         peers <- queryLocalPeerServers name'

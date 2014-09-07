@@ -9,17 +9,19 @@ import FreeAgent.AgentPrelude
 import FreeAgent.Core                  (AgentConfig (..))
 import FreeAgent.Core.Lenses           hiding (name)
 
-import Data.List.Split                 (splitOn)
 
 import System.Console.CmdArgs.Implicit (Data, cmdArgs, explicit, help, modes,
-                                        name, program, summary, typ, (&=))
+                                        name, program, typ, (&=))
 
-data Args =  Daemon { cHost   :: String
-                    , cPort   :: String
-                    , cDbPath :: String
-          }| Import { cHost      :: String
-                    , cPort      :: String
-                    , importPath :: String
+data Args =  Daemon { argsHost   :: String
+                    , argsPort   :: String
+                    , argsDbPath :: String
+          }| Import { argsHost :: String
+                    , argsPort :: String
+                    , argsPath :: String
+          }| Export { argsHost :: String
+                    , argsPort :: String
+                    , argsPath :: String
                     }
     deriving (Show, Data, Typeable)
 
@@ -29,30 +31,39 @@ data Args =  Daemon { cHost   :: String
 -- modified with any command args passed to the program.
 configArgs :: AgentConfig -> IO (AgentConfig, Args)
 configArgs dconf = cmdArgs configModes >>= \ args' ->
-        let commons = dconf & nodeHost .~ cHost args'
-                            & nodePort .~ cPort args'
+        let commons = dconf & nodeHost .~ argsHost args'
+                            & nodePort .~ argsPort args'
         in return (case args' of
                       Daemon _ _ path' -> commons & dbPath .~ convert path'
                       _                -> commons
                   , args')
   where
     configModes =
-        modes [ Import { cHost = host
+        modes [ Import { argsHost = host
                     &= explicit &= name "host" &= typ "ADDRESS"
                     &= help ("hostname or IP to listen on or connect to - default " ++ host)
-                , cPort = port &= typ "NUM"
+                , argsPort = port &= typ "NUM"
                     &= explicit &= name "port"
                     &= help ("service name or port to listen on or connect to - default " ++ port)
-                , importPath = "./import/"
-                    &= explicit &= name "import-path" &= typ "DIR"
-                    &= help "Path from which to import YAML files."
-              },Daemon { cHost = host
+                , argsPath = "./import/"
+                    &= explicit &= name "path" &= typ "DIR"
+                    &= help "Path from which to import YAML files - default ./import/"
+              },Export { argsHost = host
                     &= explicit &= name "host" &= typ "ADDRESS"
                     &= help ("hostname or IP to listen on or connect to - default " ++ host)
-                , cPort = port &= typ "NUM"
+                , argsPort = port &= typ "NUM"
                     &= explicit &= name "port"
                     &= help ("service name or port to listen on or connect to - default " ++ port)
-                , cDbPath = path &= typ "DIR"
+                , argsPath = "./export/" &= typ "DIR"
+                    &= explicit &= name "path"
+                    &= help "Path to which to export YAML files - default ./export/"
+              },Daemon { argsHost = host
+                    &= explicit &= name "host" &= typ "ADDRESS"
+                    &= help ("hostname or IP to listen on or connect to - default " ++ host)
+                , argsPort = port &= typ "NUM"
+                    &= explicit &= name "port"
+                    &= help ("service name or port to listen on or connect to - default " ++ port)
+                , argsDbPath = path &= typ "DIR"
                     &= explicit &= name "db-path"
                     &= help ("database filepath (for daemon) - default " ++ path)
               }] &= program "fabin"

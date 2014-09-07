@@ -206,7 +206,10 @@ instance Default AgentConfig where
 data Context = Context !Text deriving (Show, Eq, Ord, Typeable, Generic)
 
 data Target =   Local
-              | ForeignNode NodeId
+                -- ^ the local Process dictionary will register names looked
+                -- up on the remote nodes - the remote is specified as
+                -- "host:port"
+              | RemoteCache String
               | Remote Peer
               | Route [Context] [Zone]
               deriving (Show)

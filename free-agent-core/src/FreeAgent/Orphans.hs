@@ -7,7 +7,8 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses  #-}
 {-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE FlexibleInstances #-}
+
+{-# LANGUAGE FlexibleInstances, OverlappingInstances #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -93,6 +94,10 @@ instance Binary UTCTime where
         d <- Binary.get
         t <- Binary.get
         return $ UTCTime (ModifiedJulianDay d) (fromRational t)
+
+instance Show a => Convertible a Text where
+    safeConvert = return . tshow
+
 
 -- orphans from cereal
 instance Cereal.Serialize UTCTime where

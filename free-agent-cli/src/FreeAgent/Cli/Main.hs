@@ -9,8 +9,8 @@ module FreeAgent.Cli.Main
 
 import FreeAgent.AgentPrelude
 import FreeAgent.Cli.CmdArgs  (Args (..), configArgs)
-import FreeAgent.Cli.Import   (importActions)
-import FreeAgent.Core         (AgentConfig, PluginSet, runAgent, connectTarget)
+import FreeAgent.Cli.Import
+import FreeAgent.Core         (AgentConfig, PluginSet, withRemoteNode, runAgent)
 import FreeAgent.Core.Lenses
 import FreeAgent.Server       (runAgentServers)
 
@@ -28,21 +28,25 @@ daemonMain config plugins =
            ++ convert (config ^. nodeHost) ++ ": "
            ++ convert (config ^. nodePort))
         putStrLn "Press enter key to stop."
-        input <- asText <$> getLine
-        return ()
+        void $ asText <$> getLine
 
 clientMain :: AgentConfig -> PluginSet -> Args -> IO ()
 clientMain config plugins args =
     let config' = config & nodeHost .~ "localhost"
                          & nodePort .~ "3547"
-    in runAgent config' plugins $ connectTarget node $
+    in runAgent config' plugins $ withRemoteNode node $
          case args of
             Import _ _ path' ->
              do eimported <- importActions (convert path')
                 case eimported of
                     Right () -> putStrLn "Import successfull!"
                     Left reason -> putStrLn ("Import failed: " ++ reason)
+            Export _ _ path' ->
+             do eexported <- exportActions (convert path')
+                case eexported of
+                    Right () -> putStrLn "Export successfull!"
+                    Left reason -> putStrLn ("Export failed: " ++ reason)
             _        -> error "mode not handled in clientMain"
   where
-    node = cHost args ++ ":" ++ cPort args
+    node = argsHost args ++ ":" ++ argsPort args
 

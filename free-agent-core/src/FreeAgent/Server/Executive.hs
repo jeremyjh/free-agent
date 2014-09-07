@@ -124,7 +124,9 @@ $(makeAcidic ''ExecPersist ['putAction, 'getAction, 'deleteAction, 'putListener
 -- API
 -- -----------------------------
 
-data StoreAction = StoreAction Action | StoreNewerAction Action UTCTime
+data StoreAction = StoreAction Action
+                 | StoreNewerAction Action UTCTime
+                 | StoreActions [Action]
       deriving (Show, Typeable, Generic)
 
 instance Binary StoreAction
@@ -136,6 +138,9 @@ instance ServerCall StoreAction () ExecState where
            update (PutAction (action',now))
     respond (StoreNewerAction action' time) =
         update (PutAction (action', time))
+    respond (StoreActions actions')  =
+        do now <- getCurrentTime
+           forM_ actions' $ \action' -> update (PutAction (action',now))
 
 data UnregisterAction = UnregisterAction !Key
       deriving (Show, Typeable, Generic)
