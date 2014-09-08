@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude             #-}
+{-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude, ScopedTypeVariables #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-} -- Resolvable (Target,String)
 
@@ -12,6 +12,7 @@ module FreeAgent.Client.Peer
     , registerServer
     , PeerCommand(..)
     , peerServerName
+    , warmRemoteCache
     ) where
 
 import           FreeAgent.AgentPrelude
@@ -35,6 +36,7 @@ instance Convertible SomeException CallFail where
 
 data PeerCommand = DiscoverPeers
                    | QueryPeerCount
+                   | QueryLocalServices
                    | RegisterPeer Peer
                    | RespondRegisterPeer Peer
                    | RegisterServer String ProcessId
@@ -78,6 +80,23 @@ queryPeerServers s c z = callTarget peerServerName $ QueryPeerServers s c z
 -- | Returns the number of Peer Agent processes this node is connected to
 queryPeerCount :: MonadAgent agent => agent (Either CallFail Int)
 queryPeerCount = callTarget peerServerName QueryPeerCount
+
+-- | Query a remote node string ("host:port") for its registered
+-- servers, and register them locally as resolving RemoteCache would,
+-- so that multiple remote whereis do not have to be sent for
+-- different servers at the same node.
+warmRemoteCache :: forall process. MonadProcess process
+                => String -> process ()
+warmRemoteCache nodestr = liftProcess $
+ do let nodeId = makeNodeId nodestr
+    pid <- getSelfPid
+    nsendRemote nodeId peerServerName (QueryLocalServices, pid)
+    mservers <- expectTimeout 1000000 :: Process (Maybe [ServerRef])
+    case mservers of
+        Nothing -> say "warmRemoteCache timed out!"
+        Just servers' ->
+            forM_ servers' $ \(ServerRef name' pid') ->
+                register (nodestr ++ name') pid'
 
 instance Platform.Resolvable (Target, String) where
     resolve (Local, name') = resolve name'

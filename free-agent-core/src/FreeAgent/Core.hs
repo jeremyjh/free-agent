@@ -277,7 +277,8 @@ pluginDef = definePlugin "Core" () (return []) [] $
 -- | Connect to a remote node specified by "host:port" and execute
 -- an Agent computation with that node as the target.
 withRemoteNode :: MonadAgent agent => String -> agent a -> agent a
-withRemoteNode = withTarget . RemoteCache
+withRemoteNode nodestr ma =
+    withTarget (RemoteCache nodestr) $ warmRemoteCache nodestr >> ma
 
 withTarget :: MonadAgent agent => Target -> agent a -> agent a
 withTarget target =

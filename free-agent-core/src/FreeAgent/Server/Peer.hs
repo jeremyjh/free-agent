@@ -81,8 +81,12 @@ peerServer =
                      , agentRpcHandler $ \ (QueryPeerServers n c z) ->
                            doQueryPeerServers n c z
                      ]
+                  , infoHandlers =
+                    [
+                     agentInfoHandler $ \ (QueryLocalServices, sender :: ProcessId) ->
+                           use (self.servers) >>= send sender . Set.toList
+                    ]
                  }
-
   where
     initState = do
         context' <- askContext

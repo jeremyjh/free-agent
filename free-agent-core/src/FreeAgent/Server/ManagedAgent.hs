@@ -189,8 +189,8 @@ agentInfoHandler :: (NFSerializable a, Show a)
                  -> DeferredDispatcher (AgentState s)
 agentInfoHandler fn =
     handleInfo $ \ state' command ->
-        --TODO {-[qdebug| Processing command: #{command}|]-}
-        runAgentStateT state' (const $ return ()) (fn command)
+        let ma = [qdebug| Processing command: #{command}|] >> fn command
+        in runAgentStateT state' (const $ return ()) ma
 
 runAgentStateT :: (NFSerializable a)
                => AgentState s

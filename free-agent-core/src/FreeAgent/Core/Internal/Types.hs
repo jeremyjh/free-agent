@@ -367,7 +367,7 @@ instance Resolvable AgentServer where
 
 data ServerRef = ServerRef String ProcessId
                | PartialRef String -- ^ use only for Set filters
-                 deriving (Show, Eq, Generic)
+                 deriving (Show, Eq, Generic, Typeable)
 
 instance Binary ServerRef
 
