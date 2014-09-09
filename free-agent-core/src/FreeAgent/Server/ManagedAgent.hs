@@ -124,28 +124,28 @@ agentRpcHandler :: (NFSerializable a, NFSerializable b, Show a)
                 -> Dispatcher (AgentState s)
 agentRpcHandler fn =
     handleRpcChan $ \ state' replyCh command ->
-        --TODO {-[qdebug| Processing command: #{command}|]-}
-        runAgentStateT state' (sendChan replyCh) (fn command)
+        let ma = debugLog command >> fn command
+        in runAgentStateT state' (sendChan replyCh) ma
 
 -- | handle RPC calls that do not mutate state out of band in stateful process
 agentRpcAsyncHandler :: (NFSerializable a, NFSerializable b, Show a)
-                => (a -> (StateT s Agent) b)
-                -> Dispatcher (AgentState s)
+                     => (a -> (StateT s Agent) b)
+                     -> Dispatcher (AgentState s)
 agentRpcAsyncHandler fn =
     handleRpcChan $ \ state' replyCh command ->
-        --TODO {-[qdebug| Processing command: #{command}|]-}
-        runAgentStateTAsync state' (sendChan replyCh) (fn command)
+        let ma = debugLog command >> fn command
+        in runAgentStateTAsync state' (sendChan replyCh) ma
 
 -- | handle RPC calls that do not mutate state out of band in stateful process
 -- in an EitherT monad - will log (Left reason) on failure
 agentRpcAsyncHandlerET :: (NFSerializable a, NFSerializable b, NFSerializable e
-                     ,Show a, Show e)
-                   => (a -> (EitherT e (StateT s Agent)) b)
-                   -> Dispatcher (AgentState s)
+                          ,Show a, Show e)
+                       => (a -> (EitherT e (StateT s Agent)) b)
+                       -> Dispatcher (AgentState s)
 agentRpcAsyncHandlerET fn =
     handleRpcChan $ \ state' replyCh command ->
-        --TODO {-[qdebug| Processing command: #{command}|]-}
-        runAgentStateTAsync state' (sendChan replyCh) (handleET fn command)
+        let ma = debugLog command >> handleET fn command
+        in runAgentStateTAsync state' (sendChan replyCh) ma
 
 -- | handle calls that may mutate the State environment in
 -- an EitherT monad; on Left the command and error will be logged
@@ -155,8 +155,8 @@ agentRpcHandlerET :: (NFSerializable a, NFSerializable b, NFSerializable e
                    -> Dispatcher (AgentState s)
 agentRpcHandlerET fn =
     handleRpcChan $ \ state' replyCh command ->
-        --TODO {-[qdebug| Processing command: #{command}|]-}
-        runAgentStateT state' (sendChan replyCh) (handleET fn command)
+        let ma = debugLog command >> handleET fn command
+        in runAgentStateT state' (sendChan replyCh) ma
 
 -- | wrapper for commands that will handle a cast and mutate state -
 -- the updated StateT environment will provide the state value to
@@ -166,8 +166,8 @@ agentCastHandler :: (NFSerializable a, Show a)
                  -> Dispatcher (AgentState s)
 agentCastHandler fn =
     handleCast $ \ state' command ->
-        --TODO {-[qdebug| Processing command: #{command}|]-}
-        runAgentStateT state' (const $ return ()) (fn command)
+        let ma = debugLog command >> fn command
+        in runAgentStateT state' (const $ return ()) ma
 
 -- | wrapper for commands that will handle a cast and mutate state
 -- in an EitherT monad.
@@ -178,8 +178,8 @@ agentCastHandlerET :: (NFSerializable a, Show a, NFSerializable e, Show e)
                  -> Dispatcher (AgentState s)
 agentCastHandlerET fn =
     handleCast $ \ state' command ->
-        --TODO {-[qdebug| Processing command: #{command}|]-}
-        runAgentStateT state' (const $ return ()) (handleET fn command)
+        let ma = debugLog command >> handleET fn command
+        in runAgentStateT state' (const $ return ()) ma
 
 -- | wrapper for commands that will handle an info message
 -- the updated StateT environment will provide the state value to
@@ -189,7 +189,7 @@ agentInfoHandler :: (NFSerializable a, Show a)
                  -> DeferredDispatcher (AgentState s)
 agentInfoHandler fn =
     handleInfo $ \ state' command ->
-        let ma = [qdebug| Processing command: #{command}|] >> fn command
+        let ma = debugLog command >> fn command
         in runAgentStateT state' (const $ return ()) ma
 
 runAgentStateT :: (NFSerializable a)
@@ -249,3 +249,5 @@ agentExitHandler fn (AgentState ctxt ustate) pid reason = do
         execStateT (fn pid reason) ustate
     continue $ AgentState ctxt newState
 
+debugLog :: (Show a, MonadLogger m) => a -> m ()
+debugLog c = [qdebug| Processing command: #{c}|]
