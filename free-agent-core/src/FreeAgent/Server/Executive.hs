@@ -123,7 +123,9 @@ data StoreAction = StoreAction Action
 
 instance Binary StoreAction
 
-instance ServerCall StoreAction () ExecState where
+instance ServerCall StoreAction where
+    type CallState StoreAction = ExecState
+    type CallResponse StoreAction = ()
     callName _ = serverName
     respond (StoreAction action')  =
         do now <- getCurrentTime
@@ -139,7 +141,8 @@ data UnregisterAction = UnregisterAction !Key
 
 instance Binary UnregisterAction
 
-instance ServerCall UnregisterAction () ExecState where
+instance ServerCall UnregisterAction where
+    type CallState UnregisterAction = ExecState
     callName _ = serverName
     respond (UnregisterAction key')  =
         update (DeleteAction key')
@@ -150,14 +153,17 @@ data ExecuteStored = ExecuteStored !Key
 
 instance Binary ExecuteStored
 
-instance ServerCall ExecuteStored (Either ExecFail Result) ExecState where
+instance ServerCall ExecuteStored where
+    type CallState ExecuteStored = ExecState
+    type CallResponse ExecuteStored = Either ExecFail Result
     callName _ = serverName
     respond cmd@(ExecuteStored key') =
         runLogEitherT cmd $
          do (action', _) <-  query (GetAction key') !? ActionNotFound key'
             doExec action'
 
-instance ServerCast ExecuteStored ExecState where
+instance ServerCast ExecuteStored where
+    type CastState ExecuteStored = ExecState
     castName _ = serverName
     handle = void . respond
 
@@ -167,7 +173,8 @@ data AddListener = AddListener (Closure Listener)
 instance Binary AddListener
 instance NFData AddListener
 
-instance ServerCast AddListener ExecState where
+instance ServerCast AddListener where
+    type CastState AddListener = ExecState
     castName _ = serverName
     handle (AddListener cl) =
      do rt <- viewConfig remoteTable

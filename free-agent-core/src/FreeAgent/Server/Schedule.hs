@@ -203,23 +203,27 @@ data ScheduleAddEvent
 instance Binary ScheduleAddEvent
 instance NFData ScheduleAddEvent where rnf = genericRnf
 
-instance ServerCall ScheduleAddEvent (Either ScheduleFail ()) ScheduleState where
+instance ServerCall ScheduleAddEvent where
+    type CallState ScheduleAddEvent = ScheduleState
+    type CallResponse ScheduleAddEvent = Either ScheduleFail ()
     callName _ = serverName
     respond (ScheduleAddEvent key' recur retry) =
-     do now <- getCurrentTime
-        respond (ScheduleAddNewerEvent key' recur retry now)
+      do now <- getCurrentTime
+         respond (ScheduleAddNewerEvent key' recur retry now)
     respond cmd@(ScheduleAddNewerEvent key' recur retry time) =
         runLogEitherT cmd $
-         do let event = Event key' recur retry time
-            () <- update (AddEvent $ calcNextScheduled time event)
-            lift scheduleNextTick
+          do let event = Event key' recur retry time
+             () <- update (AddEvent $ calcNextScheduled time event)
+             lift scheduleNextTick
 
 deriving instance Generic ScheduleLookupEvent
 deriving instance Show ScheduleLookupEvent
 instance NFData ScheduleLookupEvent where rnf = genericRnf
 instance Binary ScheduleLookupEvent
 
-instance ServerCall ScheduleLookupEvent (Maybe Event) ScheduleState where
+instance ServerCall ScheduleLookupEvent where
+    type CallState ScheduleLookupEvent = ScheduleState
+    type CallResponse ScheduleLookupEvent = Maybe Event
     callName _ = serverName
     respond = query
 
@@ -228,7 +232,9 @@ deriving instance Show ScheduleRemoveEvent
 instance Binary ScheduleRemoveEvent
 instance NFData ScheduleRemoveEvent where rnf = genericRnf
 
-instance ServerCall ScheduleRemoveEvent (Either ScheduleFail ()) ScheduleState where
+instance ServerCall ScheduleRemoveEvent where
+    type CallState ScheduleRemoveEvent = ScheduleState
+    type CallResponse ScheduleRemoveEvent = Either ScheduleFail ()
     callName _ = serverName
     respond cmd = runLogEitherT cmd $ update cmd
 
