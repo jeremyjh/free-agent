@@ -132,7 +132,7 @@ spec = do
                     let matcher = $(mkClosure 'matchRemoteHostName) (nodeid, listenerName)
                     Right () <- castServ (AddListener matcher)
                     threadDelay 10000
-                    Just expid <- whereis $ execServer^.name
+                    Just expid <- whereis $ execServer ^. name
                     liftProcess $ kill expid "testing"
                     threadDelay 10000
                     Right _ <- executeAction checkTCP

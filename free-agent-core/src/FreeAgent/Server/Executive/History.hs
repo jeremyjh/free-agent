@@ -114,7 +114,7 @@ data HistoryState = HistoryState {_historyAcid :: AcidState HistoryPersist}
 
 fetchAllFrom  :: UTCTime -> Query HistoryPersist [Result]
 fetchAllFrom time =
-    takeWhile (\r -> r^.to summary.timestamp >= time) <$> view results
+    takeWhile (\r -> r ^. to summary.timestamp >= time) <$> view results
 
 insertResult :: Result -> Update HistoryPersist ()
 insertResult r = results %= (r :)
@@ -131,7 +131,7 @@ defaultBackend = HistoryBackend {
     , doAllResultsFrom = query . FetchAllFrom
     , doActionResultsFrom = \ key' time -> do
         results' <- query (FetchAllFrom time)
-        return $ filter (\r -> r^.to summary.resultOf.to key == key')
+        return $ filter (\r -> r ^. to summary.resultOf.to key == key')
                         results'
 
 }

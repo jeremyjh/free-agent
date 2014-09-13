@@ -121,10 +121,10 @@ createContext (name', config', plugins') = do
 
 
 setup :: IO ()
-setup = void $ system ("rm -rf " ++ (convert $ appConfig^.dbPath))
+setup = void $ system ("rm -rf " ++ (convert $ appConfig ^. dbPath))
 
 setupConfig :: AgentConfig -> IO ()
-setupConfig config' = void $ system ("rm -rf " ++ (convert $ config'^.dbPath))
+setupConfig config' = void $ system ("rm -rf " ++ (convert $ config' ^. dbPath))
 
 nosetup :: IO ()
 nosetup = return ()

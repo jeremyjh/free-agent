@@ -82,11 +82,11 @@ instance Default PluginSet where
 runAgent :: AgentConfig -> PluginSet -> Agent () -> IO ()
 runAgent config' plugins' ma =
     catchAny
-        ( do registerPluginMaps (plugins'^.unwrappersMap)
+        ( do registerPluginMaps (plugins' ^. unwrappersMap)
              statesMV <- newMVar mempty
              bracket openTransport (closeResources statesMV)
                  (\ tcp ->
-                    do node <- newLocalNode tcp (config'^.remoteTable)
+                    do node <- newLocalNode tcp (config' ^. remoteTable)
                        let context' = AgentContext
                                           { contextAgentConfig = config'
                                           , contextPlugins = plugins'
@@ -109,7 +109,7 @@ runAgent config' plugins' ma =
         )
   where
     openTransport = do
-        etcp <- createTransport (config'^.nodeHost) (config'^.nodePort) defaultTCPParameters
+        etcp <- createTransport (config' ^. nodeHost) (config' ^. nodePort) defaultTCPParameters
         case etcp of
             Right tcp -> return tcp
             Left msg -> throwIO msg
@@ -150,7 +150,7 @@ withAgent ctxt ma =
 -- | 'forkProcess' analogue for the Agent monad
 forkAgent :: AgentContext -> Agent () -> IO ProcessId
 forkAgent context' =
-    forkProcess (context'^.processNode) . withAgent context'
+    forkProcess (context' ^. processNode) . withAgent context'
 
 -- | Spawn a new process in the Agent monad.
 spawnAgent :: AgentContext -> Agent a -> Process ProcessId

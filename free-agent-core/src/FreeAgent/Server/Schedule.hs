@@ -254,7 +254,7 @@ scheduleServer =
             ],
             shutdownHandler =
                 \ s _ ->
-                case s^.serverState.tickerRef of
+                case s ^. serverState.tickerRef of
                    Just ref -> cancelTimer ref
                    Nothing -> return ()
         }

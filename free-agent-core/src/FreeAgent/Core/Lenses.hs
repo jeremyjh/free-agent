@@ -11,7 +11,7 @@ module FreeAgent.Core.Lenses
 ) where
 
 import           FreeAgent.Core.Internal.Types
-import           Control.Lens (makeFields, (&), (.~), (^.), _1, _2, to, (%=), (%~), (.=))
+import           Control.Lens (makeFields, (&), (.~), ( ^. ), _1, _2, to, (%=), (%~), (.=))
 
 
 makeFields ''AgentConfig

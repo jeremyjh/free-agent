@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleInstances #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleInstances          #-}
 {-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude, ScopedTypeVariables #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-} -- Resolvable (Target,String)

@@ -24,11 +24,11 @@ faMain config plugins =
 daemonMain :: AgentConfig -> PluginSet -> IO ()
 daemonMain config plugins =
     runAgentServers config plugins $
-     do putStrLn ("Agent server listening on: "
-           ++ convert (config ^. nodeHost) ++ ": "
-           ++ convert (config ^. nodePort))
-        putStrLn "Press enter key to stop."
-        void $ asText <$> getLine
+      do putStrLn ("Agent server listening on: "
+                 ++ convert (config ^. nodeHost) ++ ": "
+                 ++ convert (config ^. nodePort))
+         putStrLn "Press enter key to stop."
+         void $ asText <$> getLine
 
 clientMain :: AgentConfig -> PluginSet -> Args -> IO ()
 clientMain config plugins args =
@@ -37,16 +37,16 @@ clientMain config plugins args =
     in runAgent config' plugins $ withRemoteNode node $
          case args of
             Import _ _ path' ->
-             do eimported <- importActions (convert path')
-                case eimported of
-                    Right () -> putStrLn "Import successfull!"
-                    Left reason -> putStrLn ("Import failed: " ++ reason)
+              do eimported <- importActions (convert path')
+                 case eimported of
+                     Right () -> putStrLn "Import successfull!"
+                     Left reason -> putStrLn ("Import failed: " ++ reason)
             Export _ _ path' ->
-             do eexported <- exportActions (convert path')
-                case eexported of
-                    Right () -> putStrLn "Export successfull!"
-                    Left reason -> putStrLn ("Export failed: " ++ reason)
-            _        -> error "mode not handled in clientMain"
+              do eexported <- exportActions (convert path')
+                 case eexported of
+                     Right () -> putStrLn "Export successfull!"
+                     Left reason -> putStrLn ("Export failed: " ++ reason)
+            _ -> error "mode not handled in clientMain"
   where
     node = argsHost args ++ ":" ++ argsPort args
 

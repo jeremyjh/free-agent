@@ -30,8 +30,8 @@ runAgentServers config' plugins' ma =
     in runAgent config' plugins' $ startSuper (join [pluginServers, cservers]) >> ma
   where
     inPlugins pservers cserver =
-        all (\s -> s^.name /= cserver^.name) pservers
-    pluginServers = let plugs = plugins'^.plugins in
+        all (\s -> s ^. name /= cserver ^. name) pservers
+    pluginServers = let plugs = plugins' ^. plugins in
         concatMap (view servers) plugs
     startSuper servers' = do
         context' <- (targetServer .~ Local) <$> askContext
@@ -44,7 +44,7 @@ runAgentServers config' plugins' ma =
             pid <- liftProcess $ do
                 child' <- childFrom context' server'
                 void $ start restartOne ParallelShutdown [child']
-                waitRegistration $ server'^.name
+                waitRegistration $ server' ^. name
             Right () <- registerServer server' pid
             return ()
       where childFrom context' (AgentServer _ child) = child context'

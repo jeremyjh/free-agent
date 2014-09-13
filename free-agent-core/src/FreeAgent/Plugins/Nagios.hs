@@ -44,7 +44,7 @@ makeFields ''Command
 deriveSerializers ''Command
 
 instance Stashable Command where
-    key cmd = cmd^.host
+    key cmd = cmd ^. host
 
 data CommandResult = OK | Warning | Critical | Unknown
     deriving (Show, Eq, Typeable, Generic)
@@ -75,7 +75,7 @@ pluginDef conf = definePlugin "Nagios" conf (return []) [] $
     registerAction (actionType :: Proxy CheckTCP)
 
 extractConfig' :: (ContextReader m) => m NagiosConfig
-extractConfig' = extractConfig $ pluginDef def ^.name
+extractConfig' = extractConfig $ pluginDef def ^. name
 
 instance Stashable NagiosResult where
     key = key . summary
@@ -103,19 +103,19 @@ instance Runnable Command NagiosResult where
                 2 -> nagresult Critical
                 _ -> error "ShellCommand should have failed ExitCode match."
       where
-        makeArgs = ["-H", cmd^.host, "-p", portS $ cmd^.port]
+        makeArgs = ["-H", cmd ^. host, "-p", portS $ cmd ^. port]
         portS (Just p) = tshow p
         portS Nothing = ""
         commandPath = do
             nagconf <- extractConfig'
-            return $ nagiosPluginsPath nagconf </> convert (cmd^.shellCom)
+            return $ nagiosPluginsPath nagconf </> convert (cmd ^. shellCom)
 
 instance Stashable CheckTCP where
-    key c = c^.host ++ ":" ++ tshow (c^.port)
+    key c = c ^. host ++ ":" ++ tshow (c ^. port)
 
 instance Extractable CheckTCP
 
 instance Runnable CheckTCP NagiosResult where
     exec cmd = runEitherT $
         (resultSummary.resultOf .~ Action cmd) <$>
-            tryExecET (Command (cmd^.host) (Just $ cmd^.port) "check_tcp")
+            tryExecET (Command (cmd ^. host) (Just $ cmd ^. port) "check_tcp")

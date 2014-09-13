@@ -90,24 +90,24 @@ peerServer =
         getSelfPid >>= flip cast DiscoverPeers
         return $ PeerState self' (Set.fromList [self']) acid'
     initp2p context' = spawnLocal $ peerController $
-                  makeNodeId <$> (context'^.agentConfig.peerNodeSeeds)
+                  makeNodeId <$> (context' ^. agentConfig.peerNodeSeeds)
     initAcid initpp = openOrGetDb "agent-peer" initpp def
     initSelf acid' = do
         persist <- query' acid' GetPersist
         pid <- getSelfPid
         ctxts <- viewConfig contexts
         zs <- viewConfig zones
-        let self' = Peer (persist^.uuid) pid ctxts zs Set.empty
+        let self' = Peer (persist ^. uuid) pid ctxts zs Set.empty
         [qdebug| Peer initialized self: #{self'}|]
         return self'
 
 doDiscoverPeers :: PeerAgent ()
 doDiscoverPeers = do
-    pids <- liftProcess $ getCapable $ peerServer^.name
+    pids <- liftProcess $ getCapable $ peerServer ^. name
     [qdebug| DiscoverPeers found agent:peer services: #{pids} |]
     self' <- use self
     forM_ pids $ \pid ->
-        when ((self'^.processId) /= pid) $ do
+        when ((self' ^. processId) /= pid) $ do
             [qdebug| Sending self: #{self'} To peer: #{pid} |]
             cast pid $ RegisterPeer self'
 
@@ -127,7 +127,7 @@ doRegisterPeer peer respond' = do
     self' <- use self
     when respond' $ do
         [qdebug| Sending self: #{self'} To peer: #{peerProcessId self'} |]
-        cast (peer^.processId) (RespondRegisterPeer self')
+        cast (peer ^. processId) (RespondRegisterPeer self')
 
 doQueryPeerServers :: MonadState PeerState m
                   => String -> Set Context -> Set Zone -> m (Set Peer)
@@ -140,9 +140,9 @@ doQueryPeerServers fname fcontexts fzones = do
                                          intersectService
       where
         intersectContexts =
-            Set.filter (\p -> Set.intersection (p^.contexts) fcontexts /= Set.empty) peers
+            Set.filter (\p -> Set.intersection (p ^. contexts) fcontexts /= Set.empty) peers
         intersectZones =
-            Set.filter (\p -> Set.intersection (p^.zones) fzones /= Set.empty) peers
+            Set.filter (\p -> Set.intersection (p ^. zones) fzones /= Set.empty) peers
         intersectService = let fservers = Set.fromList [PartialRef fname] in
-            Set.filter (\p -> Set.intersection (p^.servers) fservers /= Set.empty) peers
+            Set.filter (\p -> Set.intersection (p ^. servers) fservers /= Set.empty) peers
 
