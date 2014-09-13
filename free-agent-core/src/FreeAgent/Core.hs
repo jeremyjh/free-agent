@@ -20,7 +20,7 @@ module FreeAgent.Core
     , lookupResource
     , withTarget
     , withRemoteNode
-    , module ReExport
+    , module X
     ) where
 
 import           FreeAgent.AgentPrelude
@@ -50,7 +50,7 @@ import           Network.Transport.TCP
 
 import Control.Monad.Logger (runStdoutLoggingT)
 
-import qualified FreeAgent.Core.Internal.Types as ReExport
+import qualified FreeAgent.Core.Internal.Types as X
     ( --types and constructors
       PluginDef(..)
     , AgentConfig(..)
@@ -70,9 +70,9 @@ import qualified FreeAgent.Core.Internal.Types as ReExport
     , Agent
     , AgentContext
     )
-import qualified FreeAgent.Core.Action as ReExport
-import qualified FreeAgent.Process as ReExport
-import FreeAgent.Client.Peer as ReExport
+import qualified FreeAgent.Core.Action as X
+import qualified FreeAgent.Process as X
+import           FreeAgent.Client.Peer as X
 
 -- need this here so we include Core.pluginDef by default
 instance Default PluginSet where

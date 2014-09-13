@@ -1,12 +1,6 @@
-{-# LANGUAGE CPP #-}
-{-# LANGUAGE DeriveDataTypeable     #-}
-{-# LANGUAGE DeriveGeneric          #-}
-{-# LANGUAGE NoImplicitPrelude      #-}
-{-# LANGUAGE OverloadedStrings      #-}
-{-# LANGUAGE TemplateHaskell        #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE MultiParamTypeClasses  #-}
-{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE CPP, DeriveDataTypeable, DeriveGeneric, FunctionalDependencies #-}
+{-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude, OverloadedStrings    #-}
+{-# LANGUAGE StandaloneDeriving, TemplateHaskell                            #-}
 
 {-# LANGUAGE FlexibleInstances, OverlappingInstances #-}
 
@@ -18,29 +12,29 @@ module FreeAgent.Orphans where
 
 import           FreeAgent.AgentPrelude
 
-import           Data.Binary(Binary)
-import qualified Data.Binary as Binary
+import           Data.Binary                 (Binary)
+import qualified Data.Binary                 as Binary
 
+import           Data.Aeson                  as Aeson
+import           Data.HashMap.Strict         as H
 import           Data.SafeCopy
-import           Data.Aeson as Aeson
-import           Data.HashMap.Strict as H
-import           Data.Scientific (Scientific)
+import           Data.Scientific             (Scientific)
 
 import           System.Cron
 
-import           Control.Monad.Logger          (MonadLogger(..))
-import qualified Data.Serialize                as Cereal
-import qualified Data.ByteString.Char8         as BS
-import qualified Data.ByteString.Lazy.Char8    as LBS
-import qualified Data.Text.Encoding            as Text (decodeUtf8, encodeUtf8)
+import           Control.Monad.Logger        (MonadLogger (..))
+import qualified Data.ByteString.Char8       as BS
+import qualified Data.ByteString.Lazy.Char8  as LBS
+import qualified Data.Serialize              as Cereal
+import qualified Data.Text.Encoding          as Text (decodeUtf8, encodeUtf8)
 
-import Data.UUID (UUID)
-import Data.Acid (AcidState)
+import           Data.Acid                   (AcidState)
+import           Data.UUID                   (UUID)
 
 import           Control.Distributed.Process (Closure)
 
 #if __GLASGOW_HASKELL__ < 708
-import           Data.Typeable(Typeable1)
+import           Data.Typeable               (Typeable1)
 deriving instance Typeable1 AcidState
 #else
 deriving instance Typeable AcidState

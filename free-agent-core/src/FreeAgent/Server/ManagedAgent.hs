@@ -1,9 +1,6 @@
-{-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE FunctionalDependencies, MultiParamTypeClasses     #-}
+{-# LANGUAGE NoImplicitPrelude, OverloadedStrings, QuasiQuotes #-}
+{-# LANGUAGE ScopedTypeVariables                               #-}
 
 
 module FreeAgent.Server.ManagedAgent
@@ -38,22 +35,31 @@ module FreeAgent.Server.ManagedAgent
 
 where
 
-import           FreeAgent.AgentPrelude
-import           FreeAgent.Core                                      (spawnAgent, withAgent)
-import           FreeAgent.Core.Internal.Lenses
-import           FreeAgent.Process
-import           FreeAgent.Client.Peer (CallFail(..), callTarget, castTarget)
+import FreeAgent.AgentPrelude
+import FreeAgent.Client.Peer                               (CallFail (..),
+                                                            callTarget,
+                                                            castTarget)
+import FreeAgent.Core                                      (spawnAgent,
+                                                            withAgent)
+import FreeAgent.Core.Internal.Lenses
+import FreeAgent.Process
 
-import           Control.Monad.State                                 (StateT, evalStateT
-                                                                     , execStateT, runStateT)
+import Control.Monad.State                                 (StateT, evalStateT,
+                                                            execStateT,
+                                                            runStateT)
 
 
-import           Control.Concurrent.Lifted                           (threadDelay)
-import           Control.Distributed.Process.Platform.ManagedProcess as Managed
-    hiding (cast, call, syncCallChan, action, shutdown)
-import           Control.Distributed.Process.Platform (linkOnFailure, Addressable)
-import           Control.Distributed.Process.Platform.Supervisor    as Supervisor
-import           Control.Distributed.Process.Platform.Time          (Delay(..), milliSeconds)
+import Control.Concurrent.Lifted                           (threadDelay)
+import Control.Distributed.Process.Platform                (Addressable,
+                                                            linkOnFailure)
+import Control.Distributed.Process.Platform.ManagedProcess as Managed hiding
+                                                                       (action,
+                                                                       call,
+                                                                       cast,
+                                                                       shutdown, syncCallChan)
+import Control.Distributed.Process.Platform.Supervisor     as Supervisor
+import Control.Distributed.Process.Platform.Time           (Delay (..),
+                                                            milliSeconds)
 
 data AgentState a = AgentState AgentContext a
 

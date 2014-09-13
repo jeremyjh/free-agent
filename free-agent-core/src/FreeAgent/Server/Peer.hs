@@ -1,15 +1,7 @@
-{-# LANGUAGE NoImplicitPrelude      #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE DeriveDataTypeable     #-}
-{-# LANGUAGE DeriveGeneric          #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE MultiParamTypeClasses  #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleContexts             #-}
+{-# LANGUAGE FlexibleInstances, FunctionalDependencies                       #-}
+{-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude, OverloadedStrings     #-}
+{-# LANGUAGE QuasiQuotes, ScopedTypeVariables, TemplateHaskell, TypeFamilies #-}
 
 
 module FreeAgent.Server.Peer
@@ -21,16 +13,17 @@ where
 import           FreeAgent.AgentPrelude
 import           FreeAgent.Client.Peer
 import           FreeAgent.Core.Internal.Lenses
-import           FreeAgent.Process
 import           FreeAgent.Database.AcidState
+import           FreeAgent.Process
 import           FreeAgent.Server.ManagedAgent
 
-import qualified Data.Set as Set
+import qualified Data.Set                        as Set
 
-import           Control.Monad.State                            as State (StateT, MonadState)
-import           Control.Monad.Reader (ask)
-import           Control.Distributed.Backend.P2P(getCapable, peerController,makeNodeId)
-import           Data.UUID.V1 (nextUUID)
+import           Control.Distributed.Backend.P2P (getCapable, makeNodeId,
+                                                  peerController)
+import           Control.Monad.Reader            (ask)
+import           Control.Monad.State             as State (MonadState, StateT)
+import           Data.UUID.V1                    (nextUUID)
 
 
 data PeerPersist = PeerPersist {_persistUuid :: UUID}
@@ -39,9 +32,9 @@ data PeerPersist = PeerPersist {_persistUuid :: UUID}
 deriveSafeStore ''PeerPersist
 makeFields ''PeerPersist
 
-data PeerState = PeerState { _stateSelf :: Peer
+data PeerState = PeerState { _stateSelf    :: Peer
                            , _stateFriends :: Set Peer
-                           , _stateAcid :: AcidState PeerPersist
+                           , _stateAcid    :: AcidState PeerPersist
                            }
 makeFields ''PeerState
 

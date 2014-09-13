@@ -1,53 +1,48 @@
-{-# LANGUAGE DeriveDataTypeable     #-}
-{-# LANGUAGE DeriveGeneric          #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE MultiParamTypeClasses  #-}
-{-# LANGUAGE NoImplicitPrelude      #-}
-{-# LANGUAGE OverloadedStrings      #-}
-{-# LANGUAGE TemplateHaskell        #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE BangPatterns, DeriveDataTypeable, DeriveGeneric             #-}
+{-# LANGUAGE FlexibleInstances, FunctionalDependencies                   #-}
+{-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude, OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards, ScopedTypeVariables, StandaloneDeriving    #-}
+{-# LANGUAGE TemplateHaskell, TypeFamilies                               #-}
 
 
 module FreeAgent.Server.Schedule where
 
 import           FreeAgent.AgentPrelude
-import           FreeAgent.Database.AcidState
 import           FreeAgent.Core.Internal.Lenses
-import           FreeAgent.Orphans ()
+import           FreeAgent.Database.AcidState
+import           FreeAgent.Orphans                          ()
 import           FreeAgent.Process
+import           FreeAgent.Server.Executive                 (ExecuteStored (..))
 import           FreeAgent.Server.ManagedAgent
-import           FreeAgent.Server.Executive (ExecuteStored(..))
 
-import           Control.Monad.Reader (ask)
-import qualified Data.Map.Strict as Map
-import qualified Data.Set as Set
-import           Control.Monad.State (StateT)
-import           Control.Error (note)
+import           Control.Error                              (note)
+import           Control.Monad.Reader                       (ask)
+import           Control.Monad.State                        (StateT)
+import qualified Data.Map.Strict                            as Map
+import qualified Data.Set                                   as Set
 
 import           Control.Distributed.Process.Platform.Time
-import           Control.Distributed.Process.Platform.Timer
-       (Tick(..), cancelTimer, TimerRef, sendAfter)
+import           Control.Distributed.Process.Platform.Timer (Tick (..),
+                                                             TimerRef,
+                                                             cancelTimer,
+                                                             sendAfter)
 
-import           Data.Default (Default(..))
-import           Data.Attoparsec.Text (parseOnly)
-import           Data.Time.Clock (addUTCTime, diffUTCTime)
-import Data.Binary (Binary)
+import           Data.Attoparsec.Text                       (parseOnly)
+import           Data.Binary                                (Binary)
+import           Data.Default                               (Default (..))
+import           Data.Time.Clock                            (addUTCTime,
+                                                             diffUTCTime)
 import           System.Cron
-import           System.Cron.Parser (cronSchedule)
+import           System.Cron.Parser                         (cronSchedule)
 
 -- ---------Types-------------
 -- Types
 -- ---------------------------
 
 data Event
-  = Event { schedKey   :: !Key
-          , schedRecur :: !ScheduleRecurrence
-          , schedRetry :: !RetryOption
+  = Event { schedKey      :: !Key
+          , schedRecur    :: !ScheduleRecurrence
+          , schedRetry    :: !RetryOption
           , schedModified :: !UTCTime
           } deriving (Show, Eq, Typeable, Generic)
 
@@ -79,16 +74,16 @@ data ScheduleFail = SCallFailed CallFail
               deriving (Show, Eq, Typeable, Generic)
 
 data SchedulePersist
-  = SchedulePersist { _persistEvents :: Map Key Event
-                    , _persistNextScheduled :: Set NextScheduled
+  = SchedulePersist { persistEvents        :: Map Key Event
+                    , persistNextScheduled :: Set NextScheduled
                     } deriving (Show, Typeable)
 
 instance Default SchedulePersist where
     def = SchedulePersist mempty Set.empty
 
 data ScheduleState
-   = ScheduleState { _stateAcid    :: !(AcidState SchedulePersist)
-                   , _stateTickerRef :: Maybe TimerRef
+   = ScheduleState { stateAcid      :: !(AcidState SchedulePersist)
+                   , stateTickerRef :: Maybe TimerRef
                    } deriving (Typeable, Generic)
 
 makeFields ''SchedulePersist
@@ -190,7 +185,7 @@ unschedule key' = do
         Left failed -> return $ Left (SCallFailed failed)
 
 lookupEvent :: MonadAgent agent
-          => Key -> agent (Either ScheduleFail Event)
+            => Key -> agent (Either ScheduleFail Event)
 lookupEvent key' = do
     emevent <- callServ (ScheduleLookupEvent key')
     case emevent of

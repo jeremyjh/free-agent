@@ -1,8 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE FlexibleContexts, FunctionalDependencies                  #-}
+{-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude, TemplateHaskell #-}
 
 
 module FreeAgent.Database.AcidState
@@ -15,19 +12,20 @@ module FreeAgent.Database.AcidState
 
 where
 
-import           FreeAgent.AgentPrelude
-import           FreeAgent.Core.Internal.Lenses
-import           FreeAgent.Core.Action     ()
-import           FreeAgent.Core
+import FreeAgent.AgentPrelude
+import FreeAgent.Core
+import FreeAgent.Core.Action          ()
+import FreeAgent.Core.Internal.Lenses
 
-import           Control.Monad.State  (MonadState)
+import Control.Monad.State            (MonadState)
 
-import Data.Acid
-       (AcidState, IsAcidic, openLocalStateFrom, closeAcidState,
-        makeAcidic, Query, Update, UpdateEvent, QueryEvent, EventResult )
-import           Data.Acid.Local      ( createCheckpointAndClose)
-import           Data.Acid.Advanced (query', update', MethodState)
-import           Data.Default (Default(..))
+import Data.Acid                      (AcidState, EventResult, IsAcidic, Query,
+                                       QueryEvent, Update, UpdateEvent,
+                                       closeAcidState, makeAcidic,
+                                       openLocalStateFrom)
+import Data.Acid.Advanced             (MethodState, query', update')
+import Data.Acid.Local                (createCheckpointAndClose)
+import Data.Default                   (Default (..))
 
 data AcidBase = AcidBase {_baseAcid :: ()}
 makeFields ''AcidBase

@@ -1,16 +1,8 @@
-{-# LANGUAGE DeriveDataTypeable     #-}
-{-# LANGUAGE DeriveGeneric          #-}
-{-# LANGUAGE FlexibleContexts       #-}
-{-# LANGUAGE FlexibleInstances      #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE MultiParamTypeClasses  #-}
-{-# LANGUAGE NoImplicitPrelude      #-}
-{-# LANGUAGE OverloadedStrings      #-}
-{-# LANGUAGE ScopedTypeVariables    #-}
-{-# LANGUAGE TemplateHaskell        #-}
-{-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleContexts         #-}
+{-# LANGUAGE FlexibleInstances, FunctionalDependencies                   #-}
+{-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude, OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes, ScopedTypeVariables, StandaloneDeriving        #-}
+{-# LANGUAGE TemplateHaskell, TypeFamilies                               #-}
 
 
 module FreeAgent.Server.Executive
@@ -30,21 +22,21 @@ where
 
 import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Action
-import           FreeAgent.Database.AcidState
 import           FreeAgent.Core.Internal.Lenses
-import           FreeAgent.Process                     as Process
+import           FreeAgent.Database.AcidState
+import           FreeAgent.Process                  as Process
+import           FreeAgent.Server.Executive.History hiding (serverName)
 import           FreeAgent.Server.ManagedAgent
-import           FreeAgent.Server.Executive.History    hiding (serverName)
 
 
-import           Control.Monad.State                   (StateT)
-import           Control.Monad.Reader (ask)
+import           Control.Monad.Reader               (ask)
+import           Control.Monad.State                (StateT)
 import           Data.Binary
-import qualified Data.Map.Strict                       as Map
+import qualified Data.Map.Strict                    as Map
 
-import           Control.Distributed.Static            (unclosure)
-import           Control.Error                         ((!?), hoistEither, (??))
-import           Data.Default                          (Default(..))
+import           Control.Distributed.Static         (unclosure)
+import           Control.Error                      (hoistEither, (!?), (??))
+import           Data.Default                       (Default (..))
 
 -- -----------------------------
 -- Types
@@ -54,7 +46,7 @@ type RunningActions = Map Key ProcessId
 type StoredAction = (Action, UTCTime)
 
 data ExecPersist
-  = ExecPersist { _persistActions :: Map Key StoredAction
+  = ExecPersist { _persistActions   :: Map Key StoredAction
                 , _persistListeners :: [Closure Listener]
                 } deriving (Show, Typeable)
 
