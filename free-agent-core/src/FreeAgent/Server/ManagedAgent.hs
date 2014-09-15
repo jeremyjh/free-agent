@@ -64,41 +64,38 @@ import Control.Distributed.Process.Platform.Time           (Delay (..),
 data AgentState a = AgentState AgentContext a
 
 
-class ServerCall rq where
+class (NFSerializable rq
+      ,NFSerializable (CallResponse rq)
+      ,Show rq) => ServerCall rq where
+
     type CallState rq
     type CallResponse rq
     type CallResponse rq = ()
     respond :: rq -> StateT (CallState rq) Agent (CallResponse rq)
     callName :: rq -> String
 
-class ServerCast rq where
+class (NFSerializable rq, Show rq)
+      => ServerCast rq where
     type CastState rq
     handle :: rq -> StateT (CastState rq) Agent ()
     castName :: rq -> String
 
 
-registerCall :: forall rq.
-                   (ServerCall rq
-                   ,NFSerializable rq, NFSerializable (CallResponse rq)
-                   ,Show rq)
+registerCall :: forall rq. (ServerCall rq)
                 => Proxy rq -> Dispatcher (AgentState (CallState rq))
 registerCall _ = agentRpcHandler
     (respond :: rq -> StateT (CallState rq) Agent (CallResponse rq))
 
-registerCast :: forall rq.
-                       (ServerCast rq
-                       ,NFSerializable rq, Show rq )
-                    => Proxy rq -> Dispatcher (AgentState (CastState rq))
+registerCast :: forall rq. (ServerCast rq)
+             => Proxy rq -> Dispatcher (AgentState (CastState rq))
 registerCast _ = agentCastHandler (handle :: rq -> StateT (CastState rq) Agent ())
 
-callServ :: (ServerCall rq, MonadAgent agent
-                 ,NFSerializable rq, NFSerializable (CallResponse rq))
+callServ :: (ServerCall rq, MonadAgent agent)
               => rq -> agent (Either CallFail (CallResponse rq))
 callServ rq = callTarget (callName rq) rq
 
-castServ :: (ServerCast rq, MonadAgent agent
-               ,NFSerializable rq)
-              => rq -> agent (Either CallFail ())
+castServ :: (ServerCast rq, MonadAgent agent)
+         => rq -> agent (Either CallFail ())
 castServ rq = castTarget (castName rq) rq
 
 serverState :: Lens' (AgentState a) a
