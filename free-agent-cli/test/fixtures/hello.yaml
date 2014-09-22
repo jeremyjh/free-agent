@@ -1,4 +1,5 @@
 action:
+  shellKey: hello
   shellFailCodes: []
   shellChdir:
     filepath: ./

@@ -52,7 +52,8 @@ instance Default RegexMatch where
     def = mempty
 
 data ShellCommand
-  = ShellCommand { shellCommand      :: FilePath
+  = ShellCommand { shellKey          :: Key
+                 , shellCommand      :: FilePath
                  , shellChdir        :: FilePath
                  , shellArgs         :: [Text]
                  , shellEnv          :: [(Text, Text)]
@@ -63,7 +64,8 @@ data ShellCommand
 
 instance Default ShellCommand where
     def = ShellCommand {
-              shellCommand      = mempty
+              shellKey          = mempty
+            , shellCommand      = mempty
             , shellChdir        = "./"
             , shellArgs         = mempty
             , shellEnv          = mempty
@@ -72,8 +74,8 @@ instance Default ShellCommand where
             , shellRegexMatch   = mempty
             }
 
-defaultShellCommand :: ShellCommand
-defaultShellCommand = def
+defaultShellCommand :: Key -> ShellCommand
+defaultShellCommand k = def {shellKey = k}
 
 data ShellResult
  = ShellResult { shellStdout     :: Text
@@ -84,7 +86,7 @@ data ShellResult
                } deriving (Show, Eq, Typeable, Generic)
 
 instance Stashable ShellCommand where
-    key = fpToText . shellCommand
+    key = shellKey
 
 instance Stashable ShellResult where
     key = key . shellResultOf

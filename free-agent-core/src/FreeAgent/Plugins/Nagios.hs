@@ -89,7 +89,7 @@ instance Extractable NagiosResult
 instance Runnable Command NagiosResult where
     exec cmd =
      do cmdPath <- commandPath
-        let shell = defaultShellCommand {
+        let shell = (defaultShellCommand (key cmd)) {
                       shellCommand      = cmdPath
                     , shellArgs         = makeArgs
                     , shellSuccessCodes = [0,1,2]

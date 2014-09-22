@@ -55,8 +55,10 @@ spec = do
 
         it "will not update a newer action" $ do
             testAgent $ do
-                let willWork = Action $ defaultShellCommand {shellCommand = "ls"}
-                    wontWork = Action $ defaultShellCommand {shellCommand = "ls"
+                let willWork = Action $ (defaultShellCommand "willWork")
+                                                            {shellCommand = "ls"}
+                    wontWork = Action $ (defaultShellCommand "wontWork")
+                                                            {shellCommand = "ls"
                                                             ,shellFailCodes = [0]}
                 before <- getCurrentTime
                 Right _ <- callServ $ StoreAction willWork

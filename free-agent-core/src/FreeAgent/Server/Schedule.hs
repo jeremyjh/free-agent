@@ -207,6 +207,7 @@ instance ServerCall ScheduleAddEvent where
     type CallState ScheduleAddEvent = ScheduleState
     type CallResponse ScheduleAddEvent = Either ScheduleFail ()
     callName _ = serverName
+
     respond (ScheduleAddEvent key' recur retry) =
       do now <- getCurrentTime
          respond (ScheduleAddNewerEvent key' recur retry now)

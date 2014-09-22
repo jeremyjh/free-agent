@@ -31,8 +31,8 @@ spec =
         it "can set environment variables, pass args and match stdout" $ do
             testAgent $ do
                 let (env1, val1) = ("env1", "val1")
-                let cmd = defaultShellCommand {
-                              shellCommand = "bash"
+                let cmd = (defaultShellCommand "setenv")
+                          {   shellCommand = "bash"
                           ,   shellArgs = ["-c", "echo $env1"]
                           ,   shellEnv = [(env1, val1)]
                           ,   shellRegexMatch = MatchStdioSuccess "^va.1$"
@@ -43,8 +43,8 @@ spec =
 
         it "can NOT match stdout" $ do
             testAgent $ do
-                let cmd = defaultShellCommand {
-                              shellCommand = "bash"
+                let cmd = (defaultShellCommand "nostdout")
+                          {   shellCommand = "bash"
                           ,   shellArgs = ["-c", "echo hello"]
                           ,   shellRegexMatch = MatchStdioFail "^hello$"
                           }
@@ -54,8 +54,8 @@ spec =
 
         it "can change dir temporarily" $ do
             testAgent $ do
-                let cmd = defaultShellCommand {
-                              shellCommand = "pwd"
+                let cmd = (defaultShellCommand "chdir")
+                          {   shellCommand = "pwd"
                           ,   shellChdir = "/usr/bin"
                           ,   shellRegexMatch = MatchStdioSuccess "/usr/bin"
                           }
