@@ -1,7 +1,7 @@
 {-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude, OverloadedStrings #-}
 
 module FreeAgent.Cli.Import
-    (importActions, exportActions) where
+    (importActions) where
 
 import FreeAgent.AgentPrelude
 import FreeAgent.Core                (Action, Agent)
@@ -50,6 +50,3 @@ importFile fp =
 loadActionFile :: FilePath -> EitherT Text Agent Action
 loadActionFile fp =
     liftIO (decodeFileEither (convert fp)) >>= convEitherT
-
-exportActions :: FilePath -> Agent (Either Text ())
-exportActions = error "not done yet"

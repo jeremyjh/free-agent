@@ -8,6 +8,7 @@
 module FreeAgent.Server.Executive
     ( execServer
     , StoreAction(..)
+    , QueryActions(..)
     , UnregisterAction(..)
     , ExecuteStored(..)
     , AddListener(..)
@@ -102,6 +103,9 @@ deleteAction key' =
 getAction :: Key -> Query ExecPersist (Maybe StoredAction)
 getAction key' = views actions (Map.lookup key')
 
+allActions :: Query ExecPersist [Action]
+allActions = views actions (fmap (fst . snd) . Map.toList)
+
 putListener :: Closure Listener -> Update ExecPersist ()
 putListener listener = listeners %= (:) listener
 
@@ -109,7 +113,7 @@ getPersist :: Query ExecPersist ExecPersist
 getPersist = ask
 
 -- we have to make the splices near the top of the file
-$(makeAcidic ''ExecPersist ['putAction, 'getAction, 'deleteAction, 'putListener
+$(makeAcidic ''ExecPersist ['putAction, 'getAction, 'deleteAction,'allActions, 'putListener
                            ,'getPersist])
 
 -- -----------------------------
@@ -159,8 +163,8 @@ instance ServerCall ExecuteStored where
     callName _ = serverName
     respond cmd@(ExecuteStored key') =
         runLogEitherT cmd $
-         do (action', _) <-  query (GetAction key') !? ActionNotFound key'
-            doExec action'
+          do (action', _) <-  query (GetAction key') !? ActionNotFound key'
+             doExec action'
 
 instance ServerCast ExecuteStored where
     type CastState ExecuteStored = ExecState
@@ -177,13 +181,25 @@ instance ServerCast AddListener where
     type CastState AddListener = ExecState
     castName _ = serverName
     handle (AddListener cl) =
-     do rt <- viewConfig remoteTable
-        case unclosure rt cl of
-            Left msg -> [qwarn|AddListener failed! Could not evaluate
-                          new listener closure: #{msg}|]
-            Right listener -> do
-                listeners %= (:) listener
-                update (PutListener cl)
+      do rt <- viewConfig remoteTable
+         case unclosure rt cl of
+             Left msg -> [qwarn|AddListener failed! Could not evaluate
+                           new listener closure: #{msg}|]
+             Right listener -> do
+                 listeners %= (:) listener
+                 update (PutListener cl)
+
+data QueryActions = QueryActions
+    deriving (Show, Eq, Typeable, Generic)
+
+instance Binary QueryActions
+instance NFData QueryActions
+
+instance ServerCall QueryActions where
+    type CallState QueryActions = ExecState
+    type CallResponse QueryActions = [Action]
+    callName _ = serverName
+    respond QueryActions  = query AllActions
 
 -- | Execute 'Action' corresponding to 'Key' with the current
 -- target server and extract the concrete result (if possible) to
@@ -248,6 +264,7 @@ execServer =
             , registerCall (Proxy :: Proxy StoreAction)
             , registerCall (Proxy :: Proxy UnregisterAction)
             , registerCall (Proxy :: Proxy ExecuteStored)
+            , registerCall (Proxy :: Proxy QueryActions)
             , registerCast (Proxy :: Proxy ExecuteStored)
             , registerCast (Proxy :: Proxy AddListener)
             ]

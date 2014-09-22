@@ -19,6 +19,7 @@ cabal-version:       >=1.10
 library
   exposed-modules:     FreeAgent.Cli.CmdArgs
                      , FreeAgent.Cli.Import
+                     , FreeAgent.Cli.Export
                      , FreeAgent.Cli.Main
   -- other-modules:       
   -- other-extensions:    

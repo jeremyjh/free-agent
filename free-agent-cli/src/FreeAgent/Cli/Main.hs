@@ -10,6 +10,7 @@ module FreeAgent.Cli.Main
 import FreeAgent.AgentPrelude
 import FreeAgent.Cli.CmdArgs  (Args (..), configArgs)
 import FreeAgent.Cli.Import
+import FreeAgent.Cli.Export
 import FreeAgent.Core         (AgentConfig, PluginSet, withRemoteNode, runAgent)
 import FreeAgent.Core.Lenses
 import FreeAgent.Server       (runAgentServers)
