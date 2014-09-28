@@ -1,15 +1,7 @@
-{-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleInstances        #-}
+{-# LANGUAGE FunctionalDependencies, GeneralizedNewtypeDeriving          #-}
+{-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude, OverloadedStrings #-}
+{-# LANGUAGE RankNTypes, RecordWildCards, TemplateHaskell, TypeFamilies  #-}
 
 
 module FreeAgent.Server.Executive.History
@@ -22,13 +14,13 @@ module FreeAgent.Server.Executive.History
     , HistoryBackend
     ) where
 
-import           FreeAgent.AgentPrelude
-import           FreeAgent.Core.Internal.Lenses
-import           FreeAgent.Database.AcidState
-import           FreeAgent.Server.ManagedAgent
+import FreeAgent.AgentPrelude
+import FreeAgent.Core.Internal.Lenses
+import FreeAgent.Database.AcidState
+import FreeAgent.Server.ManagedAgent
 
-import           Data.Binary (Binary)
-import           Control.Monad.State (StateT)
+import Control.Monad.State            (StateT)
+import Data.Binary                    (Binary)
 
 
 -- -----------------------------
@@ -122,7 +114,7 @@ data HistoryState = HistoryState {_historyAcid :: AcidState HistoryPersist}
 
 fetchAllFrom  :: UTCTime -> Query HistoryPersist [Result]
 fetchAllFrom time =
-    takeWhile (\r -> r^.to summary.timestamp >= time) <$> view results
+    takeWhile (\r -> r ^. to summary.timestamp >= time) <$> view results
 
 insertResult :: Result -> Update HistoryPersist ()
 insertResult r = results %= (r :)
@@ -139,7 +131,7 @@ defaultBackend = HistoryBackend {
     , doAllResultsFrom = query . FetchAllFrom
     , doActionResultsFrom = \ key' time -> do
         results' <- query (FetchAllFrom time)
-        return $ filter (\r -> r^.to summary.resultOf.to key == key')
+        return $ filter (\r -> r ^. to summary.resultOf.to key == key')
                         results'
 
 }

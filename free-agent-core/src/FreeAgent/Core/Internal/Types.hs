@@ -1,17 +1,8 @@
-{-# LANGUAGE DeriveDataTypeable         #-}
-{-# LANGUAGE DeriveGeneric              #-}
-{-# LANGUAGE ExistentialQuantification  #-}
-{-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE FunctionalDependencies     #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
-{-# LANGUAGE NoImplicitPrelude          #-}
-{-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE StandaloneDeriving         #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell            #-}
-{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, ExistentialQuantification #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, FunctionalDependencies  #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, MultiParamTypeClasses            #-}
+{-# LANGUAGE NoImplicitPrelude, OverloadedStrings, ScopedTypeVariables    #-}
+{-# LANGUAGE StandaloneDeriving, TemplateHaskell, TypeFamilies            #-}
 
 
 module FreeAgent.Core.Internal.Types
@@ -29,37 +20,41 @@ module FreeAgent.Core.Internal.Types
 where
 
 import           FreeAgent.AgentPrelude
-import           FreeAgent.Orphans                  ()
-import qualified Prelude                            as P
+import           FreeAgent.Orphans                    ()
+import qualified Prelude                              as P
 
-import Control.Monad.Reader (ReaderT, ask, mapReaderT, local)
-import           Control.Monad.Writer               (Writer)
-import           Data.Binary                        as Binary
-import           Data.Dynamic                       (Dynamic)
-import           Data.Typeable                      (cast)
+import           Control.Monad.Reader                 (ReaderT, ask, local,
+                                                       mapReaderT)
+import           Control.Monad.Writer                 (Writer)
+import           Data.Binary                          as Binary
+import           Data.Dynamic                         (Dynamic)
+import           Data.Typeable                        (cast)
 
-import           FreeAgent.Process (MonadProcess(..), Process
-                                                    ,ProcessId, NFSerializable
-                                                    ,ChildSpec, RemoteTable
-                                                    ,initRemoteTable, whereis
-                                                    ,processNodeId)
-import           Control.Distributed.Process.Node   (LocalNode)
-import           Control.Distributed.Process (NodeId)
-import           Control.Distributed.Process.Platform (Resolvable(..))
-import           Control.Monad.Base                 (MonadBase)
-import           Control.Monad.Logger               (LogLevel (..), LoggingT,
-                                                     MonadLogger (..),
-                                                     runStdoutLoggingT,
-                                                     withChannelLogger)
+import           Control.Distributed.Process          (NodeId)
+import           Control.Distributed.Process.Node     (LocalNode)
+import           Control.Distributed.Process.Platform (Resolvable (..))
+import           Control.Error                        (mapEitherT)
+import           Control.Monad.Base                   (MonadBase)
+import           Control.Monad.Logger                 (LogLevel (..), LoggingT,
+                                                       MonadLogger (..),
+                                                       runStdoutLoggingT,
+                                                       withChannelLogger)
+import           Control.Monad.State                  (StateT, mapStateT)
 import           Control.Monad.Trans.Control
-import Control.Monad.State (StateT, mapStateT)
-import Control.Error (mapEitherT)
-import           Data.Aeson (FromJSON(..), ToJSON(..), Value(..), (.:), (.=), object)
-import qualified Data.ByteString.Base64             as B64
-import           Data.Default                       (Default (..))
-import qualified Data.Set                           as Set
-import           Data.UUID                          (UUID)
-import           Data.SafeCopy (SafeCopy)
+import           Data.Aeson                           (FromJSON (..),
+                                                       ToJSON (..), Value (..),
+                                                       object, (.:), (.=))
+import qualified Data.ByteString.Base64               as B64
+import           Data.Default                         (Default (..))
+import           Data.SafeCopy                        (SafeCopy)
+import qualified Data.Set                             as Set
+import           Data.UUID                            (UUID)
+import           FreeAgent.Process                    (ChildSpec,
+                                                       MonadProcess (..),
+                                                       NFSerializable, Process,
+                                                       ProcessId, RemoteTable,
+                                                       initRemoteTable,
+                                                       processNodeId, whereis)
 
 
 
@@ -74,9 +69,9 @@ class (SafeCopy a, Show a, Typeable a) => Stashable a where
 -- | Wrapped lets us store an Action or Result and recover it using
 -- it's registered Unwrapper
 data Wrapped
-  = Wrapped { wrappedKey        :: Key
-            , wrappedTypeName   :: Text
-            , wrappedValue      :: ByteString
+  = Wrapped { wrappedKey      :: Key
+            , wrappedTypeName :: Text
+            , wrappedValue    :: ByteString
             } deriving (Show, Eq, Typeable, Generic)
 
 instance Stashable Wrapped where
@@ -146,11 +141,11 @@ type Unwrapper a = (Wrapped -> Either String a)
 type PluginConfigs = Map Text Dynamic
 
 data ActionUnwrappers
-  =  ActionUnwrappers { actionTypeName :: Text
-                      , actionUnwrapper :: Unwrapper Action
+  =  ActionUnwrappers { actionTypeName      :: Text
+                      , actionUnwrapper     :: Unwrapper Action
                       , actionJsonUnwrapper :: JsonUnwrapper Action
-                      , resultTypeName :: Text
-                      , resultUnwrapper :: Unwrapper Result
+                      , resultTypeName      :: Text
+                      , resultUnwrapper     :: Unwrapper Result
                       , resultJsonUnwrapper :: JsonUnwrapper Result
                       }
 
@@ -171,32 +166,32 @@ data ManagedResource =
     ManagedResource Dynamic (IO ())
 
 data PluginDef
-  = PluginDef { plugindefName      :: !Text
-              , plugindefContext   :: !Dynamic
+  = PluginDef { plugindefName             :: !Text
+              , plugindefContext          :: !Dynamic
               , plugindefActionUnwrappers :: ![ActionUnwrappers]
-              , plugindefListeners :: Agent [Listener]
-              , plugindefServers   :: [AgentServer]
+              , plugindefListeners        :: Agent [Listener]
+              , plugindefServers          :: [AgentServer]
               }
 
 data PluginSet
-  = PluginSet { pluginsetUnwrappersMap   :: !UnwrappersMap
-              , pluginsetListeners       :: Agent [Listener]
-              , pluginsetConfigs         :: !PluginConfigs
-              , pluginsetPlugins         :: ![PluginDef]
+  = PluginSet { pluginsetUnwrappersMap :: !UnwrappersMap
+              , pluginsetListeners     :: Agent [Listener]
+              , pluginsetConfigs       :: !PluginConfigs
+              , pluginsetPlugins       :: ![PluginDef]
               }
 
 -- | AgentConfig data is set at startup and does not change while
 -- the process is running
 data AgentConfig
-  = AgentConfig  { configDbPath         :: !FilePath
-                 , configNodeHost       :: !String
-                 , configNodePort       :: !String
-                 , configDebugLogCount  :: !Int
-                 , configMinLogLevel    :: !LogLevel
-                 , configContexts       :: Set Context
-                 , configZones          :: Set Zone
-                 , configPeerNodeSeeds  :: [String]
-                 , configRemoteTable    :: !RemoteTable
+  = AgentConfig  { configDbPath        :: !FilePath
+                 , configNodeHost      :: !String
+                 , configNodePort      :: !String
+                 , configDebugLogCount :: !Int
+                 , configMinLogLevel   :: !LogLevel
+                 , configContexts      :: Set Context
+                 , configZones         :: Set Zone
+                 , configPeerNodeSeeds :: [String]
+                 , configRemoteTable   :: !RemoteTable
                  }
 
 instance Default AgentConfig where
@@ -211,6 +206,10 @@ instance Default AgentConfig where
 data Context = Context !Text deriving (Show, Eq, Ord, Typeable, Generic)
 
 data Target =   Local
+                -- ^ the local Process dictionary will register names looked
+                -- up on the remote nodes - the remote is specified as
+                -- "host:port"
+              | RemoteCache String
               | Remote Peer
               | Route [Context] [Zone]
               deriving (Show)
@@ -230,11 +229,11 @@ instance Default Zone where def = Zone "default"
 -- | AgentContext may be initialized during startup but is more
 -- dynamic than config and may change and/or provide communications
 data AgentContext
-  = AgentContext { contextAgentConfig     :: !AgentConfig
-                 , contextPlugins         :: !PluginSet
-                 , contextProcessNode     :: !LocalNode
-                 , contextOpenResources   :: MVar (Map Text ManagedResource)
-                 , contextTargetServer    :: Target -- ^ Target to which 'AgentServer' clients will send commands
+  = AgentContext { contextAgentConfig   :: !AgentConfig
+                 , contextPlugins       :: !PluginSet
+                 , contextProcessNode   :: !LocalNode
+                 , contextOpenResources :: MVar (Map Text ManagedResource)
+                 , contextTargetServer  :: Target -- ^ Target to which 'AgentServer' clients will send commands
                  }
 
 
@@ -359,7 +358,7 @@ data ResultSummary
 
 data ActionHistory = ActionHistory deriving (Show, Eq, Typeable, Generic)
 
-data AgentServer = AgentServer { aserverName :: String
+data AgentServer = AgentServer { aserverName      :: String
                                , aserverchildSpec :: AgentContext -> Process ChildSpec
                                }
 
@@ -368,7 +367,7 @@ instance Resolvable AgentServer where
 
 data ServerRef = ServerRef String ProcessId
                | PartialRef String -- ^ use only for Set filters
-                 deriving (Show, Eq, Generic)
+                 deriving (Show, Eq, Generic, Typeable)
 
 instance Binary ServerRef
 

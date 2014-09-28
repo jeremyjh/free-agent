@@ -22,7 +22,10 @@ import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Core.Action ()
 import           FreeAgent.Orphans ()
 
+import           Data.Aeson.TH (deriveJSON,Options(..), defaultOptions)
+import           Data.Char as Char (toLower)
 import           Data.Default (Default(..))
+import Data.Binary (Binary)
 import           Shelly
     ( run, shelly, chdir, setenv, silently
     , errExit, lastExitCode, lastStderr)
@@ -52,7 +55,8 @@ instance Default RegexMatch where
     def = mempty
 
 data ShellCommand
-  = ShellCommand { shellCommand      :: FilePath
+  = ShellCommand { shellKey          :: Key
+                 , shellCommand      :: FilePath
                  , shellChdir        :: FilePath
                  , shellArgs         :: [Text]
                  , shellEnv          :: [(Text, Text)]
@@ -63,7 +67,8 @@ data ShellCommand
 
 instance Default ShellCommand where
     def = ShellCommand {
-              shellCommand      = mempty
+              shellKey          = mempty
+            , shellCommand      = mempty
             , shellChdir        = "./"
             , shellArgs         = mempty
             , shellEnv          = mempty
@@ -72,8 +77,8 @@ instance Default ShellCommand where
             , shellRegexMatch   = mempty
             }
 
-defaultShellCommand :: ShellCommand
-defaultShellCommand = def
+defaultShellCommand :: Key -> ShellCommand
+defaultShellCommand k = def {shellKey = k}
 
 data ShellResult
  = ShellResult { shellStdout     :: Text
@@ -84,7 +89,7 @@ data ShellResult
                } deriving (Show, Eq, Typeable, Generic)
 
 instance Stashable ShellCommand where
-    key = fpToText . shellCommand
+    key = shellKey
 
 instance Stashable ShellResult where
     key = key . shellResultOf
@@ -144,5 +149,16 @@ instance Runnable ShellCommand ShellResult where
                     isNothing (matchRegex (mkRegex sregex) serr)
 
 deriveSerializers ''RegexMatch
-deriveSerializers ''ShellCommand
 deriveSerializers ''ShellResult
+
+-- we want to customize the JSON field names for ShellCommand
+-- so it looks nicer in Yaml, which may be very frequently used
+instance Binary ShellCommand
+instance NFData ShellCommand where rnf = genericRnf
+deriveSafeStore ''ShellCommand
+
+deriveJSON (defaultOptions {fieldLabelModifier = \field ->
+                                let (x:xs) = drop 5 field
+                                in Char.toLower x : xs
+                           })
+           ''ShellCommand

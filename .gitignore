@@ -8,6 +8,7 @@ cabal.sandbox.config
 *.chi
 *.chs.h
 hi/
+prof/
 Session.vim
 log.txt
 report.html

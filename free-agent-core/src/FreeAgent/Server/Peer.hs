@@ -1,15 +1,7 @@
-{-# LANGUAGE NoImplicitPrelude      #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE DeriveDataTypeable     #-}
-{-# LANGUAGE DeriveGeneric          #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE MultiParamTypeClasses  #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleContexts             #-}
+{-# LANGUAGE FlexibleInstances, FunctionalDependencies                       #-}
+{-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude, OverloadedStrings     #-}
+{-# LANGUAGE QuasiQuotes, ScopedTypeVariables, TemplateHaskell, TypeFamilies #-}
 
 
 module FreeAgent.Server.Peer
@@ -21,16 +13,17 @@ where
 import           FreeAgent.AgentPrelude
 import           FreeAgent.Client.Peer
 import           FreeAgent.Core.Internal.Lenses
-import           FreeAgent.Process
 import           FreeAgent.Database.AcidState
+import           FreeAgent.Process
 import           FreeAgent.Server.ManagedAgent
 
-import qualified Data.Set as Set
+import qualified Data.Set                        as Set
 
-import           Control.Monad.State                            as State (StateT, MonadState)
-import           Control.Monad.Reader (ask)
-import           Control.Distributed.Backend.P2P(getCapable, peerController,makeNodeId)
-import           Data.UUID.V1 (nextUUID)
+import           Control.Distributed.Backend.P2P (getCapable, makeNodeId,
+                                                  peerController)
+import           Control.Monad.Reader            (ask)
+import           Control.Monad.State             as State (MonadState, StateT)
+import           Data.UUID.V1                    (nextUUID)
 
 
 data PeerPersist = PeerPersist {_persistUuid :: UUID}
@@ -39,9 +32,9 @@ data PeerPersist = PeerPersist {_persistUuid :: UUID}
 deriveSafeStore ''PeerPersist
 makeFields ''PeerPersist
 
-data PeerState = PeerState { _stateSelf :: Peer
+data PeerState = PeerState { _stateSelf    :: Peer
                            , _stateFriends :: Set Peer
-                           , _stateAcid :: AcidState PeerPersist
+                           , _stateAcid    :: AcidState PeerPersist
                            }
 makeFields ''PeerState
 
@@ -81,8 +74,12 @@ peerServer =
                      , agentRpcHandler $ \ (QueryPeerServers n c z) ->
                            doQueryPeerServers n c z
                      ]
+                  , infoHandlers =
+                    [
+                     agentInfoHandler $ \ (QueryLocalServices, sender :: ProcessId) ->
+                           use (self.servers) >>= send sender . Set.toList
+                    ]
                  }
-
   where
     initState = do
         context' <- askContext
@@ -93,24 +90,24 @@ peerServer =
         getSelfPid >>= flip cast DiscoverPeers
         return $ PeerState self' (Set.fromList [self']) acid'
     initp2p context' = spawnLocal $ peerController $
-                  makeNodeId <$> (context'^.agentConfig.peerNodeSeeds)
+                  makeNodeId <$> (context' ^. agentConfig.peerNodeSeeds)
     initAcid initpp = openOrGetDb "agent-peer" initpp def
     initSelf acid' = do
         persist <- query' acid' GetPersist
         pid <- getSelfPid
         ctxts <- viewConfig contexts
         zs <- viewConfig zones
-        let self' = Peer (persist^.uuid) pid ctxts zs Set.empty
+        let self' = Peer (persist ^. uuid) pid ctxts zs Set.empty
         [qdebug| Peer initialized self: #{self'}|]
         return self'
 
 doDiscoverPeers :: PeerAgent ()
 doDiscoverPeers = do
-    pids <- liftProcess $ getCapable $ peerServer^.name
+    pids <- liftProcess $ getCapable $ peerServer ^. name
     [qdebug| DiscoverPeers found agent:peer services: #{pids} |]
     self' <- use self
     forM_ pids $ \pid ->
-        when ((self'^.processId) /= pid) $ do
+        when ((self' ^. processId) /= pid) $ do
             [qdebug| Sending self: #{self'} To peer: #{pid} |]
             cast pid $ RegisterPeer self'
 
@@ -130,7 +127,7 @@ doRegisterPeer peer respond' = do
     self' <- use self
     when respond' $ do
         [qdebug| Sending self: #{self'} To peer: #{peerProcessId self'} |]
-        cast (peer^.processId) (RespondRegisterPeer self')
+        cast (peer ^. processId) (RespondRegisterPeer self')
 
 doQueryPeerServers :: MonadState PeerState m
                   => String -> Set Context -> Set Zone -> m (Set Peer)
@@ -143,9 +140,9 @@ doQueryPeerServers fname fcontexts fzones = do
                                          intersectService
       where
         intersectContexts =
-            Set.filter (\p -> Set.intersection (p^.contexts) fcontexts /= Set.empty) peers
+            Set.filter (\p -> Set.intersection (p ^. contexts) fcontexts /= Set.empty) peers
         intersectZones =
-            Set.filter (\p -> Set.intersection (p^.zones) fzones /= Set.empty) peers
+            Set.filter (\p -> Set.intersection (p ^. zones) fzones /= Set.empty) peers
         intersectService = let fservers = Set.fromList [PartialRef fname] in
-            Set.filter (\p -> Set.intersection (p^.servers) fservers /= Set.empty) peers
+            Set.filter (\p -> Set.intersection (p ^. servers) fservers /= Set.empty) peers
 

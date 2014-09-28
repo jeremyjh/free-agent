@@ -1,0 +1,17 @@
+action:
+  action:
+    chdir:
+      filepath: ./
+    command:
+      filepath: bash
+    args:
+    - -c
+    - echo world
+    env: []
+    successCodes: []
+    failCodes: []
+    key: world
+    regexMatch:
+      tag: MatchStdioSuccess
+      contents: ^world$
+  type: FreeAgent.Core.Action.ShellCommand.ShellCommand

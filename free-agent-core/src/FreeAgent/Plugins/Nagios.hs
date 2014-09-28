@@ -44,7 +44,7 @@ makeFields ''Command
 deriveSerializers ''Command
 
 instance Stashable Command where
-    key cmd = cmd^.host
+    key cmd = cmd ^. host
 
 data CommandResult = OK | Warning | Critical | Unknown
     deriving (Show, Eq, Typeable, Generic)
@@ -71,11 +71,11 @@ deriveSerializers ''NagiosResult
 
 pluginDef :: NagiosConfig -> PluginDef
 pluginDef conf = definePlugin "Nagios" conf (return []) [] $
- do register (actionType :: Proxy Command)
-    register (actionType :: Proxy CheckTCP)
+ do registerAction (actionType :: Proxy Command)
+    registerAction (actionType :: Proxy CheckTCP)
 
 extractConfig' :: (ContextReader m) => m NagiosConfig
-extractConfig' = extractConfig $ pluginDef def ^.name
+extractConfig' = extractConfig $ pluginDef def ^. name
 
 instance Stashable NagiosResult where
     key = key . summary
@@ -89,7 +89,7 @@ instance Extractable NagiosResult
 instance Runnable Command NagiosResult where
     exec cmd =
      do cmdPath <- commandPath
-        let shell = defaultShellCommand {
+        let shell = (defaultShellCommand (key cmd)) {
                       shellCommand      = cmdPath
                     , shellArgs         = makeArgs
                     , shellSuccessCodes = [0,1,2]
@@ -103,19 +103,19 @@ instance Runnable Command NagiosResult where
                 2 -> nagresult Critical
                 _ -> error "ShellCommand should have failed ExitCode match."
       where
-        makeArgs = ["-H", cmd^.host, "-p", portS $ cmd^.port]
+        makeArgs = ["-H", cmd ^. host, "-p", portS $ cmd ^. port]
         portS (Just p) = tshow p
         portS Nothing = ""
         commandPath = do
             nagconf <- extractConfig'
-            return $ nagiosPluginsPath nagconf </> convert (cmd^.shellCom)
+            return $ nagiosPluginsPath nagconf </> convert (cmd ^. shellCom)
 
 instance Stashable CheckTCP where
-    key c = c^.host ++ ":" ++ tshow (c^.port)
+    key c = c ^. host ++ ":" ++ tshow (c ^. port)
 
 instance Extractable CheckTCP
 
 instance Runnable CheckTCP NagiosResult where
     exec cmd = runEitherT $
         (resultSummary.resultOf .~ Action cmd) <$>
-            tryExecET (Command (cmd^.host) (Just $ cmd^.port) "check_tcp")
+            tryExecET (Command (cmd ^. host) (Just $ cmd ^. port) "check_tcp")

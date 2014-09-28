@@ -7,7 +7,8 @@ module FreeAgent.Core.Action.CompositionSpec (main, spec) where
 
 import           FreeAgent.AgentPrelude
 import qualified Prelude as P
-import           FreeAgent.Core.Internal.Lenses
+import           FreeAgent.Core
+import           FreeAgent.Core.Lenses
 import           FreeAgent.Core.Action.Composition
 
 import           FreeAgent.TestHelper
@@ -43,7 +44,7 @@ spec = do
                     `thenExec` slowTestAction
                     `thenExec` slowTestAction
                 let Just (ResultList _ [one, _, _, two]) = extract results
-                let diff = diffUTCTime (two^.to summary.timestamp) (one^.to summary.timestamp)
+                let diff = diffUTCTime (two ^. to summary.timestamp) (one ^. to summary.timestamp)
                 return (diff > microsecondsToNominalDiffTime 30000)
             `shouldReturn` True
 
@@ -55,7 +56,7 @@ spec = do
                     `whileExec` slowTestAction
                     `whileExec` slowTestAction
                 let Just (ResultList _ [one, _, _, two]) = extract results
-                let diff = diffUTCTime (two^.to summary.timestamp) (one^.to summary.timestamp)
+                let diff = diffUTCTime (two ^. to summary.timestamp) (one ^. to summary.timestamp)
                 return (diff < (microsecondsToNominalDiffTime 5000))
             `shouldReturn` True
 
@@ -65,7 +66,7 @@ spec = do
                     planExec (testFailAction "will fail")
                     `onFailure` (testFailAction "will recover")
                 let Just (ResultList _ [result']) = extract results
-                return $ result'^.to summary.text
+                return $ result' ^. to summary.text
             `shouldReturn` "onFailure called"
 
 

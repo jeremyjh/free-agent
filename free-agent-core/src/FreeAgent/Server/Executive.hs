@@ -1,21 +1,14 @@
-{-# LANGUAGE DeriveDataTypeable     #-}
-{-# LANGUAGE DeriveGeneric          #-}
-{-# LANGUAGE FlexibleContexts       #-}
-{-# LANGUAGE FlexibleInstances      #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE MultiParamTypeClasses  #-}
-{-# LANGUAGE NoImplicitPrelude      #-}
-{-# LANGUAGE OverloadedStrings      #-}
-{-# LANGUAGE ScopedTypeVariables    #-}
-{-# LANGUAGE TemplateHaskell        #-}
-{-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleContexts         #-}
+{-# LANGUAGE FlexibleInstances, FunctionalDependencies                   #-}
+{-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude, OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes, ScopedTypeVariables, StandaloneDeriving        #-}
+{-# LANGUAGE TemplateHaskell, TypeFamilies                               #-}
 
 
 module FreeAgent.Server.Executive
     ( execServer
     , StoreAction(..)
+    , QueryActions(..)
     , UnregisterAction(..)
     , ExecuteStored(..)
     , AddListener(..)
@@ -30,21 +23,21 @@ where
 
 import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Action
-import           FreeAgent.Database.AcidState
 import           FreeAgent.Core.Internal.Lenses
-import           FreeAgent.Process                     as Process
+import           FreeAgent.Database.AcidState
+import           FreeAgent.Process                  as Process
+import           FreeAgent.Server.Executive.History hiding (serverName)
 import           FreeAgent.Server.ManagedAgent
-import           FreeAgent.Server.Executive.History    hiding (serverName)
 
 
-import           Control.Monad.State                   (StateT)
-import           Control.Monad.Reader (ask)
+import           Control.Monad.Reader               (ask)
+import           Control.Monad.State                (StateT)
 import           Data.Binary
-import qualified Data.Map.Strict                       as Map
+import qualified Data.Map.Strict                    as Map
 
-import           Control.Distributed.Static            (unclosure)
-import           Control.Error                         ((!?), hoistEither, (??))
-import           Data.Default                          (Default(..))
+import           Control.Distributed.Static         (unclosure)
+import           Control.Error                      (hoistEither, (!?), (??))
+import           Data.Default                       (Default (..))
 
 -- -----------------------------
 -- Types
@@ -54,7 +47,7 @@ type RunningActions = Map Key ProcessId
 type StoredAction = (Action, UTCTime)
 
 data ExecPersist
-  = ExecPersist { _persistActions :: Map Key StoredAction
+  = ExecPersist { _persistActions   :: Map Key StoredAction
                 , _persistListeners :: [Closure Listener]
                 } deriving (Show, Typeable)
 
@@ -110,6 +103,9 @@ deleteAction key' =
 getAction :: Key -> Query ExecPersist (Maybe StoredAction)
 getAction key' = views actions (Map.lookup key')
 
+allActions :: Query ExecPersist [Action]
+allActions = views actions (fmap (fst . snd) . Map.toList)
+
 putListener :: Closure Listener -> Update ExecPersist ()
 putListener listener = listeners %= (:) listener
 
@@ -117,32 +113,40 @@ getPersist :: Query ExecPersist ExecPersist
 getPersist = ask
 
 -- we have to make the splices near the top of the file
-$(makeAcidic ''ExecPersist ['putAction, 'getAction, 'deleteAction, 'putListener
+$(makeAcidic ''ExecPersist ['putAction, 'getAction, 'deleteAction,'allActions, 'putListener
                            ,'getPersist])
 
 -- -----------------------------
 -- API
 -- -----------------------------
 
-data StoreAction = StoreAction Action | StoreNewerAction Action UTCTime
+data StoreAction = StoreAction Action
+                 | StoreNewerAction Action UTCTime
+                 | StoreActions [Action]
       deriving (Show, Typeable, Generic)
 
 instance Binary StoreAction
 
-instance ServerCall StoreAction () ExecState where
+instance ServerCall StoreAction where
+    type CallState StoreAction = ExecState
+    type CallResponse StoreAction = ()
     callName _ = serverName
     respond (StoreAction action')  =
         do now <- getCurrentTime
            update (PutAction (action',now))
     respond (StoreNewerAction action' time) =
         update (PutAction (action', time))
+    respond (StoreActions actions')  =
+        do now <- getCurrentTime
+           forM_ actions' $ \action' -> update (PutAction (action',now))
 
 data UnregisterAction = UnregisterAction !Key
       deriving (Show, Typeable, Generic)
 
 instance Binary UnregisterAction
 
-instance ServerCall UnregisterAction () ExecState where
+instance ServerCall UnregisterAction where
+    type CallState UnregisterAction = ExecState
     callName _ = serverName
     respond (UnregisterAction key')  =
         update (DeleteAction key')
@@ -153,14 +157,17 @@ data ExecuteStored = ExecuteStored !Key
 
 instance Binary ExecuteStored
 
-instance ServerCall ExecuteStored (Either ExecFail Result) ExecState where
+instance ServerCall ExecuteStored where
+    type CallState ExecuteStored = ExecState
+    type CallResponse ExecuteStored = Either ExecFail Result
     callName _ = serverName
     respond cmd@(ExecuteStored key') =
         runLogEitherT cmd $
-         do (action', _) <-  query (GetAction key') !? ActionNotFound key'
-            doExec action'
+          do (action', _) <-  query (GetAction key') !? ActionNotFound key'
+             doExec action'
 
-instance ServerCast ExecuteStored ExecState where
+instance ServerCast ExecuteStored where
+    type CastState ExecuteStored = ExecState
     castName _ = serverName
     handle = void . respond
 
@@ -170,16 +177,29 @@ data AddListener = AddListener (Closure Listener)
 instance Binary AddListener
 instance NFData AddListener
 
-instance ServerCast AddListener ExecState where
+instance ServerCast AddListener where
+    type CastState AddListener = ExecState
     castName _ = serverName
     handle (AddListener cl) =
-     do rt <- viewConfig remoteTable
-        case unclosure rt cl of
-            Left msg -> [qwarn|AddListener failed! Could not evaluate
-                          new listener closure: #{msg}|]
-            Right listener -> do
-                listeners %= (:) listener
-                update (PutListener cl)
+      do rt <- viewConfig remoteTable
+         case unclosure rt cl of
+             Left msg -> [qwarn|AddListener failed! Could not evaluate
+                           new listener closure: #{msg}|]
+             Right listener -> do
+                 listeners %= (:) listener
+                 update (PutListener cl)
+
+data QueryActions = QueryActions
+    deriving (Show, Eq, Typeable, Generic)
+
+instance Binary QueryActions
+instance NFData QueryActions
+
+instance ServerCall QueryActions where
+    type CallState QueryActions = ExecState
+    type CallResponse QueryActions = [Action]
+    callName _ = serverName
+    respond QueryActions  = query AllActions
 
 -- | Execute 'Action' corresponding to 'Key' with the current
 -- target server and extract the concrete result (if possible) to
@@ -244,6 +264,7 @@ execServer =
             , registerCall (Proxy :: Proxy StoreAction)
             , registerCall (Proxy :: Proxy UnregisterAction)
             , registerCall (Proxy :: Proxy ExecuteStored)
+            , registerCall (Proxy :: Proxy QueryActions)
             , registerCast (Proxy :: Proxy ExecuteStored)
             , registerCast (Proxy :: Proxy AddListener)
             ]
@@ -253,7 +274,7 @@ execServer =
             acid' <- openOrGetDb "agent-executive" def def
             persist <- query' acid' GetPersist
             rt <- viewConfig remoteTable
-            let cls = rights $ map (unclosure rt) (persist^.listeners)
+            let cls = rights $ map (unclosure rt) (persist ^. listeners)
             return $ ExecState (Map.fromList []) (listeners' ++ cls) acid'
 
 

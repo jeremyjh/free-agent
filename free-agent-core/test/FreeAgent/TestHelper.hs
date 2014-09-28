@@ -18,7 +18,7 @@ module FreeAgent.TestHelper
     , texpect
     ) where
 
-import FreeAgent
+import FreeAgent.Core
 import FreeAgent.AgentPrelude
 import FreeAgent.Core.Internal.Lenses
 import FreeAgent.Server
@@ -121,10 +121,10 @@ createContext (name', config', plugins') = do
 
 
 setup :: IO ()
-setup = void $ system ("rm -rf " ++ (convert $ appConfig^.dbPath))
+setup = void $ system ("rm -rf " ++ (convert $ appConfig ^. dbPath))
 
 setupConfig :: AgentConfig -> IO ()
-setupConfig config' = void $ system ("rm -rf " ++ (convert $ config'^.dbPath))
+setupConfig config' = void $ system ("rm -rf " ++ (convert $ config' ^. dbPath))
 
 nosetup :: IO ()
 nosetup = return ()

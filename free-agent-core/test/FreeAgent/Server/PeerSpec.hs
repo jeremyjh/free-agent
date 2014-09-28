@@ -44,7 +44,7 @@ spec =
     describe "FreeAgent.Peer" $ do
         it "is started by Core supervisor" $ do
             testAgent $ do
-                Just _ <- whereis $ peerServer^.name
+                Just _ <- whereis $ peerServer ^. name
                 return True
             `shouldReturn` True
 
@@ -95,7 +95,7 @@ spec =
                 nr <- texpect :: Agent Result
                 let Just (NagiosResult _ status) = extract nr
 
-                let aname = res ^.to summary.resultOf.to key
+                let aname = res  ^. to summary.resultOf.to key
 
                 -- we're done, tell the two "remotes" to exit
                 Right all3 <- queryPeerServers serverName (Set.fromList[def])
@@ -117,9 +117,9 @@ testAgent ma = testRunAgent setup 1000 appConfig appPlugins ma
 
 setup :: IO ()
 setup = do
-    void $ system ("rm -rf " ++ (convert $ appConfig^.dbPath))
-    void $ system ("rm -rf " ++ (convert $ appConfig2^.dbPath))
-    void $ system ("rm -rf " ++ (convert $ appConfigTX^.dbPath))
+    void $ system ("rm -rf " ++ (convert $ appConfig ^. dbPath))
+    void $ system ("rm -rf " ++ (convert $ appConfig2 ^. dbPath))
+    void $ system ("rm -rf " ++ (convert $ appConfigTX ^. dbPath))
 
 appConfig :: AgentConfig
 appConfig = Helper.appConfig & appendRemoteTable __remoteTable

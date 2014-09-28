@@ -59,14 +59,14 @@ library
         scientific >=0.3.3.0 && <0.4,
         base64-bytestring >=1.0.0.1 && <1.1
     exposed-modules:
+        FreeAgent.Core
         FreeAgent.AgentPrelude
-        FreeAgent
         FreeAgent.Database.AcidState
         FreeAgent.Core.Internal.Types
         FreeAgent.Orphans
+        FreeAgent.Core.Lenses
         FreeAgent.Core.Internal.Lenses
         FreeAgent.Process
-        FreeAgent.Core
         FreeAgent.Client.Peer
         FreeAgent.Server
         FreeAgent.Server.ManagedAgent

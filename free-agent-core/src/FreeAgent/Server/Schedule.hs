@@ -1,53 +1,56 @@
-{-# LANGUAGE DeriveDataTypeable     #-}
-{-# LANGUAGE DeriveGeneric          #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE MultiParamTypeClasses  #-}
-{-# LANGUAGE NoImplicitPrelude      #-}
-{-# LANGUAGE OverloadedStrings      #-}
-{-# LANGUAGE TemplateHaskell        #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleInstances     #-}
+{-# LANGUAGE FunctionalDependencies, MultiParamTypeClasses            #-}
+{-# LANGUAGE NoImplicitPrelude, OverloadedStrings, RecordWildCards    #-}
+{-# LANGUAGE ScopedTypeVariables, StandaloneDeriving, TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies                                             #-}
 
 
 module FreeAgent.Server.Schedule where
 
 import           FreeAgent.AgentPrelude
-import           FreeAgent.Database.AcidState
 import           FreeAgent.Core.Internal.Lenses
-import           FreeAgent.Orphans ()
+import           FreeAgent.Database.AcidState
+import           FreeAgent.Orphans                          ()
 import           FreeAgent.Process
+import           FreeAgent.Server.Executive                 (ExecuteStored (..))
 import           FreeAgent.Server.ManagedAgent
-import           FreeAgent.Server.Executive (ExecuteStored(..))
 
-import           Control.Monad.Reader (ask)
-import qualified Data.Map.Strict as Map
-import qualified Data.Set as Set
-import           Control.Monad.State (StateT)
-import           Control.Error (note)
+import           Control.Error                              (note)
+import           Control.Monad.Reader                       (ask)
+import           Control.Monad.State                        (StateT)
+import qualified Data.Map.Strict                            as Map
+import qualified Data.Set                                   as Set
 
 import           Control.Distributed.Process.Platform.Time
-import           Control.Distributed.Process.Platform.Timer
-       (Tick(..), cancelTimer, TimerRef, sendAfter)
+import           Control.Distributed.Process.Platform.Timer (Tick (..),
+                                                             TimerRef,
+                                                             cancelTimer,
+                                                             sendAfter)
 
-import           Data.Default (Default(..))
-import           Data.Attoparsec.Text (parseOnly)
-import           Data.Time.Clock (addUTCTime, diffUTCTime)
-import Data.Binary (Binary)
+import           Data.Aeson                                 (Result (..),
+                                                             Value (..),
+                                                             fromJSON, (.:?))
+import qualified Data.Aeson                                 as A
+import           Data.Aeson.TH                              (Options (..),
+                                                             defaultOptions,
+                                                             deriveJSON)
+import           Data.Attoparsec.Text                       (parseOnly)
+import           Data.Binary                                (Binary)
+import           Data.Char                                  as Char (toLower)
+import           Data.Default                               (Default (..))
+import           Data.Time.Clock                            (addUTCTime,
+                                                             diffUTCTime)
 import           System.Cron
-import           System.Cron.Parser (cronSchedule)
+import           System.Cron.Parser                         (cronSchedule)
 
 -- ---------Types-------------
 -- Types
 -- ---------------------------
 
 data Event
-  = Event { schedKey   :: !Key
-          , schedRecur :: !ScheduleRecurrence
-          , schedRetry :: !RetryOption
+  = Event { schedKey      :: !Key
+          , schedRecur    :: !ScheduleRecurrence
+          , schedRetry    :: !RetryOption
           , schedModified :: !UTCTime
           } deriving (Show, Eq, Typeable, Generic)
 
@@ -56,6 +59,42 @@ data ScheduleRecurrence
   | RecurInterval !Int           -- ^ execute every n milliseconds
   | OnceAt !UTCTime
   deriving (Show, Eq, Typeable, Generic)
+
+cronEvent :: Text -> Either String ScheduleRecurrence
+cronEvent format =
+    case parseOnly cronSchedule format of
+        Right sched -> Right $ RecurCron sched format
+        Left msg -> Left msg
+
+instance ToJSON ScheduleRecurrence where
+    toJSON (RecurCron _ expr) =
+        A.object ["recurCron" A..= expr]
+    toJSON (RecurInterval num) =
+        A.object ["recurInterval" A..= num]
+    toJSON (OnceAt time') =
+        A.object ["onceAt" A..= time']
+
+instance FromJSON ScheduleRecurrence where
+    parseJSON (Object value') =
+     do cron <- value' .:? "recurCron"
+        interval <- value' .:? "recurInterval"
+        once <- value' .:? "onceAt"
+        case cron of
+            Just expr ->
+                case cronEvent expr of
+                    Right recur -> return recur
+                    Left _ -> mzero
+            Nothing ->
+                case interval of
+                    Just i -> return (RecurInterval i)
+                    Nothing ->
+                        case once of
+                            Just jtime ->
+                                case fromJSON jtime of
+                                    Error _ -> mzero
+                                    Success time' -> return (OnceAt time')
+                            Nothing -> mzero
+    parseJSON _ = mzero
 
 instance Stashable Event where
     key = schedKey
@@ -79,16 +118,16 @@ data ScheduleFail = SCallFailed CallFail
               deriving (Show, Eq, Typeable, Generic)
 
 data SchedulePersist
-  = SchedulePersist { _persistEvents :: Map Key Event
-                    , _persistNextScheduled :: Set NextScheduled
+  = SchedulePersist { persistEvents        :: Map Key Event
+                    , persistNextScheduled :: Set NextScheduled
                     } deriving (Show, Typeable)
 
 instance Default SchedulePersist where
     def = SchedulePersist mempty Set.empty
 
 data ScheduleState
-   = ScheduleState { _stateAcid    :: !(AcidState SchedulePersist)
-                   , _stateTickerRef :: Maybe TimerRef
+   = ScheduleState { stateAcid      :: !(AcidState SchedulePersist)
+                   , stateTickerRef :: Maybe TimerRef
                    } deriving (Typeable, Generic)
 
 makeFields ''SchedulePersist
@@ -129,6 +168,9 @@ allCronEvents = Map.foldr crons [] <$> view events
                 cronFrom (RecurCron cron' _) = cron'
                 cronFrom _ = $(err "illegal pattern match")
 
+queryAllEvents :: Query SchedulePersist [Event]
+queryAllEvents = views events (snd . unzip . Map.toList)
+
 readyToRun :: UTCTime -> Update SchedulePersist (Set (UTCTime, Event))
 readyToRun now = do
     nextScheduled' <- use nextScheduled
@@ -162,7 +204,7 @@ nextScheduledTime = do
 
 -- we have to make the splices near the top of the file
 $(makeAcidic ''SchedulePersist ['getPersist, 'addEvent, 'scheduleLookupEvent
-                               , 'allCronEvents, 'readyToRun, 'nextScheduledTime
+                               , 'allCronEvents, 'queryAllEvents, 'readyToRun, 'nextScheduledTime
                                , 'scheduleRemoveEvent ])
 
 -- ---------API---------------
@@ -172,12 +214,9 @@ $(makeAcidic ''SchedulePersist ['getPersist, 'addEvent, 'scheduleLookupEvent
 -- | Advertise a Server on the local peer
 schedule :: MonadAgent agent
          => Key -> ScheduleRecurrence -> RetryOption
-         -> agent (Either ScheduleFail ())
-schedule !key' !recur !retry = do --TODO - why is call not forcing evaluation of NFData Event?
-    efail <- callServ (ScheduleAddEvent key' recur retry)
-    case efail of
-        Right result' -> return result'
-        Left failed -> return $ Left (SCallFailed failed)
+         -> agent (Either CallFail ())
+schedule key' recur retry =
+    callServ (ScheduleAddEvent key' recur retry)
 
 -- | Advertise a Server on the local peer
 unschedule :: MonadAgent agent
@@ -190,7 +229,7 @@ unschedule key' = do
         Left failed -> return $ Left (SCallFailed failed)
 
 lookupEvent :: MonadAgent agent
-          => Key -> agent (Either ScheduleFail Event)
+            => Key -> agent (Either ScheduleFail Event)
 lookupEvent key' = do
     emevent <- callServ (ScheduleLookupEvent key')
     case emevent of
@@ -201,30 +240,52 @@ lookupEvent key' = do
 -- Implementation
 -- ---------------------------
 data ScheduleAddEvent
-    = ScheduleAddEvent Key ScheduleRecurrence RetryOption
-    | ScheduleAddNewerEvent Key ScheduleRecurrence RetryOption UTCTime
+    = ScheduleAddEvent !Key !ScheduleRecurrence !RetryOption
+    | ScheduleAddEvents [Event]
+    | ScheduleAddNewerEvent !Key !ScheduleRecurrence !RetryOption !UTCTime
     deriving (Show, Typeable, Generic)
 
 instance Binary ScheduleAddEvent
 instance NFData ScheduleAddEvent where rnf = genericRnf
 
-instance ServerCall ScheduleAddEvent (Either ScheduleFail ()) ScheduleState where
+instance ServerCall ScheduleAddEvent where
+    type CallState ScheduleAddEvent = ScheduleState
+    type CallResponse ScheduleAddEvent = ()
     callName _ = serverName
+
     respond (ScheduleAddEvent key' recur retry) =
-     do now <- getCurrentTime
-        respond (ScheduleAddNewerEvent key' recur retry now)
-    respond cmd@(ScheduleAddNewerEvent key' recur retry time) =
-        runLogEitherT cmd $
-         do let event = Event key' recur retry time
-            () <- update (AddEvent $ calcNextScheduled time event)
-            lift scheduleNextTick
+      do now <- getCurrentTime
+         respond (ScheduleAddNewerEvent key' recur retry now)
+    respond (ScheduleAddNewerEvent key' recur retry time) =
+      do let event = Event key' recur retry time
+         () <- update (AddEvent $ calcNextScheduled time event)
+         scheduleNextTick
+    respond (ScheduleAddEvents events') =
+      do now <- getCurrentTime
+         forM_ events' $ \event -> update (AddEvent $ calcNextScheduled now event)
+         scheduleNextTick
+
+data ScheduleQueryEvents = ScheduleQueryEvents
+    deriving (Show, Typeable, Generic)
+
+instance Binary ScheduleQueryEvents
+instance NFData ScheduleQueryEvents where rnf = genericRnf
+
+instance ServerCall ScheduleQueryEvents where
+    type CallState ScheduleQueryEvents = ScheduleState
+    type CallResponse ScheduleQueryEvents = [Event]
+    callName _ = serverName
+
+    respond _ = query QueryAllEvents
 
 deriving instance Generic ScheduleLookupEvent
 deriving instance Show ScheduleLookupEvent
 instance NFData ScheduleLookupEvent where rnf = genericRnf
 instance Binary ScheduleLookupEvent
 
-instance ServerCall ScheduleLookupEvent (Maybe Event) ScheduleState where
+instance ServerCall ScheduleLookupEvent where
+    type CallState ScheduleLookupEvent = ScheduleState
+    type CallResponse ScheduleLookupEvent = Maybe Event
     callName _ = serverName
     respond = query
 
@@ -233,7 +294,9 @@ deriving instance Show ScheduleRemoveEvent
 instance Binary ScheduleRemoveEvent
 instance NFData ScheduleRemoveEvent where rnf = genericRnf
 
-instance ServerCall ScheduleRemoveEvent (Either ScheduleFail ()) ScheduleState where
+instance ServerCall ScheduleRemoveEvent where
+    type CallState ScheduleRemoveEvent = ScheduleState
+    type CallResponse ScheduleRemoveEvent = Either ScheduleFail ()
     callName _ = serverName
     respond cmd = runLogEitherT cmd $ update cmd
 
@@ -253,13 +316,14 @@ scheduleServer =
             [ registerCall (Proxy :: Proxy ScheduleRemoveEvent)
             , registerCall (Proxy :: Proxy ScheduleAddEvent)
             , registerCall (Proxy :: Proxy ScheduleLookupEvent)
+            , registerCall (Proxy :: Proxy ScheduleQueryEvents)
             ],
             infoHandlers =
             [ agentInfoHandler $ \ Tick -> onTick
             ],
             shutdownHandler =
                 \ s _ ->
-                case s^.serverState.tickerRef of
+                case s ^. serverState.tickerRef of
                    Just ref -> cancelTimer ref
                    Nothing -> return ()
         }
@@ -306,11 +370,6 @@ doRemoveSchedule :: Key -> ScheduleAgentET ()
 doRemoveSchedule key' =
     update (ScheduleRemoveEvent key')
 
-cronEvent :: Text -> Either String ScheduleRecurrence
-cronEvent format =
-    case parseOnly cronSchedule format of
-        Right sched -> Right $ RecurCron sched format
-        Left msg -> Left msg
 
 instance IsString ScheduleRecurrence where
     fromString format =
@@ -325,10 +384,21 @@ deriveSerializers ''RetryOption
 instance Binary ScheduleFail
 instance NFData ScheduleFail where rnf = genericRnf
 
-deriveSerializers ''ScheduleRecurrence
+instance Binary ScheduleRecurrence
+instance NFData ScheduleRecurrence where rnf = genericRnf
+deriveSafeStore ''ScheduleRecurrence
+
 
 instance Binary Event
 instance NFData Event where rnf = genericRnf
+-- we want to customize the JSON field names for ShellCommand
+-- so it looks nicer in Yaml, which may be very frequently used
+--
+deriveJSON (defaultOptions {fieldLabelModifier = \field ->
+                                let (x:xs) = drop 5 field
+                                in Char.toLower x : xs
+                           })
+           ''Event
 deriveSafeStore ''Event
 
 deriveSafeStore ''SchedulePersist

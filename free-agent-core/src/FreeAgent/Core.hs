@@ -19,11 +19,13 @@ module FreeAgent.Core
     , manageResource
     , lookupResource
     , withTarget
+    , withRemoteNode
+    , module X
     ) where
 
 import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Action
-    (registerPluginMaps, register, actionType)
+    (registerPluginMaps, registerAction, actionType)
 import           FreeAgent.Core.Action.ShellCommand    (ShellCommand)
 import           FreeAgent.Core.Action.Composition     (ActionPlan)
 import           FreeAgent.Core.Internal.Lenses
@@ -48,6 +50,31 @@ import           Network.Transport.TCP
 
 import Control.Monad.Logger (runStdoutLoggingT)
 
+import qualified FreeAgent.Core.Internal.Types as X
+    ( --types and constructors
+      PluginDef(..)
+    , AgentConfig(..)
+
+    , Action(..)
+    , Result(..)
+    , ResultSummary(..)
+    , RunnableFail(..)
+
+    , Stashable(..)
+    , Extractable(..)
+    , Runnable(..)
+    , Resulting(..)
+
+    -- types only
+    , PluginSet
+    , Agent
+    , AgentContext
+    , Key
+    )
+import qualified FreeAgent.Core.Action as X
+import qualified FreeAgent.Process as X
+import           FreeAgent.Client.Peer as X
+
 -- need this here so we include Core.pluginDef by default
 instance Default PluginSet where
     def = pluginSet (return ())
@@ -56,11 +83,11 @@ instance Default PluginSet where
 runAgent :: AgentConfig -> PluginSet -> Agent () -> IO ()
 runAgent config' plugins' ma =
     catchAny
-        ( do registerPluginMaps (plugins'^.unwrappersMap)
+        ( do registerPluginMaps (plugins' ^. unwrappersMap)
              statesMV <- newMVar mempty
              bracket openTransport (closeResources statesMV)
                  (\ tcp ->
-                    do node <- newLocalNode tcp (config'^.remoteTable)
+                    do node <- newLocalNode tcp (config' ^. remoteTable)
                        let context' = AgentContext
                                           { contextAgentConfig = config'
                                           , contextPlugins = plugins'
@@ -83,7 +110,7 @@ runAgent config' plugins' ma =
         )
   where
     openTransport = do
-        etcp <- createTransport (config'^.nodeHost) (config'^.nodePort) defaultTCPParameters
+        etcp <- createTransport (config' ^. nodeHost) (config' ^. nodePort) defaultTCPParameters
         case etcp of
             Right tcp -> return tcp
             Left msg -> throwIO msg
@@ -124,7 +151,7 @@ withAgent ctxt ma =
 -- | 'forkProcess' analogue for the Agent monad
 forkAgent :: AgentContext -> Agent () -> IO ProcessId
 forkAgent context' =
-    forkProcess (context'^.processNode) . withAgent context'
+    forkProcess (context' ^. processNode) . withAgent context'
 
 -- | Spawn a new process in the Agent monad.
 spawnAgent :: AgentContext -> Agent a -> Process ProcessId
@@ -245,8 +272,14 @@ lookupResource name' = do
 -- | Register the Core Actions
 pluginDef :: PluginDef
 pluginDef = definePlugin "Core" () (return []) [] $
- do register (actionType :: Proxy ShellCommand)
-    register (actionType :: Proxy ActionPlan)
+ do registerAction (actionType :: Proxy ShellCommand)
+    registerAction (actionType :: Proxy ActionPlan)
+
+-- | Connect to a remote node specified by "host:port" and execute
+-- an Agent computation with that node as the target.
+withRemoteNode :: MonadAgent agent => String -> agent a -> agent a
+withRemoteNode nodestr ma =
+    withTarget (RemoteCache nodestr) $ warmRemoteCache nodestr >> ma
 
 withTarget :: MonadAgent agent => Target -> agent a -> agent a
 withTarget target =

@@ -21,6 +21,11 @@ import           Control.Concurrent.Lifted (threadDelay)
 import           Control.Distributed.Process.Platform.Timer (Tick(..))
 import           Test.Hspec
 
+import Data.Yaml as Yaml
+import Data.Aeson as Aeson
+import qualified Data.ByteString.Lazy.Char8 as LBS
+import qualified Data.ByteString.Char8 as BS
+
 main :: IO ()
 main = hspec spec
 
@@ -36,7 +41,9 @@ spec =  --parallel $
         it "can schedule and find an event" $ do
             testAgent $ do
                 Right () <- schedule (key testAction) "@hourly" Never
-                Right _ <- lookupEvent (key testAction)
+                Right ev <- lookupEvent (key testAction)
+                liftIO $ BS.putStrLn $ Yaml.encode ev
+                liftIO $ LBS.putStrLn $ Aeson.encode ev
                 return True
             `shouldReturn` True
 
@@ -44,11 +51,11 @@ spec =  --parallel $
             testAgent $ do
                 Right () <- schedule "test older" "@hourly" Never
                 Right old <- lookupEvent "test older"
-                Right (Right ()) <- callServ $
-                                        ScheduleAddNewerEvent "test older"
-                                                              "@hourly"
-                                                              (Fixed 1 10)
-                                                              (schedModified old)
+                Right () <- callServ $
+                                ScheduleAddNewerEvent "test older"
+                                "@hourly"
+                                (Fixed 1 10)
+                                (schedModified old)
                 Right stillold <- lookupEvent "test older"
                 return (schedRetry stillold)
             `shouldReturn` Never
