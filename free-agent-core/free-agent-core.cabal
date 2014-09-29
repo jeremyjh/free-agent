@@ -77,7 +77,6 @@ library
         FreeAgent.Core.Action
         FreeAgent.Core.Action.Composition
         FreeAgent.Core.Action.ShellCommand
-        FreeAgent.Plugins.Nagios
         Control.Monad.Logger.Quote
     exposed: True
     buildable: True

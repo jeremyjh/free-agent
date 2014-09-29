@@ -11,7 +11,6 @@ import           FreeAgent.Core
 import           FreeAgent.Process
 import           FreeAgent.Server.Executive as Exec
 import           FreeAgent.Core.Internal.Lenses
-import           FreeAgent.Plugins.Nagios as Nagios
 import           FreeAgent.Server (runAgentServers)
 import           FreeAgent.Server.Peer
 import           FreeAgent.Client.Peer

@@ -8,7 +8,6 @@ import           FreeAgent.AgentPrelude
 import qualified Prelude as P
 import           FreeAgent.Core
 import           FreeAgent.Core.Lenses
-import           FreeAgent.Plugins.Nagios
 import           FreeAgent.Core.Action.ShellCommand
 
 import           FreeAgent.TestHelper
@@ -22,12 +21,6 @@ main = hspec spec
 spec :: Spec
 spec =
     describe "ShellCommand - as used by CheckTCP" $ do
-        it "'succeeds' on RC 3 - Nagios Critical" $ do
-            testAgent $ do
-                Right (NagiosResult _ status) <- exec $ realCheckTCP {_checktcpPort = 632}
-                return status
-            `shouldReturn` Critical
-
         it "can set environment variables, pass args and match stdout" $ do
             testAgent $ do
                 let (env1, val1) = ("env1", "val1")

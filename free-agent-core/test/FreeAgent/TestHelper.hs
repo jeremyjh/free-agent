@@ -28,7 +28,6 @@ import FreeAgent.Fixtures (testPluginDef)
 
 import Data.Map.Strict as Map
 
-import FreeAgent.Plugins.Nagios as Nagios
 import Control.Concurrent.Lifted (threadDelay, fork)
 import Control.Exception (throw)
 import System.Process (system)
@@ -44,10 +43,6 @@ appPlugins :: PluginSet
 appPlugins =
     pluginSet $ do
         addPlugin $ testPluginDef
-        addPlugin $ Nagios.pluginDef def {
-            -- override default plugin-specific config
-            nagiosPluginsPath = "/usr/lib/nagios/plugins"
-        }
 
 -- helper for running agent and getting results out of
 -- the Process through partially applied putMVar

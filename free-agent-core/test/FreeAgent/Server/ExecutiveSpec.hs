@@ -16,7 +16,6 @@ import           FreeAgent.Core
 import           FreeAgent.Core.Action.ShellCommand
 import           FreeAgent.Server.ManagedAgent
 import           FreeAgent.Server.Executive.History
-import           FreeAgent.Plugins.Nagios as Nagios
 import           FreeAgent.Server.Executive as Exec
 
 import           FreeAgent.TestHelper hiding (appConfig, appPlugins)
@@ -222,12 +221,12 @@ startListener sname loop = do
             apid <- liftProcess $ spawnLocal $ loop (0::Int)
             Process.register sname apid
 
-testDef :: NagiosConfig -> PluginDef
-testDef conf = definePlugin "ExecSpec"
-                            conf
-                            ((++) <$> testActionListener <*> testResultListener)
-                            []
-                            (return ())
+testDef :: PluginDef
+testDef = definePlugin "ExecSpec"
+                       (asText "")
+                       ((++) <$> testActionListener <*> testResultListener)
+                       []
+                       (return ())
 
 
 -- use a local config here because we are wiring up our own test listener
@@ -238,10 +237,6 @@ appConfig = Helper.appConfig & appendRemoteTable __remoteTable
 appPlugins :: PluginSet
 appPlugins =
     pluginSet $ do
-        addPlugin $ Nagios.pluginDef def {
-            -- override default plugin-specific config
-            nagiosPluginsPath = "/usr/lib/nagios/plugins"
-        }
-        addPlugin $ testDef def
+        addPlugin $ testDef
 
 appConfigNL = appConfig & minLogLevel .~ LevelOther ""

@@ -9,7 +9,6 @@ import           FreeAgent.Core
 import           Test.Hspec
 
 import           FreeAgent.Core.Lenses
-import           FreeAgent.Plugins.Nagios
 
 import           FreeAgent.TestHelper
 import           FreeAgent.Fixtures

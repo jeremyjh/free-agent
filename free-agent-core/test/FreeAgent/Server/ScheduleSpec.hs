@@ -21,11 +21,6 @@ import           Control.Concurrent.Lifted (threadDelay)
 import           Control.Distributed.Process.Platform.Timer (Tick(..))
 import           Test.Hspec
 
-import Data.Yaml as Yaml
-import Data.Aeson as Aeson
-import qualified Data.ByteString.Lazy.Char8 as LBS
-import qualified Data.ByteString.Char8 as BS
-
 main :: IO ()
 main = hspec spec
 
@@ -42,8 +37,6 @@ spec =  --parallel $
             testAgent $ do
                 Right () <- schedule (key testAction) "@hourly" Never
                 Right ev <- lookupEvent (key testAction)
-                liftIO $ BS.putStrLn $ Yaml.encode ev
-                liftIO $ LBS.putStrLn $ Aeson.encode ev
                 return True
             `shouldReturn` True
 

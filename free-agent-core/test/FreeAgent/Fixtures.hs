@@ -8,9 +8,10 @@
 
 module FreeAgent.Fixtures
     ( checkTCP
-    , realCheckTCP
     , TestCheckTCP(..)
     , TestAction(..)
+    , NagiosResult(..)
+    , CommandResult(..)
     , testAction
     , testFailAction
     , slowTestAction
@@ -21,8 +22,8 @@ module FreeAgent.Fixtures
 import FreeAgent.Core
 import FreeAgent.Core.Action
 import FreeAgent.AgentPrelude
--- import all your plugins here
-import FreeAgent.Plugins.Nagios as Nagios
+import FreeAgent.Core.Lenses
+
 import Control.Concurrent.Lifted (threadDelay)
 
 data TestAction = TestAction Text Int
@@ -75,6 +76,25 @@ data TestCheckTCP = TestCheckTCP Text Int
 instance Stashable TestCheckTCP where
     key (TestCheckTCP host' port')= host' ++ ":" ++ tshow port'
 
+data CommandResult = OK | Warning | Critical | Unknown
+    deriving (Show, Eq, Typeable, Generic)
+deriveSerializers ''CommandResult
+
+data NagiosResult = NagiosResult
+    { _nagresResultSummary :: ResultSummary
+    , _nagresResult :: CommandResult
+    } deriving (Show, Eq, Typeable, Generic)
+
+makeFields ''NagiosResult
+deriveSerializers ''NagiosResult
+
+instance Stashable NagiosResult where
+    key = key . summary
+
+instance Resulting NagiosResult where
+    summary (NagiosResult s _) = s
+
+instance Extractable NagiosResult
 instance Extractable TestCheckTCP
 
 instance Runnable TestCheckTCP NagiosResult where
@@ -85,9 +105,6 @@ instance Runnable TestCheckTCP NagiosResult where
 -- common test fixture
 checkTCP :: TestCheckTCP
 checkTCP = TestCheckTCP "localhost" 631
-
-realCheckTCP :: CheckTCP
-realCheckTCP = CheckTCP "localhost" 631
 
 testAction :: TestAction
 testAction = TestAction "test action" 0
