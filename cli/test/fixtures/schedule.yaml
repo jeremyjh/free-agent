@@ -3,6 +3,6 @@ event:
     tag: Never
     contents: []
   modified: 2014-09-27T16:54:56.337Z
-  key: test action
+  key: hello 
   recur:
     recurCron: ! '@hourly'
