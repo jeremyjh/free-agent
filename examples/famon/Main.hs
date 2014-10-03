@@ -29,7 +29,7 @@ appPlugins =
 appConfig :: AgentConfig
 appConfig = def & dbPath .~ "/tmp/examples-famon"
                 & nodePort .~ "8979"
-                & minLogLevel .~ LevelDebug
+               {-& minLogLevel .~ LevelDebug-}
 
 main :: IO ()
 main = faMain appConfig appPlugins

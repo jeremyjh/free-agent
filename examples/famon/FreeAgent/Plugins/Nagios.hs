@@ -25,6 +25,9 @@ import           FreeAgent.AgentPrelude
 
 
 import           Data.Default      (Default (..))
+import System.Process (readProcessWithExitCode)
+import System.Exit (ExitCode(..))
+import Control.Concurrent (forkIO)
 
 -- | Plugin-specific configuration
 data NagiosConfig = NagiosConfig {nagiosPluginsPath :: FilePath}
@@ -116,6 +119,9 @@ instance Stashable CheckTCP where
 instance Extractable CheckTCP
 
 instance Runnable CheckTCP NagiosResult where
-    exec cmd = runEitherT $
+    exec cmd =
+        {-do (ExitSuccess, _, _) <- liftIO $ readProcessWithExitCode "/bin/sleep" ["5"] ""-}
+           {-return (Right undefined)-}
+        runEitherT $
         (resultSummary.resultOf .~ Action cmd) <$>
             tryExecET (Command (cmd ^. host) (Just $ cmd ^. port) "check_tcp")

@@ -11,6 +11,7 @@ module FreeAgent.Server.Executive
     , QueryActions(..)
     , UnregisterAction(..)
     , ExecuteStored(..)
+    , ExecuteBatch(..)
     , AddListener(..)
     , executeStored
     , executeAction
@@ -23,6 +24,7 @@ where
 
 import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Action
+import           FreeAgent.Core (spawnAgent)
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Database.AcidState
 import           FreeAgent.Process                  as Process
@@ -31,7 +33,8 @@ import           FreeAgent.Server.ManagedAgent
 
 
 import           Control.Monad.Reader               (ask)
-import           Control.Monad.State                (StateT)
+import Control.Monad.State (StateT, runStateT)
+import Control.Monad.State.Class as State
 import           Data.Binary
 import qualified Data.Map.Strict                    as Map
 
@@ -60,6 +63,7 @@ data ExecState
   = ExecState { _stateRunning   :: !RunningActions
               , _stateListeners :: ![Listener]
               , _stateAcid      :: !(AcidState ExecPersist)
+              , _stateExecutedCount  :: !Int
               } deriving (Typeable, Generic)
 
 data ExecFail = ECallFailed CallFail
@@ -116,6 +120,7 @@ getPersist = ask
 $(makeAcidic ''ExecPersist ['putAction, 'getAction, 'deleteAction,'allActions, 'putListener
                            ,'getPersist])
 
+makeFields ''ExecState
 -- -----------------------------
 -- API
 -- -----------------------------
@@ -124,6 +129,7 @@ data StoreAction = StoreAction Action
                  | StoreNewerAction Action UTCTime
                  | StoreActions [Action]
       deriving (Show, Typeable, Generic)
+
 
 instance Binary StoreAction
 
@@ -162,14 +168,35 @@ instance ServerCall ExecuteStored where
     type CallResponse ExecuteStored = Either ExecFail Result
     callName _ = serverName
     respond cmd@(ExecuteStored key') =
+     do executedCount %= (+) 1
         runLogEitherT cmd $
-          do (action', _) <-  query (GetAction key') !? ActionNotFound key'
-             doExec action'
+         do (action', _) <-  query (GetAction key') !? ActionNotFound key'
+            doExec action'
 
 instance ServerCast ExecuteStored where
     type CastState ExecuteStored = ExecState
     castName _ = serverName
-    handle = void . respond
+    handle cmd =
+     do executedCount %= (+) 1
+        void . spawnLocal . void $ respond cmd
+
+data ExecuteBatch = ExecuteBatch ![Key]
+    deriving (Show, Typeable, Generic)
+
+instance Binary ExecuteBatch
+instance NFData ExecuteBatch where rnf = genericRnf
+
+instance ServerCast ExecuteBatch where
+    type CastState ExecuteBatch = ExecState
+    castName _ = serverName
+    handle (ExecuteBatch keys) =
+        forM_ keys $ \key' ->
+         do executedCount %= (+) 1
+            use executedCount >>= print
+            ctxt <- askContext
+            s <- State.get
+            Just (action', _) <-  query (GetAction key')
+            liftProcess $ void . spawnAgent ctxt . void $ runStateT (runEitherT (doExec action')) s
 
 data AddListener = AddListener (Closure Listener)
     deriving (Show, Typeable, Generic)
@@ -266,8 +293,11 @@ execServer =
             , registerCall (Proxy :: Proxy ExecuteStored)
             , registerCall (Proxy :: Proxy QueryActions)
             , registerCast (Proxy :: Proxy ExecuteStored)
+            , registerCast (Proxy :: Proxy ExecuteBatch)
             , registerCast (Proxy :: Proxy AddListener)
             ]
+          , shutdownHandler = \(AgentState _ s) _ ->
+                putStrLn $ "Executed # Actions: " ++ convert (s ^. executedCount)
         }
   where initExec = do
             listeners' <- join $ viewContext $ plugins.listeners
@@ -275,7 +305,7 @@ execServer =
             persist <- query' acid' GetPersist
             rt <- viewConfig remoteTable
             let cls = rights $ map (unclosure rt) (persist ^. listeners)
-            return $ ExecState (Map.fromList []) (listeners' ++ cls) acid'
+            return $ ExecState (Map.fromList []) (listeners' ++ cls) acid' 0
 
 
 type ExecAgent a = EitherT ExecFail (StateT ExecState Agent) a
@@ -307,7 +337,6 @@ doExec action' = do
 
 
 deriveSafeStore ''ExecPersist
-makeFields ''ExecState
 
 instance NFData ExecFail where rnf = genericRnf
 instance NFData StoreAction where rnf = genericRnf

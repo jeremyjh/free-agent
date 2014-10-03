@@ -12,7 +12,7 @@ import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Database.AcidState
 import           FreeAgent.Orphans                          ()
 import           FreeAgent.Process
-import           FreeAgent.Server.Executive                 (ExecuteStored (..))
+import           FreeAgent.Server.Executive                 (ExecuteBatch(..))
 import           FreeAgent.Server.ManagedAgent
 
 import           Control.Error                              (note)
@@ -171,16 +171,19 @@ allCronEvents = Map.foldr crons [] <$> view events
 queryAllEvents :: Query SchedulePersist [Event]
 queryAllEvents = views events (snd . unzip . Map.toList)
 
-readyToRun :: UTCTime -> Update SchedulePersist (Set (UTCTime, Event))
+readyToRun :: UTCTime -> Update SchedulePersist [Event]
 readyToRun now = do
     nextScheduled' <- use nextScheduled
     let emptyEvent = (now, Event "" (RecurInterval 0) Never zeroDate)
         (ready, waiting) = Set.split emptyEvent nextScheduled'
         nextAfter = Set.map (\(_, ev) ->
-                                calcNextScheduled (addMinutes 1 now) ev
+                                case schedRecur ev of
+                                    RecurCron _ _  -> -- Cron is precise to minute
+                                        calcNextScheduled (addMinutes 1 now) ev
+                                    _ -> calcNextScheduled now ev
                             ) ready
     nextScheduled .= Set.union nextAfter waiting
-    return ready
+    return $ snd . unzip $ Set.toList ready
 
 addEvent :: NextScheduled -> Update SchedulePersist ()
 addEvent next@(_, event) = do
@@ -337,9 +340,8 @@ onTick :: ScheduleAgent ()
 onTick = do
     now <- getCurrentTime
     events' <- update (ReadyToRun now)
-    forM_ events' $ \ (_, event') -> do
-        Right () <- castServ $ ExecuteStored (key event')
-        return ()
+    putStrLn ("onTick running events:" ++ convert (length events'))
+    Right () <- castServ $ ExecuteBatch (map key events')
     scheduleNextTick
 
 scheduleNextTick :: ScheduleAgent ()

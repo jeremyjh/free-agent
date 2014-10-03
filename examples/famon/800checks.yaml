@@ -5,7 +5,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: 205.254.135.7:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -13,7 +13,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: 37signals.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -21,7 +21,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: abcfamily.go.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -29,7 +29,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: abcnews.go.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -37,7 +37,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: adventure.howstuffworks.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -45,7 +45,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: allrecipes.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -53,7 +53,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: animals.nationalgeographic.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -61,7 +61,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: archives.obs-us.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -69,7 +69,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: armorgames.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -77,7 +77,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: articles.cnn.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -85,7 +85,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: backpackit.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -93,7 +93,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: bananarepublic.gap.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -101,7 +101,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: bananasweb.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -109,7 +109,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: barbecue.sourceforge.net:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -117,7 +117,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: bbq.about.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -125,7 +125,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: beemp3.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -133,7 +133,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: bible.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -141,7 +141,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: biffotasty.blogspot.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -149,7 +149,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: billychasen.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -157,7 +157,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: blog.box.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -165,7 +165,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: boisefork.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -173,7 +173,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: bombsite.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -181,7 +181,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: books.google.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -189,7 +189,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: bottlepy.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -197,7 +197,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: box.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -205,7 +205,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: boythefilm.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -213,7 +213,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: brain.oxfordjournals.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -221,7 +221,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: bridgerecords.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -229,7 +229,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: brutallyunfairtactics.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -237,7 +237,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: caloriecount.about.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -245,7 +245,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: cappuccino.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -253,7 +253,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: carrotcreative.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -261,7 +261,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: cars.cnet.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -269,7 +269,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: catandgirl.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -277,7 +277,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: cavegallery.net:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -285,7 +285,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: caverntavern.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -293,7 +293,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: chemistry.about.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -301,7 +301,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: chess.about.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -309,7 +309,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: chief.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -317,7 +317,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: chrismasterson.me:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -325,7 +325,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: circle.adventist.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -333,7 +333,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: coffeegeek.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -341,7 +341,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: comet.ucar.edu:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -349,7 +349,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: cometbar.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -357,7 +357,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: compass-style.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -365,7 +365,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: compass.illinois.edu:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -373,7 +373,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: compassrecords.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -381,7 +381,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: database.oxfordjournals.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -389,7 +389,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: developer.yahoo.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -397,7 +397,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: diamondcabinets.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -405,7 +405,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: dictionary.reference.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -413,7 +413,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: disney.go.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -421,7 +421,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: docs.oracle.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -429,7 +429,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: download.cnet.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -437,7 +437,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: draves.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -445,7 +445,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: drinkfortpoint.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -453,7 +453,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: earsnyc.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -461,7 +461,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: earth.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -469,7 +469,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: earth.google.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -477,7 +477,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: earthobservatory.nasa.gov:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -485,7 +485,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: electronics.howstuffworks.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -493,7 +493,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: elephant.elehost.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -501,7 +501,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: en.wikipedia.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -509,7 +509,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: en.wiktionary.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -517,7 +517,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: epicgames.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -525,7 +525,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: eraser.heidi.ie:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -533,7 +533,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: espn.go.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -541,7 +541,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: faculty.washington.edu:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -549,7 +549,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: family.go.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -557,7 +557,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: familyfun.go.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -565,7 +565,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: featherlinux.berlios.de:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -573,7 +573,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: festvox.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -581,7 +581,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: finance.yahoo.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -589,7 +589,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: finefeatherheads.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -597,7 +597,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: fire.dmzs.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -605,7 +605,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: firefoodanddrink.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -613,7 +613,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: floodlightdesign.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -621,7 +621,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: flower.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -629,7 +629,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: focusfeatures.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -637,7 +637,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: foot.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -645,7 +645,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: forkchicago.net:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -653,7 +653,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: gas.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -661,7 +661,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: gasbuddy.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -669,7 +669,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: gate.ac.uk:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -677,7 +677,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: gatepetro.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -685,7 +685,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: genome.ucsc.edu:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -693,7 +693,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: genomics.ornl.gov:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -701,7 +701,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: ghirardelli.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -709,7 +709,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: github.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -717,7 +717,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: godisimaginary.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -725,7 +725,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: godrb.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -733,7 +733,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: guitar.about.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -741,7 +741,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: hammer.ucla.edu:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -749,7 +749,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: hammerbowling.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -757,7 +757,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: help.github.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -765,7 +765,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: herbarium.usu.edu:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -773,7 +773,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: hoodamath.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -781,7 +781,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: horoscopes.astrology.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -789,7 +789,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: ice.disa.mil:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -797,7 +797,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: inventors.about.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -805,7 +805,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: itunes.apple.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -813,7 +813,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: junkraft.blogspot.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -821,7 +821,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: kids.nationalgeographic.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -829,7 +829,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: kidshealth.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -837,7 +837,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: kscope4fun.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -845,7 +845,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: linux.die.net:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -853,7 +853,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: liquidboise.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -861,7 +861,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: liquidmarkup.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -869,7 +869,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: localhost:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -877,7 +877,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: lostpedia.wikia.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -885,7 +885,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: m.box.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -893,7 +893,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: madisonmagnet.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -901,7 +901,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: map.gsfc.nasa.gov:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -909,7 +909,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: map.yahoo.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -917,7 +917,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: maps.google.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -925,7 +925,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: maps.yahoo.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -933,7 +933,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: math.ucsd.edu:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -941,7 +941,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: mathworld.wolfram.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -949,7 +949,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: mchammer.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -957,7 +957,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: meteorserver.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -965,7 +965,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: military.discovery.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -973,7 +973,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: milkinc.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -981,7 +981,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: mormon.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -989,7 +989,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: msdn.microsoft.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -997,7 +997,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: nineplanets.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1005,7 +1005,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: nutritiondata.self.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1013,7 +1013,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: nymag.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1021,7 +1021,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: olgaroad.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1029,7 +1029,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: onlinebooks.library.upenn.edu:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1037,7 +1037,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: onlineclock.net:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1045,7 +1045,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: orthoinfo.aaos.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1053,7 +1053,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: pdb1:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1061,7 +1061,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: play.google.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1069,7 +1069,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: portableapps.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1077,7 +1077,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: pubs.opengroup.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1085,7 +1085,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: quod.lib.umich.edu:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1093,7 +1093,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: redmeat.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1101,7 +1101,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: research.microsoft.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1109,7 +1109,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: rhymesayers.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1117,7 +1117,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: science.howstuffworks.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1125,7 +1125,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: science.nationalgeographic.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1133,7 +1133,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: search.carrot2.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1141,7 +1141,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: search.ebscohost.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1149,7 +1149,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: searchsqlserver.techtarget.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1157,7 +1157,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: seaside.gemstone.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1165,7 +1165,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: sfpl.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1173,7 +1173,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: shawfloors.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1181,7 +1181,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: shine.yahoo.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1189,7 +1189,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: shop.nordstrom.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1197,7 +1197,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: shopbird.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1205,7 +1205,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: shs.westport.k12.ct.us:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1213,7 +1213,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: solarsystem.nasa.gov:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1221,7 +1221,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: soundcloud.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1229,7 +1229,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: sourceforge.net:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1237,7 +1237,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: southernbarbecue.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1245,7 +1245,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: stumptowncoffee.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1253,7 +1253,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: svnbook.red-bean.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1261,7 +1261,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: sxsw.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1269,7 +1269,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: thatgamecompany.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1277,7 +1277,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: thebandcalledboy.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1285,7 +1285,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: thebathroomdiaries.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1293,7 +1293,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: thechiefleader.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1301,7 +1301,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: thecoffeeshopnyc.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1309,7 +1309,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: thefire.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1317,7 +1317,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: thekitchen.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1325,7 +1325,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: theknife.net:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1333,7 +1333,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: theoatmeal.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1341,7 +1341,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: thisfinger.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1349,7 +1349,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: twelvesouth.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1357,7 +1357,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: twitter.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1365,7 +1365,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: tycho.usno.navy.mil:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1373,7 +1373,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: urbanext.illinois.edu:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1381,7 +1381,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: us.battle.net:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1389,7 +1389,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: video.pbs.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1397,7 +1397,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: vimeo.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1405,7 +1405,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: web.me.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1413,7 +1413,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: web.mit.edu:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1421,7 +1421,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: whfoods.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1429,7 +1429,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.0800-horoscope.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1437,7 +1437,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.1800flowers.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1445,7 +1445,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.1800gotjunk.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1453,7 +1453,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.1st-milkshake-n-smoothie-recipes.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1461,7 +1461,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.acbl.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1469,7 +1469,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.acehose.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1477,7 +1477,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.act.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1485,7 +1485,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.addictinggames.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1493,7 +1493,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.adobe.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1501,7 +1501,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.adoptahighway.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1509,7 +1509,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.aeb.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1517,7 +1517,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.aeroplanemonthly.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1525,7 +1525,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.aeroplanemusic.be:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1533,7 +1533,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.af.mil:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1541,7 +1541,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.afi.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1549,7 +1549,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.afrotc.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1557,7 +1557,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.air.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1565,7 +1565,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.air1.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1573,7 +1573,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.airea.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1581,7 +1581,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.airforce.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1589,7 +1589,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.airforcetimes.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1597,7 +1597,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.airtran.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1605,7 +1605,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.airweb.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1613,7 +1613,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.allaboutbirds.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1621,7 +1621,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.allaboutvision.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1629,7 +1629,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.amazon.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1637,7 +1637,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.americangirl.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1645,7 +1645,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.americanstandard-us.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1653,7 +1653,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.amphibianark.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1661,7 +1661,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.amsmeteors.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1669,7 +1669,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.andythelwell.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1677,7 +1677,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.ansi.okstate.edu:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1685,7 +1685,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.apple.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1693,7 +1693,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.apronus.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1701,7 +1701,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.arcadelots.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1709,7 +1709,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.askmen.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1717,7 +1717,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.astrocenter.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1725,7 +1725,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.astrology.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1733,7 +1733,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.atlanta-airport.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1741,7 +1741,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.au.af.mil:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1749,7 +1749,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.audio-bible.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1757,7 +1757,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.autotrader.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1765,7 +1765,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.awf.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1773,7 +1773,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.baby.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1781,7 +1781,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.babycenter.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1789,7 +1789,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.babynames.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1797,7 +1797,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.babyzone.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1805,7 +1805,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.backpack.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1813,7 +1813,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.balloonfiesta.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1821,7 +1821,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.balloonhq.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1829,7 +1829,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.balloonsupply.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1837,7 +1837,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.balloonwarehouse.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1845,7 +1845,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.banana.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1853,7 +1853,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bananamuseum.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1861,7 +1861,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bankmpls.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1869,7 +1869,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bankofamerica.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1877,7 +1877,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.barbecue-store.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1885,7 +1885,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.barbecuebible.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1893,7 +1893,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.barbecuen.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1901,7 +1901,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.barnesandnoble.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1909,7 +1909,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bartleby.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1917,7 +1917,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.baskinrobbins.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1925,7 +1925,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bathroomfurnituredirect.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1933,7 +1933,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bathtubuniverse.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1941,7 +1941,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bbcicecream.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1949,7 +1949,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bbvacompass.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1957,7 +1957,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bedandbreakfast.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1965,7 +1965,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bedbathandbeyond.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1973,7 +1973,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bedmiami.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1981,7 +1981,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.beebasses.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1989,7 +1989,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.beemovie.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -1997,7 +1997,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.behindthechair.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2005,7 +2005,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.benchmade.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2013,7 +2013,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.benjerry.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2021,7 +2021,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bestglove.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2029,7 +2029,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bhg.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2037,7 +2037,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bible.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2045,7 +2045,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.biblegateway.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2053,7 +2053,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.biblestudytools.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2061,7 +2061,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bigapplecircus.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2069,7 +2069,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bing.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2077,7 +2077,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.biologycorner.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2085,7 +2085,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bird-technologies.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2093,7 +2093,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bird.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2101,7 +2101,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.birdbook.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2109,7 +2109,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.blueletterbible.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2117,7 +2117,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bombfest.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2125,7 +2125,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bombhiphop.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2133,7 +2133,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bookadventure.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2141,7 +2141,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.boss-inc.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2149,7 +2149,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bossaudio.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2157,7 +2157,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bosscorp.co.jp:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2165,7 +2165,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bossplow.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2173,7 +2173,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bossus.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2181,7 +2181,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bowl-america.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2189,7 +2189,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bowl.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2197,7 +2197,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.box.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2205,7 +2205,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.brainpop.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2213,7 +2213,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.breyers.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2221,7 +2221,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bridge.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2229,7 +2229,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.bridgebase.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2237,7 +2237,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.buckknives.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2245,7 +2245,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.butterflyonline.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2253,7 +2253,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.butterflysf.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2261,7 +2261,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.butterflysushi2go.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2269,7 +2269,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.butterflywebsite.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2277,7 +2277,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.buttongenerator.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2285,7 +2285,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.car.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2293,7 +2293,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.car.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2301,7 +2301,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.cardomain.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2309,7 +2309,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.cariboucoffee.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2317,7 +2317,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.carpet.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2325,7 +2325,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.carpetexpress.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2333,7 +2333,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.carpetone.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2341,7 +2341,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.carrotmuseum.co.uk:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2349,7 +2349,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.cars.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2357,7 +2357,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.cartoonnetwork.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2365,7 +2365,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.cavearts.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2373,7 +2373,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.cavedetroit.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2381,7 +2381,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.cbssports.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2389,7 +2389,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.cd-services.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2397,7 +2397,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.cdconnection.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2405,7 +2405,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.cde.ca.gov:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2413,7 +2413,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.cduniverse.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2421,7 +2421,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.cfw.tufts.edu:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2429,7 +2429,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.cgnad.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2437,7 +2437,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.chase.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2445,7 +2445,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.chem4kids.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2453,7 +2453,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.chesshouse.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2461,7 +2461,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.chessusa.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2469,7 +2469,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.chicago-fire.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2477,7 +2477,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.chiefaircraft.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2485,7 +2485,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.chiefautomotive.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2493,7 +2493,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.chiefmfg.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2501,7 +2501,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.chiefsupply.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2509,7 +2509,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.child.net:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2517,7 +2517,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.childrenshealthcare.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2525,7 +2525,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.childrensinstitute.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2533,7 +2533,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.childsup.ca.gov:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2541,7 +2541,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.chiquita.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2549,7 +2549,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.chiselindustries.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2557,7 +2557,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.chocolate.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2565,7 +2565,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.churchboutique.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2573,7 +2573,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.churchofboston.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2581,7 +2581,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.churchs.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2589,7 +2589,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.churchseats.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2597,7 +2597,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.circle.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2605,7 +2605,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.circlesanctuary.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2613,7 +2613,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.cirquedusoleil.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2621,7 +2621,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.civicyouth.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2629,7 +2629,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.cleverfiles.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2637,7 +2637,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.clownsforhire.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2645,7 +2645,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.clownswithoutborders.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2653,7 +2653,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.cml.lib.oh.us:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2661,7 +2661,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.co.bee.tx.us:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2669,7 +2669,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.coai.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2677,7 +2677,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.coffeereview.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2685,7 +2685,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.cognifit.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2693,7 +2693,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.coldsteel.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2701,7 +2701,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.coldstonecreamery.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2709,7 +2709,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.collegehumor.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2717,7 +2717,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.come2drink.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2725,7 +2725,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.comet.co.uk:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2733,7 +2733,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.cometantenna.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2741,7 +2741,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.cometpingpong.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2749,7 +2749,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.cometskateboards.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2757,7 +2757,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.compass.state.pa.us:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2765,7 +2765,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.compasslearningodyssey.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2773,7 +2773,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.comptongame.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2781,7 +2781,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.coolmath-games.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2789,7 +2789,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.crkt.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2797,7 +2797,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.csbf.nasa.gov:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2805,7 +2805,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.dailyhoroscopes.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2813,7 +2813,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.database.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2821,7 +2821,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.davidsbridal.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2829,7 +2829,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.dci.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2837,7 +2837,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.defenders.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2845,7 +2845,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.diamond-sports.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2853,7 +2853,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.diamond.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2861,7 +2861,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.diamondarchery.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2869,7 +2869,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.diamondaudio.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2877,7 +2877,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.diamondcomics.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2885,7 +2885,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.diamondmm.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2893,7 +2893,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.diamondpet.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2901,7 +2901,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.diamondsupplyco.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2909,7 +2909,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.discogs.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2917,7 +2917,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.doctorfungus.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2925,7 +2925,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.doesgodexist.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2933,7 +2933,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.dragcity.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2941,7 +2941,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.dreamhorse.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2949,7 +2949,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.dressaday.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2957,7 +2957,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.dressboston.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2965,7 +2965,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.dressupgames.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2973,7 +2973,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.drilldoctor.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2981,7 +2981,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.drinksmixer.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2989,7 +2989,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.drumchannel.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -2997,7 +2997,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.drumlink.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3005,7 +3005,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.drummagazine.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3013,7 +3013,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.drumnation.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3021,7 +3021,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.drumusic.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3029,7 +3029,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.dwdrums.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3037,7 +3037,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.dyson.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3045,7 +3045,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.e4hats.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3053,7 +3053,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.ears4life.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3061,7 +3061,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.earsinc.net:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3069,7 +3069,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.earthmagazine.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3077,7 +3077,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.ebags.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3085,7 +3085,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.ediblearrangements.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3093,7 +3093,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.edmunds.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3101,7 +3101,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.edys.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3109,7 +3109,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.egg.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3117,7 +3117,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.eggusa.net:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3125,7 +3125,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.eia.doe.gov:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3133,7 +3133,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.elephant.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3141,7 +3141,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.elephants.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3149,7 +3149,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.elsevier.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3157,7 +3157,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.emailman.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3165,7 +3165,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.empiretoday.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3173,7 +3173,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.emptybottle.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3181,7 +3181,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.enchantedlearning.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3189,7 +3189,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.energyquest.ca.gov:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3197,7 +3197,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.entnet.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3205,7 +3205,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.everythingabout.net:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3213,7 +3213,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.everythingofficefurniture.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3221,7 +3221,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.exoticmeatsandmore.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3229,7 +3229,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.explosive.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3237,7 +3237,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.explosivetattoo.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3245,7 +3245,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.explosivetattoosouth.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3253,7 +3253,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.expressdecor.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3261,7 +3261,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.extension.umn.edu:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3269,7 +3269,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.eyes.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3277,7 +3277,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.facebook.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3285,7 +3285,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.fallenfruit.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3293,7 +3293,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.falstad.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3301,7 +3301,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.familylife.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3309,7 +3309,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.familylosangeles.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3317,7 +3317,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.familysearch.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3325,7 +3325,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.fanfiction.net:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3333,7 +3333,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.fanniemay.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3341,7 +3341,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.faucetdirect.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3349,7 +3349,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.featherplace.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3357,7 +3357,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.featherusa.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3365,7 +3365,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.fender.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3373,7 +3373,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.festfoods.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3381,7 +3381,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.festivalfinder.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3389,7 +3389,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.festivalfoods.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3397,7 +3397,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.festivalgr.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3405,7 +3405,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.festivals.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3413,7 +3413,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.fhwa.dot.gov:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3421,7 +3421,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.film.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3429,7 +3429,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.filmconnection.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3437,7 +3437,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.filmschoolrejects.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3445,7 +3445,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.finger-pro.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3453,7 +3453,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.fingerfurniture.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3461,7 +3461,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.fingerlakes.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3469,7 +3469,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.fingermag.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3477,7 +3477,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.flashearth.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3485,7 +3485,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.floodlightmedia.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3493,7 +3493,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.floodlightsurveys.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3501,7 +3501,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.flowermag.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3509,7 +3509,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.flysfo.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3517,7 +3517,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.focusonthefamily.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3525,7 +3525,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.foodnetwork.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3533,7 +3533,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.foottours.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3541,7 +3541,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.ford.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3549,7 +3549,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.forever21.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3557,7 +3557,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.fork-cms.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3565,7 +3565,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.forkrestaurant.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3573,7 +3573,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.fourmilab.ch:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3581,7 +3581,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.fox.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3589,7 +3589,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.framemag.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3597,7 +3597,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.freebuttons.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3605,7 +3605,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.freeway.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3613,7 +3613,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.freewayeyewear.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3621,7 +3621,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.freewebarcade.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3629,7 +3629,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.fruit.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3637,7 +3637,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.fruitninja.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3645,7 +3645,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.fruits.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3653,7 +3653,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.fruitsandveggiesmatter.gov:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3661,7 +3661,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.fsis.usda.gov:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3669,7 +3669,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.ftd.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3677,7 +3677,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.fueleconomy.gov:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3685,7 +3685,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.funbrain.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3693,7 +3693,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.futureaudioworkshop.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3701,7 +3701,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.galeton.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3709,7 +3709,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.gamedesign.jp:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3717,7 +3717,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.gamesfreak.net:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3725,7 +3725,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.garden.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3733,7 +3733,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.garden.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3741,7 +3741,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.gardendesign.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3749,7 +3749,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.gardeners.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3757,7 +3757,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.gardenguides.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3765,7 +3765,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.gardenweb.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3773,7 +3773,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.gate.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3781,7 +3781,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.gatecitybank.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3789,7 +3789,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.gategourmet.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3797,7 +3797,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.gatesbbq.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3805,7 +3805,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.gayinternetradiolive.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3813,7 +3813,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.gdnet.ucla.edu:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3821,7 +3821,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.gemselect.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3829,7 +3829,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.gemstone.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3837,7 +3837,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.gemstone.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3845,7 +3845,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.gemstone.umd.edu:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3853,7 +3853,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.gemstonemusical.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3861,7 +3861,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.gemstonepub.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3869,7 +3869,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.gemstonewine.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3877,7 +3877,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.getmilkshake.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3885,7 +3885,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.getmistified.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3893,7 +3893,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.gibson.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3901,7 +3901,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.gigmasters.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3909,7 +3909,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.girlscouts.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3917,7 +3917,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.girlsgogames.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3925,7 +3925,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.girlskateboards.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3933,7 +3933,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.gloves-online.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3941,7 +3941,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.glovesinc.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3949,7 +3949,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.goairforcefalcons.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3957,7 +3957,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.god.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3965,7 +3965,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.god.tv:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3973,7 +3973,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.godiva.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3981,7 +3981,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.google.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3989,7 +3989,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.gordonramsay.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -3997,7 +3997,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.gotmilk.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4005,7 +4005,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.grapeswine.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4013,7 +4013,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.greenmountaincoffee.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4021,7 +4021,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.greensmiths.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4029,7 +4029,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.grupocappuccino.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4037,7 +4037,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.guardian.co.uk:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4045,7 +4045,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.guitar.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4053,7 +4053,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.guitarcenter.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4061,7 +4061,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.guitarworld.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4069,7 +4069,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.hallmarkkaleidoscope.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4077,7 +4077,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.hammacher.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4085,7 +4085,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.hammer.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4093,7 +4093,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.hammerfilms.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4101,7 +4101,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.hammernutrition.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4109,7 +4109,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.hammertraining.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4117,7 +4117,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.harmonyhollow.net:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4125,7 +4125,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.hasbro.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4133,7 +4133,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.hatclub.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4141,7 +4141,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.hatland.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4149,7 +4149,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.hats.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4157,7 +4157,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.hatsofmeat.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4165,7 +4165,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.hazegray.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4173,7 +4173,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.heidi.ie:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4181,7 +4181,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.hermanmiller.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4189,7 +4189,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.hersheys.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4197,7 +4197,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.hgtv.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4205,7 +4205,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.hickorychair.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4213,7 +4213,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.hieroglyph.net:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4221,7 +4221,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.highway.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4229,7 +4229,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.highway61.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4237,7 +4237,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.highwaybuzz.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4245,7 +4245,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.highwaymedia.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4253,7 +4253,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.holdthebutton.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4261,7 +4261,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.hollywoodbowl.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4269,7 +4269,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.homedepot.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4277,7 +4277,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.horoscope.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4285,7 +4285,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.horse.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4293,7 +4293,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.hort.purdue.edu:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4301,7 +4301,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.hosexpress.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4309,7 +4309,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.housebeautiful.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4317,7 +4317,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.howstuffworks.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4325,7 +4325,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.huffingtonpost.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4333,7 +4333,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.hugoboss.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4341,7 +4341,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.ibanez.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4349,7 +4349,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.ice.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4357,7 +4357,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.ice.gov:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4365,7 +4365,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.ice.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4373,7 +4373,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.icecream.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4381,7 +4381,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.iceculinary.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4389,7 +4389,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.icemagazine.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4397,7 +4397,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.idiotshow.net:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4405,7 +4405,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.ikea.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4413,7 +4413,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.iloveinns.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4421,7 +4421,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.imdb.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4429,7 +4429,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.imo.net:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4437,7 +4437,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.incredibleegg.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4445,7 +4445,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.indianapolisairport.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4453,7 +4453,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.insect.co.uk:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4461,7 +4461,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.insectimages.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4469,7 +4469,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.insectlore.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4477,7 +4477,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.insects.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4485,7 +4485,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.insectshield.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4493,7 +4493,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.ipl.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4501,7 +4501,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.jansport.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4509,7 +4509,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.java-gaming.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4517,7 +4517,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.jcrew.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4525,7 +4525,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.jensonbutton.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4533,7 +4533,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.jetfighter.com.au:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4541,7 +4541,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.junkfoodclothing.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4549,7 +4549,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.k-pub.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4557,7 +4557,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.kaleidoscope.net:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4565,7 +4565,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.kaleidoscope.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4573,7 +4573,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.kaleidoscopeapp.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4581,7 +4581,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.kbb.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4589,7 +4589,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.kidsbutterfly.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4597,7 +4597,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.kidzone.ws:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4605,7 +4605,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.kitchen2404.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4613,7 +4613,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.kitchenaid.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4621,7 +4621,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.kitchenandbathwarehouse.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4629,7 +4629,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.kitchens.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4637,7 +4637,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.kleinbottle.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4645,7 +4645,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.knife-depot.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4653,7 +4653,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.knifecenter.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4661,7 +4661,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.knifeoutlet.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4669,7 +4669,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.knoll.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4677,7 +4677,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.lakechamplainchocolates.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4685,7 +4685,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.lapl.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4693,7 +4693,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.last.fm:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4701,7 +4701,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.lds.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4709,7 +4709,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.learn4good.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4717,7 +4717,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.leechild.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4725,7 +4725,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.lego.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4733,7 +4733,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.lids.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4741,7 +4741,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.lightingdirect.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4749,7 +4749,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.lightinguniverse.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4757,7 +4757,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.liquid.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4765,7 +4765,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.liquidagency.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4773,7 +4773,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.liquidchurch.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4781,7 +4781,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.liquidcomics.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4789,7 +4789,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.liquidmartinibar.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4797,7 +4797,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.loc.gov:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4805,7 +4805,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.lookatbook.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4813,7 +4813,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.magnet.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4821,7 +4821,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.magnetglobal.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4829,7 +4829,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.magnetmagazine.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4837,7 +4837,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.magnetsf.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4845,7 +4845,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.magnettheater.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4853,7 +4853,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.magnetwork.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4861,7 +4861,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.maidofthemist.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4869,7 +4869,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.man-engines.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4877,7 +4877,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.man.eu:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4885,7 +4885,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.mandieselturbo.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4893,7 +4893,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.maniacworld.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4901,7 +4901,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.maninvestments.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4909,7 +4909,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.mantruckandbus.co.uk:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4917,7 +4917,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.map.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4925,7 +4925,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.mapquest.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4933,7 +4933,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.maps.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4941,7 +4941,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.mathsisfun.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4949,7 +4949,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.mazemuze.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4957,7 +4957,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.mazenails.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4965,7 +4965,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.meat.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4973,7 +4973,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.meatforcatsanddogs.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4981,7 +4981,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.med.harvard.edu:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4989,7 +4989,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.menupages.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -4997,7 +4997,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.merriam-webster.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5005,7 +5005,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.meteor-lighting.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5013,7 +5013,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.meteor.ie:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5021,7 +5021,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.meteorsolutions.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5029,7 +5029,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.metroairport.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5037,7 +5037,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.miami-airport.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5045,7 +5045,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.microscope-microscope.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5053,7 +5053,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.microscope.co.uk:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5061,7 +5061,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.microscope.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5069,7 +5069,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.microscopegallery.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5077,7 +5077,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.microscopeworld.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5085,7 +5085,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.midway.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5093,7 +5093,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.milk.dk:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5101,7 +5101,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.milkshakemedia.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5109,7 +5109,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.milkshakemusic.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5117,7 +5117,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.millerhats.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5125,7 +5125,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.miniclip.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5133,7 +5133,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.mist-music.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5141,7 +5141,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.mistsf.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5149,7 +5149,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.modbee.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5157,7 +5157,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.modernbathroom.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5165,7 +5165,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.mohawkflooring.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5173,7 +5173,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.msnbc.msn.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5181,7 +5181,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.multcolib.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5189,7 +5189,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.musiciansfriend.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5197,7 +5197,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.myspace.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5205,7 +5205,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.mysql.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5213,7 +5213,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.nationalgeographic.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5221,7 +5221,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.navy.mil:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5229,7 +5229,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.nbbqa.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5237,7 +5237,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.ndt-ed.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5245,7 +5245,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.newadvent.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5253,7 +5253,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.newegg.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5261,7 +5261,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.nfl.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5269,7 +5269,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.nick.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5277,7 +5277,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.nicor.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5285,7 +5285,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.nidcd.nih.gov:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5293,7 +5293,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.nitrome.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5301,7 +5301,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.nlm.nih.gov:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5309,7 +5309,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.notmilk.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5317,7 +5317,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.nursecredentialing.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5325,7 +5325,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.nypl.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5333,7 +5333,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.nypost.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5341,7 +5341,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.onlygloves.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5349,7 +5349,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.onlyleatherjackets.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5357,7 +5357,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.oracle.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5365,7 +5365,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.ossmann.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5373,7 +5373,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.oswego.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5381,7 +5381,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.overstock.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5389,7 +5389,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.oyunlar1.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5397,7 +5397,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.pagat.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5405,7 +5405,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.parents.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5413,7 +5413,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.paulinsect.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5421,7 +5421,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.pbs.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5429,7 +5429,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.peets.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5437,7 +5437,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.permadi.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5445,7 +5445,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.perspective.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5453,7 +5453,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.peta.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5461,7 +5461,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.phl.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5469,7 +5469,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.pigandegg.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5477,7 +5477,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.play.net:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5485,7 +5485,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.plumbersurplus.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5493,7 +5493,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.plumesnfeathers.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5501,7 +5501,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.pmichaud.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5509,7 +5509,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.poodwaddle.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5517,7 +5517,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.proflowers.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5525,7 +5525,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.publiclibraries.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5533,7 +5533,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.quizland.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5541,7 +5541,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.ready.gov:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5549,7 +5549,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.refdesk.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5557,7 +5557,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.ringling.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5565,7 +5565,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.rottentomatoes.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5573,7 +5573,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.sacbee.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5581,7 +5581,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.sandiegozoo.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5589,7 +5589,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.sbbowl.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5597,7 +5597,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.schottnyc.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5605,7 +5605,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.sciencedirect.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5613,7 +5613,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.sciencemadesimple.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5621,7 +5621,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.scouting.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5629,7 +5629,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.sees.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5637,7 +5637,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.sfgate.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5645,7 +5645,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.shopbop.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5653,7 +5653,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.shopstyle.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5661,7 +5661,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.simplybathtubs.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5669,7 +5669,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.sks-bottle.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5677,7 +5677,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.slashfilm.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5685,7 +5685,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.slate.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5693,7 +5693,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.socalgas.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5701,7 +5701,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.softpress.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5709,7 +5709,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.specialtybottle.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5717,7 +5717,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.speech.cs.cmu.edu:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5725,7 +5725,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.spl.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5733,7 +5733,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.stainmaster.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5741,7 +5741,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.staples.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5749,7 +5749,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.starbucks.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5757,7 +5757,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.starfall.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5765,7 +5765,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.starz.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5773,7 +5773,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.sundance.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5781,7 +5781,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.swgas.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5789,7 +5789,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.tablegrape.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5797,7 +5797,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.talkaboutcoffee.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5805,7 +5805,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.target.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5813,7 +5813,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.tdgarden.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5821,7 +5821,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.teamliquid.net:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5829,7 +5829,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.tencentticker.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5837,7 +5837,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.terrybisson.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5845,7 +5845,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.theathletesfoot.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5853,7 +5853,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.theboxnyc.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5861,7 +5861,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.thebutterflysite.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5869,7 +5869,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.thecarrotagency.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5877,7 +5877,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.thechessstore.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5885,7 +5885,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.thecirclenews.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5893,7 +5893,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.thecoffeeshopaz.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5901,7 +5901,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.thecoffeeshopblog.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5909,7 +5909,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.thecometcafe.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5917,7 +5917,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.thedailybeast.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5925,7 +5925,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.theegg.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5933,7 +5933,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.thefreedictionary.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5941,7 +5941,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.thefruitcompany.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5949,7 +5949,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.thefruitpages.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5957,7 +5957,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.thehat.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5965,7 +5965,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.thehorse.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5973,7 +5973,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.theice.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5981,7 +5981,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.theinterviewwithgod.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5989,7 +5989,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.themilkshop.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -5997,7 +5997,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.thetech.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6005,7 +6005,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.thinkkaleidoscope.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6013,7 +6013,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.time.gov:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6021,7 +6021,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.timeanddate.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6029,7 +6029,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.tolvanen.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6037,7 +6037,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.tonyhill.net:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6045,7 +6045,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.toysrus.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6053,7 +6053,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.treadmill-desk.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6061,7 +6061,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.ucmp.berkeley.edu:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6069,7 +6069,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.uky.edu:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6077,7 +6077,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.ultimate-guitar.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6085,7 +6085,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.universoulcircus.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6093,7 +6093,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.urbandictionary.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6101,7 +6101,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.us-highways.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6109,7 +6109,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.usafa.af.mil:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6117,7 +6117,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.usbank.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6125,7 +6125,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.ushosecorp.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6133,7 +6133,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.victoriassecret.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6141,7 +6141,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.villagehatshop.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6149,7 +6149,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.vims.edu:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6157,7 +6157,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.vintagetub.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6165,7 +6165,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.vosgeschocolate.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6173,7 +6173,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.w3schools.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6181,7 +6181,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.walmart.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6189,7 +6189,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.washgas.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6197,7 +6197,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.webmd.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6205,7 +6205,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.webopedia.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6213,7 +6213,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.wellsfargo.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6221,7 +6221,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.whfoods.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6229,7 +6229,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.whymilk.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6237,7 +6237,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.wikinvest.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6245,7 +6245,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.wilsonsleather.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6253,7 +6253,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.winterrowd.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6261,7 +6261,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.wired.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6269,7 +6269,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.woodcraft.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6277,7 +6277,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.world-airport-codes.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6285,7 +6285,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.worldbank.org:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6293,7 +6293,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.y8.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6301,7 +6301,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.yelp.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6309,7 +6309,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.youtube.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6317,7 +6317,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.zappos.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6325,7 +6325,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.zefrank.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6333,7 +6333,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.zeroc.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6341,7 +6341,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www.zuckerfeather.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6349,7 +6349,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: www1.macys.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - event:
     retry:
       tag: Never
@@ -6357,7 +6357,7 @@
     modified: 2014-10-01T01:31:56.223Z
     key: yugop.com:80
     recur:
-      recurInterval: 1
+      recurInterval: 1000
 - action:
     action:
       _checktcpPort: 80

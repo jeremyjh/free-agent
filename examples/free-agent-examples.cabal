@@ -25,5 +25,6 @@ executable famon
                      , aeson
                      , data-default
                      , unordered-containers
+                     , process
   hs-source-dirs:      famon
   default-language:    Haskell2010

@@ -118,10 +118,10 @@ defineServer name' initState' processDef' = AgentServer name' child
         initChild <- toChildStart $ init ctxt
 
         return ChildSpec {
-              childKey     = ""
+              childKey     = name'
             , childType    = Worker
             , childRestart = Permanent
-            , childStop    = TerminateTimeout (Delay $ milliSeconds 10)
+            , childStop    = TerminateTimeout (Delay $ milliSeconds 5000)
             , childStart   = initChild
             , childRegName = Just $ LocalName name'
         }
