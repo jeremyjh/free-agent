@@ -19,6 +19,7 @@ where
 import           Control.Monad.Reader                                  (ReaderT, mapReaderT)
 import           Control.Monad.Trans                                   (lift, MonadIO)
 import           Control.Monad.State                                   (StateT, mapStateT)
+import qualified Control.Monad.State                                   as State
 
 import           Control.Concurrent.Lifted                             (threadDelay)
 import           Control.Distributed.Process                           hiding
@@ -45,6 +46,7 @@ import qualified Control.Distributed.Process.Platform.ManagedProcess.UnsafeClien
 import           Control.Distributed.Process.Platform.Supervisor (ChildSpec)
 import           Control.Error                                         (EitherT, mapEitherT)
 import           Control.Monad.Trans.Control                           (MonadBaseControl(..))
+import Data.Tuple (swap)
 
 -- lifted versions of Process functions
 class (MonadIO m, MonadBaseControl IO m) => MonadProcess m where
@@ -64,15 +66,16 @@ instance (Monad m, MonadProcess m) => MonadProcess (ReaderT r m) where
 instance (Monad m, MonadProcess m) => MonadProcess (StateT s m) where
     liftProcess = lift . liftProcess
     mapProcess f ma =
-        flip mapStateT ma $
-        \ma' -> do
-            (a, s) <- ma'
-            b <- mapProcess f (return a)
-            return (b, s)
+     do s <- State.get
+        flip mapStateT ma $ \ mas ->
+            let stripped = fmap fst mas
+                applied = mapProcess f stripped
+                tack = swap . (,) s
+            in fmap tack applied
 
 instance MonadProcess m => MonadProcess (EitherT e m) where
     liftProcess = lift . liftProcess
-    mapProcess f ma = -- TODO: test this
+    mapProcess f ma =
         flip mapEitherT ma $
         \ma' -> do
             ea <- ma'

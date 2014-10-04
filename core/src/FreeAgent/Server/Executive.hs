@@ -24,7 +24,6 @@ where
 
 import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Action
-import           FreeAgent.Core (spawnAgent)
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Database.AcidState
 import           FreeAgent.Process                  as Process
@@ -33,8 +32,7 @@ import           FreeAgent.Server.ManagedAgent
 
 
 import           Control.Monad.Reader               (ask)
-import Control.Monad.State (StateT, runStateT)
-import Control.Monad.State.Class as State
+import Control.Monad.State (StateT)
 import           Data.Binary
 import qualified Data.Map.Strict                    as Map
 
@@ -193,10 +191,7 @@ instance ServerCast ExecuteBatch where
         forM_ keys $ \key' ->
          do executedCount %= (+) 1
             use executedCount >>= print
-            ctxt <- askContext
-            s <- State.get
-            Just (action', _) <-  query (GetAction key')
-            liftProcess $ void . spawnAgent ctxt . void $ runStateT (runEitherT (doExec action')) s
+            void . spawnLocal . void $ respond (ExecuteStored key')
 
 data AddListener = AddListener (Closure Listener)
     deriving (Show, Typeable, Generic)
