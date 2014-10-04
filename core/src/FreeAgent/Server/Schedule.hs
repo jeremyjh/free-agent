@@ -340,7 +340,6 @@ onTick :: ScheduleAgent ()
 onTick = do
     now <- getCurrentTime
     events' <- update (ReadyToRun now)
-    putStrLn ("onTick running events:" ++ convert (length events'))
     Right () <- castServ $ ExecuteBatch (map key events')
     scheduleNextTick
 

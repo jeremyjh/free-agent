@@ -21,6 +21,8 @@ import FreeAgent.Server.ManagedAgent
 
 import Control.Monad.State            (StateT)
 import Data.Binary                    (Binary)
+import qualified Data.CircularList as CL
+import Data.CircularList (CList)
 
 
 -- -----------------------------
@@ -105,7 +107,7 @@ historyServerImpl HistoryBackend{..} =
 -- Using circular list and AcidState
 -- -----------------------------
 
-data HistoryPersist = HistoryPersist {_historyResults :: [Result]}
+data HistoryPersist = HistoryPersist {_historyResults :: CList Result}
         deriving (Typeable)
 
 makeFields ''HistoryPersist
@@ -114,10 +116,15 @@ data HistoryState = HistoryState {_historyAcid :: AcidState HistoryPersist}
 
 fetchAllFrom  :: UTCTime -> Query HistoryPersist [Result]
 fetchAllFrom time =
-    takeWhile (\r -> r ^. to summary.timestamp >= time) <$> view results
+    takeWhile (\r -> r ^. to summary.timestamp >= time)
+                  <$> CL.rightElements  <$> view results
 
 insertResult :: Result -> Update HistoryPersist ()
-insertResult r = results %= (r :)
+insertResult r =
+ do results' <- use results
+    if CL.size results' < 5000
+        then results %= CL.insertR r
+        else results %= CL.update r . CL.rotL
 
 $(makeAcidic ''HistoryPersist ['insertResult, 'fetchAllFrom])
 
@@ -125,7 +132,7 @@ defaultBackend :: HistoryBackend HistoryState
 defaultBackend = HistoryBackend {
       doInit = do
         acid' <- openOrGetDb "agent-executive-history"
-                                  (HistoryPersist []) def
+                                  (HistoryPersist CL.empty) def
         return $ HistoryState acid'
     , doWriteResult = update . InsertResult
     , doAllResultsFrom = query . FetchAllFrom

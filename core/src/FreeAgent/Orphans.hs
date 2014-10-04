@@ -27,6 +27,8 @@ import qualified Data.ByteString.Char8       as BS
 import qualified Data.ByteString.Lazy.Char8  as LBS
 import qualified Data.Serialize              as Cereal
 import qualified Data.Text.Encoding          as Text (decodeUtf8, encodeUtf8)
+import qualified Data.CircularList as CL
+import Data.CircularList (CList)
 
 import           Data.Acid                   (AcidState)
 import           Data.UUID                   (UUID)
@@ -170,6 +172,10 @@ instance Binary.Binary Aeson.Value where
         case Aeson.decode bs of
             Just v -> return v
             Nothing -> error $ "Could not decode to Aeson.Value a BytesString: " ++ convert bs
+
+instance (SafeCopy a) => SafeCopy (CList a) where
+    getCopy = contain $ fmap CL.fromList safeGet
+    putCopy = contain . safePut . CL.rightElements
 
 -- orphans from cron
 deriving instance Typeable CronSchedule
