@@ -192,6 +192,7 @@ data AgentConfig
                  , configZones         :: Set Zone
                  , configPeerNodeSeeds :: [String]
                  , configRemoteTable   :: !RemoteTable
+                 , configInitScheduler :: !Bool
                  }
 
 instance Default AgentConfig where
@@ -200,6 +201,7 @@ instance Default AgentConfig where
             (Set.fromList [def])
             []
             initRemoteTable
+            True
 
 -- | Each agent belongs to one or more contexts - every 'Package' specifies
 -- the Context(s) in which it will execute

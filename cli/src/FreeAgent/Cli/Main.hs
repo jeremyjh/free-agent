@@ -14,6 +14,8 @@ import FreeAgent.Cli.Export
 import FreeAgent.Core         (AgentConfig, PluginSet, withRemoteNode, runAgent, Agent)
 import FreeAgent.Core.Lenses
 import FreeAgent.Server       (runAgentServers)
+import FreeAgent.Server.ManagedAgent (castServ)
+import FreeAgent.Server.Schedule (ScheduleControl(..))
 
 faMain :: AgentConfig -> PluginSet -> IO ()
 faMain config plugins =
@@ -33,6 +35,18 @@ faMain config plugins =
                 case eexported of
                     Right () -> putStrLn "Export successfull!"
                     Left reason -> putStrLn ("Export failed: " ++ reason)
+        Scheduler _ _ start stop ->
+            execClient $
+                if start then
+                 do estarted <- castServ ScheduleStart
+                    case estarted of
+                        Right () -> putStrLn "Sent start command to daemon."
+                        Left reason -> putStrLn ("Could not send start command: " ++ tshow reason)
+                else when stop $
+                      do estopped <- castServ ScheduleStop
+                         case estopped of
+                             Right () -> putStrLn "Sent stop command to daemon."
+                             Left reason -> putStrLn ("Could not send stop command: " ++ tshow reason)
 
 daemonMain :: AgentConfig -> PluginSet -> IO ()
 daemonMain config plugins =

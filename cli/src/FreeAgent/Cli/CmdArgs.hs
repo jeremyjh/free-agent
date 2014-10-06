@@ -10,19 +10,24 @@ import FreeAgent.Core                  (AgentConfig (..))
 import FreeAgent.Core.Lenses           hiding (name)
 
 
-import System.Console.CmdArgs.Implicit (Data, cmdArgs, explicit, help, modes,
-                                        name, program, typ, (&=))
+import System.Console.CmdArgs.Implicit (Data, cmdArgs, explicit, help, modes, name,
+                                        program, typ, (&=))
 
-data Args =  Daemon { argsHost   :: String
-                    , argsPort   :: String
-                    , argsDbPath :: String
-          }| Import { argsHost :: String
-                    , argsPort :: String
-                    , argsPath :: String
-          }| Export { argsHost :: String
-                    , argsPort :: String
-                    , argsPath :: String
-                    }
+data Args =  Daemon    { argsHost      :: String
+                       , argsPort      :: String
+                       , argsDbPath    :: String
+                       , argsScheduler :: Bool
+          }| Import    { argsHost      :: String
+                       , argsPort      :: String
+                       , argsPath      :: String
+          }| Export    { argsHost      :: String
+                       , argsPort      :: String
+                       , argsPath      :: String
+          }| Scheduler { argsHost      :: String
+                       , argsPort      :: String
+                       , argsStart     :: Bool
+                       , argsStop      :: Bool
+                       }
     deriving (Show, Data, Typeable)
 
 
@@ -34,8 +39,9 @@ configArgs dconf = cmdArgs configModes >>= \ args' ->
         let commons = dconf & nodeHost .~ argsHost args'
                             & nodePort .~ argsPort args'
         in return (case args' of
-                      Daemon _ _ path' -> commons & dbPath .~ convert path'
-                      _                -> commons
+                      Daemon _ _ path' _ -> commons & dbPath .~ convert path'
+                                                    & initScheduler .~ not (argsScheduler args')
+                      _                  -> commons
                   , args')
   where
     configModes =
@@ -66,8 +72,21 @@ configArgs dconf = cmdArgs configModes >>= \ args' ->
                 , argsDbPath = path &= typ "DIR"
                     &= explicit &= name "db-path"
                     &= help ("database filepath (for daemon) - default " ++ path)
+                , argsScheduler = False &= typ "BOOL"
+                   &= name "no-scheduler"
+                   &= help "do not start the scheduler automatically when the daemon is started - default false"
+              }, Scheduler { argsHost = host
+                               &= explicit &= name "host" &= typ "ADDRESS"
+                               &= help ("hostname or IP to listen on or connect to - default " ++ host)
+                           , argsPort = port &= typ "NUM"
+                               &= explicit &= name "port"
+                               &= help ("service name or port to listen on or connect to - default " ++ port)
+                           , argsStart = False &= name "start" &= help "start the scheduler of a running daemon"
+                           , argsStop = False &= name "stop" &= help "stop the scheduler of a running daemon"
               }] &= program "fabin"
 
     host = dconf ^. nodeHost
     port = dconf ^. nodePort
     path = convert (dconf ^. dbPath)
+
+

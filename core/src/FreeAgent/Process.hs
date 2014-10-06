@@ -1,7 +1,4 @@
-{-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
-{-# LANGUAGE RankNTypes                 #-}
-{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE FlexibleContexts, MultiParamTypeClasses, RankNTypes, TypeFamilies #-}
 
 -- | Provides MonadProcess typeclass and lifted versions of commonly used
 -- functions
@@ -16,37 +13,35 @@ module FreeAgent.Process
     )
 where
 
-import           Control.Monad.Reader                                  (ReaderT, mapReaderT)
-import           Control.Monad.Trans                                   (lift, MonadIO)
-import           Control.Monad.State                                   (StateT, mapStateT)
-import qualified Control.Monad.State                                   as State
+import           Control.Monad.Reader                                             (ReaderT, mapReaderT)
+import           Control.Monad.State                                              (StateT, mapStateT)
+import qualified Control.Monad.State                                              as State
+import           Control.Monad.Trans                                              (MonadIO,
+                                                                                   lift)
 
-import           Control.Concurrent.Lifted                             (threadDelay)
-import           Control.Distributed.Process                           hiding
-                                                                        (expect, expectTimeout, getSelfPid,
-                                                                        nsend, register,
-                                                                        send, spawnLocal,
-                                                                        call,
-                                                                        whereis, sendChan)
-import qualified Control.Distributed.Process                           as Base
-import           Control.Distributed.Process.Node                      (localNodeId)
-import qualified Control.Distributed.Process.Node                      as Node
-import qualified Control.Distributed.Process.Platform as Platform (__remoteTable)
-import           Control.Distributed.Process.Closure                   (mkClosure, remotable)
-import Control.Distributed.Process.Platform
-       (NFSerializable, Addressable, Routable(..), Resolvable)
-import           Control.Distributed.Process.Serializable              (Serializable)
-import qualified Control.Distributed.Process.Platform                  as Base
-import           Control.Distributed.Process.MonadBaseControl          ()
-import Control.Distributed.Process.Platform.Async
-       (Async, AsyncResult(..))
-import qualified Control.Distributed.Process.Platform.Async            as Base
-import qualified Control.Distributed.Process.Platform.UnsafePrimitives as NF
-import qualified Control.Distributed.Process.Platform.ManagedProcess.UnsafeClient   as Managed
-import           Control.Distributed.Process.Platform.Supervisor (ChildSpec)
-import           Control.Error                                         (EitherT, mapEitherT)
-import           Control.Monad.Trans.Control                           (MonadBaseControl(..))
-import Data.Tuple (swap)
+import           Control.Concurrent.Lifted                                        (threadDelay)
+import           Control.Distributed.Process                                      hiding
+                                                                                   (call,
+                                                                                   expect, expectTimeout, getSelfPid,
+                                                                                   nsend, register,
+                                                                                   send, sendChan, spawnLocal, whereis)
+import qualified Control.Distributed.Process                                      as Base
+import           Control.Distributed.Process.Closure                              (mkClosure, remotable)
+import           Control.Distributed.Process.MonadBaseControl                     ()
+import           Control.Distributed.Process.Node                                 (localNodeId)
+import qualified Control.Distributed.Process.Node                                 as Node
+import           Control.Distributed.Process.Platform                             (Addressable, NFSerializable, Resolvable, Routable (..))
+import qualified Control.Distributed.Process.Platform                             as Platform (__remoteTable)
+import qualified Control.Distributed.Process.Platform                             as Base
+import           Control.Distributed.Process.Platform.Async                       (Async, AsyncResult (..))
+import qualified Control.Distributed.Process.Platform.Async                       as Base
+import qualified Control.Distributed.Process.Platform.ManagedProcess.UnsafeClient as Managed
+import           Control.Distributed.Process.Platform.Supervisor                  (ChildSpec)
+import qualified Control.Distributed.Process.Platform.UnsafePrimitives            as NF
+import           Control.Distributed.Process.Serializable                         (Serializable)
+import           Control.Error                                                    (EitherT)
+import           Control.Monad.Trans.Control                                      (MonadBaseControl (..))
+import           Data.Tuple                                                       (swap)
 
 -- lifted versions of Process functions
 class (MonadIO m, MonadBaseControl IO m) => MonadProcess m where
@@ -75,15 +70,20 @@ instance (Monad m, MonadProcess m) => MonadProcess (StateT s m) where
 
 instance MonadProcess m => MonadProcess (EitherT e m) where
     liftProcess = lift . liftProcess
-    mapProcess f ma =
-        flip mapEitherT ma $
-        \ma' -> do
-            ea <- ma'
-            case ea of
-                Left e -> return $ Left e
-                Right a -> do
-                    b <- mapProcess f (return a)
-                    return $ Right b
+    mapProcess = error "not implemented correctly"
+         --TODO problem here is the bind we do on ma'
+         --means the application of f happens after the computation runs
+         --when semantically it needs to be before that to support e.g.
+         --spawnLocal correctly.
+    {-mapProcess f ma = error "not implemented correctly"-}
+        {-flip mapEitherT ma $-}
+        {-\ma' -> do-}
+            {-ea <- ma'-}
+            {-case ea of-}
+                {-Left e -> return $ Left e-}
+                {-Right a -> do-}
+                    {-b <- mapProcess f (return a)-}
+                    {-return $ Right b-}
 
 initRemoteTable :: RemoteTable
 initRemoteTable = Platform.__remoteTable Node.initRemoteTable

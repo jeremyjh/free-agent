@@ -128,6 +128,7 @@ instance Default SchedulePersist where
 data ScheduleState
    = ScheduleState { stateAcid      :: !(AcidState SchedulePersist)
                    , stateTickerRef :: Maybe TimerRef
+                   , stateTicking  :: Bool
                    } deriving (Typeable, Generic)
 
 makeFields ''SchedulePersist
@@ -242,6 +243,36 @@ lookupEvent key' = do
 -- -------Implementation------
 -- Implementation
 -- ---------------------------
+
+
+data ScheduleControl = ScheduleStart | ScheduleStop
+    deriving (Show, Typeable, Generic)
+
+instance Binary ScheduleControl
+instance NFData ScheduleControl where rnf = genericRnf
+
+instance ServerCast ScheduleControl where
+    type CastState ScheduleControl = ScheduleState
+    castName _ = serverName
+    handle ScheduleStart  =
+     do ticking' <- use ticking
+        if not ticking'
+          then do ticking .= True
+                  putStrLn "Starting Scheduler."
+                  tickMe
+          else putStrLn "Scheduler already running."
+    handle ScheduleStop =
+     do ticking' <- use ticking
+        if ticking'
+          then do putStrLn "Stopping Scheduler."
+                  ticking .= False
+                  ticker <- use tickerRef
+                  case ticker of
+                      Just ref ->
+                          liftProcess $ cancelTimer ref
+                      Nothing -> return ()
+          else putStrLn "Scheduler already stopped."
+
 data ScheduleAddEvent
     = ScheduleAddEvent !Key !ScheduleRecurrence !RetryOption
     | ScheduleAddEvents [Event]
@@ -320,6 +351,7 @@ scheduleServer =
             , registerCall (Proxy :: Proxy ScheduleAddEvent)
             , registerCall (Proxy :: Proxy ScheduleLookupEvent)
             , registerCall (Proxy :: Proxy ScheduleQueryEvents)
+            , registerCast (Proxy :: Proxy ScheduleControl)
             ],
             infoHandlers =
             [ agentInfoHandler $ \ Tick -> onTick
@@ -332,9 +364,17 @@ scheduleServer =
         }
   where initSchedule = do
             acid' <- openOrGetDb "agent-schedule" def def
-            pid <- getSelfPid
-            send pid Tick
-            return $ ScheduleState acid' Nothing
+            startNow <- viewConfig initScheduler
+            if startNow then
+             do putStrLn "Starting Scheduler."
+                tickMe
+            else putStrLn "Not Starting Scheduler."
+            return $ ScheduleState acid' Nothing startNow
+
+tickMe :: MonadProcess process => process ()
+tickMe =
+ do pid <- getSelfPid
+    send pid Tick
 
 onTick :: ScheduleAgent ()
 onTick = do
@@ -344,14 +384,17 @@ onTick = do
     scheduleNextTick
 
 scheduleNextTick :: ScheduleAgent ()
-scheduleNextTick = do
-    mminTime <- query NextScheduledTime
-    case mminTime of
-        Nothing -> return ()
-        Just minTime -> do
-            pid <- getSelfPid
-            diff <- diffUTCTime minTime <$> getCurrentTime
-            tickAt pid diff
+scheduleNextTick =
+ do ticking' <- use ticking
+    when ticking' $
+     do mminTime <- query NextScheduledTime
+        case mminTime of
+            Nothing -> return ()
+            Just minTime -> do
+                pid <- getSelfPid
+                diff <- diffUTCTime minTime <$> getCurrentTime
+                tickAt pid diff
+    return ()
   where tickAt pid diff
           | diff <= 0 = do
               send pid Tick
