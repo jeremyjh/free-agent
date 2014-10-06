@@ -2,7 +2,7 @@
 {-# LANGUAGE FunctionalDependencies, MultiParamTypeClasses            #-}
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings, RecordWildCards    #-}
 {-# LANGUAGE ScopedTypeVariables, StandaloneDeriving, TemplateHaskell #-}
-{-# LANGUAGE TypeFamilies                                             #-}
+{-# LANGUAGE TypeFamilies, QuasiQuotes                                #-}
 
 
 module FreeAgent.Server.Schedule where
@@ -258,20 +258,20 @@ instance ServerCast ScheduleControl where
      do ticking' <- use ticking
         if not ticking'
           then do ticking .= True
-                  putStrLn "Starting Scheduler."
+                  [qinfo|Starting scheduler.|]
                   tickMe
-          else putStrLn "Scheduler already running."
+          else [qinfo|Scheduler already running.|]
     handle ScheduleStop =
      do ticking' <- use ticking
         if ticking'
-          then do putStrLn "Stopping Scheduler."
+          then do [qinfo|Stopping scheduler.|]
                   ticking .= False
                   ticker <- use tickerRef
                   case ticker of
                       Just ref ->
                           liftProcess $ cancelTimer ref
                       Nothing -> return ()
-          else putStrLn "Scheduler already stopped."
+          else [qinfo|Scheduler already stopped.|]
 
 data ScheduleAddEvent
     = ScheduleAddEvent !Key !ScheduleRecurrence !RetryOption
@@ -366,9 +366,9 @@ scheduleServer =
             acid' <- openOrGetDb "agent-schedule" def def
             startNow <- viewConfig initScheduler
             if startNow then
-             do putStrLn "Starting Scheduler."
+             do [qinfo|Starting scheduler.|]
                 tickMe
-            else putStrLn "Not Starting Scheduler."
+            else [qinfo|Not starting scheduler.|]
             return $ ScheduleState acid' Nothing startNow
 
 tickMe :: MonadProcess process => process ()
@@ -432,12 +432,10 @@ instance Binary ScheduleRecurrence
 instance NFData ScheduleRecurrence where rnf = genericRnf
 deriveSafeStore ''ScheduleRecurrence
 
-
 instance Binary Event
 instance NFData Event where rnf = genericRnf
 -- we want to customize the JSON field names for ShellCommand
 -- so it looks nicer in Yaml, which may be very frequently used
---
 deriveJSON (defaultOptions {fieldLabelModifier = \field ->
                                 let (x:xs) = drop 5 field
                                 in Char.toLower x : xs

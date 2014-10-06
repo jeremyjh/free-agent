@@ -190,7 +190,6 @@ instance ServerCast ExecuteBatch where
     handle (ExecuteBatch keys) =
         forM_ keys $ \key' ->
          do executedCount %= (+) 1
-            use executedCount >>= print
             void . spawnLocal . void $ respond (ExecuteStored key')
 
 data AddListener = AddListener (Closure Listener)
