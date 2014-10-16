@@ -52,6 +52,7 @@ data Event
           , schedRecur    :: !ScheduleRecurrence
           , schedRetry    :: !RetryOption
           , schedModified :: !UTCTime
+          , schedDisabled :: !Bool
           } deriving (Show, Eq, Typeable, Generic)
 
 data ScheduleRecurrence
@@ -156,6 +157,9 @@ addMinutes additional time' =
     let minute' = timeIntervalToDiffTime (minutes additional) in
     addUTCTime minute' time'
 
+nextMinute :: MonadIO io => io UTCTime
+nextMinute = addMinutes 1 `liftM` getCurrentTime
+
 scheduleLookupEvent :: Key -> Query SchedulePersist (Maybe Event)
 scheduleLookupEvent key' = views events $ Map.lookup key'
 
@@ -175,7 +179,7 @@ queryAllEvents = views events (snd . unzip . Map.toList)
 readyToRun :: UTCTime -> Update SchedulePersist [Event]
 readyToRun now = do
     nextScheduled' <- use nextScheduled
-    let emptyEvent = (now, Event "" (RecurInterval 0) Never zeroDate)
+    let emptyEvent = (now, Event "" (RecurInterval 0) Never zeroDate False)
         (ready, waiting) = Set.split emptyEvent nextScheduled'
         nextAfter = Set.map (\(_, ev) ->
                                 case schedRecur ev of
@@ -199,6 +203,25 @@ scheduleRemoveEvent key' = do
     events %= Map.delete key'
     nextScheduled %= Set.filter (\ (_, ev) -> key ev /= key')
 
+disableEvents :: [Key] -> Update SchedulePersist ()
+disableEvents keys =
+ do events %= flip ( foldr $ \k es ->
+                        Map.update (\e -> Just e {schedDisabled = True}) k es
+                   ) keys
+    nextScheduled %= Set.filter (\e -> schedKey (snd e) `notElem` keys)
+
+enableEvents :: UTCTime -> [Key] -> Update SchedulePersist ()
+enableEvents now keys =
+ do events' <- use events
+    forM_ keys $ \key' ->
+     do let mevent = Map.lookup key' events'
+        case mevent of
+            Just event' ->
+             do let enabled = event' {schedDisabled = False}
+                events %= Map.insert key' enabled
+                nextScheduled %= Set.insert (calcNextScheduled now enabled)
+            Nothing -> return ()
+
 nextScheduledTime :: Query SchedulePersist (Maybe UTCTime)
 nextScheduledTime = do
     scheduled <- view nextScheduled
@@ -209,20 +232,22 @@ nextScheduledTime = do
 -- we have to make the splices near the top of the file
 $(makeAcidic ''SchedulePersist ['getPersist, 'addEvent, 'scheduleLookupEvent
                                , 'allCronEvents, 'queryAllEvents, 'readyToRun, 'nextScheduledTime
-                               , 'scheduleRemoveEvent ])
+                               , 'scheduleRemoveEvent, 'disableEvents, 'enableEvents ])
 
 -- ---------API---------------
 -- API
 -- ---------------------------
 
--- | Advertise a Server on the local peer
+-- | Helper for 'ScheduleAddEvent'; schedules an Event. Note
+-- that for a CronEvent, the event will run at the next matching time
+-- beginning one minute from now - e.g. you are scheduling something to run
+-- in the future, not right now.
 schedule :: MonadAgent agent
          => Key -> ScheduleRecurrence -> RetryOption
          -> agent (Either CallFail ())
 schedule key' recur retry =
     callServ (ScheduleAddEvent key' recur retry)
 
--- | Advertise a Server on the local peer
 unschedule :: MonadAgent agent
               => Key
               -> agent (Either ScheduleFail ())
@@ -290,14 +315,37 @@ instance ServerCall ScheduleAddEvent where
     respond (ScheduleAddEvent key' recur retry) =
       do now <- getCurrentTime
          respond (ScheduleAddNewerEvent key' recur retry now)
-    respond (ScheduleAddNewerEvent key' recur retry time) =
-      do let event = Event key' recur retry time
-         () <- update (AddEvent $ calcNextScheduled time event)
+    respond (ScheduleAddNewerEvent key' recur retry modTime) =
+      do let event = Event key' recur retry modTime False
+         next <- nextMinute
+         () <- update (AddEvent $ calcNextScheduled next event)
          scheduleNextTick
     respond (ScheduleAddEvents events') =
-      do now <- getCurrentTime
-         forM_ events' $ \event -> update (AddEvent $ calcNextScheduled now event)
+      do next <- nextMinute
+         forM_ events' $ \event -> update (AddEvent $ calcNextScheduled next event)
          scheduleNextTick
+
+
+data ScheduleEventControl
+    = ScheduleDisableEvents ![Key]
+    | ScheduleEnableEvents ![Key]
+    deriving (Show, Typeable, Generic)
+
+instance Binary ScheduleEventControl
+instance NFData ScheduleEventControl where rnf = genericRnf
+
+instance ServerCall ScheduleEventControl where
+    type CallState ScheduleEventControl = ScheduleState
+    callName _ = serverName
+
+    respond (ScheduleDisableEvents keys) =
+        update (DisableEvents keys)
+
+    respond (ScheduleEnableEvents keys) =
+     do now <- getCurrentTime
+        void $ update (EnableEvents now keys)
+        scheduleNextTick
+
 
 data ScheduleQueryEvents = ScheduleQueryEvents
     deriving (Show, Typeable, Generic)
@@ -351,6 +399,7 @@ scheduleServer =
             , registerCall (Proxy :: Proxy ScheduleAddEvent)
             , registerCall (Proxy :: Proxy ScheduleLookupEvent)
             , registerCall (Proxy :: Proxy ScheduleQueryEvents)
+            , registerCall (Proxy :: Proxy ScheduleEventControl)
             , registerCast (Proxy :: Proxy ScheduleControl)
             ],
             infoHandlers =

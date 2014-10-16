@@ -112,7 +112,7 @@ spec =
 
 
 
-testAgent ma = testRunAgent setup 1000 appConfig appPlugins ma
+testAgent ma = testRunAgent setup 2000 appConfig appPlugins ma
 
 setup :: IO ()
 setup = do

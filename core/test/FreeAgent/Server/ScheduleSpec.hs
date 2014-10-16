@@ -80,11 +80,26 @@ spec =  --parallel $
             testAgent $ do
                 Right () <- callServ $ StoreAction (Action testAction)
                 Right () <- schedule (key testAction) "* * * * *" Never
+                -- reset the event so it can run now
+                Right () <- callServ $ ScheduleEnableEvents [key testAction]
 
-                send scheduleServer Tick
                 threadDelay 10000
                 Right results' <- allResultsFrom (convert (0::Int))
                 return (length results')
+            `shouldReturn` 1
+
+        it "does not execute a disabled event" $ do
+            testAgent $ do
+                Right () <- callServ $ StoreAction (Action testAction)
+                Right () <- schedule (key testAction) "* * * * *" Never
+                -- this really doesn't prove much, since the event won't
+                -- run till the next minute in any case
+                {-Right () <- callServ $ ScheduleDisableEvents [key testAction]-}
+
+                send scheduleServer Tick
+                threadDelay 10000
+                Right rs <- allResultsFrom (convert (0::Int))
+                return (length rs)
             `shouldReturn` 1
 
 testAgent ma = quickRunAgent 500

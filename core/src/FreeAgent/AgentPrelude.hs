@@ -106,7 +106,7 @@ deriveSafeStoreVersion ver name = do
 -- > data MyData = MyData Int
 -- > deriveSafeStore ''MyData
 deriveSafeStore :: Name -> Q [Dec]
-deriveSafeStore = deriveSafeStoreVersion 1
+deriveSafeStore = deriveSafeCopy 1 'base
 
 -- | Same as 'deriveSerializers' except that the 'SafeCopy' instance will be
 -- for an extension of the provided version. This would also require
