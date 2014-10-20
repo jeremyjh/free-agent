@@ -407,9 +407,11 @@ scheduleServer =
             ],
             shutdownHandler =
                 \ s _ ->
-                case s ^. serverState.tickerRef of
+             do case s ^. serverState.tickerRef of
                    Just ref -> cancelTimer ref
                    Nothing -> return ()
+                pid <- getSelfPid
+                say $ "Schedule server " ++ show pid ++ " shutting down."
         }
   where initSchedule = do
             acid' <- openOrGetDb "agent-schedule" def def

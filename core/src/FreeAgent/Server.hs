@@ -30,7 +30,7 @@ runAgentServers config' plugins' ma =
     let cservers = filter (inPlugins pluginServers) coreServers
     in runAgent config' plugins' $
      do pid <- startSuper (join [pluginServers, cservers])
-        ma >> liftProcess (shutdown pid)
+        ma >> liftProcess (shutdownAndWait pid)
   where
     inPlugins pservers cserver =
         all (\s -> s ^. name /= cserver ^. name) pservers

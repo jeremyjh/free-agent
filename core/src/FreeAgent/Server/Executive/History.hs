@@ -15,6 +15,7 @@ module FreeAgent.Server.Executive.History
     ) where
 
 import FreeAgent.AgentPrelude
+import FreeAgent.Process (getSelfPid, say)
 import FreeAgent.Core.Internal.Lenses
 import FreeAgent.Database.AcidState
 import FreeAgent.Server.ManagedAgent
@@ -100,6 +101,8 @@ historyServerImpl HistoryBackend{..} =
                                ActionResultsFrom key' time -> doActionResultsFrom key' time
                                _ -> $(err "illegal pattern match")
                      ]
+                  , shutdownHandler = \ _ _ -> do pid <- getSelfPid
+                                                  say $ "Exec History server " ++ show pid ++ " shutting down."
                  }
 
 -- -----------------------------

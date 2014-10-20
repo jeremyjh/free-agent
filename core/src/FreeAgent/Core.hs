@@ -35,7 +35,6 @@ import           FreeAgent.Process
     , say, DiedReason(..), RemoteTable
     , localNodeId, NodeId)
 
-import           Control.Monad.Reader (runReaderT)
 import           Control.Monad.Writer             (execWriter, tell)
 import           Data.Dynamic                     (fromDynamic, toDyn )
 import qualified Data.Map                         as Map
@@ -221,6 +220,8 @@ globalMonitor = do
                  case ev of
                  -- TODO: need to promote ERROR logs so they come out in
                  -- LevelError
+                   {-(MxRegistered pid name') -> putStrLn ("Registered " ++ tshow pid ++ " as: " ++ pack name' )-}
+                   {-(MxSpawned pid) -> print pid-}
                    (MxProcessDied pid (DiedException msg)) -> liftMX $ say $ debug $ "[Error] " ++ show pid ++  " DiedException: " ++ msg
                    (MxProcessDied pid DiedDisconnect) -> liftMX $ say $ show pid ++ " DiedDisconnect"
                    (MxNodeDied nodeId (DiedException msg)) -> liftMX $ say $ debug $ "[Error] " ++ show nodeId ++  " DiedException: " ++ msg

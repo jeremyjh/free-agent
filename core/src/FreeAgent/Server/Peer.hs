@@ -79,6 +79,10 @@ peerServer =
                      agentInfoHandler $ \ (QueryLocalServices, sender :: ProcessId) ->
                            use (self.servers) >>= send sender . Set.toList
                     ]
+                  , shutdownHandler = \ _ _ -> do pid <- getSelfPid
+                                                  say $ "Peer server " ++ show pid ++ " shutting down."
+
+
                  }
   where
     initState = do

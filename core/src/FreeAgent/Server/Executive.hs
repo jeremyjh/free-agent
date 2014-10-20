@@ -290,8 +290,10 @@ execServer =
             , registerCast (Proxy :: Proxy ExecuteBatch)
             , registerCast (Proxy :: Proxy AddListener)
             ]
-          , shutdownHandler = \(AgentState _ s) _ ->
-                putStrLn $ "Executed # Actions: " ++ convert (s ^. executedCount)
+          , shutdownHandler = \(AgentState _ s) _ -> do
+                pid <- getSelfPid
+                say $ "Executed # Actions: " ++ show (s ^. executedCount)
+                say $ "Peer server " ++ show pid ++ " shutting down."
         }
   where initExec = do
             listeners' <- join $ viewContext $ plugins.listeners

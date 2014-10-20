@@ -116,7 +116,6 @@ defineServer name' initState' processDef' = AgentServer name' child
 
     child ctxt = do
         initChild <- toChildStart $ init ctxt
-
         return ChildSpec {
               childKey     = name'
             , childType    = Worker
