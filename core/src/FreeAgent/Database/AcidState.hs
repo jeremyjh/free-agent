@@ -1,5 +1,6 @@
-{-# LANGUAGE FlexibleContexts, FunctionalDependencies                  #-}
+{-# LANGUAGE FlexibleContexts, FunctionalDependencies, OverloadedStrings      #-}
 {-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude, TemplateHaskell #-}
+
 
 
 module FreeAgent.Database.AcidState
@@ -24,6 +25,7 @@ import Data.Acid                      (AcidState, EventResult, IsAcidic, Query,
                                        closeAcidState, makeAcidic,
                                        openLocalStateFrom)
 import Data.Acid.Advanced             (MethodState, query', update')
+import Data.Acid.Memory               (openMemoryState)
 import Data.Acid.Local                (createCheckpointAndClose)
 import Data.Default                   (Default (..))
 
@@ -44,10 +46,15 @@ openOrGetDb name' init (AcidOptions needCheckpoint) =
     foundOpen (Just sh) = return sh
     foundOpen Nothing = doInit
     doInit = do
-        path <- viewsConfig dbPath (</> convert name')
-        acid' <- liftIO $ openLocalStateFrom (convert path) init
-        manageResource name' acid' (closer acid')
-        return acid'
+        path <- viewConfig dbPath
+        case path of --TODO: s/b an ADT
+            "memory" -> do acid' <- liftIO $ openMemoryState init
+                           manageResource name' acid' (return ())
+                           return acid'
+            _ -> let path' = convert (path </> convert name')
+                 in do acid' <- liftIO $ {-# SCC "open-state" #-} openLocalStateFrom path' init
+                       manageResource name' acid' (closer acid')
+                       return acid'
     closer
       | needCheckpoint = createCheckpointAndClose
       | otherwise = closeAcidState

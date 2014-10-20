@@ -16,7 +16,7 @@ import           FreeAgent.Server.Peer
 import           FreeAgent.Client.Peer
 import           FreeAgent.Server.ManagedAgent
 
-import           FreeAgent.TestHelper hiding (appConfig, setup)
+import           FreeAgent.TestHelper hiding (appConfig)
 import qualified FreeAgent.TestHelper as Helper
 import           FreeAgent.Fixtures
 
@@ -114,27 +114,18 @@ spec =
 
 testAgent ma = testRunAgent setup 2000 appConfig appPlugins ma
 
-setup :: IO ()
-setup = do
-    void $ system ("rm -rf " ++ (convert $ appConfig ^. dbPath))
-    void $ system ("rm -rf " ++ (convert $ appConfig2 ^. dbPath))
-    void $ system ("rm -rf " ++ (convert $ appConfigTX ^. dbPath))
-
 appConfig :: AgentConfig
 appConfig = Helper.appConfig & appendRemoteTable __remoteTable
-                             & dbPath .~ "/tmp/leveltestp"
       {-& minLogLevel .~ LevelDebug-}
 
 appConfig2 :: AgentConfig
 appConfig2 = appConfig
-      & dbPath .~ "/tmp/leveltest2"
       & nodePort .~ "9092"
       & peerNodeSeeds .~ ["127.0.0.1:3546"]
       {-& minLogLevel .~ LevelInfo-}
 
 appConfigTX :: AgentConfig
 appConfigTX = appConfig
-      & dbPath .~ "/tmp/fa-test-tx"
       & nodePort .~ "9093"
       & peerNodeSeeds .~ ["127.0.0.1:3546"]
       & zones .~ Set.fromList [def, Zone "TX"]

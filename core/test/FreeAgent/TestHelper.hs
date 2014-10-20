@@ -36,7 +36,7 @@ import System.IO.Unsafe (unsafePerformIO)
 -- |App Config Section
 -- use record syntax to over-ride default configuration values
 appConfig :: AgentConfig
-appConfig = def & dbPath .~ "/tmp/leveltest"
+appConfig = def & dbPath .~ "memory"
                 {-& minLogLevel .~ LevelDebug-}
 
 appPlugins :: PluginSet
@@ -116,7 +116,11 @@ createContext (name', config', plugins') = do
 
 
 setup :: IO ()
-setup = void $ system ("rm -rf " ++ (convert $ appConfig ^. dbPath))
+setup =
+    case appConfig ^. dbPath of
+        "memory" -> return ()
+        _ ->
+            void $ system ("rm -rf " ++ (convert $ appConfig ^. dbPath))
 
 setupConfig :: AgentConfig -> IO ()
 setupConfig config' = void $ system ("rm -rf " ++ (convert $ config' ^. dbPath))
