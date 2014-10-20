@@ -37,7 +37,7 @@ module FreeAgent.AgentPrelude
     ) where
 
 
-import           ClassyPrelude                 hiding (handle, getCurrentTime)
+import           ClassyPrelude                 hiding (handle, getCurrentTime, ask, ReaderT)
 import qualified Prelude                       as P
 
 import           Control.DeepSeq.Generics      (NFData(..), genericRnf)

@@ -16,7 +16,7 @@ library
         template-haskell, 
         process >=1.1.0.2 && <1.2,
         text >=0.11.3.1 && <0.12,
-        classy-prelude >=0.9.2 && <0.10,
+        classy-prelude == 0.9.5,
         bytestring >=0.10.0.2 && <0.11,
         mtl >=2.1.2 && <2.2,
         file-location >=0.4.5.2 && <0.5,
