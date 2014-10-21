@@ -1,7 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE NoImplicitPrelude, OverloadedStrings, PatternGuards, QuasiQuotes #-}
+{-# LANGUAGE ScopedTypeVariables                                              #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-} -- Default PluginSet
 
@@ -24,55 +22,45 @@ module FreeAgent.Core
     ) where
 
 import           FreeAgent.AgentPrelude
-import           FreeAgent.Core.Action
-    (registerPluginMaps, registerAction, actionType)
-import           FreeAgent.Core.Action.ShellCommand    (ShellCommand)
-import           FreeAgent.Core.Action.Composition     (ActionPlan)
+import           FreeAgent.Core.Action                  (actionType, registerAction,
+                                                         registerPluginMaps)
+import           FreeAgent.Core.Action.Composition      (ActionPlan)
+import           FreeAgent.Core.Action.ShellCommand     (ShellCommand)
 import           FreeAgent.Core.Internal.Lenses
-import           FreeAgent.Process
-    ( spawnLocal, receiveWait, match
-    , sendChan, SendPort, reregister
-    , say, DiedReason(..), RemoteTable
-    , localNodeId, NodeId)
+import           FreeAgent.Process                      (DiedReason (..), NodeId,
+                                                         RemoteTable, SendPort,
+                                                         localNodeId, match, receiveWait,
+                                                         reregister, say, sendChan,
+                                                         spawnLocal)
 
-import           Control.Monad.Writer             (execWriter, tell)
-import           Data.Dynamic                     (fromDynamic, toDyn )
-import qualified Data.Map                         as Map
-import Data.Default (Default)
+import           Control.Monad.Writer                   (execWriter, tell)
+import           Data.Default                           (Default)
+import           Data.Dynamic                           (fromDynamic, toDyn)
+import qualified Data.Map                               as Map
 
-import           Control.Concurrent.Lifted        (threadDelay)
-import Control.Distributed.Process.Node
-       (newLocalNode, runProcess, forkProcess)
+import           Control.Concurrent.Lifted              (threadDelay)
 import           Control.Distributed.Process.Management
-import           Network.Transport                (closeTransport)
+import           Control.Distributed.Process.Node       (forkProcess, newLocalNode,
+                                                         runProcess)
+import           Network.Transport                      (closeTransport)
 import           Network.Transport.TCP
 
-import Control.Monad.Logger (runStdoutLoggingT)
+import           Control.Monad.Logger                   (runStdoutLoggingT)
 
-import qualified FreeAgent.Core.Internal.Types as X
-    ( --types and constructors
-      PluginDef(..)
-    , AgentConfig(..)
-
-    , Action(..)
-    , Result(..)
-    , ResultSummary(..)
-    , RunnableFail(..)
-
-    , Stashable(..)
-    , Extractable(..)
-    , Runnable(..)
-    , Resulting(..)
-
-    -- types only
-    , PluginSet
-    , Agent
-    , AgentContext
-    , Key
-    )
-import qualified FreeAgent.Core.Action as X
-import qualified FreeAgent.Process as X
-import           FreeAgent.Client.Peer as X
+import           FreeAgent.Client.Peer                  as X
+import qualified FreeAgent.Core.Action                  as X
+import qualified FreeAgent.Core.Internal.Types          as X (Action (..), Agent,
+                                                              AgentConfig (..),
+                                                              AgentContext,
+                                                              Extractable (..), Key,
+                                                              PluginDef (..), PluginSet,
+                                                              Result (..),
+                                                              ResultSummary (..),
+                                                              Resulting (..),
+                                                              Runnable (..),
+                                                              RunnableFail (..),
+                                                              Stashable (..))
+import qualified FreeAgent.Process                      as X
 
 -- need this here so we include Core.pluginDef by default
 instance Default PluginSet where
@@ -220,12 +208,23 @@ globalMonitor = do
                  case ev of
                  -- TODO: need to promote ERROR logs so they come out in
                  -- LevelError
-                   {-(MxRegistered pid name') -> putStrLn ("Registered " ++ tshow pid ++ " as: " ++ pack name' )-}
                    {-(MxSpawned pid) -> print pid-}
-                   (MxProcessDied pid (DiedException msg)) -> liftMX $ say $ debug $ "[Error] " ++ show pid ++  " DiedException: " ++ msg
-                   (MxProcessDied pid DiedDisconnect) -> liftMX $ say $ show pid ++ " DiedDisconnect"
-                   (MxNodeDied nodeId (DiedException msg)) -> liftMX $ say $ debug $ "[Error] " ++ show nodeId ++  " DiedException: " ++ msg
-                   (MxNodeDied nodeId DiedDisconnect) -> liftMX $ say $ show nodeId ++ " DiedDisconnect"
+                   (MxRegistered pid name') -> liftMX $ say ("Registered " ++ show pid ++ " as: " ++ name' )
+                   (MxProcessDied pid (DiedException msg)) ->
+                    let sayException = "[Error] " ++ show pid ++  " DiedException: " ++ msg
+                    in liftMX $ say $ case words msg of
+                       "ProcessLinkException" : _                -> sayException
+                       reason : _ | "exit-from" <- take 9 reason -> sayException
+                                  | "reason=testing" <- reverse $ take 14 (reverse reason)
+                                                                 -> sayException
+                                  | otherwise                    -> debug sayException
+                       _ -> debug sayException
+                   (MxProcessDied pid DiedDisconnect) ->
+                       liftMX $ say $ show pid ++ " DiedDisconnect"
+                   (MxNodeDied nodeId (DiedException msg)) ->
+                       liftMX $ say $ debug $ "[Error] " ++ show nodeId ++  " DiedException: " ++ msg
+                   (MxNodeDied nodeId DiedDisconnect) ->
+                       liftMX $ say $ show nodeId ++ " DiedDisconnect"
                    _                   -> return ()
            act >> mxReady ]
     threadDelay 10000

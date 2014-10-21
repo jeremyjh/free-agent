@@ -286,11 +286,12 @@ globalPluginMaps :: IORef UnwrappersMap
 globalPluginMaps = unsafePerformIO $ newIORef (Map.fromList [])
 {-# NOINLINE globalPluginMaps #-}
 
--- Yes...this is not transparent. This is necessary to deserialize
--- Actions and Results defined in Plugins. There are workarounds for
--- most cases but to receive an Action in a Cloud Haskell 'expect' we must be
--- able to deserialize in a pure Binary getter. This also makes persistence
--- of existentials in AcidState a lot cleaner in the client code.
+--TODO: We can dispense with unsafePerformIO!
+--Using the WrappedHandler under an Action/Result means we don't unwrap
+--when we 'expect' but rather when we 'exec' - last barrier was inside
+--ExecState but there we can unwrap inside an AcidState Update
+--if we pass a newtyped PluginMap with a stubbed SafeCopy instance
+--this lets us unwrap all actions just once whenever the Server restarts
 readPluginMaps :: UnwrappersMap
 readPluginMaps = unsafePerformIO $ readIORef globalPluginMaps
 {-# NOINLINE readPluginMaps #-}
