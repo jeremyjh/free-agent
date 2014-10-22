@@ -36,6 +36,7 @@ data HistoryBackend st = HistoryBackend {
     , doWriteResult       :: Result -> HistoryAgent st ()
     , doAllResultsFrom    :: UTCTime -> HistoryAgentET st [Result]
     , doActionResultsFrom :: Key -> UTCTime -> HistoryAgentET st [Result]
+    , doShutdown          :: ShutdownHandler st
 }
 
 type HistoryAgent st = StateT st Agent
@@ -101,8 +102,10 @@ historyServerImpl HistoryBackend{..} =
                                ActionResultsFrom key' time -> doActionResultsFrom key' time
                                _ -> $(err "illegal pattern match")
                      ]
-                  , shutdownHandler = \ _ _ -> do pid <- getSelfPid
-                                                  say $ "Exec History server " ++ show pid ++ " shutting down."
+                  , shutdownHandler = \ (AgentState _ st) reason ->
+                       do pid <- getSelfPid
+                          doShutdown st reason
+                          say $ "Exec History server " ++ show pid ++ " shutting down."
                  }
 
 -- -----------------------------
@@ -113,9 +116,14 @@ historyServerImpl HistoryBackend{..} =
 data HistoryPersist = HistoryPersist {_historyResults :: CList Result}
         deriving (Typeable)
 
+data HistoryState = HistoryState { _historyAcid         :: AcidState HistoryPersist
+                                 , _historySessionCount :: Int
+                                 }
+
 makeFields ''HistoryPersist
 
-data HistoryState = HistoryState {_historyAcid :: AcidState HistoryPersist}
+makeFields ''HistoryState
+
 
 fetchAllFrom  :: UTCTime -> Query HistoryPersist [Result]
 fetchAllFrom time =
@@ -136,20 +144,22 @@ defaultBackend = HistoryBackend {
       doInit = do
         acid' <- openOrGetDb "agent-executive-history"
                                   (HistoryPersist CL.empty) def
-        return $ HistoryState acid'
-    , doWriteResult = update . InsertResult
+        return $ HistoryState acid' 0
+    , doWriteResult = \ rs ->
+        do void $ update $ InsertResult rs
+           sessionCount %= (+1)
     , doAllResultsFrom = query . FetchAllFrom
     , doActionResultsFrom = \ key' time -> do
         results' <- query (FetchAllFrom time)
         return $ filter (\r -> r ^. to summary.resultOf.to key == key')
                         results'
-
+    , doShutdown = \ (HistoryState _ count) _ ->
+        say $ "Exec history wrote event count of: " ++ show count
 }
 
 defaultHistoryServer :: AgentServer
 defaultHistoryServer = historyServerImpl defaultBackend
 
-makeFields ''HistoryState
 deriveSafeStore ''HistoryPersist
 instance NFData HistoryCommand where rnf = genericRnf
 instance NFData HistoryFail where rnf = genericRnf
