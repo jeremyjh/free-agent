@@ -26,6 +26,8 @@ executable famon
                      , data-default
                      , unordered-containers
                      , process
+                     , lifted-base
+                     , distributed-process-platform 
   hs-source-dirs:      famon
   default-language:    Haskell2010
   ghc-prof-options: -O2 -auto-all

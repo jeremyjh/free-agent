@@ -6,6 +6,7 @@
     key: 205.254.135.7:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -14,6 +15,7 @@
     key: 37signals.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -22,6 +24,7 @@
     key: abcfamily.go.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -30,6 +33,7 @@
     key: abcnews.go.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -38,6 +42,7 @@
     key: adventure.howstuffworks.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -46,6 +51,7 @@
     key: allrecipes.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -54,6 +60,7 @@
     key: animals.nationalgeographic.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -62,6 +69,7 @@
     key: archives.obs-us.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -70,6 +78,7 @@
     key: armorgames.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -78,6 +87,7 @@
     key: articles.cnn.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -86,6 +96,7 @@
     key: backpackit.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -94,6 +105,7 @@
     key: bananarepublic.gap.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -102,6 +114,7 @@
     key: bananasweb.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -110,6 +123,7 @@
     key: barbecue.sourceforge.net:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -118,6 +132,7 @@
     key: bbq.about.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -126,6 +141,7 @@
     key: beemp3.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -134,6 +150,7 @@
     key: bible.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -142,6 +159,7 @@
     key: biffotasty.blogspot.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -150,6 +168,7 @@
     key: billychasen.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -158,6 +177,7 @@
     key: blog.box.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -166,6 +186,7 @@
     key: boisefork.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -174,6 +195,7 @@
     key: bombsite.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -182,6 +204,7 @@
     key: books.google.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -190,6 +213,7 @@
     key: bottlepy.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -198,6 +222,7 @@
     key: box.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -206,6 +231,7 @@
     key: boythefilm.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -214,6 +240,7 @@
     key: brain.oxfordjournals.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -222,6 +249,7 @@
     key: bridgerecords.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -230,6 +258,7 @@
     key: brutallyunfairtactics.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -238,6 +267,7 @@
     key: caloriecount.about.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -246,6 +276,7 @@
     key: cappuccino.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -254,6 +285,7 @@
     key: carrotcreative.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -262,6 +294,7 @@
     key: cars.cnet.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -270,6 +303,7 @@
     key: catandgirl.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -278,6 +312,7 @@
     key: cavegallery.net:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -286,6 +321,7 @@
     key: caverntavern.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -294,6 +330,7 @@
     key: chemistry.about.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -302,6 +339,7 @@
     key: chess.about.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -310,6 +348,7 @@
     key: chief.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -318,6 +357,7 @@
     key: chrismasterson.me:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -326,6 +366,7 @@
     key: circle.adventist.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -334,6 +375,7 @@
     key: coffeegeek.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -342,6 +384,7 @@
     key: comet.ucar.edu:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -350,6 +393,7 @@
     key: cometbar.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -358,6 +402,7 @@
     key: compass-style.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -366,6 +411,7 @@
     key: compass.illinois.edu:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -374,6 +420,7 @@
     key: compassrecords.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -382,6 +429,7 @@
     key: database.oxfordjournals.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -390,6 +438,7 @@
     key: developer.yahoo.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -398,6 +447,7 @@
     key: diamondcabinets.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -406,6 +456,7 @@
     key: dictionary.reference.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -414,6 +465,7 @@
     key: disney.go.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -422,6 +474,7 @@
     key: docs.oracle.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -430,6 +483,7 @@
     key: download.cnet.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -438,6 +492,7 @@
     key: draves.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -446,6 +501,7 @@
     key: drinkfortpoint.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -454,6 +510,7 @@
     key: earsnyc.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -462,6 +519,7 @@
     key: earth.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -470,6 +528,7 @@
     key: earth.google.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -478,6 +537,7 @@
     key: earthobservatory.nasa.gov:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -486,6 +546,7 @@
     key: electronics.howstuffworks.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -494,6 +555,7 @@
     key: elephant.elehost.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -502,6 +564,7 @@
     key: en.wikipedia.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -510,6 +573,7 @@
     key: en.wiktionary.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -518,6 +582,7 @@
     key: epicgames.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -526,6 +591,7 @@
     key: eraser.heidi.ie:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -534,6 +600,7 @@
     key: espn.go.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -542,6 +609,7 @@
     key: faculty.washington.edu:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -550,6 +618,7 @@
     key: family.go.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -558,6 +627,7 @@
     key: familyfun.go.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -566,6 +636,7 @@
     key: featherlinux.berlios.de:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -574,6 +645,7 @@
     key: festvox.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -582,6 +654,7 @@
     key: finance.yahoo.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -590,6 +663,7 @@
     key: finefeatherheads.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -598,6 +672,7 @@
     key: fire.dmzs.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -606,6 +681,7 @@
     key: firefoodanddrink.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -614,6 +690,7 @@
     key: floodlightdesign.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -622,6 +699,7 @@
     key: flower.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -630,6 +708,7 @@
     key: focusfeatures.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -638,6 +717,7 @@
     key: foot.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -646,6 +726,7 @@
     key: forkchicago.net:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -654,6 +735,7 @@
     key: gas.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -662,6 +744,7 @@
     key: gasbuddy.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -670,6 +753,7 @@
     key: gate.ac.uk:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -678,6 +762,7 @@
     key: gatepetro.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -686,6 +771,7 @@
     key: genome.ucsc.edu:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -694,6 +780,7 @@
     key: genomics.ornl.gov:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -702,6 +789,7 @@
     key: ghirardelli.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -710,6 +798,7 @@
     key: github.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -718,6 +807,7 @@
     key: godisimaginary.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -726,6 +816,7 @@
     key: godrb.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -734,6 +825,7 @@
     key: guitar.about.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -742,6 +834,7 @@
     key: hammer.ucla.edu:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -750,6 +843,7 @@
     key: hammerbowling.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -758,6 +852,7 @@
     key: help.github.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -766,6 +861,7 @@
     key: herbarium.usu.edu:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -774,6 +870,7 @@
     key: hoodamath.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -782,6 +879,7 @@
     key: horoscopes.astrology.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -790,6 +888,7 @@
     key: ice.disa.mil:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -798,6 +897,7 @@
     key: inventors.about.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -806,6 +906,7 @@
     key: itunes.apple.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -814,6 +915,7 @@
     key: junkraft.blogspot.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -822,6 +924,7 @@
     key: kids.nationalgeographic.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -830,6 +933,7 @@
     key: kidshealth.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -838,6 +942,7 @@
     key: kscope4fun.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -846,6 +951,7 @@
     key: linux.die.net:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -854,6 +960,7 @@
     key: liquidboise.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -862,6 +969,7 @@
     key: liquidmarkup.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -870,6 +978,7 @@
     key: localhost:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -878,6 +987,7 @@
     key: lostpedia.wikia.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -886,6 +996,7 @@
     key: m.box.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -894,6 +1005,7 @@
     key: madisonmagnet.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -902,6 +1014,7 @@
     key: map.gsfc.nasa.gov:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -910,6 +1023,7 @@
     key: map.yahoo.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -918,6 +1032,7 @@
     key: maps.google.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -926,6 +1041,7 @@
     key: maps.yahoo.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -934,6 +1050,7 @@
     key: math.ucsd.edu:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -942,6 +1059,7 @@
     key: mathworld.wolfram.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -950,6 +1068,7 @@
     key: mchammer.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -958,6 +1077,7 @@
     key: meteorserver.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -966,6 +1086,7 @@
     key: military.discovery.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -974,6 +1095,7 @@
     key: milkinc.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -982,6 +1104,7 @@
     key: mormon.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -990,6 +1113,7 @@
     key: msdn.microsoft.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -998,6 +1122,7 @@
     key: nineplanets.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1006,6 +1131,7 @@
     key: nutritiondata.self.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1014,6 +1140,7 @@
     key: nymag.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1022,6 +1149,7 @@
     key: olgaroad.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1030,6 +1158,7 @@
     key: onlinebooks.library.upenn.edu:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1038,6 +1167,7 @@
     key: onlineclock.net:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1046,6 +1176,7 @@
     key: orthoinfo.aaos.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1054,6 +1185,7 @@
     key: pdb1:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1062,6 +1194,7 @@
     key: play.google.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1070,6 +1203,7 @@
     key: portableapps.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1078,6 +1212,7 @@
     key: pubs.opengroup.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1086,6 +1221,7 @@
     key: quod.lib.umich.edu:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1094,6 +1230,7 @@
     key: redmeat.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1102,6 +1239,7 @@
     key: research.microsoft.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1110,6 +1248,7 @@
     key: rhymesayers.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1118,6 +1257,7 @@
     key: science.howstuffworks.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1126,6 +1266,7 @@
     key: science.nationalgeographic.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1134,6 +1275,7 @@
     key: search.carrot2.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1142,6 +1284,7 @@
     key: search.ebscohost.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1150,6 +1293,7 @@
     key: searchsqlserver.techtarget.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1158,6 +1302,7 @@
     key: seaside.gemstone.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1166,6 +1311,7 @@
     key: sfpl.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1174,6 +1320,7 @@
     key: shawfloors.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1182,6 +1329,7 @@
     key: shine.yahoo.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1190,6 +1338,7 @@
     key: shop.nordstrom.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1198,6 +1347,7 @@
     key: shopbird.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1206,6 +1356,7 @@
     key: shs.westport.k12.ct.us:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1214,6 +1365,7 @@
     key: solarsystem.nasa.gov:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1222,6 +1374,7 @@
     key: soundcloud.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1230,6 +1383,7 @@
     key: sourceforge.net:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1238,6 +1392,7 @@
     key: southernbarbecue.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1246,6 +1401,7 @@
     key: stumptowncoffee.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1254,6 +1410,7 @@
     key: svnbook.red-bean.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1262,6 +1419,7 @@
     key: sxsw.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1270,6 +1428,7 @@
     key: thatgamecompany.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1278,6 +1437,7 @@
     key: thebandcalledboy.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1286,6 +1446,7 @@
     key: thebathroomdiaries.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1294,6 +1455,7 @@
     key: thechiefleader.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1302,6 +1464,7 @@
     key: thecoffeeshopnyc.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1310,6 +1473,7 @@
     key: thefire.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1318,6 +1482,7 @@
     key: thekitchen.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1326,6 +1491,7 @@
     key: theknife.net:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1334,6 +1500,7 @@
     key: theoatmeal.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1342,6 +1509,7 @@
     key: thisfinger.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1350,6 +1518,7 @@
     key: twelvesouth.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1358,6 +1527,7 @@
     key: twitter.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1366,6 +1536,7 @@
     key: tycho.usno.navy.mil:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1374,6 +1545,7 @@
     key: urbanext.illinois.edu:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1382,6 +1554,7 @@
     key: us.battle.net:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1390,6 +1563,7 @@
     key: video.pbs.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1398,6 +1572,7 @@
     key: vimeo.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1406,6 +1581,7 @@
     key: web.me.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1414,6 +1590,7 @@
     key: web.mit.edu:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1422,6 +1599,7 @@
     key: whfoods.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1430,6 +1608,7 @@
     key: www.0800-horoscope.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1438,6 +1617,7 @@
     key: www.1800flowers.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1446,6 +1626,7 @@
     key: www.1800gotjunk.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1454,6 +1635,7 @@
     key: www.1st-milkshake-n-smoothie-recipes.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1462,6 +1644,7 @@
     key: www.acbl.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1470,6 +1653,7 @@
     key: www.acehose.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1478,6 +1662,7 @@
     key: www.act.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1486,6 +1671,7 @@
     key: www.addictinggames.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1494,6 +1680,7 @@
     key: www.adobe.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1502,6 +1689,7 @@
     key: www.adoptahighway.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1510,6 +1698,7 @@
     key: www.aeb.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1518,6 +1707,7 @@
     key: www.aeroplanemonthly.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1526,6 +1716,7 @@
     key: www.aeroplanemusic.be:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1534,6 +1725,7 @@
     key: www.af.mil:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1542,6 +1734,7 @@
     key: www.afi.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1550,6 +1743,7 @@
     key: www.afrotc.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1558,6 +1752,7 @@
     key: www.air.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1566,6 +1761,7 @@
     key: www.air1.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1574,6 +1770,7 @@
     key: www.airea.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1582,6 +1779,7 @@
     key: www.airforce.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1590,6 +1788,7 @@
     key: www.airforcetimes.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1598,6 +1797,7 @@
     key: www.airtran.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1606,6 +1806,7 @@
     key: www.airweb.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1614,6 +1815,7 @@
     key: www.allaboutbirds.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1622,6 +1824,7 @@
     key: www.allaboutvision.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1630,6 +1833,7 @@
     key: www.amazon.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1638,6 +1842,7 @@
     key: www.americangirl.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1646,6 +1851,7 @@
     key: www.americanstandard-us.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1654,6 +1860,7 @@
     key: www.amphibianark.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1662,6 +1869,7 @@
     key: www.amsmeteors.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1670,6 +1878,7 @@
     key: www.andythelwell.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1678,6 +1887,7 @@
     key: www.ansi.okstate.edu:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1686,6 +1896,7 @@
     key: www.apple.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1694,6 +1905,7 @@
     key: www.apronus.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1702,6 +1914,7 @@
     key: www.arcadelots.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1710,6 +1923,7 @@
     key: www.askmen.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1718,6 +1932,7 @@
     key: www.astrocenter.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1726,6 +1941,7 @@
     key: www.astrology.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1734,6 +1950,7 @@
     key: www.atlanta-airport.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1742,6 +1959,7 @@
     key: www.au.af.mil:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1750,6 +1968,7 @@
     key: www.audio-bible.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1758,6 +1977,7 @@
     key: www.autotrader.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1766,6 +1986,7 @@
     key: www.awf.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1774,6 +1995,7 @@
     key: www.baby.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1782,6 +2004,7 @@
     key: www.babycenter.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1790,6 +2013,7 @@
     key: www.babynames.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1798,6 +2022,7 @@
     key: www.babyzone.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1806,6 +2031,7 @@
     key: www.backpack.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1814,6 +2040,7 @@
     key: www.balloonfiesta.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1822,6 +2049,7 @@
     key: www.balloonhq.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1830,6 +2058,7 @@
     key: www.balloonsupply.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1838,6 +2067,7 @@
     key: www.balloonwarehouse.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1846,6 +2076,7 @@
     key: www.banana.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1854,6 +2085,7 @@
     key: www.bananamuseum.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1862,6 +2094,7 @@
     key: www.bankmpls.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1870,6 +2103,7 @@
     key: www.bankofamerica.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1878,6 +2112,7 @@
     key: www.barbecue-store.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1886,6 +2121,7 @@
     key: www.barbecuebible.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1894,6 +2130,7 @@
     key: www.barbecuen.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1902,6 +2139,7 @@
     key: www.barnesandnoble.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1910,6 +2148,7 @@
     key: www.bartleby.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1918,6 +2157,7 @@
     key: www.baskinrobbins.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1926,6 +2166,7 @@
     key: www.bathroomfurnituredirect.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1934,6 +2175,7 @@
     key: www.bathtubuniverse.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1942,6 +2184,7 @@
     key: www.bbcicecream.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1950,6 +2193,7 @@
     key: www.bbvacompass.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1958,6 +2202,7 @@
     key: www.bedandbreakfast.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1966,6 +2211,7 @@
     key: www.bedbathandbeyond.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1974,6 +2220,7 @@
     key: www.bedmiami.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1982,6 +2229,7 @@
     key: www.beebasses.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1990,6 +2238,7 @@
     key: www.beemovie.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -1998,6 +2247,7 @@
     key: www.behindthechair.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2006,6 +2256,7 @@
     key: www.benchmade.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2014,6 +2265,7 @@
     key: www.benjerry.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2022,6 +2274,7 @@
     key: www.bestglove.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2030,6 +2283,7 @@
     key: www.bhg.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2038,6 +2292,7 @@
     key: www.bible.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2046,6 +2301,7 @@
     key: www.biblegateway.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2054,6 +2310,7 @@
     key: www.biblestudytools.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2062,6 +2319,7 @@
     key: www.bigapplecircus.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2070,6 +2328,7 @@
     key: www.bing.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2078,6 +2337,7 @@
     key: www.biologycorner.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2086,6 +2346,7 @@
     key: www.bird-technologies.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2094,6 +2355,7 @@
     key: www.bird.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2102,6 +2364,7 @@
     key: www.birdbook.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2110,6 +2373,7 @@
     key: www.blueletterbible.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2118,6 +2382,7 @@
     key: www.bombfest.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2126,6 +2391,7 @@
     key: www.bombhiphop.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2134,6 +2400,7 @@
     key: www.bookadventure.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2142,6 +2409,7 @@
     key: www.boss-inc.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2150,6 +2418,7 @@
     key: www.bossaudio.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2158,6 +2427,7 @@
     key: www.bosscorp.co.jp:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2166,6 +2436,7 @@
     key: www.bossplow.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2174,6 +2445,7 @@
     key: www.bossus.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2182,6 +2454,7 @@
     key: www.bowl-america.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2190,6 +2463,7 @@
     key: www.bowl.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2198,6 +2472,7 @@
     key: www.box.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2206,6 +2481,7 @@
     key: www.brainpop.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2214,6 +2490,7 @@
     key: www.breyers.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2222,6 +2499,7 @@
     key: www.bridge.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2230,6 +2508,7 @@
     key: www.bridgebase.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2238,6 +2517,7 @@
     key: www.buckknives.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2246,6 +2526,7 @@
     key: www.butterflyonline.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2254,6 +2535,7 @@
     key: www.butterflysf.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2262,6 +2544,7 @@
     key: www.butterflysushi2go.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2270,6 +2553,7 @@
     key: www.butterflywebsite.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2278,6 +2562,7 @@
     key: www.buttongenerator.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2286,6 +2571,7 @@
     key: www.car.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2294,6 +2580,7 @@
     key: www.car.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2302,6 +2589,7 @@
     key: www.cardomain.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2310,6 +2598,7 @@
     key: www.cariboucoffee.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2318,6 +2607,7 @@
     key: www.carpet.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2326,6 +2616,7 @@
     key: www.carpetexpress.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2334,6 +2625,7 @@
     key: www.carpetone.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2342,6 +2634,7 @@
     key: www.carrotmuseum.co.uk:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2350,6 +2643,7 @@
     key: www.cars.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2358,6 +2652,7 @@
     key: www.cartoonnetwork.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2366,6 +2661,7 @@
     key: www.cavearts.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2374,6 +2670,7 @@
     key: www.cavedetroit.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2382,6 +2679,7 @@
     key: www.cbssports.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2390,6 +2688,7 @@
     key: www.cd-services.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2398,6 +2697,7 @@
     key: www.cdconnection.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2406,6 +2706,7 @@
     key: www.cde.ca.gov:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2414,6 +2715,7 @@
     key: www.cduniverse.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2422,6 +2724,7 @@
     key: www.cfw.tufts.edu:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2430,6 +2733,7 @@
     key: www.cgnad.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2438,6 +2742,7 @@
     key: www.chase.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2446,6 +2751,7 @@
     key: www.chem4kids.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2454,6 +2760,7 @@
     key: www.chesshouse.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2462,6 +2769,7 @@
     key: www.chessusa.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2470,6 +2778,7 @@
     key: www.chicago-fire.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2478,6 +2787,7 @@
     key: www.chiefaircraft.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2486,6 +2796,7 @@
     key: www.chiefautomotive.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2494,6 +2805,7 @@
     key: www.chiefmfg.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2502,6 +2814,7 @@
     key: www.chiefsupply.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2510,6 +2823,7 @@
     key: www.child.net:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2518,6 +2832,7 @@
     key: www.childrenshealthcare.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2526,6 +2841,7 @@
     key: www.childrensinstitute.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2534,6 +2850,7 @@
     key: www.childsup.ca.gov:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2542,6 +2859,7 @@
     key: www.chiquita.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2550,6 +2868,7 @@
     key: www.chiselindustries.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2558,6 +2877,7 @@
     key: www.chocolate.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2566,6 +2886,7 @@
     key: www.churchboutique.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2574,6 +2895,7 @@
     key: www.churchofboston.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2582,6 +2904,7 @@
     key: www.churchs.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2590,6 +2913,7 @@
     key: www.churchseats.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2598,6 +2922,7 @@
     key: www.circle.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2606,6 +2931,7 @@
     key: www.circlesanctuary.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2614,6 +2940,7 @@
     key: www.cirquedusoleil.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2622,6 +2949,7 @@
     key: www.civicyouth.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2630,6 +2958,7 @@
     key: www.cleverfiles.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2638,6 +2967,7 @@
     key: www.clownsforhire.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2646,6 +2976,7 @@
     key: www.clownswithoutborders.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2654,6 +2985,7 @@
     key: www.cml.lib.oh.us:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2662,6 +2994,7 @@
     key: www.co.bee.tx.us:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2670,6 +3003,7 @@
     key: www.coai.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2678,6 +3012,7 @@
     key: www.coffeereview.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2686,6 +3021,7 @@
     key: www.cognifit.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2694,6 +3030,7 @@
     key: www.coldsteel.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2702,6 +3039,7 @@
     key: www.coldstonecreamery.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2710,6 +3048,7 @@
     key: www.collegehumor.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2718,6 +3057,7 @@
     key: www.come2drink.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2726,6 +3066,7 @@
     key: www.comet.co.uk:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2734,6 +3075,7 @@
     key: www.cometantenna.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2742,6 +3084,7 @@
     key: www.cometpingpong.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2750,6 +3093,7 @@
     key: www.cometskateboards.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2758,6 +3102,7 @@
     key: www.compass.state.pa.us:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2766,6 +3111,7 @@
     key: www.compasslearningodyssey.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2774,6 +3120,7 @@
     key: www.comptongame.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2782,6 +3129,7 @@
     key: www.coolmath-games.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2790,6 +3138,7 @@
     key: www.crkt.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2798,6 +3147,7 @@
     key: www.csbf.nasa.gov:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2806,6 +3156,7 @@
     key: www.dailyhoroscopes.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2814,6 +3165,7 @@
     key: www.database.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2822,6 +3174,7 @@
     key: www.davidsbridal.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2830,6 +3183,7 @@
     key: www.dci.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2838,6 +3192,7 @@
     key: www.defenders.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2846,6 +3201,7 @@
     key: www.diamond-sports.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2854,6 +3210,7 @@
     key: www.diamond.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2862,6 +3219,7 @@
     key: www.diamondarchery.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2870,6 +3228,7 @@
     key: www.diamondaudio.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2878,6 +3237,7 @@
     key: www.diamondcomics.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2886,6 +3246,7 @@
     key: www.diamondmm.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2894,6 +3255,7 @@
     key: www.diamondpet.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2902,6 +3264,7 @@
     key: www.diamondsupplyco.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2910,6 +3273,7 @@
     key: www.discogs.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2918,6 +3282,7 @@
     key: www.doctorfungus.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2926,6 +3291,7 @@
     key: www.doesgodexist.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2934,6 +3300,7 @@
     key: www.dragcity.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2942,6 +3309,7 @@
     key: www.dreamhorse.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2950,6 +3318,7 @@
     key: www.dressaday.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2958,6 +3327,7 @@
     key: www.dressboston.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2966,6 +3336,7 @@
     key: www.dressupgames.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2974,6 +3345,7 @@
     key: www.drilldoctor.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2982,6 +3354,7 @@
     key: www.drinksmixer.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2990,6 +3363,7 @@
     key: www.drumchannel.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -2998,6 +3372,7 @@
     key: www.drumlink.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3006,6 +3381,7 @@
     key: www.drummagazine.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3014,6 +3390,7 @@
     key: www.drumnation.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3022,6 +3399,7 @@
     key: www.drumusic.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3030,6 +3408,7 @@
     key: www.dwdrums.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3038,6 +3417,7 @@
     key: www.dyson.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3046,6 +3426,7 @@
     key: www.e4hats.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3054,6 +3435,7 @@
     key: www.ears4life.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3062,6 +3444,7 @@
     key: www.earsinc.net:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3070,6 +3453,7 @@
     key: www.earthmagazine.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3078,6 +3462,7 @@
     key: www.ebags.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3086,6 +3471,7 @@
     key: www.ediblearrangements.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3094,6 +3480,7 @@
     key: www.edmunds.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3102,6 +3489,7 @@
     key: www.edys.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3110,6 +3498,7 @@
     key: www.egg.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3118,6 +3507,7 @@
     key: www.eggusa.net:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3126,6 +3516,7 @@
     key: www.eia.doe.gov:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3134,6 +3525,7 @@
     key: www.elephant.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3142,6 +3534,7 @@
     key: www.elephants.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3150,6 +3543,7 @@
     key: www.elsevier.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3158,6 +3552,7 @@
     key: www.emailman.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3166,6 +3561,7 @@
     key: www.empiretoday.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3174,6 +3570,7 @@
     key: www.emptybottle.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3182,6 +3579,7 @@
     key: www.enchantedlearning.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3190,6 +3588,7 @@
     key: www.energyquest.ca.gov:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3198,6 +3597,7 @@
     key: www.entnet.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3206,6 +3606,7 @@
     key: www.everythingabout.net:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3214,6 +3615,7 @@
     key: www.everythingofficefurniture.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3222,6 +3624,7 @@
     key: www.exoticmeatsandmore.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3230,6 +3633,7 @@
     key: www.explosive.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3238,6 +3642,7 @@
     key: www.explosivetattoo.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3246,6 +3651,7 @@
     key: www.explosivetattoosouth.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3254,6 +3660,7 @@
     key: www.expressdecor.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3262,6 +3669,7 @@
     key: www.extension.umn.edu:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3270,6 +3678,7 @@
     key: www.eyes.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3278,6 +3687,7 @@
     key: www.facebook.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3286,6 +3696,7 @@
     key: www.fallenfruit.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3294,6 +3705,7 @@
     key: www.falstad.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3302,6 +3714,7 @@
     key: www.familylife.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3310,6 +3723,7 @@
     key: www.familylosangeles.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3318,6 +3732,7 @@
     key: www.familysearch.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3326,6 +3741,7 @@
     key: www.fanfiction.net:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3334,6 +3750,7 @@
     key: www.fanniemay.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3342,6 +3759,7 @@
     key: www.faucetdirect.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3350,6 +3768,7 @@
     key: www.featherplace.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3358,6 +3777,7 @@
     key: www.featherusa.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3366,6 +3786,7 @@
     key: www.fender.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3374,6 +3795,7 @@
     key: www.festfoods.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3382,6 +3804,7 @@
     key: www.festivalfinder.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3390,6 +3813,7 @@
     key: www.festivalfoods.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3398,6 +3822,7 @@
     key: www.festivalgr.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3406,6 +3831,7 @@
     key: www.festivals.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3414,6 +3840,7 @@
     key: www.fhwa.dot.gov:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3422,6 +3849,7 @@
     key: www.film.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3430,6 +3858,7 @@
     key: www.filmconnection.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3438,6 +3867,7 @@
     key: www.filmschoolrejects.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3446,6 +3876,7 @@
     key: www.finger-pro.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3454,6 +3885,7 @@
     key: www.fingerfurniture.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3462,6 +3894,7 @@
     key: www.fingerlakes.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3470,6 +3903,7 @@
     key: www.fingermag.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3478,6 +3912,7 @@
     key: www.flashearth.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3486,6 +3921,7 @@
     key: www.floodlightmedia.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3494,6 +3930,7 @@
     key: www.floodlightsurveys.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3502,6 +3939,7 @@
     key: www.flowermag.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3510,6 +3948,7 @@
     key: www.flysfo.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3518,6 +3957,7 @@
     key: www.focusonthefamily.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3526,6 +3966,7 @@
     key: www.foodnetwork.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3534,6 +3975,7 @@
     key: www.foottours.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3542,6 +3984,7 @@
     key: www.ford.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3550,6 +3993,7 @@
     key: www.forever21.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3558,6 +4002,7 @@
     key: www.fork-cms.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3566,6 +4011,7 @@
     key: www.forkrestaurant.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3574,6 +4020,7 @@
     key: www.fourmilab.ch:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3582,6 +4029,7 @@
     key: www.fox.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3590,6 +4038,7 @@
     key: www.framemag.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3598,6 +4047,7 @@
     key: www.freebuttons.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3606,6 +4056,7 @@
     key: www.freeway.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3614,6 +4065,7 @@
     key: www.freewayeyewear.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3622,6 +4074,7 @@
     key: www.freewebarcade.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3630,6 +4083,7 @@
     key: www.fruit.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3638,6 +4092,7 @@
     key: www.fruitninja.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3646,6 +4101,7 @@
     key: www.fruits.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3654,6 +4110,7 @@
     key: www.fruitsandveggiesmatter.gov:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3662,6 +4119,7 @@
     key: www.fsis.usda.gov:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3670,6 +4128,7 @@
     key: www.ftd.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3678,6 +4137,7 @@
     key: www.fueleconomy.gov:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3686,6 +4146,7 @@
     key: www.funbrain.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3694,6 +4155,7 @@
     key: www.futureaudioworkshop.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3702,6 +4164,7 @@
     key: www.galeton.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3710,6 +4173,7 @@
     key: www.gamedesign.jp:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3718,6 +4182,7 @@
     key: www.gamesfreak.net:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3726,6 +4191,7 @@
     key: www.garden.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3734,6 +4200,7 @@
     key: www.garden.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3742,6 +4209,7 @@
     key: www.gardendesign.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3750,6 +4218,7 @@
     key: www.gardeners.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3758,6 +4227,7 @@
     key: www.gardenguides.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3766,6 +4236,7 @@
     key: www.gardenweb.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3774,6 +4245,7 @@
     key: www.gate.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3782,6 +4254,7 @@
     key: www.gatecitybank.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3790,6 +4263,7 @@
     key: www.gategourmet.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3798,6 +4272,7 @@
     key: www.gatesbbq.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3806,6 +4281,7 @@
     key: www.gayinternetradiolive.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3814,6 +4290,7 @@
     key: www.gdnet.ucla.edu:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3822,6 +4299,7 @@
     key: www.gemselect.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3830,6 +4308,7 @@
     key: www.gemstone.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3838,6 +4317,7 @@
     key: www.gemstone.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3846,6 +4326,7 @@
     key: www.gemstone.umd.edu:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3854,6 +4335,7 @@
     key: www.gemstonemusical.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3862,6 +4344,7 @@
     key: www.gemstonepub.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3870,6 +4353,7 @@
     key: www.gemstonewine.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3878,6 +4362,7 @@
     key: www.getmilkshake.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3886,6 +4371,7 @@
     key: www.getmistified.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3894,6 +4380,7 @@
     key: www.gibson.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3902,6 +4389,7 @@
     key: www.gigmasters.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3910,6 +4398,7 @@
     key: www.girlscouts.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3918,6 +4407,7 @@
     key: www.girlsgogames.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3926,6 +4416,7 @@
     key: www.girlskateboards.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3934,6 +4425,7 @@
     key: www.gloves-online.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3942,6 +4434,7 @@
     key: www.glovesinc.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3950,6 +4443,7 @@
     key: www.goairforcefalcons.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3958,6 +4452,7 @@
     key: www.god.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3966,6 +4461,7 @@
     key: www.god.tv:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3974,6 +4470,7 @@
     key: www.godiva.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3982,6 +4479,7 @@
     key: www.google.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3990,6 +4488,7 @@
     key: www.gordonramsay.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -3998,6 +4497,7 @@
     key: www.gotmilk.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4006,6 +4506,7 @@
     key: www.grapeswine.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4014,6 +4515,7 @@
     key: www.greenmountaincoffee.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4022,6 +4524,7 @@
     key: www.greensmiths.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4030,6 +4533,7 @@
     key: www.grupocappuccino.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4038,6 +4542,7 @@
     key: www.guardian.co.uk:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4046,6 +4551,7 @@
     key: www.guitar.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4054,6 +4560,7 @@
     key: www.guitarcenter.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4062,6 +4569,7 @@
     key: www.guitarworld.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4070,6 +4578,7 @@
     key: www.hallmarkkaleidoscope.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4078,6 +4587,7 @@
     key: www.hammacher.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4086,6 +4596,7 @@
     key: www.hammer.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4094,6 +4605,7 @@
     key: www.hammerfilms.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4102,6 +4614,7 @@
     key: www.hammernutrition.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4110,6 +4623,7 @@
     key: www.hammertraining.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4118,6 +4632,7 @@
     key: www.harmonyhollow.net:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4126,6 +4641,7 @@
     key: www.hasbro.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4134,6 +4650,7 @@
     key: www.hatclub.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4142,6 +4659,7 @@
     key: www.hatland.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4150,6 +4668,7 @@
     key: www.hats.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4158,6 +4677,7 @@
     key: www.hatsofmeat.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4166,6 +4686,7 @@
     key: www.hazegray.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4174,6 +4695,7 @@
     key: www.heidi.ie:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4182,6 +4704,7 @@
     key: www.hermanmiller.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4190,6 +4713,7 @@
     key: www.hersheys.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4198,6 +4722,7 @@
     key: www.hgtv.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4206,6 +4731,7 @@
     key: www.hickorychair.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4214,6 +4740,7 @@
     key: www.hieroglyph.net:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4222,6 +4749,7 @@
     key: www.highway.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4230,6 +4758,7 @@
     key: www.highway61.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4238,6 +4767,7 @@
     key: www.highwaybuzz.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4246,6 +4776,7 @@
     key: www.highwaymedia.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4254,6 +4785,7 @@
     key: www.holdthebutton.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4262,6 +4794,7 @@
     key: www.hollywoodbowl.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4270,6 +4803,7 @@
     key: www.homedepot.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4278,6 +4812,7 @@
     key: www.horoscope.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4286,6 +4821,7 @@
     key: www.horse.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4294,6 +4830,7 @@
     key: www.hort.purdue.edu:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4302,6 +4839,7 @@
     key: www.hosexpress.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4310,6 +4848,7 @@
     key: www.housebeautiful.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4318,6 +4857,7 @@
     key: www.howstuffworks.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4326,6 +4866,7 @@
     key: www.huffingtonpost.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4334,6 +4875,7 @@
     key: www.hugoboss.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4342,6 +4884,7 @@
     key: www.ibanez.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4350,6 +4893,7 @@
     key: www.ice.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4358,6 +4902,7 @@
     key: www.ice.gov:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4366,6 +4911,7 @@
     key: www.ice.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4374,6 +4920,7 @@
     key: www.icecream.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4382,6 +4929,7 @@
     key: www.iceculinary.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4390,6 +4938,7 @@
     key: www.icemagazine.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4398,6 +4947,7 @@
     key: www.idiotshow.net:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4406,6 +4956,7 @@
     key: www.ikea.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4414,6 +4965,7 @@
     key: www.iloveinns.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4422,6 +4974,7 @@
     key: www.imdb.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4430,6 +4983,7 @@
     key: www.imo.net:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4438,6 +4992,7 @@
     key: www.incredibleegg.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4446,6 +5001,7 @@
     key: www.indianapolisairport.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4454,6 +5010,7 @@
     key: www.insect.co.uk:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4462,6 +5019,7 @@
     key: www.insectimages.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4470,6 +5028,7 @@
     key: www.insectlore.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4478,6 +5037,7 @@
     key: www.insects.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4486,6 +5046,7 @@
     key: www.insectshield.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4494,6 +5055,7 @@
     key: www.ipl.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4502,6 +5064,7 @@
     key: www.jansport.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4510,6 +5073,7 @@
     key: www.java-gaming.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4518,6 +5082,7 @@
     key: www.jcrew.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4526,6 +5091,7 @@
     key: www.jensonbutton.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4534,6 +5100,7 @@
     key: www.jetfighter.com.au:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4542,6 +5109,7 @@
     key: www.junkfoodclothing.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4550,6 +5118,7 @@
     key: www.k-pub.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4558,6 +5127,7 @@
     key: www.kaleidoscope.net:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4566,6 +5136,7 @@
     key: www.kaleidoscope.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4574,6 +5145,7 @@
     key: www.kaleidoscopeapp.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4582,6 +5154,7 @@
     key: www.kbb.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4590,6 +5163,7 @@
     key: www.kidsbutterfly.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4598,6 +5172,7 @@
     key: www.kidzone.ws:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4606,6 +5181,7 @@
     key: www.kitchen2404.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4614,6 +5190,7 @@
     key: www.kitchenaid.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4622,6 +5199,7 @@
     key: www.kitchenandbathwarehouse.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4630,6 +5208,7 @@
     key: www.kitchens.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4638,6 +5217,7 @@
     key: www.kleinbottle.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4646,6 +5226,7 @@
     key: www.knife-depot.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4654,6 +5235,7 @@
     key: www.knifecenter.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4662,6 +5244,7 @@
     key: www.knifeoutlet.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4670,6 +5253,7 @@
     key: www.knoll.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4678,6 +5262,7 @@
     key: www.lakechamplainchocolates.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4686,6 +5271,7 @@
     key: www.lapl.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4694,6 +5280,7 @@
     key: www.last.fm:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4702,6 +5289,7 @@
     key: www.lds.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4710,6 +5298,7 @@
     key: www.learn4good.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4718,6 +5307,7 @@
     key: www.leechild.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4726,6 +5316,7 @@
     key: www.lego.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4734,6 +5325,7 @@
     key: www.lids.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4742,6 +5334,7 @@
     key: www.lightingdirect.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4750,6 +5343,7 @@
     key: www.lightinguniverse.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4758,6 +5352,7 @@
     key: www.liquid.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4766,6 +5361,7 @@
     key: www.liquidagency.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4774,6 +5370,7 @@
     key: www.liquidchurch.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4782,6 +5379,7 @@
     key: www.liquidcomics.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4790,6 +5388,7 @@
     key: www.liquidmartinibar.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4798,6 +5397,7 @@
     key: www.loc.gov:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4806,6 +5406,7 @@
     key: www.lookatbook.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4814,6 +5415,7 @@
     key: www.magnet.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4822,6 +5424,7 @@
     key: www.magnetglobal.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4830,6 +5433,7 @@
     key: www.magnetmagazine.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4838,6 +5442,7 @@
     key: www.magnetsf.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4846,6 +5451,7 @@
     key: www.magnettheater.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4854,6 +5460,7 @@
     key: www.magnetwork.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4862,6 +5469,7 @@
     key: www.maidofthemist.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4870,6 +5478,7 @@
     key: www.man-engines.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4878,6 +5487,7 @@
     key: www.man.eu:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4886,6 +5496,7 @@
     key: www.mandieselturbo.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4894,6 +5505,7 @@
     key: www.maniacworld.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4902,6 +5514,7 @@
     key: www.maninvestments.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4910,6 +5523,7 @@
     key: www.mantruckandbus.co.uk:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4918,6 +5532,7 @@
     key: www.map.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4926,6 +5541,7 @@
     key: www.mapquest.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4934,6 +5550,7 @@
     key: www.maps.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4942,6 +5559,7 @@
     key: www.mathsisfun.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4950,6 +5568,7 @@
     key: www.mazemuze.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4958,6 +5577,7 @@
     key: www.mazenails.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4966,6 +5586,7 @@
     key: www.meat.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4974,6 +5595,7 @@
     key: www.meatforcatsanddogs.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4982,6 +5604,7 @@
     key: www.med.harvard.edu:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4990,6 +5613,7 @@
     key: www.menupages.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -4998,6 +5622,7 @@
     key: www.merriam-webster.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5006,6 +5631,7 @@
     key: www.meteor-lighting.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5014,6 +5640,7 @@
     key: www.meteor.ie:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5022,6 +5649,7 @@
     key: www.meteorsolutions.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5030,6 +5658,7 @@
     key: www.metroairport.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5038,6 +5667,7 @@
     key: www.miami-airport.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5046,6 +5676,7 @@
     key: www.microscope-microscope.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5054,6 +5685,7 @@
     key: www.microscope.co.uk:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5062,6 +5694,7 @@
     key: www.microscope.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5070,6 +5703,7 @@
     key: www.microscopegallery.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5078,6 +5712,7 @@
     key: www.microscopeworld.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5086,6 +5721,7 @@
     key: www.midway.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5094,6 +5730,7 @@
     key: www.milk.dk:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5102,6 +5739,7 @@
     key: www.milkshakemedia.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5110,6 +5748,7 @@
     key: www.milkshakemusic.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5118,6 +5757,7 @@
     key: www.millerhats.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5126,6 +5766,7 @@
     key: www.miniclip.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5134,6 +5775,7 @@
     key: www.mist-music.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5142,6 +5784,7 @@
     key: www.mistsf.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5150,6 +5793,7 @@
     key: www.modbee.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5158,6 +5802,7 @@
     key: www.modernbathroom.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5166,6 +5811,7 @@
     key: www.mohawkflooring.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5174,6 +5820,7 @@
     key: www.msnbc.msn.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5182,6 +5829,7 @@
     key: www.multcolib.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5190,6 +5838,7 @@
     key: www.musiciansfriend.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5198,6 +5847,7 @@
     key: www.myspace.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5206,6 +5856,7 @@
     key: www.mysql.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5214,6 +5865,7 @@
     key: www.nationalgeographic.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5222,6 +5874,7 @@
     key: www.navy.mil:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5230,6 +5883,7 @@
     key: www.nbbqa.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5238,6 +5892,7 @@
     key: www.ndt-ed.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5246,6 +5901,7 @@
     key: www.newadvent.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5254,6 +5910,7 @@
     key: www.newegg.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5262,6 +5919,7 @@
     key: www.nfl.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5270,6 +5928,7 @@
     key: www.nick.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5278,6 +5937,7 @@
     key: www.nicor.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5286,6 +5946,7 @@
     key: www.nidcd.nih.gov:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5294,6 +5955,7 @@
     key: www.nitrome.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5302,6 +5964,7 @@
     key: www.nlm.nih.gov:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5310,6 +5973,7 @@
     key: www.notmilk.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5318,6 +5982,7 @@
     key: www.nursecredentialing.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5326,6 +5991,7 @@
     key: www.nypl.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5334,6 +6000,7 @@
     key: www.nypost.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5342,6 +6009,7 @@
     key: www.onlygloves.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5350,6 +6018,7 @@
     key: www.onlyleatherjackets.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5358,6 +6027,7 @@
     key: www.oracle.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5366,6 +6036,7 @@
     key: www.ossmann.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5374,6 +6045,7 @@
     key: www.oswego.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5382,6 +6054,7 @@
     key: www.overstock.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5390,6 +6063,7 @@
     key: www.oyunlar1.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5398,6 +6072,7 @@
     key: www.pagat.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5406,6 +6081,7 @@
     key: www.parents.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5414,6 +6090,7 @@
     key: www.paulinsect.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5422,6 +6099,7 @@
     key: www.pbs.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5430,6 +6108,7 @@
     key: www.peets.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5438,6 +6117,7 @@
     key: www.permadi.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5446,6 +6126,7 @@
     key: www.perspective.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5454,6 +6135,7 @@
     key: www.peta.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5462,6 +6144,7 @@
     key: www.phl.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5470,6 +6153,7 @@
     key: www.pigandegg.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5478,6 +6162,7 @@
     key: www.play.net:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5486,6 +6171,7 @@
     key: www.plumbersurplus.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5494,6 +6180,7 @@
     key: www.plumesnfeathers.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5502,6 +6189,7 @@
     key: www.pmichaud.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5510,6 +6198,7 @@
     key: www.poodwaddle.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5518,6 +6207,7 @@
     key: www.proflowers.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5526,6 +6216,7 @@
     key: www.publiclibraries.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5534,6 +6225,7 @@
     key: www.quizland.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5542,6 +6234,7 @@
     key: www.ready.gov:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5550,6 +6243,7 @@
     key: www.refdesk.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5558,6 +6252,7 @@
     key: www.ringling.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5566,6 +6261,7 @@
     key: www.rottentomatoes.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5574,6 +6270,7 @@
     key: www.sacbee.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5582,6 +6279,7 @@
     key: www.sandiegozoo.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5590,6 +6288,7 @@
     key: www.sbbowl.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5598,6 +6297,7 @@
     key: www.schottnyc.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5606,6 +6306,7 @@
     key: www.sciencedirect.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5614,6 +6315,7 @@
     key: www.sciencemadesimple.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5622,6 +6324,7 @@
     key: www.scouting.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5630,6 +6333,7 @@
     key: www.sees.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5638,6 +6342,7 @@
     key: www.sfgate.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5646,6 +6351,7 @@
     key: www.shopbop.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5654,6 +6360,7 @@
     key: www.shopstyle.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5662,6 +6369,7 @@
     key: www.simplybathtubs.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5670,6 +6378,7 @@
     key: www.sks-bottle.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5678,6 +6387,7 @@
     key: www.slashfilm.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5686,6 +6396,7 @@
     key: www.slate.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5694,6 +6405,7 @@
     key: www.socalgas.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5702,6 +6414,7 @@
     key: www.softpress.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5710,6 +6423,7 @@
     key: www.specialtybottle.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5718,6 +6432,7 @@
     key: www.speech.cs.cmu.edu:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5726,6 +6441,7 @@
     key: www.spl.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5734,6 +6450,7 @@
     key: www.stainmaster.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5742,6 +6459,7 @@
     key: www.staples.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5750,6 +6468,7 @@
     key: www.starbucks.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5758,6 +6477,7 @@
     key: www.starfall.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5766,6 +6486,7 @@
     key: www.starz.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5774,6 +6495,7 @@
     key: www.sundance.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5782,6 +6504,7 @@
     key: www.swgas.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5790,6 +6513,7 @@
     key: www.tablegrape.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5798,6 +6522,7 @@
     key: www.talkaboutcoffee.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5806,6 +6531,7 @@
     key: www.target.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5814,6 +6540,7 @@
     key: www.tdgarden.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5822,6 +6549,7 @@
     key: www.teamliquid.net:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5830,6 +6558,7 @@
     key: www.tencentticker.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5838,6 +6567,7 @@
     key: www.terrybisson.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5846,6 +6576,7 @@
     key: www.theathletesfoot.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5854,6 +6585,7 @@
     key: www.theboxnyc.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5862,6 +6594,7 @@
     key: www.thebutterflysite.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5870,6 +6603,7 @@
     key: www.thecarrotagency.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5878,6 +6612,7 @@
     key: www.thechessstore.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5886,6 +6621,7 @@
     key: www.thecirclenews.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5894,6 +6630,7 @@
     key: www.thecoffeeshopaz.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5902,6 +6639,7 @@
     key: www.thecoffeeshopblog.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5910,6 +6648,7 @@
     key: www.thecometcafe.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5918,6 +6657,7 @@
     key: www.thedailybeast.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5926,6 +6666,7 @@
     key: www.theegg.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5934,6 +6675,7 @@
     key: www.thefreedictionary.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5942,6 +6684,7 @@
     key: www.thefruitcompany.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5950,6 +6693,7 @@
     key: www.thefruitpages.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5958,6 +6702,7 @@
     key: www.thehat.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5966,6 +6711,7 @@
     key: www.thehorse.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5974,6 +6720,7 @@
     key: www.theice.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5982,6 +6729,7 @@
     key: www.theinterviewwithgod.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5990,6 +6738,7 @@
     key: www.themilkshop.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -5998,6 +6747,7 @@
     key: www.thetech.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6006,6 +6756,7 @@
     key: www.thinkkaleidoscope.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6014,6 +6765,7 @@
     key: www.time.gov:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6022,6 +6774,7 @@
     key: www.timeanddate.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6030,6 +6783,7 @@
     key: www.tolvanen.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6038,6 +6792,7 @@
     key: www.tonyhill.net:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6046,6 +6801,7 @@
     key: www.toysrus.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6054,6 +6810,7 @@
     key: www.treadmill-desk.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6062,6 +6819,7 @@
     key: www.ucmp.berkeley.edu:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6070,6 +6828,7 @@
     key: www.uky.edu:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6078,6 +6837,7 @@
     key: www.ultimate-guitar.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6086,6 +6846,7 @@
     key: www.universoulcircus.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6094,6 +6855,7 @@
     key: www.urbandictionary.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6102,6 +6864,7 @@
     key: www.us-highways.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6110,6 +6873,7 @@
     key: www.usafa.af.mil:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6118,6 +6882,7 @@
     key: www.usbank.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6126,6 +6891,7 @@
     key: www.ushosecorp.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6134,6 +6900,7 @@
     key: www.victoriassecret.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6142,6 +6909,7 @@
     key: www.villagehatshop.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6150,6 +6918,7 @@
     key: www.vims.edu:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6158,6 +6927,7 @@
     key: www.vintagetub.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6166,6 +6936,7 @@
     key: www.vosgeschocolate.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6174,6 +6945,7 @@
     key: www.w3schools.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6182,6 +6954,7 @@
     key: www.walmart.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6190,6 +6963,7 @@
     key: www.washgas.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6198,6 +6972,7 @@
     key: www.webmd.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6206,6 +6981,7 @@
     key: www.webopedia.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6214,6 +6990,7 @@
     key: www.wellsfargo.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6222,6 +6999,7 @@
     key: www.whfoods.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6230,6 +7008,7 @@
     key: www.whymilk.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6238,6 +7017,7 @@
     key: www.wikinvest.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6246,6 +7026,7 @@
     key: www.wilsonsleather.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6254,6 +7035,7 @@
     key: www.winterrowd.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6262,6 +7044,7 @@
     key: www.wired.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6270,6 +7053,7 @@
     key: www.woodcraft.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6278,6 +7062,7 @@
     key: www.world-airport-codes.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6286,6 +7071,7 @@
     key: www.worldbank.org:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6294,6 +7080,7 @@
     key: www.y8.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6302,6 +7089,7 @@
     key: www.yelp.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6310,6 +7098,7 @@
     key: www.youtube.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6318,6 +7107,7 @@
     key: www.zappos.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6326,6 +7116,7 @@
     key: www.zefrank.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6334,6 +7125,7 @@
     key: www.zeroc.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6342,6 +7134,7 @@
     key: www.zuckerfeather.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6350,6 +7143,7 @@
     key: www1.macys.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - event:
     retry:
       tag: Never
@@ -6358,6 +7152,7 @@
     key: yugop.com:80
     recur:
       recurInterval: 1000
+    disabled: False
 - action:
     action:
       _checktcpPort: 80

@@ -2,19 +2,18 @@
 module Main where
 
 import FreeAgent.AgentPrelude
+import FreeAgent.Cli.CmdArgs                      (Args (..))
+import FreeAgent.Cli.Main                         (clientMain, daemonMain, exitDaemon,
+                                                   faMain)
 import FreeAgent.Core
-import FreeAgent.Core.Internal.Types (LogLevel(..))
-import FreeAgent.Cli.CmdArgs (Args(..))
-import FreeAgent.Cli.Main
+import FreeAgent.Core.Internal.Types              (LogLevel (..))
 import FreeAgent.Core.Lenses
-import FreeAgent.Server.Schedule
+import FreeAgent.Process                          (liftProcess)
 
-import FreeAgent.Plugins.Nagios as Nagios
+import FreeAgent.Plugins.Nagios                   as Nagios
 
-import Data.Aeson
-import FreeAgent.Server.Executive
-import FreeAgent.Server.ManagedAgent (callServ)
-import Data.HashMap.Strict ((!))
+import Control.Distributed.Process.Platform.Time  (seconds, TimeUnit(..))
+import Control.Distributed.Process.Platform.Timer (runAfter, sleepFor)
 
 -- | Specify the plugins that should be loaded for this application.
 appPlugins :: PluginSet
@@ -29,7 +28,13 @@ appPlugins =
 appConfig :: AgentConfig
 appConfig = def & dbPath .~ "/tmp/examples-famon"
                 & nodePort .~ "8979"
-               {-& minLogLevel .~ LevelDebug-}
+                & minLogLevel .~ LevelInfo
 
 main :: IO ()
-main = faMain appConfig appPlugins
+main =
+ do args <- getArgs
+    case args of
+        "bench" : _ -> daemonMain appConfig appPlugins $ liftProcess $
+         do sleepFor 500 Millis -- wait for Peer to catch up
+            void $ runAfter (seconds 30) exitDaemon
+        _ -> faMain appConfig appPlugins

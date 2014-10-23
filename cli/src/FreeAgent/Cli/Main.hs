@@ -4,6 +4,7 @@ module FreeAgent.Cli.Main
     ( faMain
     , daemonMain
     , clientMain
+    , exitDaemon
     , def
     ) where
 
@@ -13,6 +14,7 @@ import FreeAgent.Cli.Import
 import FreeAgent.Cli.Export
 import FreeAgent.Core         (AgentConfig, PluginSet, withRemoteNode, runAgent, Agent)
 import FreeAgent.Core.Lenses
+import FreeAgent.Process
 import FreeAgent.Server       (runAgentServers)
 import FreeAgent.Server.ManagedAgent (castServ)
 import FreeAgent.Server.Schedule (ScheduleControl(..))
@@ -22,7 +24,7 @@ faMain config plugins =
  do (config', args) <- configArgs config
     let execClient = clientMain config' plugins
     case args of
-        Daemon{} -> daemonMain config' plugins
+        Daemon{} -> daemonMain config' plugins (return ())
         Import _ _ path' ->
             execClient $
              do eimported <- importActions (convert path')
@@ -35,27 +37,40 @@ faMain config plugins =
                 case eexported of
                     Right () -> putStrLn "Export successfull!"
                     Left reason -> putStrLn ("Export failed: " ++ reason)
-        Scheduler _ _ start stop ->
-            execClient $
-                if start then
+        Scheduler _ _ start stop
+            | start -> execClient $
                  do estarted <- castServ ScheduleStart
                     case estarted of
                         Right () -> putStrLn "Sent start command to daemon."
                         Left reason -> putStrLn ("Could not send start command: " ++ tshow reason)
-                else when stop $
-                      do estopped <- castServ ScheduleStop
-                         case estopped of
-                             Right () -> putStrLn "Sent stop command to daemon."
-                             Left reason -> putStrLn ("Could not send stop command: " ++ tshow reason)
+            | stop -> execClient $
+                  do estopped <- castServ ScheduleStop
+                     case estopped of
+                         Right () -> putStrLn "Sent stop command to daemon."
+                         Left reason -> putStrLn ("Could not send stop command: " ++ tshow reason)
+            | otherwise -> return ()
 
-daemonMain :: AgentConfig -> PluginSet -> IO ()
-daemonMain config plugins =
-    runAgentServers config plugins $
-      do putStrLn ("Agent server listening on: "
+daemonMain :: AgentConfig -> PluginSet -> Agent () -> IO ()
+daemonMain config plugins ma =
+    runAgentServers config plugins (ma >> waitExit)
+  where waitExit =
+         do pid <- getSelfPid; register "daemon:exit" pid
+            void $ spawnLocal (promptExit pid)
+            "exit" <- expect :: Agent Text
+            return ()
+        promptExit pid =
+         do putStrLn ("Agent server listening on: "
                  ++ convert (config ^. nodeHost) ++ ": "
                  ++ convert (config ^. nodePort))
-         putStrLn "Press enter key to stop."
-         void $ asText <$> getLine
+            putStrLn "Press enter key to stop."
+            void $ asText <$> getLine
+            send pid $ asText "exit"
+
+exitDaemon :: MonadProcess process => process ()
+exitDaemon =
+ do Just pid <- whereis "daemon:exit"
+    putStrLn "Bench done; sending exit."
+    send pid $ asText "exit"
 
 clientMain :: AgentConfig -> PluginSet -> Agent () -> IO ()
 clientMain config plugins ma =
