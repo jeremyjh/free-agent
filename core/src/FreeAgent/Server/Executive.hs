@@ -293,7 +293,7 @@ execServer =
           , shutdownHandler = \(AgentState _ s) _ -> do
                 pid <- getSelfPid
                 say $ "Executed # Actions: " ++ show (s ^. executedCount)
-                say $ "Peer server " ++ show pid ++ " shutting down."
+                say $ "Executive server " ++ show pid ++ " shutting down."
         }
   where initExec = do
             listeners' <- join $ viewContext $ plugins.listeners
