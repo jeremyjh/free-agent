@@ -6,6 +6,7 @@
 {-# LANGUAGE NoImplicitPrelude      #-}
 {-# LANGUAGE OverloadedStrings      #-}
 {-# LANGUAGE TemplateHaskell        #-}
+{-# LANGUAGE RecordWildCards #-}
 
 
 module FreeAgent.Plugins.Nagios
@@ -14,6 +15,7 @@ module FreeAgent.Plugins.Nagios
     , CommandResult(..)
     , NagiosResult(..)
     , NagiosConfig(..)
+    , CheckProcs(..)
     , pluginDef
     ) where
 
@@ -28,6 +30,7 @@ import           Data.Default      (Default (..))
 import System.Process (readProcessWithExitCode)
 import System.Exit (ExitCode(..))
 import Control.Concurrent (forkIO)
+import Data.Bifoldable (biList)
 
 -- | Plugin-specific configuration
 data NagiosConfig = NagiosConfig {nagiosPluginsPath :: FilePath}
@@ -38,16 +41,14 @@ instance Default NagiosConfig where
 
 makeFields ''NagiosConfig
 
--- | Supported Actions
-data Command = Command { _commandHost         :: Text
-                       , _commandPort         :: Maybe Int
-                       , _commandShellCom     :: Text
+data Command = Command { cmdKey  :: Key
+                       , cmdBin  :: FilePath
+                       , cmdArgs :: [(Text, Text)]
                        } deriving (Show, Eq, Typeable, Generic)
-makeFields ''Command
 deriveSerializers ''Command
 
 instance Stashable Command where
-    key cmd = cmd ^. host
+    key = cmdKey
 
 data CommandResult = OK | Warning | Critical | Unknown
     deriving (Show, Eq, Typeable, Generic)
@@ -76,6 +77,7 @@ pluginDef :: NagiosConfig -> PluginDef
 pluginDef conf = definePlugin "Nagios" conf (return []) [] $
  do registerAction (actionType :: Proxy Command)
     registerAction (actionType :: Proxy CheckTCP)
+    registerAction (actionType :: Proxy CheckProcs)
 
 extractConfig' :: (ContextReader m) => m NagiosConfig
 extractConfig' = extractConfig $ pluginDef def ^. name
@@ -90,11 +92,11 @@ instance Extractable Command
 instance Extractable NagiosResult
 
 instance Runnable Command NagiosResult where
-    exec cmd =
+    exec cmd@Command{..} =
      do cmdPath <- commandPath
-        let shell = (defaultShellCommand (key cmd)) {
+        let shell = (defaultShellCommand  cmdKey) {
                       shellCommand      = cmdPath
-                    , shellArgs         = makeArgs
+                    , shellArgs         = foldl' (\xs x -> biList x ++ xs ) [] cmdArgs
                     , shellSuccessCodes = [0,1,2]
                     }
         runEitherT $
@@ -106,12 +108,9 @@ instance Runnable Command NagiosResult where
                 2 -> nagresult Critical
                 _ -> error "ShellCommand should have failed ExitCode match."
       where
-        makeArgs = ["-H", cmd ^. host, "-p", portS $ cmd ^. port]
-        portS (Just p) = tshow p
-        portS Nothing = ""
         commandPath = do
             nagconf <- extractConfig'
-            return $ nagiosPluginsPath nagconf </> convert (cmd ^. shellCom)
+            return $ nagiosPluginsPath nagconf </> cmdBin
 
 instance Stashable CheckTCP where
     key c = c ^. host ++ ":" ++ tshow (c ^. port)
@@ -122,4 +121,31 @@ instance Runnable CheckTCP NagiosResult where
     exec cmd =
         runEitherT $
         (resultSummary.resultOf .~ Action cmd) <$>
-            tryExecET (Command (cmd ^. host) (Just $ cmd ^. port) "check_tcp")
+            tryExecET (Command (key cmd) "check_tcp" makeArgs)
+      where
+        makeArgs = [("-H", cmd ^. host), ("-p", tshow $ cmd ^. port)]
+
+data CheckProcs = CheckProcs
+          { procKey :: Key
+          , procName :: Text
+          , procMin :: Int
+          , procMax :: Int
+          , procAllMin :: Int
+          , procAllMax :: Int
+          } deriving (Show, Eq, Typeable, Generic)
+deriveSerializers ''CheckProcs
+
+instance Stashable CheckProcs where
+    key = procKey
+
+instance Extractable CheckProcs
+
+instance Runnable CheckProcs NagiosResult where
+    exec cmd@CheckProcs{..} =
+        runEitherT $
+        (resultSummary.resultOf .~ Action cmd) <$>
+            tryExecET (Command procKey "check_procs" makeArgs)
+      where makeArgs = [("-w", nameMinMax), ("-c", allMinMax), ("-C", procName) ]
+            allMinMax = tshow procAllMin ++ ":" ++ tshow procAllMax
+            nameMinMax = tshow procMin ++ ":" ++ tshow procMax
+
