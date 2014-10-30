@@ -24,7 +24,7 @@ faMain config plugins =
  do (config', args) <- configArgs config
     let execClient = clientMain config' plugins
     case args of
-        Daemon{} -> daemonMain config' plugins (return ())
+        Daemon{} -> daemonMain config' plugins (return True)
         Import _ _ path' ->
             execClient $
              do eimported <- importActions (convert path')
@@ -50,9 +50,11 @@ faMain config plugins =
                          Left reason -> putStrLn ("Could not send stop command: " ++ tshow reason)
             | otherwise -> return ()
 
-daemonMain :: AgentConfig -> PluginSet -> Agent () -> IO ()
+daemonMain :: AgentConfig -> PluginSet -> Agent Bool -> IO ()
 daemonMain config plugins ma =
-    runAgentServers config plugins (ma >> waitExit)
+    runAgentServers config plugins $
+     do needWait <- ma
+        when needWait waitExit
   where waitExit =
          do pid <- getSelfPid; register "daemon:exit" pid
             void $ spawnLocal (promptExit pid)

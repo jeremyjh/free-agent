@@ -28,6 +28,7 @@ executable famon
                      , process
                      , lifted-base
                      , distributed-process-platform 
+                     , bifunctors
   hs-source-dirs:      famon
   default-language:    Haskell2010
   ghc-prof-options: -O2 -auto-all
