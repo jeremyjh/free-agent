@@ -3,6 +3,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving, MultiParamTypeClasses            #-}
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings, ScopedTypeVariables    #-}
 {-# LANGUAGE StandaloneDeriving, TemplateHaskell, TypeFamilies            #-}
+{-# LANGUAGE BangPatterns #-}
 
 
 module FreeAgent.Core.Internal.Types
@@ -281,11 +282,11 @@ instance MonadBaseControl IO Agent where
   liftBaseWith f = Agent $ liftBaseWith $ \ rib -> f (fmap StAgent . rib . unAgent)
 
 instance MonadLogger (Agent) where
-    monadLoggerLog a b level d =
-        (configMinLogLevel . contextAgentConfig) <$> askContext >>= doLog
+    monadLoggerLog !a !b !level !d =
+        doLog =<< configMinLogLevel . contextAgentConfig <$> askContext
       where doLog minlev
               | level >= minlev = runStdoutLoggingT $ monadLoggerLog a b level d
-              | otherwise = return ()
+              | otherwise = a `seq` b `seq` d `seq` return ()
 
 runAgentLoggingT :: (MonadIO m, MonadBaseControl IO m) => Int -> LoggingT m a -> m a
 runAgentLoggingT debugCount = runStdoutLoggingT . withChannelLogger debugCount
