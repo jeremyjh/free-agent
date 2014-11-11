@@ -57,12 +57,6 @@ makeFields ''ExecPersist
 instance Default ExecPersist where
     def = ExecPersist mempty []
 
-data ExecState
-  = ExecState { _stateRunning   :: !RunningActions
-              , _stateListeners :: ![Listener]
-              , _stateAcid      :: !(AcidState ExecPersist)
-              , _stateExecutedCount  :: !Int
-              } deriving (Typeable, Generic)
 
 data ExecFail = ECallFailed CallFail
               | EDeserializationFailure Text
@@ -70,6 +64,17 @@ data ExecFail = ECallFailed CallFail
               | ActionFailed !Text
               | DBException !Text
               deriving (Show, Eq, Typeable, Generic)
+
+type ExecAgent a = EitherT ExecFail (StateT ExecState Agent) a
+
+data ExecState
+  = ExecState { _stateRunning   :: !RunningActions
+              , _stateListeners :: ![Listener]
+              , _stateAcid      :: !(AcidState ExecPersist)
+              , _stateCachedActions  :: !(Map Key (ExecAgent Result))
+              , _stateExecutedCount  :: !Int
+              } deriving (Typeable, Generic)
+
 
 instance Binary ExecFail
 
@@ -131,18 +136,25 @@ data StoreAction = StoreAction Action
 
 instance Binary StoreAction
 
+cacheAction :: Action -> StateT ExecState Agent ()
+cacheAction action' = cachedActions %= Map.insert (key action') (doExec action')
+
 instance ServerCall StoreAction where
     type CallState StoreAction = ExecState
     type CallResponse StoreAction = ()
     callName _ = serverName
     respond (StoreAction action')  =
         do now <- getCurrentTime
-           update (PutAction (action',now))
+           void $ update (PutAction (action',now))
+           cacheAction action'
     respond (StoreNewerAction action' time) =
-        update (PutAction (action', time))
+     do void $ update (PutAction (action', time))
+        cacheAction action'
     respond (StoreActions actions')  =
         do now <- getCurrentTime
-           forM_ actions' $ \action' -> update (PutAction (action',now))
+           forM_ actions' $ \action' ->
+            do void $ update (PutAction (action',now))
+               cacheAction action'
 
 data UnregisterAction = UnregisterAction !Key
       deriving (Show, Typeable, Generic)
@@ -153,7 +165,8 @@ instance ServerCall UnregisterAction where
     type CallState UnregisterAction = ExecState
     callName _ = serverName
     respond (UnregisterAction key')  =
-        update (DeleteAction key')
+     do void $ update (DeleteAction key')
+        cachedActions %= Map.delete key'
 
 
 data ExecuteStored = ExecuteStored !Key
@@ -168,8 +181,8 @@ instance ServerCall ExecuteStored where
     respond cmd@(ExecuteStored key') =
      do executedCount %= (+) 1
         runLogEitherT cmd $
-         do (action', _) <-  query (GetAction key') !? ActionNotFound key'
-            doExec action'
+            join (uses cachedActions (lookup key') !? ActionNotFound key')
+
 
 instance ServerCast ExecuteStored where
     type CastState ExecuteStored = ExecState
@@ -301,10 +314,10 @@ execServer =
             persist <- query' acid' GetPersist
             rt <- viewConfig remoteTable
             let cls = rights $ map (unclosure rt) (persist ^. listeners)
-            return $ ExecState (Map.fromList []) (listeners' ++ cls) acid' 0
+            let caches = map (doExec . fst) (persist ^. actions)
+            return $ ExecState (Map.fromList []) (listeners' ++ cls) acid' caches 0
 
 
-type ExecAgent a = EitherT ExecFail (StateT ExecState Agent) a
 
 doExecuteAction :: Action -> ExecAgent Result
 doExecuteAction = doExec

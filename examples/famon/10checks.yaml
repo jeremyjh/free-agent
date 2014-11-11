@@ -1,0 +1,136 @@
+- event:
+    retry:
+      tag: Never
+      contents: []
+    modified: 2014-10-01T01:31:56.223Z
+    key: 205.254.135.7:80
+    recur:
+      recurInterval: 1000
+    disabled: False
+- event:
+    retry:
+      tag: Never
+      contents: []
+    modified: 2014-10-01T01:31:56.223Z
+    key: 37signals.com:80
+    recur:
+      recurInterval: 1000
+    disabled: False
+- event:
+    retry:
+      tag: Never
+      contents: []
+    modified: 2014-10-01T01:31:56.223Z
+    key: abcfamily.go.com:80
+    recur:
+      recurInterval: 1000
+    disabled: False
+- event:
+    retry:
+      tag: Never
+      contents: []
+    modified: 2014-10-01T01:31:56.223Z
+    key: abcnews.go.com:80
+    recur:
+      recurInterval: 1000
+    disabled: False
+- event:
+    retry:
+      tag: Never
+      contents: []
+    modified: 2014-10-01T01:31:56.223Z
+    key: adventure.howstuffworks.com:80
+    recur:
+      recurInterval: 1000
+    disabled: False
+- event:
+    retry:
+      tag: Never
+      contents: []
+    modified: 2014-10-01T01:31:56.223Z
+    key: allrecipes.com:80
+    recur:
+      recurInterval: 1000
+    disabled: False
+- event:
+    retry:
+      tag: Never
+      contents: []
+    modified: 2014-10-01T01:31:56.223Z
+    key: animals.nationalgeographic.com:80
+    recur:
+      recurInterval: 1000
+    disabled: False
+- event:
+    retry:
+      tag: Never
+      contents: []
+    modified: 2014-10-01T01:31:56.223Z
+    key: archives.obs-us.com:80
+    recur:
+      recurInterval: 1000
+    disabled: False
+- event:
+    retry:
+      tag: Never
+      contents: []
+    modified: 2014-10-01T01:31:56.223Z
+    key: armorgames.com:80
+    recur:
+      recurInterval: 1000
+    disabled: False
+- action:
+    action:
+      _checktcpPort: 80
+      _checktcpHost: '205.254.135.7'
+    type: FreeAgent.Plugins.Nagios.CheckTCP
+- action:
+    action:
+      _checktcpPort: 80
+      _checktcpHost: 37signals.com
+    type: FreeAgent.Plugins.Nagios.CheckTCP
+- action:
+    action:
+      _checktcpPort: 80
+      _checktcpHost: abcfamily.go.com
+    type: FreeAgent.Plugins.Nagios.CheckTCP
+- action:
+    action:
+      _checktcpPort: 80
+      _checktcpHost: abcnews.go.com
+    type: FreeAgent.Plugins.Nagios.CheckTCP
+- action:
+    action:
+      _checktcpPort: 80
+      _checktcpHost: adventure.howstuffworks.com
+    type: FreeAgent.Plugins.Nagios.CheckTCP
+- action:
+    action:
+      _checktcpPort: 80
+      _checktcpHost: allrecipes.com
+    type: FreeAgent.Plugins.Nagios.CheckTCP
+- action:
+    action:
+      _checktcpPort: 80
+      _checktcpHost: animals.nationalgeographic.com
+    type: FreeAgent.Plugins.Nagios.CheckTCP
+- action:
+    action:
+      _checktcpPort: 80
+      _checktcpHost: archives.obs-us.com
+    type: FreeAgent.Plugins.Nagios.CheckTCP
+- action:
+    action:
+      _checktcpPort: 80
+      _checktcpHost: armorgames.com
+    type: FreeAgent.Plugins.Nagios.CheckTCP
+- action:
+    action:
+      _checktcpPort: 80
+      _checktcpHost: articles.cnn.com
+    type: FreeAgent.Plugins.Nagios.CheckTCP
+- action:
+    action:
+      _checktcpPort: 80
+      _checktcpHost: backpackit.com
+    type: FreeAgent.Plugins.Nagios.CheckTCP

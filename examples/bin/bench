@@ -1,0 +1,14 @@
+#!/bin/bash
+
+cabal build || exit
+
+rm -rf prof/$1-last
+mv prof/$1 prof/$1-last
+mkdir -p prof/$1
+cd prof/$1
+
+rm -rf /tmp/examples-famon
+../../dist/build/famon/famon bench init 100 | grep Creating
+echo 'executing profiled bench - this may take a bit'
+/usr/bin/time ../../dist/build/famon/famon bench +RTS -N4 -p -hd -sfabin.summary | grep 'Exec history'
+cd ../..
