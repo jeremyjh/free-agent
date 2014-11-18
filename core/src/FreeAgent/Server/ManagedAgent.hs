@@ -7,10 +7,8 @@
 module FreeAgent.Server.ManagedAgent
     ( module Managed
     , module Supervisor
-    , registerPCall
     , ServerCall(..)
     , ServerCast(..)
-    , ProtoCall(..)
     , registerCall
     , registerCast
     , AgentState(..)
@@ -18,7 +16,6 @@ module FreeAgent.Server.ManagedAgent
     , CallFail(..)
     , callServ
     , castServ
-    , callProto
     , callTarget
     , castTarget
     , runLogEitherT
@@ -66,24 +63,6 @@ import Control.Distributed.Process.Platform.Time           (Delay (..),
                                                             milliSeconds)
 
 data AgentState a = AgentState AgentContext a
-
-class (NFSerializable rq
-      ,NFSerializable (ProtoResponse rq)
-      ,Show rq) => ProtoCall rq where
-    type ProtoResponse rq
-    type ProtoImpl rq :: * -> *
-
-    respondP :: ProtoImpl rq st -> rq -> StateT st Agent (ProtoResponse rq)
-    protoName :: rq -> String
-
-registerPCall :: forall st rq. (ProtoCall rq)
-              => ProtoImpl rq st -> Proxy rq -> Dispatcher (AgentState st)
-registerPCall impl _ = agentRpcHandler
-    (respondP impl :: rq -> StateT st Agent (ProtoResponse rq))
-
-callProto :: (ProtoCall rq, MonadAgent agent)
-              => rq -> agent (Either CallFail (ProtoResponse rq))
-callProto !rq = callTarget (protoName rq) rq
 
 class (NFSerializable rq
       ,NFSerializable (CallResponse rq)
