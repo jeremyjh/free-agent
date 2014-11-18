@@ -6,7 +6,7 @@
 {-# OPTIONS_GHC -fno-warn-type-defaults#-}
 
 
-module FreeAgent.Server.ExecutiveSpec (main, spec) where
+module FreeAgent.Core.Server.ExecutiveSpec (main, spec) where
 
 import           Test.Hspec
 
@@ -15,8 +15,9 @@ import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Core
 import           FreeAgent.Core.Action.ShellCommand
 import           FreeAgent.Server.ManagedAgent
-import           FreeAgent.Server.Executive.History
-import           FreeAgent.Server.Executive as Exec
+import           FreeAgent.Core.Protocol
+import           FreeAgent.Core.Protocol.Executive.History
+import           FreeAgent.Core.Protocol.Executive as Exec
 
 import           FreeAgent.TestHelper hiding (appConfig, appPlugins)
 import qualified FreeAgent.TestHelper as Helper
@@ -39,7 +40,7 @@ spec = do
 
         it "is started by Core supervisor" $ do
             testAgent $ do
-                Just _ <- resolve execServer
+                Just _ <- resolve Exec.serverName
                 return True
             `shouldReturn` True
 
@@ -48,7 +49,7 @@ spec = do
                 Right _ <- callServ $ StoreAction (Action checkTCP)
                 (Right (_ :: NagiosResult ) ) <- executeStored $ key checkTCP
                 -- confirm results were written
-                Right results' <- allResultsFrom (convert (0::Int))
+                Right results' <- findResultsSince (convert (0::Int))
                 return $ length results'
             `shouldReturn` 1
 
@@ -72,15 +73,15 @@ spec = do
                 Right _ <- callServ $ StoreAction (Action testAction)
                 Right _ <- castServ $ ExecuteStored (key testAction)
 
-                threadDelay 1000
+                threadDelay 10000
                 -- confirm results were written
-                Right results' <- allResultsFrom (convert (0::Int))
+                Right results' <- findResultsSince (convert (0::Int))
                 return $ length results'
             `shouldReturn` 3
 
         it "will fail to execute a non-registered action" $ do
             testAgentNL $ do
-                Right () <- callServ $ UnregisterAction (key testAction)
+                Right () <- callServ $ RemoveAction (key testAction)
                 Right (Left (ActionNotFound _)) <- callServ $ ExecuteStored (key testAction)
                 return True -- no match failure
             `shouldReturn` True
@@ -91,8 +92,8 @@ spec = do
                 let Just (NagiosResult _ OK) = extract nr
                 -- confirm results were written
 
-                Right results' <- actionResultsFrom (key checkTCP)
-                                                    (convert (0::Int))
+                Right results' <- findActionResultsSince (key checkTCP)
+                                                         (convert (0::Int))
                 return $ length results'
             `shouldReturn` 2
 
@@ -133,7 +134,7 @@ spec = do
                     let matcher = $(mkClosure 'matchRemoteHostName) (nodeid, listenerName)
                     Right () <- castServ (AddListener matcher)
                     threadDelay 10000
-                    Just expid <- whereis $ execServer ^. name
+                    Just expid <- whereis $ Exec.serverName
                     liftProcess $ kill expid "testing"
                     threadDelay 10000
                     Right _ <- executeAction checkTCP
@@ -237,6 +238,7 @@ appConfig = Helper.appConfig & appendRemoteTable __remoteTable
 appPlugins :: PluginSet
 appPlugins =
     pluginSet $ do
-        addPlugin $ testDef
+        addPlugin testDef
+        addPlugin testPluginDef
 
 appConfigNL = appConfig & minLogLevel .~ LevelOther ""

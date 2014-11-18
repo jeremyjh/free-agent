@@ -68,13 +68,17 @@ library
         FreeAgent.Core.Lenses
         FreeAgent.Core.Internal.Lenses
         FreeAgent.Process
-        FreeAgent.Client.Peer
+        FreeAgent.Core.Protocol
         FreeAgent.Server
         FreeAgent.Server.ManagedAgent
-        FreeAgent.Server.Peer
-        FreeAgent.Server.Executive
-        FreeAgent.Server.Executive.History
-        FreeAgent.Server.Schedule
+        FreeAgent.Core.Protocol.Peer
+        FreeAgent.Core.Server.Peer
+        FreeAgent.Core.Protocol.Executive
+        FreeAgent.Core.Server.Executive
+        FreeAgent.Core.Protocol.Executive.History
+        FreeAgent.Core.Server.Executive.History
+        FreeAgent.Core.Protocol.Schedule
+        FreeAgent.Core.Server.Schedule
         FreeAgent.Core.Action
         FreeAgent.Core.Action.Composition
         FreeAgent.Core.Action.ShellCommand

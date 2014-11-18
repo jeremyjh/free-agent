@@ -1,5 +1,4 @@
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings, QuasiQuotes #-}
 {-# LANGUAGE ScopedTypeVariables, TypeFamilies                 #-}
 
@@ -13,7 +12,6 @@ module FreeAgent.Server.ManagedAgent
     , registerCast
     , AgentState(..)
     , defineServer
-    , CallFail(..)
     , callServ
     , castServ
     , callTarget
@@ -37,9 +35,7 @@ module FreeAgent.Server.ManagedAgent
 where
 
 import FreeAgent.AgentPrelude
-import FreeAgent.Client.Peer                               (CallFail (..),
-                                                            callTarget,
-                                                            castTarget)
+import FreeAgent.Core.Protocol
 import FreeAgent.Core                                      (spawnAgent,
                                                             withAgent)
 import FreeAgent.Core.Internal.Lenses
@@ -64,40 +60,16 @@ import Control.Distributed.Process.Platform.Time           (Delay (..),
 
 data AgentState a = AgentState AgentContext a
 
+registerCall :: forall st rq. (ServerCall rq)
+             => CallProtocol rq st
+             -> Proxy rq -> Dispatcher (AgentState st)
+registerCall impl _ = agentRpcHandler
+    (respond impl :: rq -> StateT st Agent (CallResponse rq))
 
-class (NFSerializable rq
-      ,NFSerializable (CallResponse rq)
-      ,Show rq) => ServerCall rq where
-
-    type CallState rq
-    type CallResponse rq
-    type CallResponse rq = ()
-    respond :: rq -> StateT (CallState rq) Agent (CallResponse rq)
-    callName :: rq -> String
-
-class (NFSerializable rq, Show rq)
-      => ServerCast rq where
-    type CastState rq
-    handle :: rq -> StateT (CastState rq) Agent ()
-    castName :: rq -> String
-
-
-registerCall :: forall rq. (ServerCall rq)
-                => Proxy rq -> Dispatcher (AgentState (CallState rq))
-registerCall _ = agentRpcHandler
-    (respond :: rq -> StateT (CallState rq) Agent (CallResponse rq))
-
-registerCast :: forall rq. (ServerCast rq)
-             => Proxy rq -> Dispatcher (AgentState (CastState rq))
-registerCast _ = agentCastHandler (handle :: rq -> StateT (CastState rq) Agent ())
-
-callServ :: (ServerCall rq, MonadAgent agent)
-              => rq -> agent (Either CallFail (CallResponse rq))
-callServ !rq = callTarget (callName rq) rq
-
-castServ :: (ServerCast rq, MonadAgent agent)
-         => rq -> agent (Either CallFail ())
-castServ !rq = castTarget (castName rq) rq
+registerCast :: forall st rq. (ServerCast rq)
+             => CastProtocol rq st
+             -> Proxy rq -> Dispatcher (AgentState st)
+registerCast impl _ = agentCastHandler (handle impl :: rq -> StateT st Agent ())
 
 serverState :: Lens' (AgentState a) a
 serverState f (AgentState c a) = fmap (AgentState c) (f a)

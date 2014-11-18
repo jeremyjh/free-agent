@@ -1,50 +1,42 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleInstances          #-}
-{-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude, ScopedTypeVariables #-}
+{-# LANGUAGE NoImplicitPrelude, DeriveDataTypeable, DeriveGeneric #-}
+{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, BangPatterns #-}
+{-# LANGUAGE ScopedTypeVariables, TypeFamilies, FlexibleContexts #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-} -- Resolvable (Target,String)
 
-module FreeAgent.Client.Peer
-    ( queryPeerServers
-    , queryPeerCount
+module FreeAgent.Core.Protocol
+    (
+      CallFail(..)
     , callTarget
     , castTarget
-    , CallFail(..)
-    , registerServer
-    , PeerCommand(..)
-    , peerServerName
-    , warmRemoteCache
+    , QueryPeerServers(..)
+    , ServerCall(..)
+    , ServerCast(..)
+    , callServ
+    , castServ
+
     ) where
 
 import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Process
 
+import Control.Monad.State                                 (StateT)
 import           Data.Binary
 import qualified Data.Set                             as Set
 
-import           Control.Distributed.Backend.P2P      (makeNodeId)
 import qualified Control.Distributed.Process.Platform as Platform
-
 import           Control.Error                        ((!?))
 
 data CallFail = RoutingFailed | ServerCrash String
         deriving (Show, Eq, Typeable, Generic)
 
 instance Binary CallFail
+instance NFData CallFail where rnf = genericRnf
+
 instance Convertible SomeException CallFail where
     safeConvert e = return $ ServerCrash (show e)
 
-data PeerCommand = DiscoverPeers
-                   | QueryPeerCount
-                   | QueryLocalServices
-                   | RegisterPeer Peer
-                   | RespondRegisterPeer Peer
-                   | RegisterServer String ProcessId
-                   | QueryPeerServers String (Set Context) (Set Zone)
-    deriving (Show, Typeable, Generic)
-
-instance Binary PeerCommand
-instance NFData PeerCommand
 
 callTarget :: (MonadAgent agent, NFSerializable a, NFSerializable b)
            => String -> a -> agent (Either CallFail b)
@@ -60,43 +52,42 @@ castTarget name' command = runEitherT $ do
     pid <- resolve (target, name') !? RoutingFailed
     cast pid command
 
-peerServerName :: String
-peerServerName = "agent:peer"
+class (NFSerializable rq
+      ,NFSerializable (CallResponse rq)
+      ,Show rq) => ServerCall rq where
 
--- | Advertise a Server on the peer
-registerServer :: (MonadAgent agent)
-               => AgentServer -> ProcessId -> agent (Either CallFail ())
-registerServer (AgentServer sname _) pid =
-    castTarget peerServerName $ RegisterServer sname pid
+    type CallResponse rq
+    type CallResponse rq = ()
+    type CallProtocol rq :: * -> *
 
--- | Get a list of Peers (from local Peer's cache)
--- which have the requested Server registered
--- Contexts and Zones
-queryPeerServers :: MonadAgent agent
-                => String -> Set Context -> Set Zone
-                -> agent (Either CallFail (Set Peer))
-queryPeerServers s c z = callTarget peerServerName $ QueryPeerServers s c z
+    respond :: CallProtocol rq st -> rq -> StateT st Agent (CallResponse rq)
+    callName :: rq -> String
 
--- | Returns the number of Peer Agent processes this node is connected to
-queryPeerCount :: MonadAgent agent => agent (Either CallFail Int)
-queryPeerCount = callTarget peerServerName QueryPeerCount
+class (NFSerializable rq, Show rq)
+      => ServerCast rq where
+    type CastProtocol rq :: * -> *
 
--- | Query a remote node string ("host:port") for its registered
--- servers, and register them locally as resolving RemoteCache would,
--- so that multiple remote whereis do not have to be sent for
--- different servers at the same node.
-warmRemoteCache :: forall process. MonadProcess process
-                => String -> process ()
-warmRemoteCache nodestr = liftProcess $
- do let nodeId = makeNodeId nodestr
-    pid <- getSelfPid
-    nsendRemote nodeId peerServerName (QueryLocalServices, pid)
-    mservers <- expectTimeout 1000000 :: Process (Maybe [ServerRef])
-    case mservers of
-        Nothing -> say "warmRemoteCache timed out!"
-        Just servers' ->
-            forM_ servers' $ \(ServerRef name' pid') ->
-                register (nodestr ++ name') pid'
+    handle :: CastProtocol rq st -> rq -> StateT st Agent ()
+    castName :: rq -> String
+
+
+callServ :: (ServerCall rq, MonadAgent agent)
+              => rq -> agent (Either CallFail (CallResponse rq))
+callServ !rq = callTarget (callName rq) rq
+
+castServ :: (ServerCast rq, MonadAgent agent)
+         => rq -> agent (Either CallFail ())
+castServ !rq = castTarget (castName rq) rq
+
+-- | We need to define some of Peer Protocol here, because the Resolvable
+-- instance for (Target, String) is used in the callTarget/callServ
+-- functions. Those functions also need the ServerCall / ServerCast
+-- classes.
+data QueryPeerServers = QueryPeerServers String (Set Context) (Set Zone)
+   deriving (Show, Typeable, Generic)
+
+instance Binary QueryPeerServers
+instance NFData QueryPeerServers where rnf = genericRnf
 
 instance Platform.Resolvable (Target, String) where
     resolve (Local, name') = resolve name'
@@ -127,4 +118,5 @@ queryLocalPeerServers :: MonadProcess process
                 -> process (Set Peer)
 queryLocalPeerServers s c z = syncCallChan (Local, peerServerName) $ QueryPeerServers s c z
 
-instance NFData CallFail where rnf = genericRnf
+peerServerName :: String
+peerServerName = "agent:peer"
