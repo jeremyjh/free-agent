@@ -7,8 +7,10 @@
 module FreeAgent.Server.ManagedAgent
     ( module Managed
     , module Supervisor
+    , registerPCall
     , ServerCall(..)
     , ServerCast(..)
+    , ProtoCall(..)
     , registerCall
     , registerCast
     , AgentState(..)
@@ -16,6 +18,7 @@ module FreeAgent.Server.ManagedAgent
     , CallFail(..)
     , callServ
     , castServ
+    , callProto
     , callTarget
     , castTarget
     , runLogEitherT
@@ -64,15 +67,33 @@ import Control.Distributed.Process.Platform.Time           (Delay (..),
 
 data AgentState a = AgentState AgentContext a
 
+class (NFSerializable rq
+      ,NFSerializable (ProtoResponse rq)
+      ,Show rq) => ProtoCall rq where
+    type ProtoResponse rq
+    type ProtoImpl rq :: * -> *
+
+    respondP :: ProtoImpl rq st -> rq -> StateT st Agent (ProtoResponse rq)
+    protoName :: rq -> String
+
+registerPCall :: forall st rq. (ProtoCall rq)
+              => ProtoImpl rq st -> Proxy rq -> Dispatcher (AgentState st)
+registerPCall impl _ = agentRpcHandler
+    (respondP impl :: rq -> StateT st Agent (ProtoResponse rq))
+
+callProto :: (ProtoCall rq, MonadAgent agent)
+              => rq -> agent (Either CallFail (ProtoResponse rq))
+callProto !rq = callTarget (protoName rq) rq
 
 class (NFSerializable rq
       ,NFSerializable (CallResponse rq)
       ,Show rq) => ServerCall rq where
 
-    type CallState rq
     type CallResponse rq
     type CallResponse rq = ()
-    respond :: rq -> StateT (CallState rq) Agent (CallResponse rq)
+    type CallProtocol rq :: * -> *
+
+    respond :: CallProtocol rq st -> rq -> StateT st Agent (CallResponse rq)
     callName :: rq -> String
 
 class (NFSerializable rq, Show rq)
@@ -82,10 +103,11 @@ class (NFSerializable rq, Show rq)
     castName :: rq -> String
 
 
-registerCall :: forall rq. (ServerCall rq)
-                => Proxy rq -> Dispatcher (AgentState (CallState rq))
-registerCall _ = agentRpcHandler
-    (respond :: rq -> StateT (CallState rq) Agent (CallResponse rq))
+registerCall :: forall st rq. (ServerCall rq)
+             => CallProtocol rq st
+             -> Proxy rq -> Dispatcher (AgentState st)
+registerCall impl _ = agentRpcHandler
+    (respond impl :: rq -> StateT st Agent (CallResponse rq))
 
 registerCast :: forall rq. (ServerCast rq)
              => Proxy rq -> Dispatcher (AgentState (CastState rq))

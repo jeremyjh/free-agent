@@ -9,7 +9,7 @@ module FreeAgent.Server.Executive
     ( execServer
     , StoreAction(..)
     , QueryActions(..)
-    , UnregisterAction(..)
+    , RemoveAction(..)
     , ExecuteStored(..)
     , ExecuteBatch(..)
     , AddListener(..)
@@ -128,11 +128,44 @@ makeFields ''ExecState
 -- API
 -- -----------------------------
 
+type ExecImplM st rs = StateT st Agent rs
+type ExecImplE st rs = ExecImplM st (Either ExecFail rs)
+
+data ExecImpl st = ExecImpl {
+     doStoreAction :: StoreAction -> ExecImplM st ()
+   , doRemoveAction :: RemoveAction -> ExecImplM st ()
+   , doExecuteStored :: ExecuteStored -> ExecImplE st Result
+   , doQueryActions :: QueryActions -> ExecImplM st [Action]
+}
+
+execImpl :: ExecImpl ExecState
+execImpl = ExecImpl doStoreAction' doRemoveAction' doExecuteStored' doQueryActions'
+  where
+    doStoreAction' (StoreAction action')  =
+        do now <- getCurrentTime
+           void $ update (PutAction (action',now))
+           cacheAction action'
+    doStoreAction' (StoreNewerAction action' time) =
+     do void $ update (PutAction (action', time))
+        cacheAction action'
+    doStoreAction' (StoreActions actions')  =
+        do now <- getCurrentTime
+           forM_ actions' $ \action' ->
+            do void $ update (PutAction (action',now))
+               cacheAction action'
+    doRemoveAction' (RemoveAction key')  =
+     do void $ update (DeleteAction key')
+        cachedActions %= Map.delete key'
+    doExecuteStored' cmd@(ExecuteStored key') =
+     do executedCount %= (+) 1
+        runLogEitherT cmd $
+            join (uses cachedActions (lookup key') !? ActionNotFound key')
+    doQueryActions' _ = query AllActions
+
 data StoreAction = StoreAction Action
                  | StoreNewerAction Action UTCTime
                  | StoreActions [Action]
       deriving (Show, Typeable, Generic)
-
 
 instance Binary StoreAction
 
@@ -140,34 +173,20 @@ cacheAction :: Action -> StateT ExecState Agent ()
 cacheAction action' = cachedActions %= Map.insert (key action') (doExec action')
 
 instance ServerCall StoreAction where
-    type CallState StoreAction = ExecState
     type CallResponse StoreAction = ()
+    type CallProtocol StoreAction = ExecImpl
     callName _ = serverName
-    respond (StoreAction action')  =
-        do now <- getCurrentTime
-           void $ update (PutAction (action',now))
-           cacheAction action'
-    respond (StoreNewerAction action' time) =
-     do void $ update (PutAction (action', time))
-        cacheAction action'
-    respond (StoreActions actions')  =
-        do now <- getCurrentTime
-           forM_ actions' $ \action' ->
-            do void $ update (PutAction (action',now))
-               cacheAction action'
+    respond = doStoreAction
 
-data UnregisterAction = UnregisterAction !Key
+data RemoveAction = RemoveAction !Key
       deriving (Show, Typeable, Generic)
 
-instance Binary UnregisterAction
+instance Binary RemoveAction
 
-instance ServerCall UnregisterAction where
-    type CallState UnregisterAction = ExecState
+instance ServerCall RemoveAction where
+    type CallProtocol RemoveAction = ExecImpl
     callName _ = serverName
-    respond (UnregisterAction key')  =
-     do void $ update (DeleteAction key')
-        cachedActions %= Map.delete key'
-
+    respond = doRemoveAction
 
 data ExecuteStored = ExecuteStored !Key
     deriving (Show, Typeable, Generic)
@@ -175,13 +194,10 @@ data ExecuteStored = ExecuteStored !Key
 instance Binary ExecuteStored
 
 instance ServerCall ExecuteStored where
-    type CallState ExecuteStored = ExecState
     type CallResponse ExecuteStored = Either ExecFail Result
+    type CallProtocol ExecuteStored = ExecImpl
     callName _ = serverName
-    respond cmd@(ExecuteStored key') =
-     do executedCount %= (+) 1
-        runLogEitherT cmd $
-            join (uses cachedActions (lookup key') !? ActionNotFound key')
+    respond = doExecuteStored
 
 
 instance ServerCast ExecuteStored where
@@ -189,7 +205,8 @@ instance ServerCast ExecuteStored where
     castName _ = serverName
     handle cmd =
      do executedCount %= (+) 1
-        void . spawnLocal . void $ respond cmd
+        void . spawnLocal . void $ respond execImpl cmd
+
 
 data ExecuteBatch = ExecuteBatch ![Key]
     deriving (Show, Typeable, Generic)
@@ -203,7 +220,7 @@ instance ServerCast ExecuteBatch where
     handle (ExecuteBatch keys) =
         forM_ keys $ \key' ->
          do executedCount %= (+) 1
-            void . spawnLocal . void $ respond (ExecuteStored key')
+            void . spawnLocal . void $ respond execImpl (ExecuteStored key')
 
 data AddListener = AddListener (Closure Listener)
     deriving (Show, Typeable, Generic)
@@ -230,10 +247,10 @@ instance Binary QueryActions
 instance NFData QueryActions
 
 instance ServerCall QueryActions where
-    type CallState QueryActions = ExecState
     type CallResponse QueryActions = [Action]
+    type CallProtocol QueryActions = ExecImpl
     callName _ = serverName
-    respond QueryActions  = query AllActions
+    respond = doQueryActions
 
 -- | Execute 'Action' corresponding to 'Key' with the current
 -- target server and extract the concrete result (if possible) to
@@ -295,10 +312,10 @@ execServer =
                       ExecuteAction act -> doExecuteAction act
                       _ -> $(err "illegal pattern match")
 
-            , registerCall (Proxy :: Proxy StoreAction)
-            , registerCall (Proxy :: Proxy UnregisterAction)
-            , registerCall (Proxy :: Proxy ExecuteStored)
-            , registerCall (Proxy :: Proxy QueryActions)
+            , registerCall execImpl (Proxy :: Proxy StoreAction)
+            , registerCall execImpl (Proxy :: Proxy RemoveAction)
+            , registerCall execImpl (Proxy :: Proxy ExecuteStored)
+            , registerCall execImpl (Proxy :: Proxy QueryActions)
             , registerCast (Proxy :: Proxy ExecuteStored)
             , registerCast (Proxy :: Proxy ExecuteBatch)
             , registerCast (Proxy :: Proxy AddListener)
@@ -349,5 +366,5 @@ deriveSafeStore ''ExecPersist
 
 instance NFData ExecFail where rnf = genericRnf
 instance NFData StoreAction where rnf = genericRnf
-instance NFData UnregisterAction where rnf = genericRnf
+instance NFData RemoveAction where rnf = genericRnf
 instance NFData ExecuteStored where rnf = genericRnf

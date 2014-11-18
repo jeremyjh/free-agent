@@ -80,7 +80,7 @@ spec = do
 
         it "will fail to execute a non-registered action" $ do
             testAgentNL $ do
-                Right () <- callServ $ UnregisterAction (key testAction)
+                Right () <- callServ $ RemoveAction (key testAction)
                 Right (Left (ActionNotFound _)) <- callServ $ ExecuteStored (key testAction)
                 return True -- no match failure
             `shouldReturn` True
