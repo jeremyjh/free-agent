@@ -77,8 +77,9 @@ class (NFSerializable rq
 
 class (NFSerializable rq, Show rq)
       => ServerCast rq where
-    type CastState rq
-    handle :: rq -> StateT (CastState rq) Agent ()
+    type CastProtocol rq :: * -> *
+
+    handle :: CastProtocol rq st -> rq -> StateT st Agent ()
     castName :: rq -> String
 
 
@@ -88,9 +89,10 @@ registerCall :: forall st rq. (ServerCall rq)
 registerCall impl _ = agentRpcHandler
     (respond impl :: rq -> StateT st Agent (CallResponse rq))
 
-registerCast :: forall rq. (ServerCast rq)
-             => Proxy rq -> Dispatcher (AgentState (CastState rq))
-registerCast _ = agentCastHandler (handle :: rq -> StateT (CastState rq) Agent ())
+registerCast :: forall st rq. (ServerCast rq)
+             => CastProtocol rq st
+             -> Proxy rq -> Dispatcher (AgentState st)
+registerCast impl _ = agentCastHandler (handle impl :: rq -> StateT st Agent ())
 
 callServ :: (ServerCall rq, MonadAgent agent)
               => rq -> agent (Either CallFail (CallResponse rq))

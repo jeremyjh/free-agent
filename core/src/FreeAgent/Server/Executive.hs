@@ -132,35 +132,54 @@ type ExecImplM st rs = StateT st Agent rs
 type ExecImplE st rs = ExecImplM st (Either ExecFail rs)
 
 data ExecImpl st = ExecImpl {
-     doStoreAction :: StoreAction -> ExecImplM st ()
-   , doRemoveAction :: RemoveAction -> ExecImplM st ()
-   , doExecuteStored :: ExecuteStored -> ExecImplE st Result
-   , doQueryActions :: QueryActions -> ExecImplM st [Action]
+     callStoreAction :: StoreAction -> ExecImplM st ()
+   , callRemoveAction :: RemoveAction -> ExecImplM st ()
+   , callExecuteStored :: ExecuteStored -> ExecImplE st Result
+   , callQueryActions :: QueryActions -> ExecImplM st [Action]
+   , castExecuteStored :: ExecuteStored -> ExecImplM st ()
+   , castExecuteBatch :: ExecuteBatch -> ExecImplM st ()
+   , castAddListener :: AddListener -> ExecImplM st ()
 }
 
 execImpl :: ExecImpl ExecState
-execImpl = ExecImpl doStoreAction' doRemoveAction' doExecuteStored' doQueryActions'
+execImpl = ExecImpl callStoreAction' callRemoveAction' callExecuteStored' callQueryActions'
+                    castExecuteStored' castExecuteBatch' castAddListener'
   where
-    doStoreAction' (StoreAction action')  =
+    callStoreAction' (StoreAction action')  =
         do now <- getCurrentTime
            void $ update (PutAction (action',now))
            cacheAction action'
-    doStoreAction' (StoreNewerAction action' time) =
+    callStoreAction' (StoreNewerAction action' time) =
      do void $ update (PutAction (action', time))
         cacheAction action'
-    doStoreAction' (StoreActions actions')  =
+    callStoreAction' (StoreActions actions')  =
         do now <- getCurrentTime
            forM_ actions' $ \action' ->
             do void $ update (PutAction (action',now))
                cacheAction action'
-    doRemoveAction' (RemoveAction key')  =
+    callRemoveAction' (RemoveAction key')  =
      do void $ update (DeleteAction key')
         cachedActions %= Map.delete key'
-    doExecuteStored' cmd@(ExecuteStored key') =
+    callExecuteStored' cmd@(ExecuteStored key') =
      do executedCount %= (+) 1
         runLogEitherT cmd $
             join (uses cachedActions (lookup key') !? ActionNotFound key')
-    doQueryActions' _ = query AllActions
+    callQueryActions' _ = query AllActions
+    castExecuteStored' cmd =
+     do executedCount %= (+) 1
+        void . spawnLocal . void $ callExecuteStored' cmd
+    castExecuteBatch'(ExecuteBatch keys) =
+        forM_ keys $ \key' ->
+         do executedCount %= (+) 1
+            void . spawnLocal . void $ callExecuteStored' (ExecuteStored key')
+    castAddListener' (AddListener cl) =
+      do rt <- viewConfig remoteTable
+         case unclosure rt cl of
+             Left msg -> [qwarn|AddListener failed! Could not evaluate
+                           new listener closure: #{msg}|]
+             Right listener -> do
+                 listeners %= (:) listener
+                 update (PutListener cl)
 
 data StoreAction = StoreAction Action
                  | StoreNewerAction Action UTCTime
@@ -176,7 +195,7 @@ instance ServerCall StoreAction where
     type CallResponse StoreAction = ()
     type CallProtocol StoreAction = ExecImpl
     callName _ = serverName
-    respond = doStoreAction
+    respond = callStoreAction
 
 data RemoveAction = RemoveAction !Key
       deriving (Show, Typeable, Generic)
@@ -186,7 +205,7 @@ instance Binary RemoveAction
 instance ServerCall RemoveAction where
     type CallProtocol RemoveAction = ExecImpl
     callName _ = serverName
-    respond = doRemoveAction
+    respond = callRemoveAction
 
 data ExecuteStored = ExecuteStored !Key
     deriving (Show, Typeable, Generic)
@@ -197,15 +216,13 @@ instance ServerCall ExecuteStored where
     type CallResponse ExecuteStored = Either ExecFail Result
     type CallProtocol ExecuteStored = ExecImpl
     callName _ = serverName
-    respond = doExecuteStored
+    respond = callExecuteStored
 
 
 instance ServerCast ExecuteStored where
-    type CastState ExecuteStored = ExecState
+    type CastProtocol ExecuteStored = ExecImpl
     castName _ = serverName
-    handle cmd =
-     do executedCount %= (+) 1
-        void . spawnLocal . void $ respond execImpl cmd
+    handle = castExecuteStored
 
 
 data ExecuteBatch = ExecuteBatch ![Key]
@@ -215,12 +232,9 @@ instance Binary ExecuteBatch
 instance NFData ExecuteBatch where rnf = genericRnf
 
 instance ServerCast ExecuteBatch where
-    type CastState ExecuteBatch = ExecState
+    type CastProtocol ExecuteBatch = ExecImpl
     castName _ = serverName
-    handle (ExecuteBatch keys) =
-        forM_ keys $ \key' ->
-         do executedCount %= (+) 1
-            void . spawnLocal . void $ respond execImpl (ExecuteStored key')
+    handle = castExecuteBatch
 
 data AddListener = AddListener (Closure Listener)
     deriving (Show, Typeable, Generic)
@@ -229,16 +243,9 @@ instance Binary AddListener
 instance NFData AddListener
 
 instance ServerCast AddListener where
-    type CastState AddListener = ExecState
+    type CastProtocol AddListener = ExecImpl
     castName _ = serverName
-    handle (AddListener cl) =
-      do rt <- viewConfig remoteTable
-         case unclosure rt cl of
-             Left msg -> [qwarn|AddListener failed! Could not evaluate
-                           new listener closure: #{msg}|]
-             Right listener -> do
-                 listeners %= (:) listener
-                 update (PutListener cl)
+    handle = castAddListener
 
 data QueryActions = QueryActions
     deriving (Show, Eq, Typeable, Generic)
@@ -250,7 +257,7 @@ instance ServerCall QueryActions where
     type CallResponse QueryActions = [Action]
     type CallProtocol QueryActions = ExecImpl
     callName _ = serverName
-    respond = doQueryActions
+    respond = callQueryActions
 
 -- | Execute 'Action' corresponding to 'Key' with the current
 -- target server and extract the concrete result (if possible) to
@@ -316,9 +323,9 @@ execServer =
             , registerCall execImpl (Proxy :: Proxy RemoveAction)
             , registerCall execImpl (Proxy :: Proxy ExecuteStored)
             , registerCall execImpl (Proxy :: Proxy QueryActions)
-            , registerCast (Proxy :: Proxy ExecuteStored)
-            , registerCast (Proxy :: Proxy ExecuteBatch)
-            , registerCast (Proxy :: Proxy AddListener)
+            , registerCast execImpl (Proxy :: Proxy ExecuteStored)
+            , registerCast execImpl (Proxy :: Proxy ExecuteBatch)
+            , registerCast execImpl (Proxy :: Proxy AddListener)
             ]
           , shutdownHandler = \(AgentState _ s) _ -> do
                 pid <- getSelfPid

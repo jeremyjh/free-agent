@@ -274,57 +274,48 @@ type ScheduleImplM st rs = StateT st Agent rs
 type ScheduleImplE st rs = ScheduleImplM st (Either ScheduleFail rs)
 
 data ScheduleImpl st = ScheduleImpl {
-    doScheduleAddEvent :: ScheduleAddEvent -> ScheduleImplM st ()
-  , doScheduleEventControl :: ScheduleEventControl -> ScheduleImplM st ()
-  , doScheduleLookupEvent :: ScheduleLookupEvent -> ScheduleImplM st (Maybe Event)
-  , doScheduleQueryEvents :: ScheduleQueryEvents -> ScheduleImplM st [Event]
-  , doScheduleRemoveEvent :: ScheduleRemoveEvent -> ScheduleImplE st ()
+    callScheduleAddEvent :: ScheduleAddEvent -> ScheduleImplM st ()
+  , callScheduleEventControl :: ScheduleEventControl -> ScheduleImplM st ()
+  , callScheduleLookupEvent :: ScheduleLookupEvent -> ScheduleImplM st (Maybe Event)
+  , callScheduleQueryEvents :: ScheduleQueryEvents -> ScheduleImplM st [Event]
+  , callScheduleRemoveEvent :: ScheduleRemoveEvent -> ScheduleImplE st ()
+  , castScheduleControl :: ScheduleControl -> ScheduleImplM st ()
 }
 scheduleImpl :: ScheduleImpl ScheduleState
-scheduleImpl = ScheduleImpl doScheduleAddEvent' doScheduleEventControl'
-                            doScheduleLookupEvent' doScheduleQueryEvents'
-                            doScheduleRemoveEvent'
+scheduleImpl = ScheduleImpl callScheduleAddEvent' callScheduleEventControl'
+                            callScheduleLookupEvent' callScheduleQueryEvents'
+                            callScheduleRemoveEvent' castScheduleControl'
   where
-    doScheduleAddEvent' (ScheduleAddEvent key' recur retry) =
+    callScheduleAddEvent' (ScheduleAddEvent key' recur retry) =
       do now <- getCurrentTime
-         doScheduleAddEvent' (ScheduleAddNewerEvent key' recur retry now)
-    doScheduleAddEvent' (ScheduleAddNewerEvent key' recur retry modTime) =
+         callScheduleAddEvent' (ScheduleAddNewerEvent key' recur retry now)
+    callScheduleAddEvent' (ScheduleAddNewerEvent key' recur retry modTime) =
       do let event = Event key' recur retry modTime False
          next <- nextMinute
          () <- update (AddEvent $ calcNextScheduled next event)
          scheduleNextTick
-    doScheduleAddEvent' (ScheduleAddEvents events') =
+    callScheduleAddEvent' (ScheduleAddEvents events') =
       do next <- nextMinute
          forM_ events' $ \event -> update (AddEvent $ calcNextScheduled next event)
          scheduleNextTick
-    doScheduleEventControl' (ScheduleDisableEvents keys) =
+    callScheduleEventControl' (ScheduleDisableEvents keys) =
         update (DisableEvents keys)
 
-    doScheduleEventControl' (ScheduleEnableEvents keys) =
+    callScheduleEventControl' (ScheduleEnableEvents keys) =
      do now <- getCurrentTime
         void $ update (EnableEvents now keys)
         scheduleNextTick
-    doScheduleLookupEvent' = query
-    doScheduleQueryEvents' _ = query QueryAllEvents
-    doScheduleRemoveEvent' cmd = runLogEitherT cmd $ update cmd
-
-data ScheduleControl = ScheduleStart | ScheduleStop
-    deriving (Show, Typeable, Generic)
-
-instance Binary ScheduleControl
-instance NFData ScheduleControl where rnf = genericRnf
-
-instance ServerCast ScheduleControl where
-    type CastState ScheduleControl = ScheduleState
-    castName _ = serverName
-    handle ScheduleStart  =
+    callScheduleLookupEvent' = query
+    callScheduleQueryEvents' _ = query QueryAllEvents
+    callScheduleRemoveEvent' cmd = runLogEitherT cmd $ update cmd
+    castScheduleControl' ScheduleStart  =
      do ticking' <- use ticking
         if not ticking'
           then do ticking .= True
                   [qinfo|Starting scheduler.|]
                   tickMe
           else [qinfo|Scheduler already running.|]
-    handle ScheduleStop =
+    castScheduleControl' ScheduleStop  =
      do ticking' <- use ticking
         if ticking'
           then do [qinfo|Stopping scheduler.|]
@@ -335,6 +326,17 @@ instance ServerCast ScheduleControl where
                           liftProcess $ cancelTimer ref
                       Nothing -> return ()
           else [qinfo|Scheduler already stopped.|]
+
+data ScheduleControl = ScheduleStart | ScheduleStop
+    deriving (Show, Typeable, Generic)
+
+instance Binary ScheduleControl
+instance NFData ScheduleControl where rnf = genericRnf
+
+instance ServerCast ScheduleControl where
+    type CastProtocol ScheduleControl = ScheduleImpl
+    castName _ = serverName
+    handle = castScheduleControl
 
 data ScheduleAddEvent
     = ScheduleAddEvent !Key !ScheduleRecurrence !RetryOption
@@ -349,8 +351,7 @@ instance ServerCall ScheduleAddEvent where
     type CallProtocol ScheduleAddEvent = ScheduleImpl
     type CallResponse ScheduleAddEvent = ()
     callName _ = serverName
-    respond = doScheduleAddEvent
-
+    respond = callScheduleAddEvent
 
 data ScheduleEventControl
     = ScheduleDisableEvents ![Key]
@@ -364,7 +365,7 @@ instance ServerCall ScheduleEventControl where
     type CallProtocol ScheduleEventControl = ScheduleImpl
     type CallResponse ScheduleEventControl = ()
     callName _ = serverName
-    respond = doScheduleEventControl
+    respond = callScheduleEventControl
 
 data ScheduleQueryEvents = ScheduleQueryEvents
     deriving (Show, Typeable, Generic)
@@ -376,7 +377,7 @@ instance ServerCall ScheduleQueryEvents where
     type CallProtocol ScheduleQueryEvents = ScheduleImpl
     type CallResponse ScheduleQueryEvents = [Event]
     callName _ = serverName
-    respond = doScheduleQueryEvents
+    respond = callScheduleQueryEvents
 
 deriving instance Generic ScheduleLookupEvent
 deriving instance Show ScheduleLookupEvent
@@ -387,7 +388,7 @@ instance ServerCall ScheduleLookupEvent where
     type CallProtocol ScheduleLookupEvent = ScheduleImpl
     type CallResponse ScheduleLookupEvent = Maybe Event
     callName _ = serverName
-    respond = doScheduleLookupEvent
+    respond = callScheduleLookupEvent
 
 deriving instance Generic ScheduleRemoveEvent
 deriving instance Show ScheduleRemoveEvent
@@ -398,7 +399,7 @@ instance ServerCall ScheduleRemoveEvent where
     type CallProtocol ScheduleRemoveEvent = ScheduleImpl
     type CallResponse ScheduleRemoveEvent = Either ScheduleFail ()
     callName _ = serverName
-    respond = doScheduleRemoveEvent
+    respond = callScheduleRemoveEvent
 
 serverName :: String
 serverName = "agent:schedule"
@@ -418,7 +419,7 @@ scheduleServer =
             , registerCall scheduleImpl (Proxy :: Proxy ScheduleLookupEvent)
             , registerCall scheduleImpl (Proxy :: Proxy ScheduleQueryEvents)
             , registerCall scheduleImpl (Proxy :: Proxy ScheduleEventControl)
-            , registerCast (Proxy :: Proxy ScheduleControl)
+            , registerCast scheduleImpl (Proxy :: Proxy ScheduleControl)
             ],
             infoHandlers =
             [ agentInfoHandler $ \ Tick -> onTick
