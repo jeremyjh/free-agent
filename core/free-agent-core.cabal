@@ -72,7 +72,8 @@ library
         FreeAgent.Server
         FreeAgent.Server.ManagedAgent
         FreeAgent.Server.Peer
-        FreeAgent.Server.Executive
+        FreeAgent.Core.Protocol.Executive
+        FreeAgent.Core.Server.Executive
         FreeAgent.Server.Executive.History
         FreeAgent.Server.Schedule
         FreeAgent.Core.Action

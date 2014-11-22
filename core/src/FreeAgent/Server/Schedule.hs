@@ -12,7 +12,7 @@ import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Database.AcidState
 import           FreeAgent.Orphans                          ()
 import           FreeAgent.Process
-import           FreeAgent.Server.Executive                 (ExecuteBatch(..))
+import           FreeAgent.Core.Protocol.Executive   (ExecuteBatch(..))
 import           FreeAgent.Server.ManagedAgent
 
 import           Control.Error                              (note)

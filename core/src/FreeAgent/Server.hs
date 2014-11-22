@@ -15,7 +15,7 @@ import FreeAgent.AgentPrelude
 import FreeAgent.Core.Internal.Lenses
 import FreeAgent.Process
 import FreeAgent.Core (runAgent)
-import FreeAgent.Server.Executive (execServer)
+import FreeAgent.Core.Server.Executive (execServer)
 import FreeAgent.Server.Executive.History (defaultHistoryServer)
 import FreeAgent.Server.Schedule (scheduleServer)
 import FreeAgent.Server.Peer (peerServer)

@@ -16,7 +16,7 @@ import           FreeAgent.Core
 import           FreeAgent.Core.Action.ShellCommand
 import           FreeAgent.Server.ManagedAgent
 import           FreeAgent.Server.Executive.History
-import           FreeAgent.Server.Executive as Exec
+import           FreeAgent.Core.Protocol.Executive as Exec
 
 import           FreeAgent.TestHelper hiding (appConfig, appPlugins)
 import qualified FreeAgent.TestHelper as Helper
@@ -39,7 +39,7 @@ spec = do
 
         it "is started by Core supervisor" $ do
             testAgent $ do
-                Just _ <- resolve execServer
+                Just _ <- resolve Exec.serverName
                 return True
             `shouldReturn` True
 
@@ -133,7 +133,7 @@ spec = do
                     let matcher = $(mkClosure 'matchRemoteHostName) (nodeid, listenerName)
                     Right () <- castServ (AddListener matcher)
                     threadDelay 10000
-                    Just expid <- whereis $ execServer ^. name
+                    Just expid <- whereis $ Exec.serverName
                     liftProcess $ kill expid "testing"
                     threadDelay 10000
                     Right _ <- executeAction checkTCP

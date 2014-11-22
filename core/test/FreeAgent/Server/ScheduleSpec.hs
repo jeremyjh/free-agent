@@ -10,7 +10,7 @@ import           FreeAgent.Process
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Server.Schedule as Schedule
 import           FreeAgent.Server.Executive.History (allResultsFrom)
-import           FreeAgent.Server.Executive (StoreAction(..))
+import           FreeAgent.Core.Protocol.Executive (StoreAction(..))
 import           FreeAgent.Server.ManagedAgent (callServ)
 
 import           FreeAgent.TestHelper hiding (appConfig)
