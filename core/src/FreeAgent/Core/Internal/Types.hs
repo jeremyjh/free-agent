@@ -362,7 +362,7 @@ data ResultSummary
 data ActionHistory = ActionHistory deriving (Show, Eq, Typeable, Generic)
 
 data AgentServer = AgentServer { aserverName      :: String
-                               , aserverchildSpec :: AgentContext -> Process ChildSpec
+                               , aserverChildSpec :: AgentContext -> Process ChildSpec
                                }
 
 instance Resolvable AgentServer where
