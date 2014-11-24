@@ -6,7 +6,7 @@
 {-# OPTIONS_GHC -fno-warn-type-defaults#-}
 
 
-module FreeAgent.Server.ExecutiveSpec (main, spec) where
+module FreeAgent.Core.Server.ExecutiveSpec (main, spec) where
 
 import           Test.Hspec
 
@@ -237,6 +237,7 @@ appConfig = Helper.appConfig & appendRemoteTable __remoteTable
 appPlugins :: PluginSet
 appPlugins =
     pluginSet $ do
-        addPlugin $ testDef
+        addPlugin testDef
+        addPlugin testPluginDef
 
 appConfigNL = appConfig & minLogLevel .~ LevelOther ""
