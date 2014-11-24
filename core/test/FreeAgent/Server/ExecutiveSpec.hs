@@ -72,7 +72,7 @@ spec = do
                 Right _ <- callServ $ StoreAction (Action testAction)
                 Right _ <- castServ $ ExecuteStored (key testAction)
 
-                threadDelay 1000
+                threadDelay 10000
                 -- confirm results were written
                 Right results' <- allResultsFrom (convert (0::Int))
                 return $ length results'
