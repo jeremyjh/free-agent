@@ -114,7 +114,9 @@ deriveSafeStore = deriveSafeCopy 1 'base
 -- for more details.
 deriveSerializersVersion :: Version a -> Name -> Q [Dec]
 deriveSerializersVersion ver name = do
-    sc <- deriveSafeStoreVersion ver name
+    sc <- case ver of
+        1 -> deriveSafeCopy 1 'base name
+        _ -> deriveSafeCopy ver 'extension name
     gen <- [d| instance Binary   $(conT name)
                instance FromJSON $(conT name)
                instance ToJSON   $(conT name)
@@ -126,7 +128,18 @@ deriveSerializersVersion ver name = do
 -- instances for Actions/Results.
 -- This includes Cereal, SafeCopy, Binary and NFData.
 deriveSerializers :: Name -> Q [Dec]
-deriveSerializers = deriveSerializersVersion 1
+deriveSerializers name =
+    -- Originally we called deriveSerializersVersion here but this created
+    -- random linking errors in hdevtools and other tools due (I suspect)
+    -- to stage restriction. A little redundancy is preferable to separate
+    -- modules.
+ do sc <- deriveSafeCopy 1 'base name
+    gen <- [d| instance Binary   $(conT name)
+               instance FromJSON $(conT name)
+               instance ToJSON   $(conT name)
+               instance NFData   $(conT name)
+                   where rnf = genericRnf |]
+    return $ sc ++ gen
 
 
 (!??) :: Applicative m => m (Maybe a) -> e -> m (Either e a)
