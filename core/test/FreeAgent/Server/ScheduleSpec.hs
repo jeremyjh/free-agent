@@ -8,7 +8,7 @@ import           FreeAgent.AgentPrelude
 import qualified Prelude as P
 import           FreeAgent.Process
 import           FreeAgent.Core.Internal.Lenses
-import           FreeAgent.Server.Schedule as Schedule
+import           FreeAgent.Core.Protocol.Schedule as Schedule
 import           FreeAgent.Server.Executive.History (allResultsFrom)
 import           FreeAgent.Core.Protocol.Executive (StoreAction(..))
 import           FreeAgent.Server.ManagedAgent (callServ)
@@ -29,7 +29,7 @@ spec =  --parallel $
     describe "Basic scheduler operations" $ do
         it "is started by Core supervisor" $ do
             testAgent $ do
-                Just _ <- resolve scheduleServer
+                Just _ <- whereis serverName
                 return True
             `shouldReturn` True
 
@@ -96,7 +96,7 @@ spec =  --parallel $
                 -- run till the next minute in any case
                 {-Right () <- callServ $ ScheduleDisableEvents [key testAction]-}
 
-                send scheduleServer Tick
+                send serverName Tick
                 threadDelay 10000
                 Right rs <- allResultsFrom (convert (0::Int))
                 return (length rs)

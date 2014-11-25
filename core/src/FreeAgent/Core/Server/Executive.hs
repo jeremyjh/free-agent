@@ -7,8 +7,7 @@
 
 module FreeAgent.Core.Server.Executive
     ( execServer
-    )
-where
+    ) where
 
 import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Action
