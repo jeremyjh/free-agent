@@ -9,7 +9,7 @@ import qualified Prelude as P
 import           FreeAgent.Process
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Core.Protocol.Schedule as Schedule
-import           FreeAgent.Server.Executive.History (allResultsFrom)
+import           FreeAgent.Core.Protocol.Executive.History (findResultsSince)
 import           FreeAgent.Core.Protocol.Executive (StoreAction(..))
 import           FreeAgent.Server.ManagedAgent (callServ)
 
@@ -84,7 +84,7 @@ spec =  --parallel $
                 Right () <- callServ $ ScheduleEnableEvents [key testAction]
 
                 threadDelay 10000
-                Right results' <- allResultsFrom (convert (0::Int))
+                Right results' <- findResultsSince (convert (0::Int))
                 return (length results')
             `shouldReturn` 1
 
@@ -98,7 +98,7 @@ spec =  --parallel $
 
                 send serverName Tick
                 threadDelay 10000
-                Right rs <- allResultsFrom (convert (0::Int))
+                Right rs <- findResultsSince (convert (0::Int))
                 return (length rs)
             `shouldReturn` 1
 

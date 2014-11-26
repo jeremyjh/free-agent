@@ -15,7 +15,7 @@ import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Core
 import           FreeAgent.Core.Action.ShellCommand
 import           FreeAgent.Server.ManagedAgent
-import           FreeAgent.Server.Executive.History
+import           FreeAgent.Core.Protocol.Executive.History
 import           FreeAgent.Core.Protocol.Executive as Exec
 
 import           FreeAgent.TestHelper hiding (appConfig, appPlugins)
@@ -48,7 +48,7 @@ spec = do
                 Right _ <- callServ $ StoreAction (Action checkTCP)
                 (Right (_ :: NagiosResult ) ) <- executeStored $ key checkTCP
                 -- confirm results were written
-                Right results' <- allResultsFrom (convert (0::Int))
+                Right results' <- findResultsSince (convert (0::Int))
                 return $ length results'
             `shouldReturn` 1
 
@@ -74,7 +74,7 @@ spec = do
 
                 threadDelay 10000
                 -- confirm results were written
-                Right results' <- allResultsFrom (convert (0::Int))
+                Right results' <- findResultsSince (convert (0::Int))
                 return $ length results'
             `shouldReturn` 3
 
@@ -91,8 +91,8 @@ spec = do
                 let Just (NagiosResult _ OK) = extract nr
                 -- confirm results were written
 
-                Right results' <- actionResultsFrom (key checkTCP)
-                                                    (convert (0::Int))
+                Right results' <- findActionResultsSince (key checkTCP)
+                                                         (convert (0::Int))
                 return $ length results'
             `shouldReturn` 2
 

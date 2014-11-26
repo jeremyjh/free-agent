@@ -56,34 +56,33 @@ $(makeAcidic ''PeerPersist ['getPersist])
 
 peerServer :: AgentServer
 peerServer =
-    defineServer peerServerName
-                 initState
-                 defaultProcess {
-                     apiHandlers =
-                     [ agentCastHandler $ \ cmd ->
-                         -- registration is async to avoid possiblity of deadlock
-                         case cmd of
-                             DiscoverPeers -> doDiscoverPeers
-                             RegisterPeer peer -> doRegisterPeer peer True
-                             RespondRegisterPeer peer -> doRegisterPeer peer False
-                             RegisterServer name' pid -> doRegisterServer name' pid
-                             _ -> $(err "illegal pattern match")
+    defineServer
+         peerServerName
+         initState
+         defaultProcess {
+             apiHandlers =
+             [ agentCastHandler $ \ cmd ->
+                 -- registration is async to avoid possiblity of deadlock
+                 case cmd of
+                     DiscoverPeers -> doDiscoverPeers
+                     RegisterPeer peer -> doRegisterPeer peer True
+                     RespondRegisterPeer peer -> doRegisterPeer peer False
+                     RegisterServer name' pid -> doRegisterServer name' pid
+                     _ -> $(err "illegal pattern match")
 
-                     , agentRpcHandler $ \ QueryPeerCount -> uses friends length
+             , agentRpcHandler $ \ QueryPeerCount -> uses friends length
 
-                     , agentRpcHandler $ \ (QueryPeerServers n c z) ->
-                           doQueryPeerServers n c z
-                     ]
-                  , infoHandlers =
-                    [
-                     agentInfoHandler $ \ (QueryLocalServices, sender :: ProcessId) ->
-                           use (self.servers) >>= send sender . Set.toList
-                    ]
-                  , shutdownHandler = \ _ _ -> do pid <- getSelfPid
-                                                  say $ "Peer server " ++ show pid ++ " shutting down."
-
-
-                 }
+             , agentRpcHandler $ \ (QueryPeerServers n c z) ->
+                   doQueryPeerServers n c z
+             ]
+          , infoHandlers =
+            [
+             agentInfoHandler $ \ (QueryLocalServices, sender :: ProcessId) ->
+                   use (self.servers) >>= send sender . Set.toList
+            ]
+          , shutdownHandler = \ _ _ -> do pid <- getSelfPid
+                                          say $ "Peer server " ++ show pid ++ " shutting down."
+         }
   where
     initState = do
         context' <- askContext

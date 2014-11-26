@@ -14,7 +14,7 @@ import           FreeAgent.Core.Action
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Database.AcidState
 import           FreeAgent.Process                  as Process
-import           FreeAgent.Server.Executive.History hiding (serverName)
+import           FreeAgent.Core.Protocol.Executive.History hiding (serverName)
 import           FreeAgent.Server.ManagedAgent
 import           FreeAgent.Core.Protocol.Executive
 
