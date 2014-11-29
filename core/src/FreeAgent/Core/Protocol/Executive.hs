@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleContexts, FlexibleInstances  #-}
 {-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude        #-}
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
-{-# LANGUAGE TypeFamilies                                           #-}
+{-# LANGUAGE CPP, TypeFamilies                                           #-}
 
 
 module FreeAgent.Core.Protocol.Executive
@@ -26,8 +26,8 @@ where
 import FreeAgent.AgentPrelude
 import FreeAgent.Core.Action
 import FreeAgent.Core.Internal.Lenses
+import FreeAgent.Core.Protocol
 import FreeAgent.Process              as Process
-import FreeAgent.Server.ManagedAgent
 
 
 import Control.Error                  (hoistEither, (??))
@@ -75,29 +75,26 @@ data ExecImpl st = ExecImpl {
    , castAddListener   :: AddListener -> ExecImplM st ()
 }
 
+#define EXEC_CALL(REQ, RSP, FN)             \
+instance ServerCall REQ where               \
+   type CallProtocol REQ = ExecImpl        ;\
+   type CallResponse REQ = RSP             ;\
+   callName _ = serverName                 ;\
+   respond = FN                            ;\
 
 data StoreAction = StoreAction Action
                  | StoreNewerAction Action UTCTime
                  | StoreActions [Action]
       deriving (Show, Typeable, Generic)
-
 instance Binary StoreAction
-
-instance ServerCall StoreAction where
-    type CallResponse StoreAction = ()
-    type CallProtocol StoreAction = ExecImpl
-    callName _ = serverName
-    respond = callStoreAction
+instance NFData StoreAction where rnf = genericRnf
+EXEC_CALL (StoreAction, (), callStoreAction)
 
 data RemoveAction = RemoveAction !Key
       deriving (Show, Typeable, Generic)
 
 instance Binary RemoveAction
-
-instance ServerCall RemoveAction where
-    type CallProtocol RemoveAction = ExecImpl
-    callName _ = serverName
-    respond = callRemoveAction
+EXEC_CALL (RemoveAction, (), callRemoveAction)
 
 data ExecuteStored = ExecuteStored !Key
     deriving (Show, Typeable, Generic)
@@ -196,6 +193,5 @@ callExecutive command = do
         Left cf -> return (Left $ ECallFailed cf)
 
 instance NFData ExecFail where rnf = genericRnf
-instance NFData StoreAction where rnf = genericRnf
 instance NFData RemoveAction where rnf = genericRnf
 instance NFData ExecuteStored where rnf = genericRnf

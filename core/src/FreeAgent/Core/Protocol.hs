@@ -6,7 +6,7 @@
 
 module FreeAgent.Core.Protocol
     (
-      CallFail
+      CallFail(..)
     , callTarget
     , castTarget
     , QueryPeerServers(..)

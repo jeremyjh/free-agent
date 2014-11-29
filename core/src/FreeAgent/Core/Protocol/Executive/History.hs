@@ -15,6 +15,7 @@ module FreeAgent.Core.Protocol.Executive.History
 
 import FreeAgent.AgentPrelude
 import FreeAgent.Core.Internal.Lenses
+import FreeAgent.Core.Protocol
 import FreeAgent.Server.ManagedAgent
 
 import Control.Monad.State            (StateT)

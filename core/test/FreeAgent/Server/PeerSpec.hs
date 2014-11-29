@@ -12,8 +12,7 @@ import           FreeAgent.Process
 import           FreeAgent.Core.Protocol.Executive as Exec
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Server (runAgentServers)
-import           FreeAgent.Server.Peer
-import           FreeAgent.Client.Peer
+import           FreeAgent.Core.Protocol.Peer
 import           FreeAgent.Server.ManagedAgent
 
 import           FreeAgent.TestHelper hiding (appConfig)
@@ -43,7 +42,7 @@ spec =
     describe "FreeAgent.Peer" $ do
         it "is started by Core supervisor" $ do
             testAgent $ do
-                Just _ <- whereis $ peerServer ^. name
+                Just _ <- whereis $ peerServerName
                 return True
             `shouldReturn` True
 

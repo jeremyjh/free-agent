@@ -9,8 +9,8 @@ module FreeAgent.Core.Protocol.Schedule where
 
 import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Internal.Lenses
+import           FreeAgent.Core.Protocol
 import           FreeAgent.Orphans                          ()
-import           FreeAgent.Server.ManagedAgent
 
 import           Control.Error                              (note)
 import           Control.Monad.State                        (StateT)

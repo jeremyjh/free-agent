@@ -15,6 +15,7 @@ import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Core
 import           FreeAgent.Core.Action.ShellCommand
 import           FreeAgent.Server.ManagedAgent
+import           FreeAgent.Core.Protocol
 import           FreeAgent.Core.Protocol.Executive.History
 import           FreeAgent.Core.Protocol.Executive as Exec
 

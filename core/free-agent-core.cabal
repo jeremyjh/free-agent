@@ -68,10 +68,11 @@ library
         FreeAgent.Core.Lenses
         FreeAgent.Core.Internal.Lenses
         FreeAgent.Process
-        FreeAgent.Client.Peer
+        FreeAgent.Core.Protocol
         FreeAgent.Server
         FreeAgent.Server.ManagedAgent
-        FreeAgent.Server.Peer
+        FreeAgent.Core.Protocol.Peer
+        FreeAgent.Core.Server.Peer
         FreeAgent.Core.Protocol.Executive
         FreeAgent.Core.Server.Executive
         FreeAgent.Core.Protocol.Executive.History

@@ -27,6 +27,7 @@ import           FreeAgent.Core.Action                  (actionType, registerAct
 import           FreeAgent.Core.Action.Composition      (ActionPlan)
 import           FreeAgent.Core.Action.ShellCommand     (ShellCommand)
 import           FreeAgent.Core.Internal.Lenses
+import           FreeAgent.Core.Protocol.Peer            (warmRemoteCache)
 import           FreeAgent.Process                      (DiedReason (..), NodeId,
                                                          RemoteTable, SendPort,
                                                          localNodeId, match, receiveWait,
@@ -47,7 +48,7 @@ import           Network.Transport.TCP
 
 import           Control.Monad.Logger                   (runStdoutLoggingT)
 
-import           FreeAgent.Client.Peer                  as X
+import           FreeAgent.Core.Protocol                  as X
 import qualified FreeAgent.Core.Action                  as X
 import qualified FreeAgent.Core.Internal.Types          as X (Action (..), Agent,
                                                               AgentConfig (..),

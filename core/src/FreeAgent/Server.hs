@@ -18,8 +18,8 @@ import FreeAgent.Core (runAgent)
 import FreeAgent.Core.Server.Executive (execServer)
 import FreeAgent.Core.Server.Executive.History (defaultHistoryServer)
 import FreeAgent.Core.Server.Schedule (scheduleServer)
-import FreeAgent.Server.Peer (peerServer)
-import FreeAgent.Client.Peer (registerServer)
+import FreeAgent.Core.Server.Peer (peerServer)
+import FreeAgent.Core.Protocol.Peer (registerServer)
 
 import Control.Distributed.Process.Platform.Supervisor
 

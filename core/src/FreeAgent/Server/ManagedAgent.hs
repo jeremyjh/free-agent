@@ -1,5 +1,4 @@
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings, QuasiQuotes #-}
 {-# LANGUAGE ScopedTypeVariables, TypeFamilies                 #-}
 
@@ -13,7 +12,6 @@ module FreeAgent.Server.ManagedAgent
     , registerCast
     , AgentState(..)
     , defineServer
-    , CallFail(..)
     , callServ
     , castServ
     , callTarget
@@ -59,7 +57,6 @@ import Control.Distributed.Process.Platform.ManagedProcess as Managed hiding
 import Control.Distributed.Process.Platform.Supervisor     as Supervisor
 import Control.Distributed.Process.Platform.Time           (Delay (..),
                                                             milliSeconds)
-import           Control.Distributed.Backend.P2P      (makeNodeId)
 
 data AgentState a = AgentState AgentContext a
 
