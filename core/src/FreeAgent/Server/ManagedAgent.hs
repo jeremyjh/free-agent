@@ -37,9 +37,7 @@ module FreeAgent.Server.ManagedAgent
 where
 
 import FreeAgent.AgentPrelude
-import FreeAgent.Client.Peer                               (CallFail (..),
-                                                            callTarget,
-                                                            castTarget)
+import FreeAgent.Core.Protocol
 import FreeAgent.Core                                      (spawnAgent,
                                                             withAgent)
 import FreeAgent.Core.Internal.Lenses
@@ -61,27 +59,9 @@ import Control.Distributed.Process.Platform.ManagedProcess as Managed hiding
 import Control.Distributed.Process.Platform.Supervisor     as Supervisor
 import Control.Distributed.Process.Platform.Time           (Delay (..),
                                                             milliSeconds)
+import           Control.Distributed.Backend.P2P      (makeNodeId)
 
 data AgentState a = AgentState AgentContext a
-
-class (NFSerializable rq
-      ,NFSerializable (CallResponse rq)
-      ,Show rq) => ServerCall rq where
-
-    type CallResponse rq
-    type CallResponse rq = ()
-    type CallProtocol rq :: * -> *
-
-    respond :: CallProtocol rq st -> rq -> StateT st Agent (CallResponse rq)
-    callName :: rq -> String
-
-class (NFSerializable rq, Show rq)
-      => ServerCast rq where
-    type CastProtocol rq :: * -> *
-
-    handle :: CastProtocol rq st -> rq -> StateT st Agent ()
-    castName :: rq -> String
-
 
 registerCall :: forall st rq. (ServerCall rq)
              => CallProtocol rq st
@@ -93,14 +73,6 @@ registerCast :: forall st rq. (ServerCast rq)
              => CastProtocol rq st
              -> Proxy rq -> Dispatcher (AgentState st)
 registerCast impl _ = agentCastHandler (handle impl :: rq -> StateT st Agent ())
-
-callServ :: (ServerCall rq, MonadAgent agent)
-              => rq -> agent (Either CallFail (CallResponse rq))
-callServ !rq = callTarget (callName rq) rq
-
-castServ :: (ServerCast rq, MonadAgent agent)
-         => rq -> agent (Either CallFail ())
-castServ !rq = castTarget (castName rq) rq
 
 serverState :: Lens' (AgentState a) a
 serverState f (AgentState c a) = fmap (AgentState c) (f a)

@@ -9,6 +9,7 @@ module FreeAgent.Process
     , NFSerializable
     , localNodeId
     , ChildSpec
+    , makeNodeId
     , Async, AsyncResult(..)
     )
 where
@@ -39,6 +40,7 @@ import qualified Control.Distributed.Process.Platform.ManagedProcess.UnsafeClien
 import           Control.Distributed.Process.Platform.Supervisor                  (ChildSpec)
 import qualified Control.Distributed.Process.Platform.UnsafePrimitives            as NF
 import           Control.Distributed.Process.Serializable                         (Serializable)
+import           Control.Distributed.Backend.P2P      (makeNodeId)
 import           Control.Error                                                    (EitherT)
 import           Control.Monad.Trans.Control                                      (MonadBaseControl (..))
 import           Data.Tuple                                                       (swap)
