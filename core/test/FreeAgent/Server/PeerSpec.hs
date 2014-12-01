@@ -8,12 +8,10 @@ module FreeAgent.Server.PeerSpec (main, spec) where
 import           FreeAgent.AgentPrelude
 import qualified Prelude as P
 import           FreeAgent.Core
-import           FreeAgent.Process
-import           FreeAgent.Core.Protocol.Executive as Exec
-import           FreeAgent.Core.Internal.Lenses
+import           FreeAgent.Core.Lenses
 import           FreeAgent.Server (runAgentServers)
-import           FreeAgent.Core.Protocol.Peer
 import           FreeAgent.Server.ManagedAgent
+import qualified FreeAgent.Core.Protocol.Executive as Exec
 
 import           FreeAgent.TestHelper hiding (appConfig)
 import qualified FreeAgent.TestHelper as Helper
@@ -96,8 +94,8 @@ spec =
                 let aname = res  ^. to summary.resultOf.to key
 
                 -- we're done, tell the two "remotes" to exit
-                Right all3 <- queryPeerServers serverName (Set.fromList[def])
-                                                    (Set.fromList[def])
+                Right all3 <- queryPeerServers peerServerName (Set.fromList[def])
+                                                              (Set.fromList[def])
                 forM_ all3 $ \peer' -> do
                     mpid <- resolve (peer', ("waiter"::String))
                     case mpid of

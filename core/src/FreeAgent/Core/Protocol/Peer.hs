@@ -26,19 +26,17 @@ import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Process
 import           FreeAgent.Core.Protocol
 
-import Control.Monad.State (StateT)
 import           Data.Binary
 
-type PeerImplM st rs = StateT st Agent rs
 
-data PeerImpl st = PeerImpl {
-    castDiscoverPeers       :: DiscoverPeers -> PeerImplM st ()
-  , castRegisterPeer        :: RegisterPeer -> PeerImplM st ()
-  , castRespondRegisterPeer :: RespondRegisterPeer -> PeerImplM st ()
-  , castRegisterServer      ::  RegisterServer -> PeerImplM st ()
-  , callQueryPeerServers    :: QueryPeerServers -> PeerImplM st (Set Peer)
-  , callQueryPeerCount      :: QueryPeerCount -> PeerImplM st Int
-  , callQueryLocalServices  :: QueryLocalServices -> PeerImplM st [ServerRef]
+data PeerImpl m = PeerImpl {
+    castDiscoverPeers       :: DiscoverPeers -> m ()
+  , castRegisterPeer        :: RegisterPeer -> m ()
+  , castRespondRegisterPeer :: RespondRegisterPeer -> m ()
+  , castRegisterServer      ::  RegisterServer -> m ()
+  , callQueryPeerServers    :: QueryPeerServers -> m (Set Peer)
+  , callQueryPeerCount      :: QueryPeerCount -> m Int
+  , callQueryLocalServices  :: QueryLocalServices -> m [ServerRef]
 }
 
 

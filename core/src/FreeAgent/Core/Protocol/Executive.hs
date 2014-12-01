@@ -31,7 +31,6 @@ import FreeAgent.Process              as Process
 
 
 import Control.Error                  (hoistEither, (??))
-import Control.Monad.State            (StateT)
 import Data.Binary
 
 
@@ -62,17 +61,14 @@ data ExecutiveCommand =
 instance Binary ExecutiveCommand where
 instance NFData ExecutiveCommand where
 
-type ExecImplM st rs = StateT st Agent rs
-type ExecImplE st rs = ExecImplM st (Either ExecFail rs)
-
-data ExecImpl st = ExecImpl {
-     callStoreAction   :: StoreAction -> ExecImplM st ()
-   , callRemoveAction  :: RemoveAction -> ExecImplM st ()
-   , callExecuteStored :: ExecuteStored -> ExecImplE st Result
-   , callQueryActions  :: QueryActions -> ExecImplM st [Action]
-   , castExecuteStored :: ExecuteStored -> ExecImplM st ()
-   , castExecuteBatch  :: ExecuteBatch -> ExecImplM st ()
-   , castAddListener   :: AddListener -> ExecImplM st ()
+data ExecImpl m = ExecImpl {
+     callStoreAction   :: StoreAction -> m ()
+   , callRemoveAction  :: RemoveAction -> m ()
+   , callExecuteStored :: ExecuteStored -> m (Either ExecFail Result)
+   , callQueryActions  :: QueryActions -> m [Action]
+   , castExecuteStored :: ExecuteStored -> m ()
+   , castExecuteBatch  :: ExecuteBatch -> m ()
+   , castAddListener   :: AddListener -> m ()
 }
 
 #define EXEC_CALL(REQ, RSP, FN)             \

@@ -8,10 +8,11 @@ module FreeAgent.Core.Lenses
 , module FreeAgent.Core.Lenses
 ) where
 
-import Control.Lens                  (abbreviatedFields, makeLensesWith, to, (%=), (%~),
-                                      (&), (.=), (.~), (^.), _1, _2)
+import Control.Lens                  (abbreviatedFields, makeLensesWith, set, to, use,
+                                      uses, view, views, (%=), (%~), (&), (.=), (.~),
+                                      (^.), _1, _2)
 import FreeAgent.Core.Internal.Types
-import Language.Haskell.TH.Syntax (Name, Q, Dec)
+import Language.Haskell.TH.Syntax    (Dec, Name, Q)
 
 makeFields :: Name -> Q [Dec]
 makeFields = makeLensesWith abbreviatedFields
@@ -19,3 +20,4 @@ makeFields = makeLensesWith abbreviatedFields
 makeLensesWith abbreviatedFields ''AgentConfig
 makeLensesWith abbreviatedFields ''PluginDef
 makeLensesWith abbreviatedFields ''ResultSummary
+makeLensesWith abbreviatedFields ''Peer

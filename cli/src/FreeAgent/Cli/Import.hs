@@ -5,9 +5,9 @@ module FreeAgent.Cli.Import
 
 import FreeAgent.AgentPrelude
 import FreeAgent.Core                (Action, Agent)
-import FreeAgent.Server.Executive    (StoreAction (..))
-import FreeAgent.Server.Schedule (Event(..), ScheduleAddEvent(..))
-import FreeAgent.Server.ManagedAgent (callServ)
+import FreeAgent.Core.Protocol.Executive (StoreAction (..))
+import FreeAgent.Core.Protocol.Schedule (Event(..), ScheduleAddEvent(..))
+import FreeAgent.Core.Protocol (callServ)
 
 import Control.Error (left)
 import Data.EitherR                  (runEitherRT, succeedT)

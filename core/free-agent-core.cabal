@@ -61,6 +61,7 @@ library
         data-clist >=0.0.7.2 && <0.1
     exposed-modules:
         FreeAgent.Core
+        FreeAgent.Core.Agent
         FreeAgent.AgentPrelude
         FreeAgent.Database.AcidState
         FreeAgent.Core.Internal.Types

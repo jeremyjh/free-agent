@@ -16,9 +16,11 @@ module FreeAgent.Core.Protocol.Executive.History
 import FreeAgent.AgentPrelude
 import FreeAgent.Core.Internal.Lenses
 import FreeAgent.Core.Protocol
-import FreeAgent.Server.ManagedAgent
+import FreeAgent.Core.Action ()
 
 import Control.Monad.State            (StateT)
+import Control.Distributed.Process.Platform.ManagedProcess
+       (ShutdownHandler)
 import Data.Binary                    (Binary)
 
 
@@ -27,14 +29,12 @@ import Data.Binary                    (Binary)
 -- -----------------------------
 
 -- | defines back-end implementation
-data HistoryImpl st = HistoryImpl {
+data HistoryImpl t st = HistoryImpl {
       doInit              :: Agent st
-    , castWriteResult       :: WriteResult -> HistoryAgent st ()
-    , callFindResults       :: FindResults -> HistoryAgent st [Result]
+    , castWriteResult       :: WriteResult -> t st ()
+    , callFindResults       :: FindResults -> t st [Result]
     , doShutdown          :: ShutdownHandler st
 }
-
-type HistoryAgent st = StateT st Agent
 
 data HistoryFail = HCallFailed CallFail
         deriving (Show, Eq, Typeable, Generic)

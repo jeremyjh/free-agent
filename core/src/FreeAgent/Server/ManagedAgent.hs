@@ -36,7 +36,7 @@ where
 
 import FreeAgent.AgentPrelude
 import FreeAgent.Core.Protocol
-import FreeAgent.Core                                      (spawnAgent,
+import FreeAgent.Core.Agent                                      (spawnAgent,
                                                             withAgent)
 import FreeAgent.Core.Internal.Lenses
 import FreeAgent.Process
@@ -61,13 +61,13 @@ import Control.Distributed.Process.Platform.Time           (Delay (..),
 data AgentState a = AgentState AgentContext a
 
 registerCall :: forall st rq. (ServerCall rq)
-             => CallProtocol rq st
+             => CallProtocol rq (StateT st Agent)
              -> Proxy rq -> Dispatcher (AgentState st)
 registerCall impl _ = agentRpcHandler
     (respond impl :: rq -> StateT st Agent (CallResponse rq))
 
 registerCast :: forall st rq. (ServerCast rq)
-             => CastProtocol rq st
+             => CastProtocol rq (StateT st Agent)
              -> Proxy rq -> Dispatcher (AgentState st)
 registerCast impl _ = agentCastHandler (handle impl :: rq -> StateT st Agent ())
 

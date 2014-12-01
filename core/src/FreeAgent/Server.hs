@@ -34,8 +34,10 @@ runAgentServers config' plugins' ma =
   where
     inPlugins pservers cserver =
         all (\s -> s ^. name /= cserver ^. name) pservers
+
     pluginServers = let plugs = plugins' ^. plugins in
         concatMap (view servers) plugs
+
     startSuper servers' = do
         context' <- (targetServer .~ Local) <$> askContext
         spid <- liftProcess $ do

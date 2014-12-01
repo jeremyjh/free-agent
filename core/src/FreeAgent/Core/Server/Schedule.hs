@@ -10,12 +10,10 @@ module FreeAgent.Core.Server.Schedule
     ) where
 
 import           FreeAgent.AgentPrelude
-import           FreeAgent.Core.Internal.Lenses
+import           FreeAgent.Core
+import           FreeAgent.Core.Lenses
 import           FreeAgent.Database.AcidState
-import           FreeAgent.Orphans                          ()
-import           FreeAgent.Process
-import           FreeAgent.Core.Protocol.Executive   (ExecuteBatch(..))
-import           FreeAgent.Core.Protocol.Schedule
+import           FreeAgent.Core.Protocol.Schedule (serverName)
 import           FreeAgent.Server.ManagedAgent
 
 import           Control.Monad.Reader                       (ask)
@@ -278,6 +276,3 @@ scheduleNextTick =
             let interval = diffTimeToTimeInterval diff
             ref <- liftProcess $ sendAfter interval pid Tick
             tickerRef .= Just ref
-
-
-

@@ -1,9 +1,5 @@
-{-# LANGUAGE ScopedTypeVariables       #-}
-{-# LANGUAGE FlexibleInstances         #-}
-{-# LANGUAGE FunctionalDependencies    #-}
-{-# LANGUAGE MultiParamTypeClasses     #-}
-{-# LANGUAGE NoImplicitPrelude         #-}
-{-# LANGUAGE TemplateHaskell           #-}
+{-# LANGUAGE FlexibleInstances, FunctionalDependencies, MultiParamTypeClasses #-}
+{-# LANGUAGE NoImplicitPrelude, ScopedTypeVariables, TemplateHaskell          #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -15,28 +11,31 @@ module FreeAgent.Core.Internal.Lenses
 )
 where
 
-import           FreeAgent.AgentPrelude
-import           FreeAgent.Core.Lenses as X
-import           FreeAgent.Core.Internal.Types as X
+import FreeAgent.AgentPrelude
+import FreeAgent.Core.Internal.Types as X
+import FreeAgent.Core.Lenses         as X
 
-import Control.Lens as X
-       ( makeLenses, Getting, use, uses, view, views, set
-       , Profunctor, Lens', Optical)
+import Control.Lens                  as X (Getting, Lens', Optical, Profunctor,
+                                           makeLenses)
 
-import Control.Applicative(Const)
+import Control.Applicative           (Const)
 
 
 
 makeFields ''AgentContext
-makeFields ''Peer
 makeFields ''AgentServer
 makeFields ''PluginSet
 
--- | Use a lens to view a portion of AgentContext
+
+-- | Use a lens to view config from AgentContext
 viewConfig :: (ContextReader m) => Getting a AgentConfig a -> m a
 viewConfig lens = view (agentConfig.lens) <$> askContext
 
--- | Use a lens to view a portion of AgentContext
+-- | Use a lens to view plugins from AgentContext
+viewPlugins :: (ContextReader m) => Getting a PluginSet a -> m a
+viewPlugins lens = view (plugins.lens) <$> askContext
+
+-- | Internal use only - view access to entire context
 viewContext :: (ContextReader m) => Getting a AgentContext a -> m a
 viewContext lens = view lens <$> askContext
 

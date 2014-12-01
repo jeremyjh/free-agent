@@ -9,9 +9,9 @@ import FreeAgent.Core
 import FreeAgent.Core.Internal.Types              (LogLevel (..))
 import FreeAgent.Core.Lenses
 import FreeAgent.Process                          (liftProcess)
-import FreeAgent.Server.Executive                 (StoreAction (..))
-import FreeAgent.Server.ManagedAgent              (callServ)
-import FreeAgent.Server.Schedule                  (Event (..), RetryOption (..),
+import FreeAgent.Core.Protocol.Executive                 (StoreAction (..))
+import FreeAgent.Core.Protocol              (callServ)
+import FreeAgent.Core.Protocol.Schedule                  (Event (..), RetryOption (..),
                                                    ScheduleAddEvent (..),
                                                    ScheduleEventControl (..),
                                                    ScheduleRecurrence (..))
@@ -21,6 +21,8 @@ import FreeAgent.Plugins.Nagios                   as Nagios
 import Control.Distributed.Process.Platform.Time  (TimeUnit (..), seconds)
 import Control.Distributed.Process.Platform.Timer (runAfter, sleepFor)
 import Prelude                                    (read)
+
+--derp
 
 -- | Specify the plugins that should be loaded for this application.
 appPlugins :: PluginSet

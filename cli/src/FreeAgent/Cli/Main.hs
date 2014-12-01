@@ -16,8 +16,8 @@ import FreeAgent.Core         (AgentConfig, PluginSet, withRemoteNode, runAgent,
 import FreeAgent.Core.Lenses
 import FreeAgent.Process
 import FreeAgent.Server       (runAgentServers)
-import FreeAgent.Server.ManagedAgent (castServ)
-import FreeAgent.Server.Schedule (ScheduleControl(..))
+import FreeAgent.Core.Protocol (castServ)
+import FreeAgent.Core.Protocol.Schedule (ScheduleControl(..))
 
 faMain :: AgentConfig -> PluginSet -> IO ()
 faMain config plugins =

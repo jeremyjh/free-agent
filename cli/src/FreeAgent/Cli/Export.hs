@@ -5,9 +5,9 @@ module FreeAgent.Cli.Export
 
 import FreeAgent.AgentPrelude
 import FreeAgent.Core                (Agent, key)
-import FreeAgent.Server.Executive    (QueryActions(..))
-import FreeAgent.Server.Schedule     (ScheduleQueryEvents(..))
-import FreeAgent.Server.ManagedAgent (callServ)
+import FreeAgent.Core.Protocol.Executive    (QueryActions(..))
+import FreeAgent.Core.Protocol.Schedule     (ScheduleQueryEvents(..))
+import FreeAgent.Core.Protocol (callServ)
 import FreeAgent.Cli.Import
 
 import qualified Filesystem.Path as Path

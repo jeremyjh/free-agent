@@ -21,7 +21,6 @@ import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Process
 
-import Control.Monad.State                                 (StateT)
 import           Data.Binary
 import qualified Data.Set                             as Set
 
@@ -58,16 +57,16 @@ class (NFSerializable rq
 
     type CallResponse rq
     type CallResponse rq = ()
-    type CallProtocol rq :: * -> *
+    type CallProtocol rq :: (* -> *) -> *
 
-    respond :: CallProtocol rq st -> rq -> StateT st Agent (CallResponse rq)
+    respond :: CallProtocol rq m -> rq -> m (CallResponse rq)
     callName :: rq -> String
 
 class (NFSerializable rq, Show rq)
       => ServerCast rq where
-    type CastProtocol rq :: * -> *
+    type CastProtocol rq :: (* -> *) -> *
 
-    handle :: CastProtocol rq st -> rq -> StateT st Agent ()
+    handle :: CastProtocol rq m -> rq -> m ()
     castName :: rq -> String
 
 

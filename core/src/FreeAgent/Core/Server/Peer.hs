@@ -11,11 +11,9 @@ module FreeAgent.Core.Server.Peer
 where
 
 import           FreeAgent.AgentPrelude
-import           FreeAgent.Core.Protocol  (QueryPeerServers(..))
-import           FreeAgent.Core.Protocol.Peer
-import           FreeAgent.Core.Internal.Lenses
+import           FreeAgent.Core
+import           FreeAgent.Core.Lenses
 import           FreeAgent.Database.AcidState
-import           FreeAgent.Process
 import           FreeAgent.Server.ManagedAgent
 
 import qualified Data.Set                        as Set
@@ -140,15 +138,15 @@ peerServer =
          }
   where
     initState = do
-        context' <- askContext
         Just newid <- liftIO nextUUID
         acid' <- initAcid (PeerPersist newid)
         self' <- initSelf acid'
-        liftProcess $ initp2p context' >>= link
+        seeds <- viewConfig peerNodeSeeds
+        liftProcess $ initp2p seeds >>= link
         getSelfPid >>= flip cast DiscoverPeers
         return $ PeerState self' (Set.fromList [self']) acid'
-    initp2p context' = spawnLocal $ peerController $
-                  makeNodeId <$> (context' ^. agentConfig.peerNodeSeeds)
+    initp2p seeds = spawnLocal $ peerController $
+                        makeNodeId <$> seeds
     initAcid initpp = openOrGetDb "agent-peer" initpp def
     initSelf acid' = do
         persist <- query' acid' GetPersist

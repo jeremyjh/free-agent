@@ -12,9 +12,9 @@ module FreeAgent.Core.Server.Executive.History
     ) where
 
 import FreeAgent.AgentPrelude
-import FreeAgent.Process (getSelfPid, say)
-import FreeAgent.Core.Internal.Lenses
-import FreeAgent.Core.Protocol.Executive.History
+import FreeAgent.Core
+import FreeAgent.Core.Lenses
+import FreeAgent.Core.Protocol.Executive.History(serverName)
 import FreeAgent.Database.AcidState
 import FreeAgent.Server.ManagedAgent
 

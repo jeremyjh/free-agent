@@ -10,13 +10,11 @@ module FreeAgent.Core.Server.Executive
     ) where
 
 import           FreeAgent.AgentPrelude
-import           FreeAgent.Core.Action
-import           FreeAgent.Core.Internal.Lenses
+import           FreeAgent.Core
+import           FreeAgent.Core.Lenses
 import           FreeAgent.Database.AcidState
-import           FreeAgent.Process                  as Process
-import           FreeAgent.Core.Protocol.Executive.History hiding (serverName)
 import           FreeAgent.Server.ManagedAgent
-import           FreeAgent.Core.Protocol.Executive
+import           FreeAgent.Core.Protocol.Executive (serverName)
 
 
 import           Control.Monad.Reader               (ask)
@@ -118,7 +116,7 @@ execServer =
                 say $ "Executive server " ++ show pid ++ " shutting down."
         }
   where initExec = do
-            listeners' <- join $ viewContext $ plugins.listeners
+            listeners' <- join $ viewPlugins listeners
             acid' <- openOrGetDb "agent-executive" def def
             persist <- query' acid' GetPersist
             rt <- viewConfig remoteTable
