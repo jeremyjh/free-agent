@@ -7,7 +7,7 @@
 module FreeAgent.Core.Protocol.Executive
     (
       ExecImpl(..)
-    , ExecutiveCommand(..)
+    , ExecuteAction(..)
     , StoreAction(..)
     , QueryActions(..)
     , RemoveAction(..)
@@ -53,22 +53,16 @@ instance Convertible RunnableFail ExecFail where
 instance Convertible CallFail ExecFail where
     safeConvert = return . ECallFailed
 
-data ExecutiveCommand =
-        ExecuteAction Action
-      | TerminateExecutive
-      deriving (Show, Typeable, Generic)
 
-instance Binary ExecutiveCommand where
-instance NFData ExecutiveCommand where
-
-data ExecImpl m = ExecImpl {
-     callStoreAction   :: StoreAction -> m ()
-   , callRemoveAction  :: RemoveAction -> m ()
-   , callExecuteStored :: ExecuteStored -> m (Either ExecFail Result)
-   , callQueryActions  :: QueryActions -> m [Action]
-   , castExecuteStored :: ExecuteStored -> m ()
-   , castExecuteBatch  :: ExecuteBatch -> m ()
-   , castAddListener   :: AddListener -> m ()
+data ExecImpl st = ExecImpl {
+     callExecuteAction :: ExecuteAction -> ProtoT ExecuteAction st (Either ExecFail Result)
+   , callStoreAction   :: StoreAction -> ProtoT StoreAction st ()
+   , callRemoveAction  :: RemoveAction -> ProtoT RemoveAction st ()
+   , callExecuteStored :: ExecuteStored -> ProtoT ExecuteStored st (Either ExecFail Result)
+   , callQueryActions  :: QueryActions -> ProtoT QueryActions st [Action]
+   , castExecuteStored :: ExecuteStored -> ProtoT ExecuteStored st ()
+   , castExecuteBatch  :: ExecuteBatch -> ProtoT ExecuteBatch st ()
+   , castAddListener   :: AddListener -> ProtoT AddListener st ()
 }
 
 #define EXEC_CALL(REQ, RSP, FN)             \
@@ -77,6 +71,13 @@ instance ServerCall REQ where               \
    type CallResponse REQ = RSP             ;\
    callName _ = serverName                 ;\
    respond = FN                            ;\
+
+data ExecuteAction = ExecuteAction Action
+      deriving (Show, Typeable, Generic)
+
+EXEC_CALL(ExecuteAction, Either ExecFail Result, callExecuteAction)
+instance Binary ExecuteAction
+instance NFData ExecuteAction where rnf = genericRnf
 
 data StoreAction = StoreAction Action
                  | StoreNewerAction Action UTCTime
@@ -181,7 +182,7 @@ serverName :: String
 serverName = "agent:executive"
 
 callExecutive :: (NFSerializable a, MonadAgent agent)
-            => ExecutiveCommand -> agent (Either ExecFail a)
+            => ExecuteAction -> agent (Either ExecFail a)
 callExecutive command = do
     eresult <- callTarget serverName command
     case eresult of

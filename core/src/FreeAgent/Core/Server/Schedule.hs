@@ -162,6 +162,8 @@ $(makeAcidic ''SchedulePersist ['getPersist, 'addEvent, 'lookupEvent
 
 type ScheduleAgent a = StateT ScheduleState Agent a
 
+type instance ProtoT rq ScheduleState a = StateT ScheduleState Agent a
+
 scheduleImpl :: ScheduleImpl ScheduleState
 scheduleImpl = ScheduleImpl callScheduleAddEvent' callScheduleEventControl'
                             callScheduleLookupEvent' callScheduleQueryEvents'

@@ -145,12 +145,12 @@ type ScheduleImplM st rs = StateT st Agent rs
 type ScheduleImplE st rs = ScheduleImplM st (Either ScheduleFail rs)
 
 data ScheduleImpl st = ScheduleImpl {
-    callScheduleAddEvent :: ScheduleAddEvent -> ScheduleImplM st ()
-  , callScheduleEventControl :: ScheduleEventControl -> ScheduleImplM st ()
-  , callScheduleLookupEvent :: ScheduleLookupEvent -> ScheduleImplM st (Maybe Event)
-  , callScheduleQueryEvents :: ScheduleQueryEvents -> ScheduleImplM st [Event]
-  , callScheduleRemoveEvent :: ScheduleRemoveEvent -> ScheduleImplE st ()
-  , castScheduleControl :: ScheduleControl -> ScheduleImplM st ()
+    callScheduleAddEvent :: ScheduleAddEvent -> ProtoT ScheduleAddEvent st ()
+  , callScheduleEventControl :: ScheduleEventControl -> ProtoT ScheduleEventControl st ()
+  , callScheduleLookupEvent :: ScheduleLookupEvent -> ProtoT ScheduleLookupEvent st (Maybe Event)
+  , callScheduleQueryEvents :: ScheduleQueryEvents -> ProtoT ScheduleQueryEvents st [Event]
+  , callScheduleRemoveEvent :: ScheduleRemoveEvent -> ProtoT ScheduleRemoveEvent st (Either ScheduleFail ())
+  , castScheduleControl :: ScheduleControl -> ProtoT ScheduleControl st ()
 }
 
 data ScheduleControl = ScheduleStart | ScheduleStop

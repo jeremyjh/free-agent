@@ -97,14 +97,11 @@ execServer =
         initExec
         defaultProcess {
             apiHandlers =
-            [ agentRpcAsyncHandlerET $
-                  \cmd -> case cmd of
-                      ExecuteAction act -> doExecuteAction act
-                      _ -> $(err "illegal pattern match")
-
+            [
+              registerCallAsync execImpl (Proxy :: Proxy ExecuteAction)
+            , registerCallAsync execImpl (Proxy :: Proxy ExecuteStored)
             , registerCall execImpl (Proxy :: Proxy StoreAction)
             , registerCall execImpl (Proxy :: Proxy RemoveAction)
-            , registerCall execImpl (Proxy :: Proxy ExecuteStored)
             , registerCall execImpl (Proxy :: Proxy QueryActions)
             , registerCast execImpl (Proxy :: Proxy ExecuteStored)
             , registerCast execImpl (Proxy :: Proxy ExecuteBatch)
@@ -124,10 +121,16 @@ execServer =
             let caches = map (doExec . fst) (persist ^. actions)
             return $ ExecState (Map.fromList []) (listeners' ++ cls) acid' caches 0
 
+type instance ProtoT rq ExecState a = StateT ExecState Agent a
+
 execImpl :: ExecImpl ExecState
-execImpl = ExecImpl callStoreAction' callRemoveAction' callExecuteStored' callQueryActions'
+execImpl = ExecImpl callExecuteAction' callStoreAction' callRemoveAction'
+                    callExecuteStored' callQueryActions'
                     castExecuteStored' castExecuteBatch' castAddListener'
   where
+    callExecuteAction' cmd@(ExecuteAction action') =
+        runLogEitherT cmd $ doExec action'
+
     callStoreAction' (StoreAction action')  =
         do now <- getCurrentTime
            void $ update (PutAction (action',now))
@@ -172,9 +175,6 @@ execImpl = ExecImpl callStoreAction' callRemoveAction' callExecuteStored' callQu
 
 cacheAction :: Action -> StateT ExecState Agent ()
 cacheAction action' = cachedActions %= Map.insert (key action') (doExec action')
-
-doExecuteAction :: Action -> ExecAgent Result
-doExecuteAction = doExec
 
 doExec :: Action -> ExecAgent Result
 doExec action' = do

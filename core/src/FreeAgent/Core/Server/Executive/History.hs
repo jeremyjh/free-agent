@@ -14,12 +14,13 @@ module FreeAgent.Core.Server.Executive.History
 import FreeAgent.AgentPrelude
 import FreeAgent.Core
 import FreeAgent.Core.Lenses
-import FreeAgent.Core.Protocol.Executive.History(serverName)
+import FreeAgent.Core.Protocol.Executive.History (serverName)
 import FreeAgent.Database.AcidState
 import FreeAgent.Server.ManagedAgent
 
 import qualified Data.CircularList as CL
 import Data.CircularList (CList)
+import Control.Monad.State (StateT)
 
 
 
@@ -69,6 +70,11 @@ insertResult r =
 
 $(makeAcidic ''HistoryPersist ['insertResult, 'fetchAllFrom])
 
+--TODO: really want to parameterize over the monad as well, this still
+--needs work and thought
+type instance ProtoT WriteResult st a = StateT st Agent a
+type instance ProtoT FindResults st a = StateT st Agent a
+
 historyImpl :: HistoryImpl HistoryState
 historyImpl = HistoryImpl doInit' castWriteResult' callFindResults' doShutdown'
   where
@@ -76,14 +82,17 @@ historyImpl = HistoryImpl doInit' castWriteResult' callFindResults' doShutdown'
      do acid' <- openOrGetDb "agent-executive-history"
                              (HistoryPersist CL.empty) def
         return $ HistoryState acid' 0
+
     castWriteResult' (WriteResult rs) =
         do void $ update $ InsertResult rs
            sessionCount %= (+1)
+
     callFindResults' (AllResultsSince time) = query $ FetchAllFrom time
     callFindResults' (ActionResultsSince key' time) =
      do results' <- query (FetchAllFrom time)
         return $ filter (\r -> r ^. to summary.resultOf.to key == key')
                         results'
+
     doShutdown' (HistoryState _ count) _ =
         say $ "Exec history wrote event count of: " ++ show count
 

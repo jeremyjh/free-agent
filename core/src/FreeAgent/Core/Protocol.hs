@@ -12,6 +12,7 @@ module FreeAgent.Core.Protocol
     , QueryPeerServers(..)
     , ServerCall(..)
     , ServerCast(..)
+    , ProtoT
     , callServ
     , castServ
 
@@ -51,22 +52,24 @@ castTarget name' command = runEitherT $ do
     pid <- resolve (target, name') !? RoutingFailed
     cast pid command
 
+type family ProtoT rq st a
+
 class (NFSerializable rq
       ,NFSerializable (CallResponse rq)
       ,Show rq) => ServerCall rq where
 
     type CallResponse rq
     type CallResponse rq = ()
-    type CallProtocol rq :: (* -> *) -> *
+    type CallProtocol rq :: * -> *
 
-    respond :: CallProtocol rq m -> rq -> m (CallResponse rq)
+    respond :: CallProtocol rq st -> rq -> ProtoT rq st (CallResponse rq)
     callName :: rq -> String
 
 class (NFSerializable rq, Show rq)
       => ServerCast rq where
-    type CastProtocol rq :: (* -> *) -> *
+    type CastProtocol rq :: * -> *
 
-    handle :: CastProtocol rq m -> rq -> m ()
+    handle :: CastProtocol rq st -> rq -> ProtoT rq st ()
     castName :: rq -> String
 
 

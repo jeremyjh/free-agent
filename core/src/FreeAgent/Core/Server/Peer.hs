@@ -21,6 +21,7 @@ import qualified Data.Set                        as Set
 import           Control.Distributed.Backend.P2P (getCapable,
                                                   peerController)
 import           Control.Monad.Reader            (ask)
+import Control.Monad.State (StateT)
 import           Data.UUID.V1                    (nextUUID)
 
 
@@ -49,6 +50,8 @@ $(makeAcidic ''PeerPersist ['getPersist])
 -- -------Implementation------
 -- Implementation
 -- ---------------------------
+
+type instance ProtoT rq PeerState a = StateT PeerState Agent a
 
 peerImpl :: PeerImpl PeerState
 peerImpl = PeerImpl castDiscoverPeers' castRegisterPeer' castRespondRegisterPeer'
@@ -112,6 +115,7 @@ peerImpl = PeerImpl castDiscoverPeers' castRegisterPeer' castRespondRegisterPeer
                 Set.filter (\p -> Set.intersection (p ^. servers)
                                                    fservers /= Set.empty)
                            peers
+
 
 peerServer :: AgentServer
 peerServer =

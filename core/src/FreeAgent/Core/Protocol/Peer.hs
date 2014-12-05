@@ -29,14 +29,14 @@ import           FreeAgent.Core.Protocol
 import           Data.Binary
 
 
-data PeerImpl m = PeerImpl {
-    castDiscoverPeers       :: DiscoverPeers -> m ()
-  , castRegisterPeer        :: RegisterPeer -> m ()
-  , castRespondRegisterPeer :: RespondRegisterPeer -> m ()
-  , castRegisterServer      ::  RegisterServer -> m ()
-  , callQueryPeerServers    :: QueryPeerServers -> m (Set Peer)
-  , callQueryPeerCount      :: QueryPeerCount -> m Int
-  , callQueryLocalServices  :: QueryLocalServices -> m [ServerRef]
+data PeerImpl st = PeerImpl {
+    castDiscoverPeers       :: DiscoverPeers -> ProtoT DiscoverPeers st ()
+  , castRegisterPeer        :: RegisterPeer -> ProtoT RegisterPeer st ()
+  , castRespondRegisterPeer :: RespondRegisterPeer -> ProtoT RespondRegisterPeer st ()
+  , castRegisterServer      ::  RegisterServer -> ProtoT RegisterServer st ()
+  , callQueryPeerServers    :: QueryPeerServers -> ProtoT QueryPeerServers st (Set Peer)
+  , callQueryPeerCount      :: QueryPeerCount -> ProtoT QueryPeerCount st Int
+  , callQueryLocalServices  :: QueryLocalServices -> ProtoT QueryLocalServices st [ServerRef]
 }
 
 

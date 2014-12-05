@@ -18,7 +18,6 @@ import FreeAgent.Core.Internal.Lenses
 import FreeAgent.Core.Protocol
 import FreeAgent.Core.Action ()
 
-import Control.Monad.State            (StateT)
 import Control.Distributed.Process.Platform.ManagedProcess
        (ShutdownHandler)
 import Data.Binary                    (Binary)
@@ -29,10 +28,10 @@ import Data.Binary                    (Binary)
 -- -----------------------------
 
 -- | defines back-end implementation
-data HistoryImpl t st = HistoryImpl {
+data HistoryImpl st = HistoryImpl {
       doInit              :: Agent st
-    , castWriteResult       :: WriteResult -> t st ()
-    , callFindResults       :: FindResults -> t st [Result]
+    , castWriteResult       :: WriteResult -> ProtoT WriteResult st ()
+    , callFindResults       :: FindResults -> ProtoT FindResults st [Result]
     , doShutdown          :: ShutdownHandler st
 }
 

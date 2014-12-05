@@ -1,6 +1,5 @@
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE NoImplicitPrelude, OverloadedStrings, QuasiQuotes #-}
-{-# LANGUAGE ScopedTypeVariables, TypeFamilies                 #-}
+{-# LANGUAGE FlexibleContexts, NoImplicitPrelude, OverloadedStrings, QuasiQuotes #-}
+{-# LANGUAGE ScopedTypeVariables, TypeFamilies                                   #-}
 
 
 module FreeAgent.Server.ManagedAgent
@@ -9,6 +8,7 @@ module FreeAgent.Server.ManagedAgent
     , ServerCall(..)
     , ServerCast(..)
     , registerCall
+    , registerCallAsync
     , registerCast
     , AgentState(..)
     , defineServer
@@ -18,11 +18,8 @@ module FreeAgent.Server.ManagedAgent
     , castTarget
     , runLogEitherT
     , agentCastHandler
-    , agentCastHandlerET
     , agentRpcHandler
-    , agentRpcHandlerET
     , agentRpcAsyncHandler
-    , agentRpcAsyncHandlerET
     , agentInfoHandler
     , agentExitHandler
     , serverState
@@ -35,41 +32,49 @@ module FreeAgent.Server.ManagedAgent
 where
 
 import FreeAgent.AgentPrelude
-import FreeAgent.Core.Protocol
-import FreeAgent.Core.Agent                                      (spawnAgent,
-                                                            withAgent)
+import FreeAgent.Core.Agent                                (spawnAgent, withAgent)
 import FreeAgent.Core.Internal.Lenses
+import FreeAgent.Core.Protocol
 import FreeAgent.Process
 
 import Control.Monad.State                                 (StateT, evalStateT,
-                                                            execStateT,
-                                                            runStateT)
-
+                                                            execStateT, runStateT)
 
 import Control.Concurrent.Lifted                           (threadDelay)
-import Control.Distributed.Process.Platform                (Addressable,
-                                                            linkOnFailure)
-import Control.Distributed.Process.Platform.ManagedProcess as Managed hiding
-                                                                       (action,
-                                                                       call,
-                                                                       cast,
-                                                                       shutdown, syncCallChan)
+import Control.Distributed.Process.Platform                (Addressable, linkOnFailure)
+import Control.Distributed.Process.Platform.ManagedProcess as Managed hiding (action,
+                                                                       call, cast,
+                                                                       shutdown,
+                                                                       syncCallChan)
 import Control.Distributed.Process.Platform.Supervisor     as Supervisor
-import Control.Distributed.Process.Platform.Time           (Delay (..),
-                                                            milliSeconds)
+import Control.Distributed.Process.Platform.Time           (Delay (..), milliSeconds)
 
 data AgentState a = AgentState AgentContext a
 
-registerCall :: forall st rq. (ServerCall rq)
-             => CallProtocol rq (StateT st Agent)
+registerCall :: forall st rq.
+                ( ServerCall rq
+                , ProtoT rq st (CallResponse rq) ~ StateT st Agent (CallResponse rq))
+             => CallProtocol rq st
              -> Proxy rq -> Dispatcher (AgentState st)
 registerCall impl _ = agentRpcHandler
-    (respond impl :: rq -> StateT st Agent (CallResponse rq))
+    (respond impl :: rq -> ProtoT rq st (CallResponse rq))
 
-registerCast :: forall st rq. (ServerCast rq)
-             => CastProtocol rq (StateT st Agent)
+-- | Like registerCall, but spawns a new process which will reply when
+-- complete to the caller. *Warning*: This mean changes to state are discarded.
+registerCallAsync :: forall st rq.
+                     ( ServerCall rq
+                     , ProtoT rq st (CallResponse rq) ~ StateT st Agent (CallResponse rq))
+                  => CallProtocol rq st
+                  -> Proxy rq -> Dispatcher (AgentState st)
+registerCallAsync impl _ = agentRpcAsyncHandler
+    (respond impl :: rq -> ProtoT rq st (CallResponse rq))
+
+registerCast :: forall st rq.
+                ( ServerCast rq
+                , ProtoT rq st () ~ StateT st Agent ())
+             => CastProtocol rq st
              -> Proxy rq -> Dispatcher (AgentState st)
-registerCast impl _ = agentCastHandler (handle impl :: rq -> StateT st Agent ())
+registerCast impl _ = agentCastHandler (handle impl :: rq -> ProtoT rq st ())
 
 serverState :: Lens' (AgentState a) a
 serverState f (AgentState c a) = fmap (AgentState c) (f a)
@@ -115,28 +120,6 @@ agentRpcAsyncHandler fn =
         let ma = debugLog command >> fn command
         in runAgentStateTAsync state' (sendChan replyCh) ma
 
--- | handle RPC calls that do not mutate state out of band in stateful process
--- in an EitherT monad - will log (Left reason) on failure
-agentRpcAsyncHandlerET :: (NFSerializable a, NFSerializable b, NFSerializable e
-                          ,Show a, Show e)
-                       => (a -> (EitherT e (StateT s Agent)) b)
-                       -> Dispatcher (AgentState s)
-agentRpcAsyncHandlerET fn =
-    handleRpcChan $ \ state' replyCh command ->
-        let ma = debugLog command >> handleET fn command
-        in runAgentStateTAsync state' (sendChan replyCh) ma
-
--- | handle calls that may mutate the State environment in
--- an EitherT monad; on Left the command and error will be logged
-agentRpcHandlerET :: (NFSerializable a, NFSerializable b, NFSerializable e
-                     ,Show a, Show e)
-                   => (a -> (EitherT e (StateT s Agent)) b)
-                   -> Dispatcher (AgentState s)
-agentRpcHandlerET fn =
-    handleRpcChan $ \ state' replyCh command ->
-        let ma = debugLog command >> handleET fn command
-        in runAgentStateT state' (sendChan replyCh) ma
-
 -- | wrapper for commands that will handle a cast and mutate state -
 -- the updated StateT environment will provide the state value to
 -- 'continue'
@@ -146,18 +129,6 @@ agentCastHandler :: (NFSerializable a, Show a)
 agentCastHandler fn =
     handleCast $ \ state' command ->
         let ma = debugLog command >> fn command
-        in runAgentStateT state' (const $ return ()) ma
-
--- | wrapper for commands that will handle a cast and mutate state
--- in an EitherT monad.
--- The updated StateT environment will provide the state value to
--- 'continue'; a Left value will log the command and error message.
-agentCastHandlerET :: (NFSerializable a, Show a, NFSerializable e, Show e)
-                 => (a -> (EitherT e (StateT s Agent)) ())
-                 -> Dispatcher (AgentState s)
-agentCastHandlerET fn =
-    handleCast $ \ state' command ->
-        let ma = debugLog command >> handleET fn command
         in runAgentStateT state' (const $ return ()) ma
 
 -- | wrapper for commands that will handle an info message
@@ -197,17 +168,6 @@ runAgentStateTAsync state'@(AgentState ctxt ustate) respond' ma = do
     -- and send an exit to the sendPortProcessId
     liftProcess $ linkOnFailure pid
     continue state'
-
-handleET :: (NFSerializable a, NFSerializable b, NFSerializable e
-                     ,Show a, Show e)
-         => (a -> (EitherT e (StateT s Agent)) b) -> a
-         -> (StateT s Agent) (Either e b)
-handleET fn command =
-    runEitherT (fn command) >>= logEitherT
-  where logEitherT left'@(Left reason) = do
-            [qwarn| Processing for #{command} failed with reason: #{reason} |]
-            return left'
-        logEitherT right' = return right'
 
 runLogEitherT :: (Show msg, Show e, MonadLogger m)
               => msg -> EitherT e m a -> m (Either e a)
