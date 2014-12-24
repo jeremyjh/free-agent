@@ -13,7 +13,8 @@
    * startup load file definitions - update AgentDB actions IF newer
   
   Actions: 
-   * do atomic insert to unwrapper map as plugins are added
+   * replace Existential with Action function dictionary - plugins impl unwrapAction
+   * Store PluginMap in AgentContext; support unwrap in ContextReader only (no more unsafePerformIO)
 
   Result Alerting
    * Generic Listener - AgentServer w/ pluggable backend like History
@@ -21,6 +22,11 @@
 
   Actions: 
    * ActionPlans
+	- retry spec
+
+  Refactor: 
+   * extract distributed-process-lifted
+   * extract distributed-process-protocols
   
 1.0.0: 
 
