@@ -10,7 +10,7 @@ module FreeAgent.Core.Server.Schedule
     ) where
 
 import           FreeAgent.AgentPrelude
-import           FreeAgent.Core
+import           FreeAgent.Core hiding (lookupEvent)
 import           FreeAgent.Core.Lenses
 import           FreeAgent.Database.AcidState
 import           FreeAgent.Core.Protocol.Schedule (serverName)
@@ -39,21 +39,20 @@ import           System.Cron
 type NextScheduled = (UTCTime, Event)
 
 data SchedulePersist
-  = SchedulePersist { persistEvents        :: Map Key Event
-                    , persistNextScheduled :: Set NextScheduled
+  = SchedulePersist { _persistEvents        :: Map Key Event
+                    , _persistNextScheduled :: Set NextScheduled
                     } deriving (Show, Typeable)
 
 instance Default SchedulePersist where
     def = SchedulePersist mempty Set.empty
 
 data ScheduleState
-   = ScheduleState { stateAcid      :: !(AcidState SchedulePersist)
-                   , stateTickerRef :: Maybe TimerRef
-                   , stateTicking  :: Bool
+   = ScheduleState { _stateAcid      :: !(AcidState SchedulePersist)
+                   , _stateTickerRef :: Maybe TimerRef
+                   , _stateTicking  :: Bool
                    } deriving (Typeable, Generic)
 
 makeFields ''SchedulePersist
-deriveSafeStore ''SchedulePersist
 
 makeFields ''ScheduleState
 
@@ -126,16 +125,16 @@ removeEvent key' = do
     nextScheduled %= Set.filter (\ (_, ev) -> key ev /= key')
 
 disableEvents :: [Key] -> Update SchedulePersist ()
-disableEvents keys =
+disableEvents keys' =
  do events %= flip ( foldr $ \k es ->
                         Map.update (\e -> Just e {schedDisabled = True}) k es
-                   ) keys
-    nextScheduled %= Set.filter (\e -> schedKey (snd e) `notElem` keys)
+                   ) keys'
+    nextScheduled %= Set.filter (\e -> schedKey (snd e) `notElem` keys')
 
 enableEvents :: UTCTime -> [Key] -> Update SchedulePersist ()
-enableEvents now keys =
+enableEvents now keys' =
  do events' <- use events
-    forM_ keys $ \key' ->
+    forM_ keys' $ \key' ->
      do let mevent = Map.lookup key' events'
         case mevent of
             Just event' ->
@@ -181,12 +180,12 @@ scheduleImpl = ScheduleImpl callScheduleAddEvent' callScheduleEventControl'
       do next <- nextMinute
          forM_ events' $ \event -> update (AddEvent $ calcNextScheduled next event)
          scheduleNextTick
-    callScheduleEventControl' (ScheduleDisableEvents keys) =
-        update (DisableEvents keys)
+    callScheduleEventControl' (ScheduleDisableEvents keys') =
+        update (DisableEvents keys')
 
-    callScheduleEventControl' (ScheduleEnableEvents keys) =
+    callScheduleEventControl' (ScheduleEnableEvents keys') =
      do now <- getCurrentTime
-        void $ update (EnableEvents now keys)
+        void $ update (EnableEvents now keys')
         scheduleNextTick
     callScheduleLookupEvent' (ScheduleLookupEvent k) =
         query (LookupEvent k)
@@ -278,3 +277,5 @@ scheduleNextTick =
             let interval = diffTimeToTimeInterval diff
             ref <- liftProcess $ sendAfter interval pid Tick
             tickerRef .= Just ref
+
+deriveSafeStore ''SchedulePersist

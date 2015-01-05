@@ -52,6 +52,7 @@ data ExecState
               , _stateExecutedCount  :: !Int
               } deriving (Typeable, Generic)
 
+makeFields ''ExecState
 
 -- -----------------------------
 -- Persistent state functions
@@ -84,7 +85,6 @@ getPersist = ask
 $(makeAcidic ''ExecPersist ['putAction, 'getAction, 'deleteAction,'allActions, 'putListener
                            ,'getPersist])
 
-makeFields ''ExecState
 
 -- -----------------------------
 -- Implementation
@@ -159,8 +159,8 @@ execImpl = ExecImpl callExecuteAction' callStoreAction' callRemoveAction'
      do executedCount %= (+) 1
         void . spawnLocal . void $ callExecuteStored' cmd
 
-    castExecuteBatch'(ExecuteBatch keys) =
-        forM_ keys $ \key' ->
+    castExecuteBatch'(ExecuteBatch keys') =
+        forM_ keys' $ \key' ->
          do executedCount %= (+) 1
             void . spawnLocal . void $ callExecuteStored' (ExecuteStored key')
 

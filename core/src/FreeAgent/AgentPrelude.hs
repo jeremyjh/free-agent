@@ -30,6 +30,7 @@ module FreeAgent.AgentPrelude
     , Proxy(..)
     , deriveSafeStore
     , deriveSafeStoreVersion
+    , deriveSerializersVersion
     , getCurrentTime
     , NFData(..), genericRnf
     , (!??)
