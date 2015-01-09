@@ -37,7 +37,7 @@ import System.IO.Unsafe (unsafePerformIO)
 -- use record syntax to over-ride default configuration values
 appConfig :: AgentConfig
 appConfig = def & dbPath .~ "memory"
-                {-& minLogLevel .~ LevelDebug-}
+                & minLogLevel .~ LevelInfo
 
 appPlugins :: PluginSet
 appPlugins =

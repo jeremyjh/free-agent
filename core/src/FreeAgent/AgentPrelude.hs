@@ -23,7 +23,7 @@ module FreeAgent.AgentPrelude
     , Convertible(..)
     , def
     , deriveSerializers
-    , fqName, proxyFqName
+    , fqName, typeName, proxyFqName
     , qdebug, qinfo, qwarn, qerror
     , qdebugNS
     , logDebug, logInfo, logWarn, logError
@@ -65,10 +65,12 @@ data Proxy a = Proxy deriving Typeable
 
 type FilePathS = P.FilePath
 
+typeName :: (Typeable a) => a -> Text
+typeName typee = pack . P.show $ typeOf typee
+
 fqName :: (Typeable a) => a -> Text
-fqName typee =  modName ++ "." ++ name
+fqName typee =  modName ++ "." ++ typeName typee
   where
-    name = pack . P.show $ typeOf typee
     modName = pack . tyConModule . typeRepTyCon $ typeOf typee
 
 proxyFqName :: (Typeable a) => Proxy a -> Text

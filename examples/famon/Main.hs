@@ -8,7 +8,6 @@ import FreeAgent.Cli.Main                         (clientMain, daemonMain, exitD
 import FreeAgent.Core
 import FreeAgent.Core.Internal.Types              (LogLevel (..))
 import FreeAgent.Core.Lenses
-import FreeAgent.Process                          (liftProcess)
 import FreeAgent.Core.Protocol.Executive                 (StoreAction (..))
 import FreeAgent.Core.Protocol              (callServ)
 import FreeAgent.Core.Protocol.Schedule                  (Event (..), RetryOption (..),
@@ -49,7 +48,7 @@ main =
 
 bench :: IO ()
 bench =
-    daemonMain appConfig appPlugins $ liftProcess $
+    daemonMain appConfig appPlugins $ liftP $
      do sleepFor 500 Millis -- wait for Peer to catch up
         void $ runAfter (seconds 30) exitDaemon
         return True
@@ -65,7 +64,7 @@ benchInit num =
                 , Event key' (RecurInterval 1) Never zeroDate False : events )
             (actions, events) = foldr checks ([],[]) keys
         in do putStrLn ("Creating " ++ num ++ " Actions and Events.")
-              liftProcess $ sleepFor 500 Millis
+              liftP $ sleepFor 500 Millis
               Right () <- callServ (StoreActions actions)
               Right () <- callServ (ScheduleAddEvents events)
               Right () <- callServ (ScheduleEnableEvents keys)

@@ -12,7 +12,7 @@ import FreeAgent.AgentPrelude
 import FreeAgent.Cli.CmdArgs  (Args (..), configArgs)
 import FreeAgent.Cli.Import
 import FreeAgent.Cli.Export
-import FreeAgent.Core         (AgentConfig, PluginSet, withRemoteNode, runAgent, Agent)
+import FreeAgent.Core         (AgentConfig, PluginSet, withRemoteNode, runAgent, Agent, MonadProcess)
 import FreeAgent.Core.Lenses
 import FreeAgent.Process
 import FreeAgent.Server       (runAgentServers)

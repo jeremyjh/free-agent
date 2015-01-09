@@ -18,6 +18,7 @@ import FreeAgent.Core.Protocol.Executive.History (serverName)
 import FreeAgent.Database.AcidState
 import FreeAgent.Server.ManagedAgent
 
+
 import qualified Data.CircularList as CL
 import Data.CircularList (CList)
 import Control.Monad.State (StateT)
@@ -33,10 +34,11 @@ historyServerImpl impl@HistoryImpl{..} =
                      [   registerCall impl (Proxy :: Proxy FindResults)
                      ,   registerCast impl (Proxy :: Proxy WriteResult)
                      ]
-                  , shutdownHandler = \ (AgentState _ st) reason ->
+                  , shutdownHandler = \ (AgentState stats _ _) reason ->
                        do pid <- getSelfPid
-                          doShutdown st reason
-                          say $ "Exec History server " ++ show pid ++ " shutting down."
+                          say $ "History Stats: " ++ show stats
+                          say $ "Exec History server " ++ show pid
+                                                       ++ " shutting down: " ++ show reason
                  }
 
 -- -----------------------------
@@ -76,7 +78,7 @@ type instance ProtoT WriteResult st a = StateT st Agent a
 type instance ProtoT FindResults st a = StateT st Agent a
 
 historyImpl :: HistoryImpl HistoryState
-historyImpl = HistoryImpl doInit' castWriteResult' callFindResults' doShutdown'
+historyImpl = HistoryImpl doInit' castWriteResult' callFindResults'
   where
     doInit' =
      do acid' <- openOrGetDb "agent-executive-history"
@@ -92,9 +94,6 @@ historyImpl = HistoryImpl doInit' castWriteResult' callFindResults' doShutdown'
      do results' <- query (FetchAllFrom time)
         return $ filter (\r -> r ^. to summary.resultOf.to key == key')
                         results'
-
-    doShutdown' (HistoryState _ count) _ =
-        say $ "Exec history wrote event count of: " ++ show count
 
 defaultHistoryServer :: AgentServer
 defaultHistoryServer = historyServerImpl historyImpl

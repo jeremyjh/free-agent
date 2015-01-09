@@ -18,8 +18,6 @@ import FreeAgent.Core.Internal.Lenses
 import FreeAgent.Core.Protocol
 import FreeAgent.Core.Action ()
 
-import Control.Distributed.Process.Platform.ManagedProcess
-       (ShutdownHandler)
 import Data.Binary                    (Binary)
 
 
@@ -32,7 +30,6 @@ data HistoryImpl st = HistoryImpl {
       doInit              :: Agent st
     , castWriteResult       :: WriteResult -> ProtoT WriteResult st ()
     , callFindResults       :: FindResults -> ProtoT FindResults st [Result]
-    , doShutdown          :: ShutdownHandler st
 }
 
 data HistoryFail = HCallFailed CallFail

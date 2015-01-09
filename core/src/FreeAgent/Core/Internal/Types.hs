@@ -80,15 +80,15 @@ instance Stashable Wrapped where
 instance FromJSON Wrapped where
     parseJSON (Object value') = do
         key' <- value' .: "key"
-        typeName <- value' .: "typeName"
+        typeName' <- value' .: "typeName"
         b64T :: Text <- value' .: "value"
-        return (Wrapped key' typeName (B64.decodeLenient (convert b64T)))
+        return (Wrapped key' typeName' (B64.decodeLenient (convert b64T)))
     parseJSON _ = mzero
 
 instance ToJSON Wrapped where
-    toJSON (Wrapped key' typeName value') =
+    toJSON (Wrapped key' typeName' value') =
         let b64T = (convert $ B64.encode value') :: Text
-        in object ["key" .= key', "typeName" .= typeName, "value" .= b64T]
+        in object ["key" .= key', "typeName" .= typeName', "value" .= b64T]
 
 
 data Action = forall a b. (Runnable a b) => Action a

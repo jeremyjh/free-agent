@@ -10,5 +10,5 @@ cd prof/$1
 rm -rf /tmp/examples-famon
 ../../dist/build/famon/famon bench init 100 | grep Creating
 echo 'executing profiled bench - this may take a bit'
-/usr/bin/time ../../dist/build/famon/famon bench +RTS -N4 -p -hd -sfabin.summary | grep 'Exec history'
+/usr/bin/time ../../dist/build/famon/famon bench +RTS -N4 -p -hd -sfabin.summary | grep 'Stats: '
 cd ../..

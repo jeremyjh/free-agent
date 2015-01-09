@@ -1,5 +1,6 @@
-{-# LANGUAGE FlexibleContexts, NoImplicitPrelude, OverloadedStrings, QuasiQuotes #-}
-{-# LANGUAGE ScopedTypeVariables, TypeFamilies                                   #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude, OverloadedStrings, QuasiQuotes #-}
+{-# LANGUAGE ScopedTypeVariables, TypeFamilies                       #-}
 
 
 module FreeAgent.Server.ManagedAgent
@@ -22,7 +23,6 @@ module FreeAgent.Server.ManagedAgent
     , agentRpcAsyncHandler
     , agentInfoHandler
     , agentExitHandler
-    , serverState
     , Addressable
     , Delay(..)
     , ChildSpec(..)
@@ -40,6 +40,10 @@ import FreeAgent.Process
 import Control.Monad.State                                 (StateT, evalStateT,
                                                             execStateT, runStateT)
 
+import qualified Data.Map.Strict as Map
+
+
+
 import Control.Concurrent.Lifted                           (threadDelay)
 import Control.Distributed.Process.Platform                (Addressable, linkOnFailure)
 import Control.Distributed.Process.Platform.ManagedProcess as Managed hiding (action,
@@ -49,7 +53,9 @@ import Control.Distributed.Process.Platform.ManagedProcess as Managed hiding (ac
 import Control.Distributed.Process.Platform.Supervisor     as Supervisor
 import Control.Distributed.Process.Platform.Time           (Delay (..), milliSeconds)
 
-data AgentState a = AgentState AgentContext a
+type AgentStats = Map Text Int
+
+data AgentState a = AgentState !AgentStats !AgentContext !a
 
 registerCall :: forall st rq.
                 ( ServerCall rq
@@ -76,9 +82,6 @@ registerCast :: forall st rq.
              -> Proxy rq -> Dispatcher (AgentState st)
 registerCast impl _ = agentCastHandler (handle impl :: rq -> ProtoT rq st ())
 
-serverState :: Lens' (AgentState a) a
-serverState f (AgentState c a) = fmap (AgentState c) (f a)
-
 defineServer :: String -- ^ server name
              -> Agent st -- ^ state intialization
              -> ProcessDefinition (AgentState st)
@@ -89,7 +92,7 @@ defineServer name' initState' processDef' = AgentServer name' child
         state' <- withAgent context' initState'
         serve state' onStart processDef'
       where onStart state' =
-                return $ InitOk (AgentState context' state') Infinity
+                return $ InitOk (AgentState mempty context' state') Infinity
 
     child ctxt = do
         initChild <- toChildStart $ init ctxt
@@ -102,6 +105,11 @@ defineServer name' initState' processDef' = AgentServer name' child
             , childRegName = Just $ LocalName name'
         }
 
+incrStats :: Typeable rq => AgentState st -> rq -> AgentState st
+incrStats (AgentState stats c u) rq =
+    let updated = Map.insertWith (+) (typeName rq) 1 stats
+    in AgentState updated c u
+
 -- | handle channel RPC calls that may mutate the State environment
 agentRpcHandler :: (NFSerializable a, NFSerializable b, Show a)
                 => (a -> (StateT s Agent) b)
@@ -109,7 +117,8 @@ agentRpcHandler :: (NFSerializable a, NFSerializable b, Show a)
 agentRpcHandler fn =
     handleRpcChan $ \ state' replyCh command ->
         let ma = debugLog command >> fn command
-        in runAgentStateT state' (sendChan replyCh) ma
+            state'' = incrStats state' command
+        in runAgentStateT state'' (sendChan replyCh) ma
 
 -- | handle RPC calls that do not mutate state out of band in stateful process
 agentRpcAsyncHandler :: (NFSerializable a, NFSerializable b, Show a)
@@ -118,7 +127,8 @@ agentRpcAsyncHandler :: (NFSerializable a, NFSerializable b, Show a)
 agentRpcAsyncHandler fn =
     handleRpcChan $ \ state' replyCh command ->
         let ma = debugLog command >> fn command
-        in runAgentStateTAsync state' (sendChan replyCh) ma
+            state'' = incrStats state' command
+        in runAgentStateTAsync state'' (sendChan replyCh) ma
 
 -- | wrapper for commands that will handle a cast and mutate state -
 -- the updated StateT environment will provide the state value to
@@ -129,7 +139,8 @@ agentCastHandler :: (NFSerializable a, Show a)
 agentCastHandler fn =
     handleCast $ \ state' command ->
         let ma = debugLog command >> fn command
-        in runAgentStateT state' (const $ return ()) ma
+            state'' = incrStats state' command
+        in runAgentStateT state'' (const $ return ()) ma
 
 -- | wrapper for commands that will handle an info message
 -- the updated StateT environment will provide the state value to
@@ -140,26 +151,27 @@ agentInfoHandler :: (NFSerializable a, Show a)
 agentInfoHandler fn =
     handleInfo $ \ state' command ->
         let ma = debugLog command >> fn command
-        in runAgentStateT state' (const $ return ()) ma
+            state'' = incrStats state' command
+        in runAgentStateT state'' (const $ return ()) ma
 
 runAgentStateT :: (NFSerializable a)
                => AgentState s
                -> (a -> Agent ())
                -> StateT s Agent a
                -> Process (ProcessAction (AgentState s) )
-runAgentStateT (AgentState ctxt ustate) respond' ma = do
+runAgentStateT (AgentState stats ctxt ustate) respond' ma = do
     newState <- withAgent ctxt $ do
         (result, newState) <- runStateT ma ustate
         respond' result
         return newState
-    continue $ AgentState ctxt newState
+    continue $ AgentState stats ctxt newState
 
 runAgentStateTAsync :: (NFSerializable a)
                     => AgentState s
                     -> (a -> Agent ())
                     -> StateT s Agent a
                     -> Process (ProcessAction (AgentState s) )
-runAgentStateTAsync state'@(AgentState ctxt ustate) respond' ma = do
+runAgentStateTAsync state'@(AgentState _ ctxt ustate) respond' ma = do
     pid <- spawnAgent ctxt $ do
         threadDelay 1000 -- so we have time to setup a link in parent
         evalStateT ma ustate >>= respond'
@@ -182,11 +194,11 @@ agentExitHandler :: (NFSerializable a, Show a)
                  => (ProcessId -> a -> (StateT s Agent) ())
                  -> AgentState s -> ProcessId -> a
                  -> Process (ProcessAction (AgentState s) )
-agentExitHandler fn (AgentState ctxt ustate) pid reason = do
+agentExitHandler fn (AgentState stats ctxt ustate) pid reason = do
     newState <- withAgent ctxt $ do
         [qdebug| Handling exit reason #{reason}|]
         execStateT (fn pid reason) ustate
-    continue $ AgentState ctxt newState
+    continue $ AgentState stats ctxt newState
 
 debugLog :: (Show a, MonadLogger m) => a -> m ()
 debugLog c = [qdebug| Processing command: #{c}|]

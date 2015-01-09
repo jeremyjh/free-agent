@@ -107,9 +107,9 @@ execServer =
             , registerCast execImpl (Proxy :: Proxy ExecuteBatch)
             , registerCast execImpl (Proxy :: Proxy AddListener)
             ]
-          , shutdownHandler = \(AgentState _ s) _ -> do
+          , shutdownHandler = \(AgentState stats _ _) _ -> do
                 pid <- getSelfPid
-                say $ "Executed # Actions: " ++ show (s ^. executedCount)
+                say $ "Executive Stats: " ++ show stats
                 say $ "Executive server " ++ show pid ++ " shutting down."
         }
   where initExec = do

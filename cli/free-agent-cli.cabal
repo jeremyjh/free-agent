@@ -35,6 +35,7 @@ library
                      , distributed-process-p2p
                      , system-filepath
                      , aeson
+                     , distributed-process-lifted
   hs-source-dirs:      src
   default-language:    Haskell2010
   ghc-options: -Wall

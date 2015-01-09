@@ -171,15 +171,18 @@ scheduleImpl = ScheduleImpl callScheduleAddEvent' callScheduleEventControl'
     callScheduleAddEvent' (ScheduleAddEvent key' recur retry) =
       do now <- getCurrentTime
          callScheduleAddEvent' (ScheduleAddNewerEvent key' recur retry now)
+
     callScheduleAddEvent' (ScheduleAddNewerEvent key' recur retry modTime) =
       do let event = Event key' recur retry modTime False
          next <- nextMinute
          () <- update (AddEvent $ calcNextScheduled next event)
          scheduleNextTick
+
     callScheduleAddEvent' (ScheduleAddEvents events') =
       do next <- nextMinute
          forM_ events' $ \event -> update (AddEvent $ calcNextScheduled next event)
          scheduleNextTick
+
     callScheduleEventControl' (ScheduleDisableEvents keys') =
         update (DisableEvents keys')
 
@@ -187,11 +190,15 @@ scheduleImpl = ScheduleImpl callScheduleAddEvent' callScheduleEventControl'
      do now <- getCurrentTime
         void $ update (EnableEvents now keys')
         scheduleNextTick
+
     callScheduleLookupEvent' (ScheduleLookupEvent k) =
         query (LookupEvent k)
+
     callScheduleQueryEvents' _ = query QueryAllEvents
+
     callScheduleRemoveEvent' cmd@(ScheduleRemoveEvent k) =
         runLogEitherT cmd $ update (RemoveEvent k)
+
     castScheduleControl' ScheduleStart  =
      do ticking' <- use ticking
         if not ticking'
@@ -199,6 +206,7 @@ scheduleImpl = ScheduleImpl callScheduleAddEvent' callScheduleEventControl'
                   [qinfo|Starting scheduler.|]
                   tickMe
           else [qinfo|Scheduler already running.|]
+
     castScheduleControl' ScheduleStop  =
      do ticking' <- use ticking
         if ticking'
@@ -229,8 +237,8 @@ scheduleServer =
             [ agentInfoHandler $ \ Tick -> onTick
             ],
             shutdownHandler =
-                \ s _ ->
-             do case s ^. serverState.tickerRef of
+                \ (AgentState _ _ s) _ ->
+             do case s ^. tickerRef of
                    Just ref -> cancelTimer ref
                    Nothing -> return ()
                 pid <- getSelfPid
