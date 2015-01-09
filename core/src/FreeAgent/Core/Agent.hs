@@ -18,12 +18,13 @@ module FreeAgent.Core.Agent
     , lookupResource
     , withTarget
     , withRemoteNode
+    , agentAsync
     ) where
 
 import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Action                  (actionType, registerAction,
                                                          registerPluginMaps)
-import           FreeAgent.Core.Action.Composition      (ActionPlan)
+import           FreeAgent.Core.Action.Composition      (ActionPlan, withAgent, agentAsync)
 import           FreeAgent.Core.Action.ShellCommand     (ShellCommand)
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Core.Protocol.Peer            (warmRemoteCache)
@@ -45,7 +46,6 @@ import           Control.Distributed.Process.Node       (forkProcess, newLocalNo
 import           Network.Transport                      (closeTransport)
 import           Network.Transport.TCP
 
-import           Control.Monad.Logger                   (runStdoutLoggingT)
 
 
 
@@ -69,8 +69,7 @@ runAgent config' plugins' ma =
                                           , contextOpenResources = statesMV
                                           , contextTargetServer = Local
                                           }
-                       let proc = runStdoutLoggingT $
-                                     runReaderT (unAgent ma) context'
+                       let proc = runReaderT (unAgent ma) context'
 
                        runProcess node $ do
                                     initLogger context'
@@ -111,16 +110,6 @@ runAgent config' plugins' ma =
            , match $ \(ch :: SendPort ()) -> -- a shutdown request
                sendChan ch ()
            ]
-
--- | Run an Agent action with an extracted AgentContext.
--- This is used to embed Agent code in the Process monad, for
--- example in ManagedProcess.
-withAgent :: AgentContext -> Agent a -> Process a
-withAgent ctxt ma =
-    catchAny (runStdoutLoggingT $ runReaderT (unAgent ma) ctxt)
-             $ \exception -> do
-                 putStrLn $ "Exception in withAgent: " ++ tshow exception
-                 throwIO exception
 
 -- | 'forkProcess' analogue for the Agent monad
 forkAgent :: AgentContext -> Agent () -> IO ProcessId

@@ -10,7 +10,7 @@ import FreeAgent.Core.Internal.Types             as X (Action (..), Agent,
                                                        Resulting (..), Runnable (..),
                                                        RunnableFail (..), Stashable (..), Listener(..), AgentServer(..),
                                                        UUID, Peer(..), ServerRef(..), Target(..),
-                                                       Zone(..), Context(..))
+                                                       Zone(..), Context(..), MonadProcess(..))
 
 
 

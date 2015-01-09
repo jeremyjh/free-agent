@@ -30,7 +30,7 @@ runAgentServers config' plugins' ma =
     let cservers = filter (inPlugins pluginServers) coreServers
     in runAgent config' plugins' $
      do pid <- startSuper (join [pluginServers, cservers])
-        ma >> liftProcess (shutdownAndWait pid)
+        ma >> liftP (shutdownAndWait pid)
   where
     inPlugins pservers cserver =
         all (\s -> s ^. name /= cserver ^. name) pservers
@@ -40,7 +40,7 @@ runAgentServers config' plugins' ma =
 
     startSuper servers' = do
         context' <- (targetServer .~ Local) <$> askContext
-        spid <- liftProcess $ do
+        spid <- liftP $ do
             cspecs <- sequence $ fmap (childFrom context') servers'
             start restartOne ParallelShutdown cspecs
         forM_ servers' $ \server' -> do

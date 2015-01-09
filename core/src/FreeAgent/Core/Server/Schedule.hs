@@ -207,7 +207,7 @@ scheduleImpl = ScheduleImpl callScheduleAddEvent' callScheduleEventControl'
                   ticker <- use tickerRef
                   case ticker of
                       Just ref ->
-                          liftProcess $ cancelTimer ref
+                          liftP $ cancelTimer ref
                       Nothing -> return ()
           else [qinfo|Scheduler already stopped.|]
 
@@ -275,7 +275,7 @@ scheduleNextTick =
               tickerRef .= Nothing
           | otherwise = do
             let interval = diffTimeToTimeInterval diff
-            ref <- liftProcess $ sendAfter interval pid Tick
+            ref <- liftP $ sendAfter interval pid Tick
             tickerRef .= Just ref
 
 deriveSafeStore ''SchedulePersist

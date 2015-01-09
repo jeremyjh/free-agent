@@ -3,12 +3,12 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving, MultiParamTypeClasses            #-}
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings, ScopedTypeVariables    #-}
 {-# LANGUAGE StandaloneDeriving, TemplateHaskell, TypeFamilies            #-}
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE BangPatterns, UndecidableInstances #-}
 
 
 module FreeAgent.Core.Internal.Types
  ( module FreeAgent.Core.Internal.Types
- , MonadProcess
+ , MonadProcess(..)
  , NFSerializable, Process, ProcessId
  , MonadBase
  , MonadBaseControl
@@ -24,13 +24,13 @@ import           FreeAgent.AgentPrelude
 import           FreeAgent.Orphans                    ()
 import qualified Prelude                              as P
 
-import           Control.Monad.Reader                 (ReaderT, ask, local,
-                                                       mapReaderT)
+import           Control.Monad.Reader                 (ReaderT, ask, local)
 import           Control.Monad.Writer                 (Writer)
 import           Data.Binary                          as Binary
 import           Data.Dynamic                         (Dynamic)
 import           Data.Typeable                        (cast)
 
+import           Control.Distributed.Process.Lifted.Class
 import           Control.Distributed.Process          (NodeId)
 import           Control.Distributed.Process.Node     (LocalNode)
 import           Control.Distributed.Process.Platform (Resolvable (..))
@@ -51,7 +51,6 @@ import           Data.SafeCopy                        (SafeCopy)
 import qualified Data.Set                             as Set
 import           Data.UUID                            (UUID)
 import           FreeAgent.Process                    (ChildSpec,
-                                                       MonadProcess (..),
                                                        NFSerializable, Process,
                                                        ProcessId, RemoteTable,
                                                        initRemoteTable,
@@ -268,7 +267,7 @@ instance (MonadAgent agent)
 instance MonadAgent agent => MonadAgent (EitherT fail agent) where
     withAgentContext f = mapEitherT (withAgentContext f)
 
-newtype Agent a = Agent { unAgent :: ReaderT AgentContext (LoggingT Process) a}
+newtype Agent a = Agent { unAgent :: ReaderT AgentContext Process a}
             deriving ( Functor, Applicative, Monad, MonadBase IO
                      , ContextReader, MonadIO
                      )
@@ -277,9 +276,14 @@ instance MonadAgent Agent where
     withAgentContext f ma = Agent $ local f (unAgent ma)
 
 instance MonadBaseControl IO Agent where
-  newtype StM Agent a = StAgent {unSTAgent :: StM (ReaderT AgentContext (LoggingT Process)) a}
+  newtype StM Agent a = StAgent {unSTAgent :: StM (ReaderT AgentContext Process) a}
   restoreM (StAgent m) = Agent $ restoreM m
   liftBaseWith f = Agent $ liftBaseWith $ \ rib -> f (fmap StAgent . rib . unAgent)
+
+instance MonadProcessBase Agent where
+  type StMP Agent a = StMP (ReaderT AgentContext Process) a
+  restoreMP = Agent . restoreMP
+  liftBaseWithP f = Agent $ liftBaseWithP $ \ rib -> f (rib . unAgent)
 
 instance MonadLogger (Agent) where
     monadLoggerLog !a !b !level !d =
@@ -292,12 +296,7 @@ runAgentLoggingT :: (MonadIO m, MonadBaseControl IO m) => Int -> LoggingT m a ->
 runAgentLoggingT debugCount = runStdoutLoggingT . withChannelLogger debugCount
 
 instance MonadProcess Agent where
-    liftProcess ma = Agent . lift $ lift ma
-    mapProcess f ma = Agent $ do
-        debugCount <- (configDebugLogCount . contextAgentConfig) <$> askContext
-        mapReaderT (mapLoggingT debugCount f) (unAgent ma)
-      where
-        mapLoggingT conf f' = lift . f' . runAgentLoggingT conf
+    liftP ma = Agent $ lift ma
 
 -- | Failure modes for exec method of Runnable
 -- A failure should mean that the action could not

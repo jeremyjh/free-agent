@@ -166,7 +166,7 @@ runAgentStateTAsync state'@(AgentState ctxt ustate) respond' ma = do
     -- TODO: This will prevent the client call from hanging forever
     -- on an exception/crash but it would be better for executive to monitor child process
     -- and send an exit to the sendPortProcessId
-    liftProcess $ linkOnFailure pid
+    liftP $ linkOnFailure pid
     continue state'
 
 runLogEitherT :: (Show msg, Show e, MonadLogger m)

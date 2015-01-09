@@ -135,7 +135,7 @@ spec = do
                     Right () <- castServ (AddListener matcher)
                     threadDelay 10000
                     Just expid <- whereis $ Exec.serverName
-                    liftProcess $ kill expid "testing"
+                    liftP $ kill expid "testing"
                     threadDelay 10000
                     Right _ <- executeAction checkTCP
                     nr <- texpect :: Agent Result
@@ -219,7 +219,7 @@ testResultListener = do
 startListener sname loop = do
     whereis sname >>= maybe startIt (return . const ())
   where startIt = do
-            apid <- liftProcess $ spawnLocal $ loop (0::Int)
+            apid <- liftP $ spawnLocal $ loop (0::Int)
             Process.register sname apid
 
 testDef :: PluginDef

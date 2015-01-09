@@ -3,6 +3,7 @@
   Common/Core:
    * switch logging to hslogger or DP platform logger 
    * update quasi-quotes to populate source from Loc
+   * Keep statistics on every command sent to servers
 
   Executive: 
    * Triggers - an Action to run when a matching Action or Result <event> takes place - a
@@ -25,7 +26,6 @@
 	- retry spec
 
   Refactor: 
-   * extract distributed-process-lifted
    * extract distributed-process-protocols
   
 1.0.0: 

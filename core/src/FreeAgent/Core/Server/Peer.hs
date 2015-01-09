@@ -59,7 +59,7 @@ peerImpl = PeerImpl castDiscoverPeers' castRegisterPeer' castRespondRegisterPeer
                     callQueryLocalServices'
   where
     castDiscoverPeers' _ =
-     do pids <- liftProcess $ getCapable $ peerServer ^. name
+     do pids <- liftP $ getCapable $ peerServer ^. name
         [qdebug| DiscoverPeers found agent:peer services: #{pids} |]
         self' <- use self
         forM_ pids $ \pid ->
@@ -146,7 +146,7 @@ peerServer =
         acid' <- initAcid (PeerPersist newid)
         self' <- initSelf acid'
         seeds <- viewConfig peerNodeSeeds
-        liftProcess $ initp2p seeds >>= link
+        liftP $ initp2p seeds >>= link
         getSelfPid >>= flip cast DiscoverPeers
         return $ PeerState self' (Set.fromList [self']) acid'
     initp2p seeds = spawnLocal $ peerController $

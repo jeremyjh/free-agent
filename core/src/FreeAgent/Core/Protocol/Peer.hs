@@ -67,7 +67,7 @@ queryPeerCount = callServ QueryPeerCount
 -- different servers at the same node.
 warmRemoteCache :: forall process. MonadProcess process
                 => String -> process ()
-warmRemoteCache nodestr = liftProcess $
+warmRemoteCache nodestr = liftP $
  do let nodeId = makeNodeId nodestr
     pid <- getSelfPid
     nsendRemote nodeId peerServerName (QueryLocalServices, pid)

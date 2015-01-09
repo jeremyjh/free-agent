@@ -13,6 +13,25 @@ import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Core.Action
 import           FreeAgent.Process
 
+import Control.Distributed.Process.Platform.Async (async)
+import Control.Distributed.Process.Serializable (Serializable)
+
+-- | Run an Agent action with an extracted AgentContext.
+-- This is used to embed Agent code in the Process monad, for
+-- example in ManagedProcess.
+withAgent :: AgentContext -> Agent a -> Process a
+withAgent ctxt ma =
+    catchAny (runReaderT (unAgent ma) ctxt)
+             $ \exception -> do
+                 putStrLn $ "Exception in withAgent: " ++ tshow exception
+                 throwIO exception
+
+-- | Use d.p's 'async' function with an Agent computation.
+agentAsync :: (MonadAgent agent, Serializable a)
+           => Agent a -> agent (Async a)
+agentAsync ma =
+ do ctxt <- askContext
+    liftP $ async (withAgent ctxt ma)
 
 -- | A composite 'Action', can be constructed with combinators
 -- such as 'planExec' and 'thenExec'. The comments for each
@@ -95,9 +114,9 @@ instance Runnable ActionPlan ResultList where
             result2 <- tryExecWithET plan2 (Result result1)
             return $ result1 <> result2
 
-    exec (Parallel plan1 plan2) = do
-        ref1 <- async (tryExec plan1)
-        ref2 <- async (tryExec plan2)
+    exec (Parallel plan1 plan2) =
+     do ref1 <- agentAsync (tryExec plan1)
+        ref2 <- agentAsync (tryExec plan2)
         aresult1 <- wait ref1
         aresult2 <- wait ref2
         return $ case aresult1 of
@@ -127,9 +146,9 @@ instance Runnable ActionPlan ResultList where
             result2 <- tryExecWithET plan2 (Result result1)
             return (result1 <> result2)
 
-    execWith (Parallel plan1 plan2) eresult = do
-        ref1 <- async (tryExecWith plan1 eresult)
-        ref2 <- async (tryExecWith plan2 eresult)
+    execWith (Parallel plan1 plan2) eresult =
+     do ref1 <- agentAsync (tryExecWith plan1 eresult)
+        ref2 <- agentAsync (tryExecWith plan2 eresult)
         aresult1 <- wait ref1
         aresult2 <- wait ref2
         return $ case aresult1 of
