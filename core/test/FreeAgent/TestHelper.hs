@@ -22,7 +22,6 @@ import FreeAgent.Core
 import FreeAgent.AgentPrelude
 import FreeAgent.Core.Internal.Lenses
 import FreeAgent.Server
-import FreeAgent.Process
 
 import FreeAgent.Fixtures (testPluginDef)
 
@@ -37,7 +36,7 @@ import System.IO.Unsafe (unsafePerformIO)
 -- use record syntax to over-ride default configuration values
 appConfig :: AgentConfig
 appConfig = def & dbPath .~ "memory"
-                & minLogLevel .~ LevelInfo
+                {-& minLogLevel .~ LevelInfo-}
 
 appPlugins :: PluginSet
 appPlugins =

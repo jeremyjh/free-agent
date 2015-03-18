@@ -3,7 +3,6 @@
   Common/Core:
    * switch logging to hslogger or DP platform logger 
    * update quasi-quotes to populate source from Loc
-   * Keep statistics on every command sent to servers
 
   Executive: 
    * Triggers - an Action to run when a matching Action or Result <event> takes place - a
@@ -12,14 +11,12 @@
 
   Command Line Interface
    * startup load file definitions - update AgentDB actions IF newer
+   * switch optparse-applicative
+   * user-definable options
   
   Actions: 
    * replace Existential with Action function dictionary - plugins impl unwrapAction
    * Store PluginMap in AgentContext; support unwrap in ContextReader only (no more unsafePerformIO)
-
-  Result Alerting
-   * Generic Listener - AgentServer w/ pluggable backend like History
-   * Result Alerting Rules
 
   Actions: 
    * ActionPlans

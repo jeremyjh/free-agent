@@ -6,11 +6,9 @@
 module FreeAgent.Server.PeerSpec (main, spec) where
 
 import           FreeAgent.AgentPrelude
-import qualified Prelude as P
 import           FreeAgent.Core
 import           FreeAgent.Core.Lenses
 import           FreeAgent.Server (runAgentServers)
-import           FreeAgent.Server.ManagedAgent
 import qualified FreeAgent.Core.Protocol.Executive as Exec
 
 import           FreeAgent.TestHelper hiding (appConfig)
@@ -23,7 +21,6 @@ import qualified Data.Set as Set
 import           Control.Concurrent.Lifted
 
 import           Test.Hspec
-import System.Process (system)
 
 matchRemoteHostName :: (NodeId, String) -> Listener
 matchRemoteHostName (nodeid, name') = matchAction (\(TestCheckTCP host' _) -> host' == "localhost") nodeid name'

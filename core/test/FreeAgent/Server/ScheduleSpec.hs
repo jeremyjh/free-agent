@@ -5,7 +5,6 @@
 module FreeAgent.Server.ScheduleSpec (main, spec) where
 
 import           FreeAgent.AgentPrelude
-import qualified Prelude as P
 import           FreeAgent.Process
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Core.Protocol.Schedule as Schedule
@@ -36,7 +35,7 @@ spec =  --parallel $
         it "can schedule and find an event" $ do
             testAgent $ do
                 Right () <- schedule (key testAction) "@hourly" Never
-                Right ev <- lookupEvent (key testAction)
+                Right _ <- lookupEvent (key testAction)
                 return True
             `shouldReturn` True
 

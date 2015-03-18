@@ -59,23 +59,24 @@ runAgent config' plugins' ma =
     catchAny
         ( do registerPluginMaps (plugins' ^. unwrappersMap)
              statesMV <- newMVar mempty
-             bracket openTransport (closeResources statesMV)
-                 (\ tcp ->
-                    do node <- newLocalNode tcp (config' ^. remoteTable)
-                       let context' = AgentContext
-                                          { contextAgentConfig = config'
-                                          , contextPlugins = plugins'
-                                          , contextProcessNode = node
-                                          , contextOpenResources = statesMV
-                                          , contextTargetServer = Local
-                                          }
-                       let proc = runReaderT (unAgent ma) context'
+             bracket openTransport
+                     (closeResources statesMV)
+                     (\ tcp ->
+                        do node <- newLocalNode tcp (config' ^. remoteTable)
+                           let context' = AgentContext
+                                              { contextAgentConfig = config'
+                                              , contextPlugins = plugins'
+                                              , contextProcessNode = node
+                                              , contextOpenResources = statesMV
+                                              , contextTargetServer = Local
+                                              }
+                           let proc = runReaderT (unAgent ma) context'
 
-                       runProcess node $ do
-                                    initLogger context'
-                                    globalMonitor
-                                    proc
-                 )
+                           runProcess node $ do
+                                        initLogger context'
+                                        globalMonitor
+                                        proc
+                     )
         )
         (\ exception -> do
             putStrLn $ "Exception in runAgent: " ++ tshow exception

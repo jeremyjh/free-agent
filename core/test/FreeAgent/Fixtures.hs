@@ -20,7 +20,6 @@ module FreeAgent.Fixtures
     ) where
 
 import FreeAgent.Core
-import FreeAgent.Core.Action
 import FreeAgent.AgentPrelude
 import FreeAgent.Core.Lenses
 

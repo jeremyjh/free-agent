@@ -8,13 +8,11 @@ import           FreeAgent.AgentPrelude
 import           FreeAgent.Core
 import           Test.Hspec
 
-import           FreeAgent.Core.Lenses
 
 import           FreeAgent.TestHelper
 import           FreeAgent.Fixtures
 
 import qualified Data.Yaml  as Yaml
-import           FreeAgent.Process
 
 
 main :: IO ()
@@ -47,7 +45,7 @@ spec = do
                     child <- spawnLocal $ do
                         action <- texpect :: Agent Action
                         (Right nr) <- exec action
-                        let Just (NagiosResult _ OK) = extract nr
+                        Just (NagiosResult _ OK) <- return $ extract nr
                         send parent ("Got OK" :: Text)
                     send child $ Action checkTCP
                     confirm <- texpect :: Agent Text
@@ -60,7 +58,7 @@ spec = do
                     parent <- getSelfPid
                     child <- spawnLocal $ do
                         wr <- texpect :: Agent Result
-                        let Just (NagiosResult _ OK) = extract wr
+                        Just (NagiosResult _ OK) <- return $ extract wr
                         send parent ("Got OK" :: Text)
                     send child nr
                     confirm <- texpect :: Agent Text
@@ -75,7 +73,7 @@ spec = do
 
                     Right creturn <- exec $ Action checkTCP
                     let yreturn = Yaml.encode creturn
-                    let Just (_::Result) = Yaml.decode yreturn
+                    Just (_::Result) <- return $ Yaml.decode yreturn
 
                     return action'
                 `shouldReturn` Action checkTCP

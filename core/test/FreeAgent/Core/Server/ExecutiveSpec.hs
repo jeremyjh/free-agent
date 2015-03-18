@@ -14,9 +14,6 @@ import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Core
 import           FreeAgent.Core.Action.ShellCommand
-import           FreeAgent.Server.ManagedAgent
-import           FreeAgent.Core.Protocol
-import           FreeAgent.Core.Protocol.Executive.History
 import           FreeAgent.Core.Protocol.Executive as Exec
 
 import           FreeAgent.TestHelper hiding (appConfig, appPlugins)
@@ -60,9 +57,9 @@ spec = do
                     wontWork = Action $ (defaultShellCommand "wontWork")
                                                             {shellCommand = "ls"
                                                             ,shellFailCodes = [0]}
-                before <- getCurrentTime
+                beforeTime <- getCurrentTime
                 Right _ <- callServ $ StoreAction willWork
-                Right _ <- callServ $ StoreNewerAction wontWork before
+                Right _ <- callServ $ StoreNewerAction wontWork beforeTime
 
                 Right (_ :: ShellResult)<- executeStored $ key willWork
                 return True
@@ -89,7 +86,7 @@ spec = do
         it "can execute a supplied action" $ do
             testAgent $ do
                 (Right nr) <- executeAction checkTCP
-                let Just (NagiosResult _ OK) = extract nr
+                Just (NagiosResult _ OK) <- return $ extract nr
                 -- confirm results were written
 
                 Right results' <- findActionResultsSince (key checkTCP)
