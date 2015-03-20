@@ -28,7 +28,9 @@ import FreeAgent.Fixtures (testPluginDef)
 import Data.Map.Strict as Map
 
 import Control.Concurrent.Lifted (threadDelay, fork)
+import Control.Concurrent.MVar.Lifted
 import Control.Exception (throw)
+import Control.Exception.Enclosed  (tryAnyDeep)
 import System.Process (system)
 import System.IO.Unsafe (unsafePerformIO)
 

@@ -24,7 +24,7 @@ spec = do
             it "can run a process" $ do
                 testAgent $  do
                     pid <- getSelfPid
-                    return $ take 3 $ tshow pid
+                    return $ take 3 $ show pid
                 `shouldReturn` "pid"
 
             it "can do basic Process messaging" $ do

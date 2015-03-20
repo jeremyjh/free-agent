@@ -13,6 +13,8 @@ import           FreeAgent.Core.Internal.Lenses
 import           FreeAgent.Core.Action
 import           FreeAgent.Process
 
+import           Control.Monad.Reader(runReaderT)
+
 import Control.Distributed.Process.Platform.Async (async)
 import Control.Distributed.Process.Serializable (Serializable)
 

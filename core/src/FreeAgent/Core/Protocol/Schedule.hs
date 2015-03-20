@@ -56,10 +56,10 @@ cronEvent format =
 
 instance IsString ScheduleRecurrence where
     fromString format =
-        case cronEvent (pack format) of
+        case cronEvent (convert format) of
             Right cron' -> cron'
             _ -> error $ "Unable to parse cron formatted literal: "
-                         ++ unpack format
+                         ++ format
 instance ToJSON ScheduleRecurrence where
     toJSON (RecurCron _ expr) =
         A.object ["recurCron" A..= expr]

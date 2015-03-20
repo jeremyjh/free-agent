@@ -13,12 +13,21 @@
 -- exported here should be used in at least two Dash modules
 module FreeAgent.AgentPrelude
     (
-      module ClassyPrelude
+      module BasicPrelude
+    , Semigroup(..)
+    , forM_, forM
+    , Generic
+    , P.show
+    , tshow
+    , Time.UTCTime(..)
+    , Time.Day(..)
     , FilePathS
     , debug, dbg, err
     , convert
     , EitherT, runEitherT
     , convEither, convEitherT
+    , tryAny
+    , catchAny
     , tryAnyConvT
     , Convertible(..)
     , def
@@ -38,7 +47,7 @@ module FreeAgent.AgentPrelude
     ) where
 
 
-import           ClassyPrelude                 hiding (handle, getCurrentTime, ask, ReaderT)
+import           BasicPrelude hiding (handle, show, (<>), forM_, forM, init)
 import qualified Prelude                       as P
 
 import           Control.DeepSeq.Generics      (NFData(..), genericRnf)
@@ -50,14 +59,22 @@ import           Data.Binary                   as Binary (Binary (..))
 import           Data.Convertible              (Convertible(..), convert)
 import           Data.Default                  (def)
 import           Data.Typeable
+import           GHC.Generics                 (Generic)
 import           Language.Haskell.TH           (Dec, Name, Q)
 import           Language.Haskell.TH.Lib       (conT)
 
+import           Data.Foldable (forM_)
+import           Data.Traversable(forM)
 import           Data.Aeson                    (FromJSON(..), ToJSON)
+import           Data.Semigroup                (Semigroup(..))
 import qualified Data.Time.Clock as            Time
+import qualified Data.Time.Calendar as            Time
 import           Data.SafeCopy
        (Version, deriveSafeCopy, base, extension)
+import qualified Data.Text as Text
 import           FileLocation                  (dbg, debug, err)
+
+import           Control.Exception.Enclosed    (tryAny, catchAny)
 
 #if __GLASGOW_HASKELL__ < 708
 data Proxy a = Proxy deriving Typeable
@@ -65,20 +82,23 @@ data Proxy a = Proxy deriving Typeable
 
 type FilePathS = P.FilePath
 
+tshow :: (Show a) => a -> Text
+tshow = Text.pack . P.show
+
 typeName :: (Typeable a) => a -> Text
-typeName typee = pack . P.show $ typeOf typee
+typeName typee = Text.pack . P.show $ typeOf typee
 
 fqName :: (Typeable a) => a -> Text
 fqName typee =  modName ++ "." ++ typeName typee
   where
-    modName = pack . tyConModule . typeRepTyCon $ typeOf typee
+    modName = Text.pack . tyConModule . typeRepTyCon $ typeOf typee
 
 proxyFqName :: (Typeable a) => Proxy a -> Text
 proxyFqName typee =  modName ++ "." ++ name
   where
-    name = pack . P.show $ subtype
+    name = Text.pack . P.show $ subtype
     subtype = let (_ , [t]) = (splitTyConApp $ typeOf typee) in t
-    modName = pack . tyConModule $ typeRepTyCon subtype
+    modName = Text.pack . tyConModule $ typeRepTyCon subtype
 
 convEither :: Convertible e f => Either e a -> Either f a
 convEither (Right result) = Right result
@@ -155,8 +175,8 @@ tryAnyConvT :: (MonadBaseControl IO io, Convertible SomeException e)
 tryAnyConvT ma = lift (tryAny ma) >>= convEitherT
 
 
-getCurrentTime :: MonadIO io => io UTCTime
+getCurrentTime :: MonadIO io => io Time.UTCTime
 getCurrentTime = liftIO Time.getCurrentTime
 
-zeroDate ::UTCTime
+zeroDate :: Time.UTCTime
 zeroDate = convert (0::Int)

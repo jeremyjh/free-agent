@@ -89,7 +89,7 @@ peerImpl = PeerImpl castDiscoverPeers' castRegisterPeer' castRespondRegisterPeer
         -- re-broadcast self when we add a new server
         cast peerServer DiscoverPeers
 
-    callQueryPeerCount' _ = uses friends length
+    callQueryPeerCount' _ = uses friends Set.size
 
     callQueryLocalServices' _ =
         Set.toList <$> use (self.servers)

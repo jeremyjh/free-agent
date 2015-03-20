@@ -21,6 +21,7 @@ module FreeAgent.Core.Agent
     , agentAsync
     ) where
 
+import qualified Prelude as P
 import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Action                  (actionType, registerAction,
                                                          registerPluginMaps)
@@ -35,11 +36,13 @@ import           FreeAgent.Process                      (DiedReason (..), NodeId
                                                          spawnLocal)
 
 import           Control.Monad.Writer                   (execWriter, tell)
+import           Control.Monad.Reader                   (runReaderT)
 import           Data.Default                           (Default)
 import           Data.Dynamic                           (fromDynamic, toDyn)
 import qualified Data.Map                               as Map
 
 import           Control.Concurrent.Lifted              (threadDelay)
+import           Control.Concurrent.MVar.Lifted
 import           Control.Distributed.Process.Management
 import           Control.Distributed.Process.Node       (forkProcess, newLocalNode,
                                                          runProcess)
@@ -189,7 +192,7 @@ globalMonitor = do
                    (MxRegistered pid name') -> liftMX $ say ("Registered " ++ show pid ++ " as: " ++ name' )
                    (MxProcessDied pid (DiedException msg)) ->
                     let sayException = "[Error] " ++ show pid ++  " DiedException: " ++ msg
-                    in liftMX $ say $ case words msg of
+                    in liftMX $ say $ case P.words msg of
                        "ProcessLinkException" : _                -> sayException
                        reason : _ | "exit-from" <- take 9 reason -> sayException
                                   | "reason=testing" <- reverse $ take 14 (reverse reason)

@@ -101,7 +101,7 @@ spec =
                             send pid ("waithere" :: String)
                 threadDelay 10000
 
-                return (count, length peers,aname, status)
+                return (count, Set.size peers,aname, status)
             `shouldReturn` (3, 1, key checkTCP, OK)
 
 

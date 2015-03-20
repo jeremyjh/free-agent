@@ -27,11 +27,15 @@ import qualified Data.ByteString.Char8       as BS
 import qualified Data.ByteString.Lazy.Char8  as LBS
 import qualified Data.Serialize              as Cereal
 import qualified Data.Text.Encoding          as Text (decodeUtf8, encodeUtf8)
+import qualified Data.Text                   as Text
+
 import qualified Data.CircularList as CL
 import Data.CircularList (CList)
 
 import           Data.Acid                   (AcidState)
+import Data.Convertible (ConvertError(..))
 import           Data.UUID                   (UUID)
+import qualified Filesystem.Path.CurrentOS as F
 
 import           Control.Distributed.Process (Closure)
 
@@ -66,16 +70,22 @@ instance Convertible String LByteString where
     safeConvert = return . LBS.pack
 
 instance Convertible String FilePath where
-    safeConvert = return . fpFromString
+    safeConvert = return . F.decodeString
 
 instance Convertible FilePath String where
-    safeConvert = return . fpToString
+    safeConvert = return . F.encodeString
 
 instance Convertible Text FilePath where
-    safeConvert = return . fpFromText
+    safeConvert = return . F.fromText
 
 instance Convertible FilePath Text where
-    safeConvert = return . fpToText
+    safeConvert fp =
+        case F.toText fp of
+            Right t -> return t
+            Left reason -> Left (ConvertError (F.encodeString fp)
+                                              "FilePath"
+                                              "Text"
+                                              (Text.unpack reason))
 
 --orphans from Binary
 instance Binary.Binary Text where
@@ -128,30 +138,29 @@ instance Typeable a => SafeCopy (Closure a) where
     putCopy = unsafePut
     getCopy = unsafeGet
 
-
 deriveSafeStore ''UUID
 
 -- orphans from filesystem-path
 instance Binary FilePath where
-    put = Binary.put . fpToString
-    get = return . fpFromString =<< Binary.get
+    put = Binary.put . F.encodeString
+    get = return . F.decodeString =<< Binary.get
 
 instance SafeCopy FilePath where
     version = 1
     kind = base
     errorTypeName _ = "Filesystem.Path.FilePath"
-    putCopy = contain . safePut . fpToString
-    getCopy = contain $ return . fpFromString =<< safeGet
+    putCopy = contain . safePut . F.encodeString
+    getCopy = contain $ return . F.decodeString =<< safeGet
 
 instance FromJSON FilePath where
     parseJSON (Object value') = do
         path  <- value' .: "filepath"
-        return $ fpFromText path
+        return $ F.fromText path
     parseJSON _ = mzero
 
 instance ToJSON FilePath where
     toJSON path =
-        object ["filepath" .= fpToText path]
+        object ["filepath" .= F.toText path]
 
 deriveSafeStore ''Value
 deriveSafeStore ''Scientific

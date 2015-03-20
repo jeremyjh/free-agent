@@ -27,6 +27,7 @@ import           Control.Monad.Writer        (tell)
 import           Data.Binary                 (Binary)
 import qualified Data.Binary                 as Binary
 import           Data.Dynamic                (cast)
+import           Data.IORef.Lifted
 import qualified Data.Map                    as Map
 import           System.IO.Unsafe            (unsafePerformIO)
 

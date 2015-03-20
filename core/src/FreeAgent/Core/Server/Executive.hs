@@ -151,7 +151,7 @@ execImpl = ExecImpl callExecuteAction' callStoreAction' callRemoveAction'
     callExecuteStored' cmd@(ExecuteStored key') =
      do executedCount %= (+) 1
         runLogEitherT cmd $
-            join (uses cachedActions (lookup key') !? ActionNotFound key')
+            join (uses cachedActions (Map.lookup key') !? ActionNotFound key')
 
     callQueryActions' _ = query AllActions
 

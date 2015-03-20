@@ -221,7 +221,7 @@ startListener sname loop = do
 
 testDef :: PluginDef
 testDef = definePlugin "ExecSpec"
-                       (asText "")
+                       ("" :: Text)
                        ((++) <$> testActionListener <*> testResultListener)
                        []
                        (return ())

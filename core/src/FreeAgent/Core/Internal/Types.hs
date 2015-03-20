@@ -24,6 +24,7 @@ import           FreeAgent.AgentPrelude
 import           FreeAgent.Orphans                    ()
 import qualified Prelude                              as P
 
+import           Control.Concurrent                   (MVar)
 import           Control.Monad.Reader                 (ReaderT, ask, local)
 import           Control.Monad.Writer                 (Writer)
 import           Data.Binary                          as Binary
