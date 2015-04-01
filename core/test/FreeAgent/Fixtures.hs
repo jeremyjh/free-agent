@@ -43,13 +43,9 @@ instance Stashable TestAction where
 instance Stashable TestResult where
     key (TestResult summ) = key summ
 
-instance Extractable TestResult
-
 instance Resulting TestResult where
     summary (TestResult summ) = summ
 
-
-instance Extractable TestAction
 
 instance Runnable TestAction TestResult where
     exec ta@(TestAction text' delay) = do
@@ -57,13 +53,11 @@ instance Runnable TestAction TestResult where
         time' <- getCurrentTime
         return $ Right $ TestResult (ResultSummary time' text' (toAction ta))
 
-    execWith action' _ = do
+    execWith action' _ =
         exec action'
 
-instance Extractable TestFailAction
-
 instance Runnable TestFailAction TestResult where
-    exec (TestFailAction text') = return $ Left (GeneralFailure (text'))
+    exec (TestFailAction text') = return $ Left (GeneralFailure text')
 
     execWith action' _ = do
         summ <- resultNow "onFailure called" action'
@@ -93,9 +87,6 @@ instance Stashable NagiosResult where
 instance Resulting NagiosResult where
     summary (NagiosResult s _) = s
 
-instance Extractable NagiosResult
-instance Extractable TestCheckTCP
-
 instance Runnable TestCheckTCP NagiosResult where
     exec action' = do
         summ <- summaryNow "Test succeed."  action'
@@ -109,7 +100,7 @@ testAction :: TestAction
 testAction = TestAction "test action" 0
 
 testFailAction :: Text -> TestFailAction
-testFailAction text' = TestFailAction text'
+testFailAction = TestFailAction
 
 -- test with delay
 slowTestAction :: TestAction

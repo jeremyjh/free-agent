@@ -86,7 +86,7 @@ spec =
                                 executeAction checkTCP
 
                 nr <- texpect :: Agent Result
-                let Just (NagiosResult _ status) = extract nr
+                let Just (NagiosResult _ status) = extractResult nr
 
                 let aname = res  ^. to summary.resultOf.to key
 
@@ -94,10 +94,10 @@ spec =
                 Right all3 <- queryPeerServers peerServerName (Set.fromList[def])
                                                               (Set.fromList[def])
                 forM_ all3 $ \peer' -> do
-                    mpid <- resolve (peer', ("waiter"::String))
+                    mpid <- resolve (peer', "waiter"::String)
                     case mpid of
                         Nothing -> return ()
-                        Just pid -> do
+                        Just pid ->
                             send pid ("waithere" :: String)
                 threadDelay 10000
 

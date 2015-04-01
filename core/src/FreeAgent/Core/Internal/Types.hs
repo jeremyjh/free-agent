@@ -110,7 +110,7 @@ instance NFData Action where
 -- | Class for types that will result from some action and can
 -- be boxed as 'Result'.
 class ( NFSerializable result,  FromJSON result, ToJSON result
-      , Stashable result, Extractable result)
+      , Stashable result)
     => Resulting result where
     -- | provide a 'ResultSummary'
     summary :: result -> ResultSummary
@@ -326,17 +326,12 @@ instance Convertible SomeException RunnableFail where
 data FailResult = FailResult RunnableFail ResultSummary
         deriving (Show,  Typeable, Generic)
 
--- | extract the concrete type under an Existential
-class Typeable x => Extractable x where
-    extract :: (Typeable a) => x -> Maybe a
-    extract = cast
-
 -- | Types which can be executed in the FreeAgent framework. Concrete
 -- instances may be wrapped in the 'Action' existential type for compatibility
 -- with all the basic plumbing implemented in FreeAgent Servers.
 class ( NFSerializable action, NFSerializable result
       , Stashable action, Stashable result, Resulting result
-      , Extractable action, Eq action
+      , Eq action
       , FromJSON action, FromJSON result, ToJSON action, ToJSON result)
      => Runnable action result | action -> result where
      -- | Perform the Action - implementing 'exec' is the minimum viable

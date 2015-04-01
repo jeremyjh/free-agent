@@ -12,6 +12,7 @@
 
 module FreeAgent.Core.Action
     ( toAction
+    , extractAction, extractResult
     , resultNow
     , registerAction, actionType
     , registerPluginMaps
@@ -49,15 +50,11 @@ instance Stashable ResultSummary where
 
 deriveSerializers ''FailResult
 
-instance Extractable ResultSummary
-
 instance Resulting ResultSummary where
     summary summ = summ
 
 instance Stashable FailResult where
     key (FailResult _ summ) = key summ
-
-instance Extractable FailResult
 
 instance Resulting FailResult where
     summary (FailResult _ summ) = summ
@@ -73,7 +70,7 @@ data ActionEnvelope = ActionEnvelope
 
 instance Stashable ActionEnvelope where
     key = wrappedKey . envelopeWrapped
-instance Extractable ActionEnvelope
+
 instance Runnable ActionEnvelope Result where
     exec (ActionEnvelope wrapped _) =
         case decodeAction readPluginMaps wrapped of
@@ -90,6 +87,12 @@ instance SafeCopy Action where
     errorTypeName _ = "FreeAgent.Type.Action"
     putCopy (Action action) = contain (safePut $ seal action)
     getCopy = contain $ unseal safeGet
+
+extractAction :: Typeable a=> Action -> Maybe a
+extractAction (Action a)= cast a
+
+extractResult :: Typeable a=> Result -> Maybe a
+extractResult (Result a)= cast a
 
 seal :: Runnable action b => action -> ActionEnvelope
 seal action = ActionEnvelope
@@ -146,15 +149,9 @@ instance ToJSON Result where
     toJSON (Result result') =
         Aeson.object ["type" .= fqName result', "result" .= toJSON result']
 
-instance Extractable Result where
-    extract (Result a) = cast a
-
 instance Resulting Result where
     summary (Result a) = summary a
     matchR f (Result a)  = maybe False f (cast a)
-
-instance Extractable Action where
-    extract (Action a) = cast a
 
 instance Runnable Action Result where
     exec (Action action') = do

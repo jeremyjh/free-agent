@@ -94,15 +94,11 @@ instance Stashable ShellCommand where
 instance Stashable ShellResult where
     key = key . shellResultOf
 
-instance Extractable ShellResult
-
 instance Resulting ShellResult where
     summary ShellResult{..} =
         ResultSummary shellTimestamp
                       shellStdout
                       (Action shellResultOf)
-
-instance Extractable ShellCommand
 
 instance Runnable ShellCommand ShellResult where
     exec cmd@ShellCommand{..} =

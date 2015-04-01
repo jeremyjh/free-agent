@@ -2,9 +2,9 @@ module FreeAgent.Core (module X) where
 
 import FreeAgent.Core.Agent                     as X
 import FreeAgent.Core.Action                     as X
-import FreeAgent.Core.Internal.Types             as X (Action (..), Agent,
+import FreeAgent.Core.Internal.Types             as X (Action, Agent,
                                                        AgentConfig (..), AgentContext,
-                                                       Extractable (..), Key,
+                                                       Key,
                                                        PluginDef (..), PluginSet,
                                                        Result (..), ResultSummary (..),
                                                        Resulting (..), Runnable (..),

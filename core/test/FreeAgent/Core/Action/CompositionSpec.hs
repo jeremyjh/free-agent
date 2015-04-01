@@ -1,12 +1,11 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell #-}
+
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 
 module FreeAgent.Core.Action.CompositionSpec (main, spec) where
 
 import           FreeAgent.AgentPrelude
-import qualified Prelude as P
 import           FreeAgent.Core
 import           FreeAgent.Core.Lenses
 import           FreeAgent.Core.Action.Composition
@@ -29,10 +28,10 @@ spec = do
     describe "ActionPlan" $ do
         it "can serialize and deserialize existentially" $ do
             testAgent $
-                let plan = Action $ planExec checkTCP `thenExec` checkTCP
+                let plan = toAction $ planExec checkTCP `thenExec` checkTCP
                     bytes = Binary.encode plan
                 in return (Binary.decode bytes)
-            `shouldReturn` (Action $ planExec checkTCP `thenExec` checkTCP)
+            `shouldReturn` (toAction $ planExec checkTCP `thenExec` checkTCP)
 
     describe "ActionPlan combinators" $ do
 
@@ -43,7 +42,7 @@ spec = do
                     `thenExec` slowTestAction
                     `thenExec` slowTestAction
                     `thenExec` slowTestAction
-                let Just (ResultList _ [one, _, _, two]) = extract results
+                let (ResultList _ [one, _, _, two]) = results
                 let diff = diffUTCTime (two ^. to summary.timestamp) (one ^. to summary.timestamp)
                 return (diff > microsecondsToNominalDiffTime 30000)
             `shouldReturn` True
@@ -55,17 +54,18 @@ spec = do
                     `whileExec` slowTestAction
                     `whileExec` slowTestAction
                     `whileExec` slowTestAction
-                let Just (ResultList _ [one, _, _, two]) = extract results
+                let (ResultList _ [one, _, _, two]) = results
                 let diff = diffUTCTime (two ^. to summary.timestamp) (one ^. to summary.timestamp)
-                return (diff < (microsecondsToNominalDiffTime 5000))
+                return (diff < microsecondsToNominalDiffTime 5000)
             `shouldReturn` True
 
         it "can fire another actionplan on failure" $ do
             testAgent $ do
                 Right results <- exec $
                     planExec (testFailAction "will fail")
-                    `onFailure` (testFailAction "will recover")
-                let Just (ResultList _ [result']) = extract results
+                    `onFailure` testFailAction "will recover"
+                let (ResultList _ [result']) = results
+
                 return $ result' ^. to summary.text
             `shouldReturn` "onFailure called"
 

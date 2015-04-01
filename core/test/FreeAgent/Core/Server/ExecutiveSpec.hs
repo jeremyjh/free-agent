@@ -86,7 +86,7 @@ spec = do
         it "can execute a supplied action" $ do
             testAgent $ do
                 (Right nr) <- executeAction checkTCP
-                Just (NagiosResult _ OK) <- return $ extract nr
+                Just (NagiosResult _ OK) <- return $ extractResult nr
                 -- confirm results were written
 
                 Right results' <- findActionResultsSince (key checkTCP)
@@ -119,7 +119,7 @@ spec = do
                 threadDelay 10000
                 Right _ <- executeAction checkTCP
                 nr <- texpect :: Agent Result
-                let Just (NagiosResult _ status) = extract nr
+                let Just (NagiosResult _ status) = extractResult nr
                 return status
             `shouldReturn` OK
 
@@ -136,7 +136,7 @@ spec = do
                     threadDelay 10000
                     Right _ <- executeAction checkTCP
                     nr <- texpect :: Agent Result
-                    let Just (NagiosResult _ status) = extract nr
+                    let Just (NagiosResult _ status) = extractResult nr
                     return status
 
             -- recovery with state from disk when launching new agent
@@ -144,7 +144,7 @@ spec = do
                 getSelfPid >>= register listenerName
                 Right _ <- executeAction checkTCP
                 nr <- texpect :: Agent Result
-                let Just (NagiosResult _ status) = extract nr
+                let Just (NagiosResult _ status) = extractResult nr
                 return status
             return (result' == result'')
             `shouldReturn` True

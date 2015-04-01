@@ -153,7 +153,7 @@ executeStored :: (MonadAgent agent, Resulting result)
 executeStored key' =
     runEitherT $
      do result' <- callResult >>= convEitherT >>= hoistEither
-        extract result' ?? EDeserializationFailure (tshow result')
+        extractResult result' ?? EDeserializationFailure (tshow result')
   where callResult = lift $ callServ $ ExecuteStored key'
 
 executeAction :: (MonadAgent agent, Runnable a b)
