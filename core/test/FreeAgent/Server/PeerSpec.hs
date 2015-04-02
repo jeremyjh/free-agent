@@ -23,7 +23,7 @@ import           Control.Concurrent.Lifted
 import           Test.Hspec
 
 matchRemoteHostName :: (NodeId, String) -> Listener
-matchRemoteHostName (nodeid, name') = matchAction (\(TestCheckTCP host' _) -> host' == "localhost") nodeid name'
+matchRemoteHostName (nodeid, name') = actionListener (\(TestCheckTCP host' _) -> host' == "localhost") nodeid name'
 remotable ['matchRemoteHostName]
 
 main :: IO ()

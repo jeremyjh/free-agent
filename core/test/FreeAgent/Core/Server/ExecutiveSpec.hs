@@ -25,7 +25,7 @@ import           FreeAgent.Process as Process
 
 
 matchRemoteHostName :: (NodeId, String) -> Listener
-matchRemoteHostName (nodeid, name') = matchAction (\(TestCheckTCP host' _) -> host' == "localhost") nodeid name'
+matchRemoteHostName (nodeid, name') = actionListener (\(TestCheckTCP host' _) -> host' == "localhost") nodeid name'
 remotable ['matchRemoteHostName]
 
 main :: IO ()
@@ -182,7 +182,7 @@ testActionListener :: Agent [Listener]
 testActionListener = do
     startListener sname loop
     nodeid <- thisNodeId
-    return [matchAction (\(TestCheckTCP host' _) -> host' == "localhost") nodeid sname]
+    return [actionListener (\(TestCheckTCP host' _) -> host' == "localhost") nodeid sname]
   where
     sname = "ExecSpecActionListener"
     loop count = do
@@ -198,7 +198,7 @@ testResultListener :: Agent [Listener]
 testResultListener = do
     startListener sname loop
     nodeid <- thisNodeId
-    return [matchResult (const True)
+    return [resultListener (const True)
                         (\ (NagiosResult _ r) -> r == OK)
                         nodeid
                         sname

@@ -13,6 +13,7 @@
 module FreeAgent.Core.Action
     ( toAction
     , extractAction, extractResult
+    , matchAction, matchResult
     , resultNow
     , registerAction, actionType
     , registerPluginMaps
@@ -94,6 +95,12 @@ extractAction (Action a)= cast a
 extractResult :: Typeable a=> Result -> Maybe a
 extractResult (Result a)= cast a
 
+matchAction :: Typeable a => (a -> Bool) -> Action -> Bool
+matchAction f (Action a) = maybe False f (cast a)
+
+matchResult :: Typeable a => (a -> Bool) -> Result -> Bool
+matchResult f (Result r) = maybe False f (cast r)
+
 seal :: Runnable action b => action -> ActionEnvelope
 seal action = ActionEnvelope
                 { envelopeWrapped = wrap action
@@ -151,7 +158,6 @@ instance ToJSON Result where
 
 instance Resulting Result where
     summary (Result a) = summary a
-    matchR f (Result a)  = maybe False f (cast a)
 
 instance Runnable Action Result where
     exec (Action action') = do
@@ -163,8 +169,6 @@ instance Runnable Action Result where
         execR <- execWith action' result'
         return $ flip fmap execR $ \result ->
                 Result result
-
-    matchA f (Action a)  = maybe False f (cast a)
 
 instance Stashable Result where
     key (Result a) = key a

@@ -114,10 +114,6 @@ class ( NFSerializable result,  FromJSON result, ToJSON result
     => Resulting result where
     -- | provide a 'ResultSummary'
     summary :: result -> ResultSummary
-    -- | Create a generalized ResultMatcher function - see 'Core.resultMatcher'
-    matchR :: (Typeable a) => (a -> Bool) -> result -> Bool
-
-    matchR predicate result' = maybe False predicate (cast result')
 
 -- Result
 -- | Box for returning results from 'Action' exec.
@@ -342,10 +338,7 @@ class ( NFSerializable action, NFSerializable result
     -- the result and calls exec
     execWith :: (MonadAgent agent)
              =>  action -> Result -> agent (Either RunnableFail result)
-    -- | Create a generalized ActionMatcher function - see 'Core.actionMatcher'
-    matchA :: (Typeable a) => (a -> Bool) -> action -> Bool
 
-    matchA predicate action' = maybe False predicate (cast action')
     execWith action' _ = exec action'
 
 data ResultSummary

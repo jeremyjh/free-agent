@@ -16,8 +16,8 @@ module FreeAgent.Core.Protocol.Executive
     , AddListener(..)
     , executeStored
     , executeAction
-    , matchAction
-    , matchResult
+    , actionListener
+    , resultListener
     , serverName
     , ExecFail(..)
     )
@@ -165,8 +165,8 @@ executeAction action' =
 -- receive a 'Result' for each 'Action' executed that matches the typed predicate
 -- argument. Only predicates for Actions in which the underlying concrete type
 -- matches will be evaluated.
-matchAction :: Runnable a b => (a -> Bool) -> NodeId -> String -> Listener
-matchAction af = ActionMatching (matchA af)
+actionListener :: Runnable a b => (a -> Bool) -> NodeId -> String -> Listener
+actionListener af = ActionMatching (matchAction af)
 
 -- | Used with 'addListener' - defines a 'Listener' that will
 -- receive a 'Result' for each 'Action' executed where both the Action and Result
@@ -174,9 +174,9 @@ matchAction af = ActionMatching (matchA af)
 -- If you need the 'ActionMatcher' predicate to have access to the underlying
 -- concrete type, then pass the typed predicate to 'matchA' to make an
 -- 'ActionMatcher'.
-matchResult :: Resulting b
+resultListener :: Resulting b
             => ActionMatcher -> (b -> Bool) -> NodeId -> String -> Listener
-matchResult af rf = ResultMatching af (matchR rf)
+resultListener af rf = ResultMatching af (matchResult rf)
 
 serverName :: String
 serverName = "agent:executive"
