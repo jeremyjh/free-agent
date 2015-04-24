@@ -33,9 +33,9 @@ import           Data.IORef.Lifted
 import qualified Data.Map                    as Map
 import           System.IO.Unsafe            (unsafePerformIO)
 
-import           Control.Error (hoistEither)
+import           Control.Error (hoistEither, hush)
 import           Data.SafeCopy
-import           Data.Serialize (runPut, runGet)
+import           Data.Serialize (runGet)
 
 import Data.Aeson (Value(..), fromJSON, (.=), (.:))
 import qualified Data.Aeson  as Aeson
@@ -70,7 +70,7 @@ data ActionEnvelope = ActionEnvelope
     } deriving (Show, Eq, Typeable, Generic)
 
 instance Stashable ActionEnvelope where
-    key = wrappedKey . envelopeWrapped
+    key = key . envelopeWrapped
 
 instance Runnable ActionEnvelope Result where
     exec (ActionEnvelope wrapped _) =
@@ -243,15 +243,14 @@ unwrapJsonResult uw wrapped = Result <$> uw wrapped
 
 -- Wrap a concrete type for stash or send where it
 -- will be decoded to an Action or Result
-wrap :: (Stashable a) => a -> Wrapped
-wrap st = Wrapped (key st) (fqName st) (safeEncode st)
+wrap :: (Portable a) => a -> Wrapped
+wrap st = WrappedExists (fqName st) st
 
 -- | Unwrap a 'Wrapper' into a (known) concrete type
-unWrap :: (Stashable a) => Wrapped -> Either String a
-unWrap = safeDecode . wrappedValue
-
-safeEncode :: (SafeCopy a) => a -> ByteString
-safeEncode = runPut . safePut
+unWrap :: forall a. (Portable a) => Wrapped -> Either String a
+unWrap (WrappedEncoded _ _ bytes')= safeDecode bytes'
+unWrap (WrappedExists _ payload) = maybe (Left failcast) Right (cast payload)
+    where failcast = convert $ fqName payload <> " does not match " <> fqName (undefined :: a)
 
 safeDecode :: (SafeCopy a) => ByteString -> Either String a
 safeDecode = runGet safeGet
@@ -263,12 +262,9 @@ unWrapJson jwrapped = case fromJSON jwrapped of
 
 --used in serialization instances
 decodeAction :: UnwrappersMap -> Wrapped -> Maybe Action
-decodeAction pluginMap wrapped@(Wrapped _ type' _) =
-    case Map.lookup ("Action:" ++ type') pluginMap of
-        Just uwMap ->
-            case actionUnwrapper uwMap wrapped of
-                Right act -> Just act
-                Left _ -> Nothing
+decodeAction pluginMap wrapped =
+    case Map.lookup ("Action:" ++ wrappedTypeName wrapped) pluginMap of
+        Just uwMap -> hush $ actionUnwrapper uwMap wrapped
         Nothing -> Nothing
 
 decodeJsonAction :: UnwrappersMap -> Text -> Value -> Action
@@ -285,7 +281,7 @@ registerPluginMaps :: (MonadBase IO m) => UnwrappersMap -> m ()
 registerPluginMaps = writeIORef globalPluginMaps
 
 globalPluginMaps :: IORef UnwrappersMap
-globalPluginMaps = unsafePerformIO $ newIORef (Map.fromList [])
+globalPluginMaps = unsafePerformIO $ newIORef mempty
 {-# NOINLINE globalPluginMaps #-}
 
 --TODO: We can dispense with unsafePerformIO!
@@ -299,13 +295,13 @@ readPluginMaps = unsafePerformIO $ readIORef globalPluginMaps
 {-# NOINLINE readPluginMaps #-}
 
 decodeResult' :: UnwrappersMap -> Wrapped -> Result
-decodeResult' pluginMap wrapped@(Wrapped _ type' _) =
-    case Map.lookup ("Result:" ++ type') pluginMap of
+decodeResult' pluginMap wrapped =
+    case Map.lookup ("Result:" ++ wrappedTypeName wrapped) pluginMap of
         Just uwMap -> case resultUnwrapper uwMap wrapped of
             Right act -> act
             Left s -> error $ "Error deserializing wrapper: " ++ s
-        Nothing -> error $ "Type Name: " ++ convert type'
-                    ++ " not matched! Is your plugin registered?"
+        Nothing -> error $ "Type Name: " ++ convert (wrappedTypeName wrapped)
+                ++ " not matched! Is your plugin registered?"
 
 --used in serialization instances - throws an exception since Binary decode is no maybe
 decodeJsonResult :: UnwrappersMap -> Text -> Value -> Result

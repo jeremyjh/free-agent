@@ -48,7 +48,8 @@ import           Data.Aeson                           (FromJSON (..),
                                                        object, (.:), (.=))
 import qualified Data.ByteString.Base64               as B64
 import           Data.Default                         (Default (..))
-import           Data.SafeCopy                        (SafeCopy)
+import           Data.SafeCopy                        --(SafeCopy(..))
+import           Data.Serialize (runPut)
 import qualified Data.Set                             as Set
 import           Data.UUID                            (UUID)
 import           FreeAgent.Process                    (ChildSpec,
@@ -66,31 +67,86 @@ type Key = Text
 class (SafeCopy a, Show a, Typeable a) => Stashable a where
     key :: a -> Key
 
--- Wrapped
+class (Stashable a, Eq a, ToJSON a, FromJSON a) => Portable a where
+
+instance (Stashable a, Eq a, ToJSON a, FromJSON a) => Portable a
+
 -- | Wrapped lets us store an Action or Result and recover it using
--- it's registered Unwrapper
+         -- it's registered Unwrapper
 data Wrapped
-  = Wrapped { wrappedKey      :: Key
-            , wrappedTypeName :: Text
-            , wrappedValue    :: ByteString
-            } deriving (Show, Eq, Typeable, Generic)
+  = WrappedEncoded  Key !Text !ByteString
+  | forall a. Portable a =>
+    WrappedExists !Text !a
+        deriving (Typeable)
+
+wrappedTypeName :: Wrapped -> Text
+wrappedTypeName (WrappedEncoded _ type' _) = type'
+wrappedTypeName (WrappedExists type' _) = type'
+
+instance NFData Wrapped where
+    rnf = (`seq` ())
+
+instance Show Wrapped where
+    show (WrappedEncoded key' type' _) = "WrappedEncoded: " ++ show (key', type')
+    show (WrappedExists _ payload) = "WrappedExists: " ++ show payload
+
+safeEncode :: SafeCopy a => a -> ByteString
+safeEncode = runPut . safePut
+
+instance Eq Wrapped where
+  (WrappedEncoded key' type' bytes') == (WrappedEncoded key'' type'' bytes'') =
+      key' == key'' && type' == type'' && bytes' == bytes''
+  (WrappedEncoded key' type' bytes') == (WrappedExists type'' payload) =
+      key' == key payload && type' == type'' && bytes' == safeEncode payload
+  (WrappedExists type' a) == (WrappedExists type'' b) =
+      type' == type'' && maybe False (a ==) (cast b)
+  w1@WrappedExists {} == w2@WrappedEncoded {} = w2 == w1
+
+instance SafeCopy Wrapped where
+    version = 1
+    kind = base
+    errorTypeName _ = "FreeAgent.Core.Internal.Types.Wrapped"
+
+    putCopy (WrappedEncoded key' type' bytes') = contain $
+     do safePut key'
+        safePut type'
+        safePut bytes'
+    putCopy (WrappedExists type' payload) =
+        putCopy (WrappedEncoded (key payload)
+                                type'
+                                (safeEncode payload))
+
+    getCopy = contain $ WrappedEncoded <$> safeGet <*> safeGet <*> safeGet
+
+instance Binary Wrapped where
+    get = WrappedEncoded <$> Binary.get <*> Binary.get <*> Binary.get
+    put (WrappedEncoded key' type' bytes') =
+     do Binary.put key'
+        Binary.put type'
+        Binary.put bytes'
+    put (WrappedExists type' payload) =
+        Binary.put (WrappedEncoded (key payload)
+                                   type'
+                                   (safeEncode payload))
 
 instance Stashable Wrapped where
-    key = wrappedKey
+  key (WrappedEncoded key' _ _)= key'
+  key (WrappedExists _ payload)= key payload
 
 instance FromJSON Wrapped where
     parseJSON (Object value') = do
         key' <- value' .: "key"
         typeName' <- value' .: "typeName"
         b64T :: Text <- value' .: "value"
-        return (Wrapped key' typeName' (B64.decodeLenient (convert b64T)))
+        return (WrappedEncoded key' typeName' (B64.decodeLenient (convert b64T)))
     parseJSON _ = mzero
 
 instance ToJSON Wrapped where
-    toJSON (Wrapped key' typeName' value') =
+    toJSON (WrappedEncoded key' typeName' value') =
         let b64T = (convert $ B64.encode value') :: Text
-        in object ["key" .= key', "typeName" .= typeName', "value" .= b64T]
-
+        in object ["key" .= key', "typeName" .= typeName', "bytes" .= b64T]
+    toJSON (WrappedExists type' payload) =
+      object ["key" .= key payload, "typeName" .= type', "payload" .=  toJSON payload]
 
 data Action = forall a b. (Runnable a b) => Action a
         deriving Typeable
@@ -109,8 +165,7 @@ instance NFData Action where
 
 -- | Class for types that will result from some action and can
 -- be boxed as 'Result'.
-class ( NFSerializable result,  FromJSON result, ToJSON result
-      , Stashable result)
+class ( NFSerializable result, Portable result)
     => Resulting result where
     -- | provide a 'ResultSummary'
     summary :: result -> ResultSummary
@@ -320,15 +375,16 @@ instance Convertible SomeException RunnableFail where
     safeConvert = return . RSomeException . tshow
 
 data FailResult = FailResult RunnableFail ResultSummary
-        deriving (Show,  Typeable, Generic)
+        deriving (Show, Eq,  Typeable, Generic)
 
 -- | Types which can be executed in the FreeAgent framework. Concrete
 -- instances may be wrapped in the 'Action' existential type for compatibility
 -- with all the basic plumbing implemented in FreeAgent Servers.
-class ( NFSerializable action, NFSerializable result
-      , Stashable action, Stashable result, Resulting result
+class ( NFSerializable action
       , Eq action
-      , FromJSON action, FromJSON result, ToJSON action, ToJSON result)
+      , Portable action
+      , Resulting result
+      )
      => Runnable action result | action -> result where
      -- | Perform the Action - implementing 'exec' is the minimum viable
      -- instance.
@@ -390,10 +446,6 @@ instance Resolvable (Peer, String) where
 
 deriveSerializers ''Context
 deriveSerializers ''Zone
-
-deriveSafeStore ''Wrapped
-instance NFData Wrapped where rnf = genericRnf
-instance Binary Wrapped
 
 deriveSerializers ''RunnableFail
 
