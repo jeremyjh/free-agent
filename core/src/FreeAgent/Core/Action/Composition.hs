@@ -3,7 +3,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 module FreeAgent.Core.Action.Composition where
@@ -64,53 +64,58 @@ instance Stashable ActionPlan where
     key (Parallel plan _) = key plan
     key (OnFailure plan _) = key plan
 
-data ResultList
-  = ResultList ResultSummary [Result]
-    deriving (Show, Eq, Typeable, Generic)
-
-instance Stashable ResultList where
-    key = key . summary
-
-instance Resulting ResultList where
-    summary (ResultList summ _) = summ
-
-instance Semigroup ResultList where
-    (ResultList summ results1) <> (ResultList _ results2) =
-        ResultList summ (results1 <> results2)
-
-planExec :: Runnable a b => a -> ActionPlan
+planExec :: Runnable a => a -> ActionPlan
 planExec = Exec . toAction
 
-thenExec :: Runnable a b => ActionPlan -> a -> ActionPlan
+thenExec :: Runnable a => ActionPlan -> a -> ActionPlan
 thenExec = combinePlan Sequential
 
-whileExec :: Runnable a b => ActionPlan -> a -> ActionPlan
+whileExec :: Runnable a => ActionPlan -> a -> ActionPlan
 whileExec = combinePlan Parallel
 
-onFailure :: Runnable a b => ActionPlan -> a -> ActionPlan
+onFailure :: Runnable a => ActionPlan -> a -> ActionPlan
 onFailure = combinePlan OnFailure
 
-combinePlan :: Runnable action result
+combinePlan :: Runnable action
              => (ActionPlan -> ActionPlan -> ActionPlan)
              -> ActionPlan -> action -> ActionPlan
 combinePlan fn plan action' = fn plan (planExec action')
 
 
-failResult :: RunnableFail -> ResultSummary -> Result
-failResult reason summary' = Result $ FailResult reason summary'
+failResultNow :: MonadIO io => RunnableFail -> Text -> Action -> io Result
+failResultNow reason summ action' =
+    resultNow (FailResult reason (key action')) summ action'
 
-instance Runnable ActionPlan ResultList where
-    exec (Exec action') =
-        runEitherT $ do
-            result' <- tryExecET action'
-            let (ResultSummary rtime rtext _) = summary result'
-            return $ ResultList (ResultSummary rtime rtext action') [result']
+data ResultList = ResultList Key [Result]
+    deriving (Show, Eq, Typeable, Generic)
+
+instance Stashable ResultList where
+    key (ResultList key' _) = key'
+
+appendResults :: Result -> Result -> Result
+appendResults r1 r2 = r1 { resultWrapped = wrap $
+    let list1 = extractResult r1
+        list2 = extractResult r2 in
+    case (list1, list2) of
+      (Just (ResultList k results1 ), Just (ResultList _ results2)) ->
+          ResultList k (results1 ++ results2)
+      (Just (ResultList k results), Nothing) ->
+          ResultList k (results ++ [r2])
+      (Nothing, Just (ResultList k results)) ->
+          ResultList k (r1 : results)
+      (Nothing, Nothing) -> ResultList (key r1) [r1, r2]
+    }
+
+instance Runnable ActionPlan where
+    type RunnableResult ActionPlan = ResultList
+
+    exec (Exec action') = tryExec action'
 
     exec (Sequential plan1 plan2) =
         runEitherT $ do
             result1 <- tryExecET plan1
-            result2 <- tryExecWithET plan2 (Result result1)
-            return $ result1 <> result2
+            result2 <- tryExecWithET plan2 result1
+            return $ appendResults result1 result2
 
     exec (Parallel plan1 plan2) =
      do ref1 <- agentAsync (tryExec plan1)
@@ -120,29 +125,25 @@ instance Runnable ActionPlan ResultList where
         return $ case aresult1 of
             AsyncDone (Right result1) ->
                 case aresult2 of
-                    AsyncDone (Right result2) -> Right $ result1 <> result2
-                    reason -> Left (GeneralFailure $ "Async exec failed: " ++ tshow reason )
-            reason -> Left (GeneralFailure $ "Async exec failed: " ++ tshow reason )
+                    AsyncDone (Right result2) -> Right $ appendResults result1 result2
+                    reason -> Left (GeneralFailure $ "Async exec failed: " ++ tshow reason)
+            reason -> Left (GeneralFailure $ "Async exec failed: " ++ tshow reason)
 
     exec (OnFailure plan1 plan2) = do
         result' <- tryExec plan1
         case result' of
             Left reason -> do
-                summary' <- resultNow (tshow reason) plan1
-                tryExecWith plan2 (failResult reason summary')
+                failed <- failResultNow reason (tshow reason) (toAction plan1)
+                tryExecWith plan2 failed
             _ -> return result'
 
-    execWith (Exec action') eresult =
-        runEitherT $ do
-            result' <- tryExecWithET action' eresult
-            let (ResultSummary rtime rtext _) = summary result'
-            return $ ResultList (ResultSummary rtime rtext action') [result']
+    execWith (Exec action') eresult = tryExecWith action' eresult
 
     execWith (Sequential plan1 plan2) eresult =
         runEitherT $ do
             result1 <- tryExecWithET plan1 eresult
-            result2 <- tryExecWithET plan2 (Result result1)
-            return (result1 <> result2)
+            result2 <- tryExecWithET plan2 result1
+            return $ appendResults result1 result2
 
     execWith (Parallel plan1 plan2) eresult =
      do ref1 <- agentAsync (tryExecWith plan1 eresult)
@@ -152,7 +153,7 @@ instance Runnable ActionPlan ResultList where
         return $ case aresult1 of
             AsyncDone (Right result1) ->
                 case aresult2 of
-                    AsyncDone (Right result2) -> Right $ result1 <> result2
+                    AsyncDone (Right result2) -> Right $ appendResults result1 result2
                     reason -> Left (GeneralFailure $ "Async operation failed: " ++ tshow reason)
             reason -> Left (GeneralFailure $ "Async operation failed: " ++ tshow reason)
 
@@ -160,9 +161,9 @@ instance Runnable ActionPlan ResultList where
         result1 <- tryExecWith plan1 result
         case result1 of
             Left reason -> do
-                summary' <- resultNow (tshow reason) plan1
-                execWith plan2 (failResult reason summary')
+                failed <- failResultNow reason (tshow reason) (toAction plan1)
+                tryExecWith plan2 failed
             _ -> return result1
 
-deriveSerializers ''ResultList
 deriveSerializers ''ActionPlan
+deriveSerializers ''ResultList

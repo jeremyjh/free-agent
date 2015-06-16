@@ -42,8 +42,8 @@ spec = do
                     `thenExec` slowTestAction
                     `thenExec` slowTestAction
                     `thenExec` slowTestAction
-                let (ResultList _ [one, _, _, two]) = results
-                let diff = diffUTCTime (two ^. to summary.timestamp) (one ^. to summary.timestamp)
+                let Just (ResultList _ [one, _, _, two]) = extractResult results
+                let diff = diffUTCTime (resultTimestamp two) (resultTimestamp one)
                 return (diff > microsecondsToNominalDiffTime 30000)
             `shouldReturn` True
 
@@ -54,8 +54,8 @@ spec = do
                     `whileExec` slowTestAction
                     `whileExec` slowTestAction
                     `whileExec` slowTestAction
-                let (ResultList _ [one, _, _, two]) = results
-                let diff = diffUTCTime (two ^. to summary.timestamp) (one ^. to summary.timestamp)
+                let Just (ResultList _ [one, _, _, two]) = extractResult results
+                let diff = diffUTCTime (resultTimestamp two) (resultTimestamp one)
                 return (diff < microsecondsToNominalDiffTime 5000)
             `shouldReturn` True
 
@@ -64,9 +64,8 @@ spec = do
                 Right results <- exec $
                     planExec (testFailAction "will fail")
                     `onFailure` testFailAction "will recover"
-                let (ResultList _ [result']) = results
 
-                return $ result' ^. to summary.text
+                return $ resultText results
             `shouldReturn` "onFailure called"
 
 

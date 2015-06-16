@@ -137,7 +137,7 @@ instance FromJSON Wrapped where
     parseJSON (Object value') = do
         key' <- value' .: "key"
         typeName' <- value' .: "typeName"
-        b64T :: Text <- value' .: "value"
+        b64T :: Text <- value' .: "bytes"
         return (WrappedEncoded key' typeName' (B64.decodeLenient (convert b64T)))
     parseJSON _ = mzero
 
@@ -146,9 +146,10 @@ instance ToJSON Wrapped where
         let b64T = (convert $ B64.encode value') :: Text
         in object ["key" .= key', "typeName" .= typeName', "bytes" .= b64T]
     toJSON (WrappedExists type' payload) =
-      object ["key" .= key payload, "typeName" .= type', "payload" .=  toJSON payload]
+      let b64T = (convert $ B64.encode $ safeEncode payload) :: Text
+      in object ["key" .= key payload, "typeName" .= type', "bytes" .=  b64T]
 
-data Action = forall a b. (Runnable a b) => Action a
+data Action = forall a. (Runnable a) => Action a
         deriving Typeable
 
 instance Eq Action where
@@ -163,28 +164,9 @@ instance P.Show Action where
 instance NFData Action where
     rnf (Action a) = rnf a
 
--- | Class for types that will result from some action and can
--- be boxed as 'Result'.
-class ( NFSerializable result, Portable result)
-    => Resulting result where
-    -- | provide a 'ResultSummary'
-    summary :: result -> ResultSummary
-
 -- Result
 -- | Box for returning results from 'Action' exec.
 --
-data Result = forall a. (Resulting a, Show a) => Result a
-
-instance Show Result where
-    show (Result a) = show a
-
-instance Eq Result where
-    (Result a) == (Result b) = Binary.encode a == Binary.encode b
-
-deriving instance Typeable Result
-
-instance NFData Result where
-    rnf (Result a) = rnf a
 
 type FetchAction = Either String Action
 -- Unwrapper and registration types
@@ -197,8 +179,7 @@ data ActionUnwrappers
                       , actionUnwrapper     :: Unwrapper Action
                       , actionJsonUnwrapper :: JsonUnwrapper Action
                       , resultTypeName      :: Text
-                      , resultUnwrapper     :: Unwrapper Result
-                      , resultJsonUnwrapper :: JsonUnwrapper Result
+                      , resultUnwrapper     :: Result -> Result
                       }
 
 type UnwrappersMap = Map Text ActionUnwrappers
@@ -374,7 +355,7 @@ data RunnableFail =
 instance Convertible SomeException RunnableFail where
     safeConvert = return . RSomeException . tshow
 
-data FailResult = FailResult RunnableFail ResultSummary
+data FailResult = FailResult RunnableFail Key
         deriving (Show, Eq,  Typeable, Generic)
 
 -- | Types which can be executed in the FreeAgent framework. Concrete
@@ -383,22 +364,27 @@ data FailResult = FailResult RunnableFail ResultSummary
 class ( NFSerializable action
       , Eq action
       , Portable action
-      , Resulting result
+      , Portable (RunnableResult action)
       )
-     => Runnable action result | action -> result where
+     => Runnable action where
+
+    type RunnableResult action
+    type RunnableResult action = Result
+
      -- | Perform the Action - implementing 'exec' is the minimum viable
      -- instance.
     exec :: (MonadAgent agent)
-         => action -> agent (Either RunnableFail result)
+         => action -> agent (Either RunnableFail Result)
     -- | Exec with some 'Result' - the default instance ignores
     -- the result and calls exec
     execWith :: (MonadAgent agent)
-             =>  action -> Result -> agent (Either RunnableFail result)
+             =>  action -> Result -> agent (Either RunnableFail Result)
 
     execWith action' _ = exec action'
 
-data ResultSummary
-  = ResultSummary { resultTimestamp :: UTCTime
+data Result
+  = Result        { resultWrapped   :: Wrapped
+                  , resultTimestamp :: UTCTime
                   , resultText      :: Text
                   , resultResultOf  :: Action
                   } deriving (Show, Eq, Typeable, Generic)

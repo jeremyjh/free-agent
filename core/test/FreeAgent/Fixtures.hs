@@ -16,7 +16,6 @@ module FreeAgent.Fixtures
     , testFailAction
     , slowTestAction
     , testPluginDef
-    , summaryNow
     ) where
 
 import FreeAgent.Core
@@ -34,34 +33,29 @@ data TestFailAction = TestFailAction Text
 instance Stashable TestFailAction where
     key (TestFailAction text') = text'
 
-data TestResult = TestResult ResultSummary
+data TestResult = TestResult Key
     deriving (Show, Eq, Typeable, Generic)
 
 instance Stashable TestAction where
     key (TestAction text' _) = text'
 
 instance Stashable TestResult where
-    key (TestResult summ) = key summ
-
-instance Resulting TestResult where
-    summary (TestResult summ) = summ
+    key (TestResult key') = key'
 
 
-instance Runnable TestAction TestResult where
+instance Runnable TestAction where
     exec ta@(TestAction text' delay) = do
         threadDelay delay
-        time' <- getCurrentTime
-        return $ Right $ TestResult (ResultSummary time' text' (toAction ta))
+        Right <$> resultNow (TestResult (key ta)) text' (toAction ta)
 
     execWith action' _ =
         exec action'
 
-instance Runnable TestFailAction TestResult where
+instance Runnable TestFailAction where
     exec (TestFailAction text') = return $ Left (GeneralFailure text')
 
-    execWith action' _ = do
-        summ <- resultNow "onFailure called" action'
-        return $ Right (TestResult summ)
+    execWith action' _ =
+        Right <$> resultNow (TestResult $ key action') "onFailure called" action'
 
 data TestCheckTCP = TestCheckTCP Text Int
     deriving (Show, Eq, Typeable, Generic)
@@ -73,24 +67,18 @@ data CommandResult = OK | Warning | Critical | Unknown
     deriving (Show, Eq, Typeable, Generic)
 deriveSerializers ''CommandResult
 
-data NagiosResult = NagiosResult
-    { _nagresResultSummary :: ResultSummary
-    , _nagresResult :: CommandResult
-    } deriving (Show, Eq, Typeable, Generic)
+data NagiosResult = NagiosResult Key CommandResult
+    deriving (Show, Eq, Typeable, Generic)
 
 makeFields ''NagiosResult
 deriveSerializers ''NagiosResult
 
 instance Stashable NagiosResult where
-    key = key . summary
+    key (NagiosResult key' _ )= key'
 
-instance Resulting NagiosResult where
-    summary (NagiosResult s _) = s
-
-instance Runnable TestCheckTCP NagiosResult where
-    exec action' = do
-        summ <- summaryNow "Test succeed."  action'
-        return $ Right (NagiosResult summ OK)
+instance Runnable TestCheckTCP where
+    exec action' =
+        Right <$> resultNow (NagiosResult (key action') OK) "Test succeed."  action'
 
 -- common test fixture
 checkTCP :: TestCheckTCP
@@ -111,12 +99,6 @@ testPluginDef = definePlugin "FixturesPlugin" () (return []) [] $
  do registerAction (actionType :: Proxy TestAction )
     registerAction (actionType :: Proxy TestFailAction)
     registerAction (actionType :: Proxy TestCheckTCP)
-
-summaryNow :: (Runnable action b, MonadIO io)
-           => Text -> action -> io ResultSummary
-summaryNow msg resultOf' = do
-    now <- getCurrentTime
-    return $ ResultSummary now msg (toAction resultOf')
 
 deriveSerializers ''TestAction
 deriveSerializers ''TestFailAction

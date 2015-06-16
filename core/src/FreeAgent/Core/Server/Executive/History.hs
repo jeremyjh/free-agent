@@ -60,7 +60,7 @@ makeFields ''HistoryState
 
 fetchAllFrom  :: UTCTime -> Query HistoryPersist [Result]
 fetchAllFrom time =
-    takeWhile (\r -> r ^. to summary.timestamp >= time)
+    takeWhile (\r -> resultTimestamp r >= time)
                   <$> CL.rightElements  <$> view results
 
 insertResult :: Result -> Update HistoryPersist ()
@@ -92,7 +92,7 @@ historyImpl = HistoryImpl doInit' castWriteResult' callFindResults'
     callFindResults' (AllResultsSince time) = query $ FetchAllFrom time
     callFindResults' (ActionResultsSince key' time) =
      do results' <- query (FetchAllFrom time)
-        return $ filter (\r -> r ^. to summary.resultOf.to key == key')
+        return $ filter (\r -> key (resultWrapped r)  == key')
                         results'
 
 defaultHistoryServer :: AgentServer

@@ -153,13 +153,9 @@ pluginSet pluginWriter =
     buildConfigs plugin =
         (plugindefName plugin, plugindefContext plugin)
     buildPluginMaps unwrappers =
-        let pairs = unzip $ map (\uw ->
-                                    ( ("Action:" ++ actionTypeName uw, uw)
-                                    , ("Result:" ++ resultTypeName uw, uw) ) )
-                                unwrappers
-            amap = Map.fromList (fst pairs)
-            rmap = Map.fromList (snd pairs)
-        in amap ++ rmap
+        let pairs = map (\uw -> ("Action:" ++ actionTypeName uw, uw))
+                        unwrappers
+        in Map.fromList pairs
     buildListeners = foldM appendListener []
     appendListener acc = plugindefListeners >=> return . (++ acc)
 

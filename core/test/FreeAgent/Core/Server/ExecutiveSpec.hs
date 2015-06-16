@@ -44,7 +44,7 @@ spec = do
         it "can execute a stored action" $ do
             testAgent $ do
                 Right _ <- callServ $ StoreAction (Action checkTCP)
-                (Right (_ :: NagiosResult ) ) <- executeStored $ key checkTCP
+                Right _ <- executeStored $ key checkTCP
                 -- confirm results were written
                 Right results' <- findResultsSince (convert (0::Int))
                 return $ length results'
@@ -61,7 +61,7 @@ spec = do
                 Right _ <- callServ $ StoreAction willWork
                 Right _ <- callServ $ StoreNewerAction wontWork beforeTime
 
-                Right (_ :: ShellResult)<- executeStored $ key willWork
+                Right _ <- executeStored $ key willWork
                 return True
             `shouldReturn` True
 

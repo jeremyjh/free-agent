@@ -7,6 +7,7 @@
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE TypeFamilies #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -19,6 +20,7 @@ module FreeAgent.Core.Action
     , registerPluginMaps
     , tryExec, tryExecWith
     , tryExecET, tryExecWithET
+    , wrap, unWrap
     )
 where
 
@@ -44,21 +46,11 @@ import qualified Data.Aeson  as Aeson
 -- Serialization instances for Action are all this module as they require specialized
 -- and sensitive functions we want to keep encapsulated e.g. (readPluginMaps)
 
-deriveSerializers ''ResultSummary
-
-instance Stashable ResultSummary where
-    key (ResultSummary time _ action') = key action' ++ ":" ++ tshow time
-
+deriveSerializers ''Result
 deriveSerializers ''FailResult
 
-instance Resulting ResultSummary where
-    summary summ = summ
-
 instance Stashable FailResult where
-    key (FailResult _ summ) = key summ
-
-instance Resulting FailResult where
-    summary (FailResult _ summ) = summ
+    key (FailResult _ key') = key'
 
 -- ActionEnvelope
 -- | A general type for transit of Actions through an agent network which
@@ -72,7 +64,7 @@ data ActionEnvelope = ActionEnvelope
 instance Stashable ActionEnvelope where
     key = key . envelopeWrapped
 
-instance Runnable ActionEnvelope Result where
+instance Runnable ActionEnvelope where
     exec (ActionEnvelope wrapped _) =
         case decodeAction readPluginMaps wrapped of
             Just action' -> exec action'
@@ -92,16 +84,16 @@ instance SafeCopy Action where
 extractAction :: Typeable a=> Action -> Maybe a
 extractAction (Action a)= cast a
 
-extractResult :: Typeable a=> Result -> Maybe a
-extractResult (Result a)= cast a
+extractResult :: Portable a => Result -> Maybe a
+extractResult = hush . unWrap . resultWrapped
 
 matchAction :: Typeable a => (a -> Bool) -> Action -> Bool
 matchAction f (Action a) = maybe False f (cast a)
 
-matchResult :: Typeable a => (a -> Bool) -> Result -> Bool
-matchResult f (Result r) = maybe False f (cast r)
+matchResult :: Portable a => (a -> Bool) -> Result -> Bool
+matchResult f = maybe False f . extractResult
 
-seal :: Runnable action b => action -> ActionEnvelope
+seal :: Runnable action => action -> ActionEnvelope
 seal action = ActionEnvelope
                 { envelopeWrapped = wrap action
                 , envelopeMeta = mempty --TODO:implement meta
@@ -129,117 +121,81 @@ instance ToJSON Action where
     toJSON (Action action') =
         Aeson.object ["type" .= fqName action', "action" .= toJSON action']
 
--- same as Action - we need Result serialization instances here
-instance Binary Result where
-    put (Result a) = Binary.put $ wrap a
-    get = do
-        wrapped <- Binary.get
-        return $ decodeResult' readPluginMaps wrapped
-
-instance SafeCopy Result where
-    version = 1
-    kind = base
-    errorTypeName _ = "FreeAgent.Types.Result"
-    putCopy (Result r) = contain $ safePut (wrap r)
-    getCopy = contain $ do
-        wrapped <- safeGet
-        return $ decodeResult' readPluginMaps wrapped
-
-instance FromJSON Result where
-    parseJSON (Object value') = do
-        type'  <- value' .: "type"
-        result' <- value' .: "result"
-        return $ decodeJsonResult readPluginMaps type' result'
-    parseJSON _ = mzero
-
-instance ToJSON Result where
-    toJSON (Result result') =
-        Aeson.object ["type" .= fqName result', "result" .= toJSON result']
-
-instance Resulting Result where
-    summary (Result a) = summary a
-
-instance Runnable Action Result where
-    exec (Action action') = do
-        execR <- exec action'
-        return $ flip fmap execR $ \result ->
-                Result result
-
-    execWith (Action action') result' = do
-        execR <- execWith action' result'
-        return $ flip fmap execR $ \result ->
-                Result result
+instance Runnable Action where
+    exec (Action action') = exec action'
+    execWith (Action action') = execWith action'
 
 instance Stashable Result where
-    key (Result a) = key a
+    key = key . resultWrapped
 
 -- | Wrap a concrete action in existential unless it is already an Action
-toAction :: (Runnable a b) => a -> Action
+toAction :: (Runnable a) => a -> Action
 toAction act = fromMaybe (Action act) (cast act)
 
-resultNow :: (MonadIO io, Runnable action b)
-          => Text -> action -> io ResultSummary
-resultNow text' action = do
+resultNow :: (MonadIO io, Runnable action, Portable result)
+          => result -> Text -> action -> io Result
+resultNow result text' action = do
     time <- getCurrentTime
-    return (ResultSummary time text' (toAction action))
+    return (Result (wrap result) time text' (toAction action))
 
 -- | Use to register your Action types so they can be
 -- deserialized dynamically at runtime; invoke as:
-registerAction :: forall a b. (Runnable a b, Resulting b)
+registerAction :: forall a. (Runnable a)
                => Proxy a -> ActionsWriter
 registerAction  action' = tell [
     ActionUnwrappers (proxyFqName action')
                      (unwrapAction (unWrap :: Unwrapper a))
                      (unwrapJsonAction (unWrapJson :: JsonUnwrapper a))
-                     (proxyFqName (Proxy :: Proxy b))
-                     (unwrapResult (unWrap :: Unwrapper b))
-                     (unwrapJsonResult (unWrapJson :: JsonUnwrapper b))
+                     (proxyFqName (Proxy :: Proxy (RunnableResult a)))
+                     (unwrapResult (unWrap :: Unwrapper (RunnableResult a)))
+
     ]
+
+unwrapResult :: Portable a => Unwrapper a -> Result -> Result
+unwrapResult uw result =
+    case extractResult result of
+         Just wrapped ->
+             case uw wrapped of
+                 Right unwrapped ->result {resultWrapped = wrap unwrapped}
+                 _ -> result
+         Nothing -> result
 
 -- | Used only to fix the type passed to 'register' - this should not
 -- ever be evaluated and will throw an error if it is
-actionType :: (Runnable a b) => Proxy a
+actionType :: (Runnable a) => Proxy a
 actionType = Proxy :: Proxy a
 
 -- | Does tryAny on exec and converts SomeException to RunnableFail.
-tryExec :: (Runnable action result, MonadAgent agent)
-          => action -> agent (Either RunnableFail result)
+tryExec :: (Runnable action, MonadAgent agent)
+          => action -> agent (Either RunnableFail Result)
 tryExec action' =
     either (Left . convert) id <$> tryAny (exec action')
 
 -- | Does tryAny on execWith and converts SomeException to RunnableFail.
-tryExecWith :: (Runnable action result, MonadAgent agent)
-          => action -> Result -> agent (Either RunnableFail result)
+tryExecWith :: (Runnable action, MonadAgent agent)
+          => action -> Result -> agent (Either RunnableFail Result)
 tryExecWith action' result' =
     either (Left . convert) id <$> tryAny (execWith action' result')
 
 -- | Like tryExec but hoists into an EitherT monad.
-tryExecET :: (Runnable action result, MonadAgent agent)
-          => action -> EitherT RunnableFail agent result
+tryExecET :: (Runnable action, MonadAgent agent)
+          => action -> EitherT RunnableFail agent Result
 tryExecET = tryExec >=> hoistEither
 
 -- | Like tryExecWith but hoists into an EitherT monad.
-tryExecWithET :: (Runnable action result, MonadAgent agent)
-          => action -> Result -> EitherT RunnableFail agent result
+tryExecWithET :: (Runnable action, MonadAgent agent)
+          => action -> Result -> EitherT RunnableFail agent Result
 tryExecWithET action' = tryExecWith action' >=> hoistEither
 
 -- | Unwrap a concrete type into an Action
 --
-unwrapAction :: (Runnable a b)
+unwrapAction :: (Runnable a)
              => Unwrapper a -> Wrapped -> FetchAction
 unwrapAction uw wrapped = Action <$> uw wrapped
 
-unwrapJsonAction :: (Runnable a b)
+unwrapJsonAction :: (Runnable a)
              => JsonUnwrapper a -> Value -> FetchAction
 unwrapJsonAction uw wrapped = Action <$> uw wrapped
-
-unwrapResult :: (Resulting b)
-             => Unwrapper b -> Wrapped -> Either String Result
-unwrapResult uw wrapped = Result <$> uw wrapped
-
-unwrapJsonResult :: (Resulting b)
-             => JsonUnwrapper b -> Value -> Either String Result
-unwrapJsonResult uw wrapped = Result <$> uw wrapped
 
 -- Wrap a concrete type for stash or send where it
 -- will be decoded to an Action or Result
@@ -274,7 +230,6 @@ decodeJsonAction pluginMap type' action' =
             Right act -> act
             Left s -> error $ "Error deserializing wrapper: " ++ s
         Nothing -> error $ "Type Name: " ++ convert type'
-                    ++ " not matched! Is your plugin registered?"
 
 -- | Set or re-set the top-level Action Map (done after plugins are registered)
 registerPluginMaps :: (MonadBase IO m) => UnwrappersMap -> m ()
@@ -294,22 +249,4 @@ readPluginMaps :: UnwrappersMap
 readPluginMaps = unsafePerformIO $ readIORef globalPluginMaps
 {-# NOINLINE readPluginMaps #-}
 
-decodeResult' :: UnwrappersMap -> Wrapped -> Result
-decodeResult' pluginMap wrapped =
-    case Map.lookup ("Result:" ++ wrappedTypeName wrapped) pluginMap of
-        Just uwMap -> case resultUnwrapper uwMap wrapped of
-            Right act -> act
-            Left s -> error $ "Error deserializing wrapper: " ++ s
-        Nothing -> error $ "Type Name: " ++ convert (wrappedTypeName wrapped)
-                ++ " not matched! Is your plugin registered?"
-
---used in serialization instances - throws an exception since Binary decode is no maybe
-decodeJsonResult :: UnwrappersMap -> Text -> Value -> Result
-decodeJsonResult pluginMap type' value' =
-    case Map.lookup ("Result:" ++ type') pluginMap of
-        Just uwMap -> case resultJsonUnwrapper uwMap value' of
-            Right act -> act
-            Left s -> error $ "Error deserializing wrapper: " ++ s
-        Nothing -> error $ "Type Name: " ++ convert type'
-                    ++ " not matched! Is your plugin registered?"
 deriveSerializers ''ActionEnvelope

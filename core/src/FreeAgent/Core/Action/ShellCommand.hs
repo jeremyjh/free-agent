@@ -19,7 +19,7 @@ where
 
 import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Internal.Lenses
-import           FreeAgent.Core.Action ()
+import           FreeAgent.Core.Action
 import           FreeAgent.Orphans ()
 
 import           Data.Aeson.TH (deriveJSON,Options(..), defaultOptions)
@@ -94,13 +94,7 @@ instance Stashable ShellCommand where
 instance Stashable ShellResult where
     key = key . shellResultOf
 
-instance Resulting ShellResult where
-    summary ShellResult{..} =
-        ResultSummary shellTimestamp
-                      shellStdout
-                      (Action shellResultOf)
-
-instance Runnable ShellCommand ShellResult where
+instance Runnable ShellCommand where
     exec cmd@ShellCommand{..} =
         shelly . errExit False
                . silently
@@ -123,7 +117,8 @@ instance Runnable ShellCommand ShellResult where
                 if checkMatch (convert cmdStdout) (convert cmdStderr) shellRegexMatch
                 then
                  do time <- getCurrentTime
-                    right $ ShellResult cmdStdout cmdStderr exitCode time cmd
+                    let result = ShellResult cmdStdout cmdStderr exitCode time cmd
+                    right (Result (wrap result) time cmdStdout (toAction cmd))
                 else left (GeneralFailure $ "Match failed: " <> tshow shellRegexMatch
                                          <> "\n In output: " <> cmdStdout
                                          <> "\n" <> cmdStderr )

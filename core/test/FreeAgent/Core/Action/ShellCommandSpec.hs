@@ -30,9 +30,9 @@ spec =
                           ,   shellEnv = [(env1, val1)]
                           ,   shellRegexMatch = MatchStdioSuccess "^va.1$"
                           }
-                Right res <- exec cmd
-                return $ take 36 (show res)
-            `shouldReturn` "ShellResult {shellStdout = \"val1\\n\","
+                Right (Just res) <- fmap extractResult <$> exec cmd
+                return (shellStdout res)
+            `shouldReturn` "val1\n"
 
         it "can NOT match stdout" $ do
             testAgent $ do
@@ -52,9 +52,9 @@ spec =
                           ,   shellChdir = "/usr/bin"
                           ,   shellRegexMatch = MatchStdioSuccess "/usr/bin"
                           }
-                Right res <- exec cmd
-                return $ take 36 (show res)
-            `shouldReturn` "ShellResult {shellStdout = \"/usr/bin"
+                Right (Just res) <- fmap extractResult <$> exec cmd
+                return (shellStdout res)
+            `shouldReturn` "/usr/bin\n"
 
 testAgent ma = quickRunAgent 500
                              ("4122"

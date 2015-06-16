@@ -30,7 +30,7 @@ import FreeAgent.Core.Protocol
 import FreeAgent.Process              as Process
 
 
-import Control.Error                  (hoistEither, (??))
+import Control.Error                  (hoistEither)
 import Data.Binary
 
 
@@ -148,15 +148,13 @@ instance ServerCall QueryActions where
 -- | Execute 'Action' corresponding to 'Key' with the current
 -- target server and extract the concrete result (if possible) to
 -- the expected type.
-executeStored :: (MonadAgent agent, Resulting result)
-                  => Key -> agent (Either ExecFail result)
+executeStored :: (MonadAgent agent)
+                  => Key -> agent (Either ExecFail Result)
 executeStored key' =
-    runEitherT $
-     do result' <- callResult >>= convEitherT >>= hoistEither
-        extractResult result' ?? EDeserializationFailure (tshow result')
+    runEitherT $ callResult >>= convEitherT >>= hoistEither
   where callResult = lift $ callServ $ ExecuteStored key'
 
-executeAction :: (MonadAgent agent, Runnable a b)
+executeAction :: (MonadAgent agent, Runnable a)
               => a -> agent (Either ExecFail Result)
 executeAction action' =
     callExecutive $ ExecuteAction (toAction action')
@@ -165,7 +163,7 @@ executeAction action' =
 -- receive a 'Result' for each 'Action' executed that matches the typed predicate
 -- argument. Only predicates for Actions in which the underlying concrete type
 -- matches will be evaluated.
-actionListener :: Runnable a b => (a -> Bool) -> NodeId -> String -> Listener
+actionListener :: Runnable a => (a -> Bool) -> NodeId -> String -> Listener
 actionListener af = ActionMatching (matchAction af)
 
 -- | Used with 'addListener' - defines a 'Listener' that will
@@ -174,8 +172,9 @@ actionListener af = ActionMatching (matchAction af)
 -- If you need the 'ActionMatcher' predicate to have access to the underlying
 -- concrete type, then pass the typed predicate to 'matchA' to make an
 -- 'ActionMatcher'.
-resultListener :: Resulting b
-            => ActionMatcher -> (b -> Bool) -> NodeId -> String -> Listener
+resultListener :: Portable b
+               => ActionMatcher -> (b -> Bool)
+               -> NodeId -> String -> Listener
 resultListener af rf = ResultMatching af (matchResult rf)
 
 serverName :: String

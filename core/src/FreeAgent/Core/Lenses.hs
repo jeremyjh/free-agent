@@ -19,5 +19,4 @@ makeFields = makeLensesWith abbreviatedFields
 
 makeLensesWith abbreviatedFields ''AgentConfig
 makeLensesWith abbreviatedFields ''PluginDef
-makeLensesWith abbreviatedFields ''ResultSummary
 makeLensesWith abbreviatedFields ''Peer
