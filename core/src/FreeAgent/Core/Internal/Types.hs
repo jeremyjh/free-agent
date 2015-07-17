@@ -45,7 +45,7 @@ import           Control.Monad.State                  (StateT, mapStateT)
 import           Control.Monad.Trans.Control
 import           Data.Aeson                           (FromJSON (..),
                                                        ToJSON (..), Value (..),
-                                                       object, (.:), (.=))
+                                                       object, (.:), (.:?), (.=))
 import qualified Data.ByteString.Base64               as B64
 import           Data.Default                         (Default (..))
 import           Data.SafeCopy                        --(SafeCopy(..))
@@ -74,13 +74,15 @@ instance (Stashable a, Eq a, ToJSON a, FromJSON a) => Portable a
 -- | Wrapped lets us store an Action or Result and recover it using
          -- it's registered Unwrapper
 data Wrapped
-  = WrappedEncoded  Key !Text !ByteString
+  = WrappedEncoded  !Key !Text !ByteString
+  | WrappedJson !Key !Text !Value
   | forall a. Portable a =>
     WrappedExists !Text !a
         deriving (Typeable)
 
 wrappedTypeName :: Wrapped -> Text
 wrappedTypeName (WrappedEncoded _ type' _) = type'
+wrappedTypeName (WrappedJson  _ type' _) = type'
 wrappedTypeName (WrappedExists type' _) = type'
 
 instance NFData Wrapped where
@@ -88,6 +90,7 @@ instance NFData Wrapped where
 
 instance Show Wrapped where
     show (WrappedEncoded key' type' _) = "WrappedEncoded: " ++ show (key', type')
+    show (WrappedJson key' type' val') = "WrappedJson: " ++ show (key', type',val')
     show (WrappedExists _ payload) = "WrappedExists: " ++ show payload
 
 safeEncode :: SafeCopy a => a -> ByteString
@@ -98,9 +101,16 @@ instance Eq Wrapped where
       key' == key'' && type' == type'' && bytes' == bytes''
   (WrappedEncoded key' type' bytes') == (WrappedExists type'' payload) =
       key' == key payload && type' == type'' && bytes' == safeEncode payload
+  (WrappedJson key' type' val') == (WrappedJson key'' type'' val'') =
+      key' == key'' && type' == type'' && val' == val''
+  (WrappedJson key' type' val') == (WrappedExists type'' payload) =
+      key' == key payload && type' == type'' && val' == toJSON payload
   (WrappedExists type' a) == (WrappedExists type'' b) =
       type' == type'' && maybe False (a ==) (cast b)
   w1@WrappedExists {} == w2@WrappedEncoded {} = w2 == w1
+  w1@WrappedExists {} == w2@WrappedJson {} = w2 == w1
+  WrappedEncoded {} == WrappedJson {} = False
+  WrappedJson {} == WrappedEncoded {} = False
 
 instance SafeCopy Wrapped where
     version = 1
@@ -111,6 +121,10 @@ instance SafeCopy Wrapped where
      do safePut key'
         safePut type'
         safePut bytes'
+    putCopy (WrappedJson key' type' val') = contain $
+     do safePut key'
+        safePut type'
+        safePut val'
     putCopy (WrappedExists type' payload) =
         putCopy (WrappedEncoded (key payload)
                                 type'
@@ -124,6 +138,10 @@ instance Binary Wrapped where
      do Binary.put key'
         Binary.put type'
         Binary.put bytes'
+    put (WrappedJson key' type' val') =
+     do Binary.put key'
+        Binary.put type'
+        Binary.put val'
     put (WrappedExists type' payload) =
         Binary.put (WrappedEncoded (key payload)
                                    type'
@@ -131,23 +149,30 @@ instance Binary Wrapped where
 
 instance Stashable Wrapped where
   key (WrappedEncoded key' _ _)= key'
+  key (WrappedJson key' _ _)= key'
   key (WrappedExists _ payload)= key payload
 
 instance FromJSON Wrapped where
     parseJSON (Object value') = do
         key' <- value' .: "key"
         typeName' <- value' .: "typeName"
-        b64T :: Text <- value' .: "bytes"
-        return (WrappedEncoded key' typeName' (B64.decodeLenient (convert b64T)))
+        mb64T :: Maybe Text <- value' .:? "bytes"
+        case mb64T of
+            Just b64T ->
+                return (WrappedEncoded key' typeName' (B64.decodeLenient (convert b64T)))
+            Nothing -> do
+                val <- value' .: "value"
+                return (WrappedJson key' typeName' val) 
     parseJSON _ = mzero
 
 instance ToJSON Wrapped where
     toJSON (WrappedEncoded key' typeName' value') =
         let b64T = (convert $ B64.encode value') :: Text
         in object ["key" .= key', "typeName" .= typeName', "bytes" .= b64T]
+    toJSON (WrappedJson key' typeName' value') =
+        object ["key" .= key', "typeName" .= typeName', "value" .= value']
     toJSON (WrappedExists type' payload) =
-      let b64T = (convert $ B64.encode $ safeEncode payload) :: Text
-      in object ["key" .= key payload, "typeName" .= type', "bytes" .=  b64T]
+        object ["key" .= key payload, "typeName" .= type', "value" .=  toJSON payload]
 
 data Action = forall a. (Runnable a) => Action a
         deriving Typeable

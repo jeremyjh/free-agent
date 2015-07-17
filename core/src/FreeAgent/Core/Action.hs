@@ -205,6 +205,10 @@ wrap st = WrappedExists (fqName st) st
 -- | Unwrap a 'Wrapper' into a (known) concrete type
 unWrap :: forall a. (Portable a) => Wrapped -> Either String a
 unWrap (WrappedEncoded _ _ bytes')= safeDecode bytes'
+unWrap (WrappedJson _ _ val')=
+  case fromJSON val' of
+      Aeson.Success val -> Right val
+      Aeson.Error reason -> Left reason
 unWrap (WrappedExists _ payload) = maybe (Left failcast) Right (cast payload)
     where failcast = convert $ fqName payload <> " does not match " <> fqName (undefined :: a)
 
