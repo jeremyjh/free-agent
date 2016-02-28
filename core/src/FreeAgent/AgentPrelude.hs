@@ -1,11 +1,6 @@
-{-# LANGUAGE CPP #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell   #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE CPP, DeriveDataTypeable, FlexibleContexts, FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude, OverloadedStrings  #-}
+{-# LANGUAGE ScopedTypeVariables, TemplateHaskell                         #-}
 
 
 -- | Extensions to ClassyPrelude that are useful to most modules & plugins in Dash
@@ -17,6 +12,8 @@ module FreeAgent.AgentPrelude
     , Semigroup(..)
     , forM_, forM
     , Generic
+    , Path.FilePath
+    , (</>)
     , P.show
     , tshow
     , Time.UTCTime(..)
@@ -47,34 +44,38 @@ module FreeAgent.AgentPrelude
     ) where
 
 
-import           BasicPrelude hiding (handle, show, (<>), forM_, forM, init)
-import qualified Prelude                       as P
+import           BasicPrelude                    hiding (FilePath, forM, forM_, handle,
+                                                  init, show, (</>), (<>))
+import qualified Prelude                         as P
 
-import           Control.DeepSeq.Generics      (NFData(..), genericRnf)
-import           Control.Error                 (EitherT, runEitherT, hoistEither)
-import           Control.Monad.Logger          (logDebug, logInfo, logWarn, logError)
-import           Control.Monad.Logger.Quote    (qdebug, qinfo, qwarn, qerror, qdebugNS)
-import Control.Monad.Trans.Control (MonadBaseControl)
-import           Data.Binary                   as Binary (Binary (..))
-import           Data.Convertible              (Convertible(..), convert)
-import           Data.Default                  (def)
+import           Control.DeepSeq.Generics        (NFData (..), genericRnf)
+import           Control.Error                   (EitherT, hoistEither, runEitherT)
+import           Control.Monad.Logger            (logDebug, logError, logInfo, logWarn)
+import           Control.Monad.Logger.Quote      (qdebug, qdebugNS, qerror, qinfo, qwarn)
+import           Control.Monad.Trans.Control     (MonadBaseControl)
+import           Data.Binary                     as Binary (Binary (..))
+import           Data.Convertible                (Convertible (..), convert)
+import           Data.Convertible.Instances.Text ()
+import           Data.Default                    (def)
 import           Data.Typeable
-import           GHC.Generics                 (Generic)
-import           Language.Haskell.TH           (Dec, Name, Q)
-import           Language.Haskell.TH.Lib       (conT)
+import           GHC.Generics                    (Generic)
+import           Language.Haskell.TH             (Dec, Name, Q)
+import           Language.Haskell.TH.Lib         (conT)
 
-import           Data.Foldable (forM_)
-import           Data.Traversable(forM)
-import           Data.Aeson                    (FromJSON(..), ToJSON)
-import           Data.Semigroup                (Semigroup(..))
-import qualified Data.Time.Clock as            Time
-import qualified Data.Time.Calendar as            Time
-import           Data.SafeCopy
-       (Version, deriveSafeCopy, base, extension)
-import qualified Data.Text as Text
-import           FileLocation                  (dbg, debug, err)
+import           Data.Aeson                      (FromJSON (..), ToJSON)
+import           Data.Foldable                   (forM_)
+import           Data.SafeCopy                   (Version, base, deriveSafeCopy,
+                                                  extension)
+import           Data.Semigroup                  (Semigroup (..))
+import qualified Data.Text                       as Text
+import qualified Data.Time.Calendar              as Time
+import qualified Data.Time.Clock                 as Time
+import           Data.Traversable                (forM)
+import           FileLocation                    (dbg, debug, err)
+import           Filesystem.Path                 ((</>))
+import qualified Filesystem.Path.CurrentOS       as Path
 
-import           Control.Exception.Enclosed    (tryAny, catchAny)
+import           Control.Exception.Enclosed      (catchAny, tryAny)
 
 #if __GLASGOW_HASKELL__ < 708
 data Proxy a = Proxy deriving Typeable
@@ -173,7 +174,6 @@ deriveSerializers name =
 tryAnyConvT :: (MonadBaseControl IO io, Convertible SomeException e)
             => io a -> EitherT e io a
 tryAnyConvT ma = lift (tryAny ma) >>= convEitherT
-
 
 getCurrentTime :: MonadIO io => io Time.UTCTime
 getCurrentTime = liftIO Time.getCurrentTime

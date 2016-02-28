@@ -1,8 +1,7 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleInstances     #-}
-{-# LANGUAGE FunctionalDependencies, MultiParamTypeClasses            #-}
-{-# LANGUAGE NoImplicitPrelude, OverloadedStrings, RecordWildCards    #-}
-{-# LANGUAGE ScopedTypeVariables, StandaloneDeriving, TemplateHaskell #-}
-{-# LANGUAGE TypeFamilies, QuasiQuotes                                #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleContexts, FlexibleInstances #-}
+{-# LANGUAGE FunctionalDependencies, MultiParamTypeClasses, NoImplicitPrelude       #-}
+{-# LANGUAGE OverloadedStrings, QuasiQuotes, RecordWildCards, ScopedTypeVariables   #-}
+{-# LANGUAGE StandaloneDeriving, TemplateHaskell, TypeFamilies                      #-}
 
 
 module FreeAgent.Core.Server.Schedule
@@ -10,26 +9,23 @@ module FreeAgent.Core.Server.Schedule
     ) where
 
 import           FreeAgent.AgentPrelude
-import           FreeAgent.Core hiding (lookupEvent)
+import           FreeAgent.Core                           hiding (lookupEvent)
 import           FreeAgent.Core.Lenses
+import           FreeAgent.Core.Protocol.Schedule         (serverName)
 import           FreeAgent.Database.AcidState
-import           FreeAgent.Core.Protocol.Schedule (serverName)
 import           FreeAgent.Server.ManagedAgent
 
-import           Control.Monad.Reader                       (ask)
-import           Control.Monad.State                        (StateT)
-import qualified Data.Map.Strict                            as Map
-import qualified Data.Set                                   as Set
+import           Control.Monad.Reader                     (ask)
+import           Control.Monad.State                      (StateT)
+import qualified Data.Map.Strict                          as Map
+import qualified Data.Set                                 as Set
 
-import           Control.Distributed.Process.Platform.Time
-import           Control.Distributed.Process.Platform.Timer (Tick (..),
-                                                             TimerRef,
-                                                             cancelTimer,
-                                                             sendAfter)
+import           Control.Distributed.Process.Extras.Time
+import           Control.Distributed.Process.Extras.Timer (Tick (..), TimerRef,
+                                                           cancelTimer, sendAfter)
 
-import           Data.Default                               (Default (..))
-import           Data.Time.Clock                            (addUTCTime,
-                                                             diffUTCTime)
+import           Data.Default                             (Default (..))
+import           Data.Time.Clock                          (addUTCTime, diffUTCTime)
 import           System.Cron
 
 
@@ -49,7 +45,7 @@ instance Default SchedulePersist where
 data ScheduleState
    = ScheduleState { _stateAcid      :: !(AcidState SchedulePersist)
                    , _stateTickerRef :: Maybe TimerRef
-                   , _stateTicking  :: Bool
+                   , _stateTicking   :: Bool
                    } deriving (Typeable, Generic)
 
 makeFields ''SchedulePersist

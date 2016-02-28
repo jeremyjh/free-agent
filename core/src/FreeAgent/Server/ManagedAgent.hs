@@ -45,13 +45,13 @@ import qualified Data.Map.Strict as Map
 
 
 import Control.Concurrent.Lifted                           (threadDelay)
-import Control.Distributed.Process.Platform                (Addressable, linkOnFailure)
-import Control.Distributed.Process.Platform.ManagedProcess as Managed hiding (action,
+import Control.Distributed.Process.Extras                  (Addressable, linkOnFailure)
+import Control.Distributed.Process.ManagedProcess as Managed hiding    (action,
                                                                        call, cast,
                                                                        shutdown,
                                                                        syncCallChan)
-import Control.Distributed.Process.Platform.Supervisor     as Supervisor
-import Control.Distributed.Process.Platform.Time           (Delay (..), milliSeconds)
+import Control.Distributed.Process.Supervisor               as Supervisor
+import Control.Distributed.Process.Extras.Time             (Delay (..), milliSeconds)
 
 type AgentStats = Map Text Int
 

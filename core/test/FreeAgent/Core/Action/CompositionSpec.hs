@@ -15,7 +15,7 @@ import           FreeAgent.Fixtures
 
 import qualified Data.Binary as Binary
 
-import Control.Distributed.Process.Platform.Time
+import Control.Distributed.Process.Extras.Time
        (microsecondsToNominalDiffTime)
 import           Test.Hspec
 import Data.Time.Clock (diffUTCTime)

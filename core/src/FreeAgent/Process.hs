@@ -26,22 +26,24 @@ import           Control.Distributed.Process.Closure                            
 import           Control.Distributed.Process.MonadBaseControl                     ()
 import           Control.Distributed.Process.Node                                 (localNodeId)
 import qualified Control.Distributed.Process.Node                                 as Node
-import           Control.Distributed.Process.Platform                             (Addressable, NFSerializable, Resolvable, Routable (..))
-import qualified Control.Distributed.Process.Platform                             as Platform (__remoteTable)
-import qualified Control.Distributed.Process.Platform                             as Base
-import           Control.Distributed.Process.Platform.Async                       (Async, AsyncResult (..))
-import qualified Control.Distributed.Process.Platform.Async                       as Base
-import qualified Control.Distributed.Process.Platform.ManagedProcess.UnsafeClient as Managed
-import           Control.Distributed.Process.Platform.Supervisor                  (ChildSpec)
-import qualified Control.Distributed.Process.Platform.UnsafePrimitives            as NF
+import           Control.Distributed.Process.Extras                               (Addressable, NFSerializable, Resolvable, Routable (..))
+
+import           Control.Distributed.Process.Async                       (Async, AsyncResult (..))
+import qualified Control.Distributed.Process.Extras                               as Extras
+import qualified Control.Distributed.Process.Async                                as Base
+import qualified Control.Distributed.Process.ManagedProcess.UnsafeClient as Managed
+import           Control.Distributed.Process.Supervisor                  (ChildSpec)
+import qualified Control.Distributed.Process.Extras.UnsafePrimitives            as NF
 import           Control.Distributed.Backend.P2P      (makeNodeId)
-import           Control.Error                                                    (EitherT)
+import           Control.Error                        (EitherT)
+
 
 instance MonadProcess m => MonadProcess (EitherT e m) where
     liftP = lift . liftP
 
 initRemoteTable :: RemoteTable
-initRemoteTable = Platform.__remoteTable Node.initRemoteTable
+initRemoteTable = Extras.__remoteTable Node.initRemoteTable
+
 
 -- | Send a processId a message - note this is actually
 -- 'Routable.unsafeSendTo' from Control.Distributed.Process.Platform
@@ -78,7 +80,7 @@ waitRegistration sname = loop
 
 resolve :: (MonadProcess m, Resolvable addr)
         => addr -> m (Maybe ProcessId)
-resolve = liftP . Base.resolve
+resolve = liftP . Extras.resolve
 
 wait :: MonadProcess process
      => Async a -> process (AsyncResult a)

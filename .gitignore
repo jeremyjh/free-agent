@@ -2,6 +2,7 @@ dist
 cabal-dev
 vendor/
 .cabal-sandbox
+.stack-work
 cabal.sandbox.config
 *.o
 *.hi

@@ -17,7 +17,7 @@ import qualified FreeAgent.TestHelper as Helper
 import           FreeAgent.Fixtures
 
 import           Control.Concurrent.Lifted (threadDelay)
-import           Control.Distributed.Process.Platform.Timer (Tick(..))
+import           Control.Distributed.Process.Extras.Timer (Tick(..))
 import           Test.Hspec
 
 main :: IO ()

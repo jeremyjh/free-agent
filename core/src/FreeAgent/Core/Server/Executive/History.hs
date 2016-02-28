@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleInstances        #-}
 {-# LANGUAGE FunctionalDependencies, GeneralizedNewtypeDeriving          #-}
 {-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude, OverloadedStrings #-}

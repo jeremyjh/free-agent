@@ -15,7 +15,7 @@ import FreeAgent.AgentPrelude
 import FreeAgent.Core.Internal.Types as X
 import FreeAgent.Core.Lenses         as X
 
-import Control.Lens                  as X (Getting, Lens', Optical, Profunctor,
+import Control.Lens                  as X (Getting, Lens', LensLike',
                                            makeLenses)
 
 import Control.Applicative           (Const)
@@ -39,10 +39,8 @@ viewPlugins lens = view (plugins.lens) <$> askContext
 viewContext :: (ContextReader m) => Getting a AgentContext a -> m a
 viewContext lens = view lens <$> askContext
 
-viewsConfig :: forall f p r a. (ContextReader f, Profunctor p)
-            => (p a (Const r a) -> AgentConfig -> Const r AgentConfig) -> p a r -> f r
+viewsConfig :: ContextReader f => ((a -> Const b a) -> AgentConfig -> Const b AgentConfig) -> (a -> b) -> f b
 viewsConfig lens f = views (agentConfig.lens) f <$> askContext
 
-viewsContext :: forall f p r a. (ContextReader f, Profunctor p)
-             => Optical p (->) (Const r) AgentContext AgentContext a a -> p a r -> f r
+viewsContext :: ContextReader f => LensLike' (Const b) AgentContext a -> (a -> b) -> f b
 viewsContext lens f = views lens f <$> askContext

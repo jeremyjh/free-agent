@@ -34,7 +34,7 @@ import           Data.Typeable                        (cast)
 import           Control.Distributed.Process.Lifted.Class
 import           Control.Distributed.Process          (NodeId)
 import           Control.Distributed.Process.Node     (LocalNode)
-import           Control.Distributed.Process.Platform (Resolvable (..))
+import           Control.Distributed.Process.Extras   (Resolvable (..))
 import           Control.Error                        (mapEitherT)
 import           Control.Monad.Base                   (MonadBase)
 import           Control.Monad.Logger                 (LogLevel (..), LoggingT,
@@ -309,16 +309,16 @@ instance MonadAgent Agent where
     withAgentContext f ma = Agent $ local f (unAgent ma)
 
 instance MonadBaseControl IO Agent where
-  newtype StM Agent a = StAgent {unSTAgent :: StM (ReaderT AgentContext Process) a}
-  restoreM (StAgent m) = Agent $ restoreM m
-  liftBaseWith f = Agent $ liftBaseWith $ \ rib -> f (fmap StAgent . rib . unAgent)
+  type StM Agent a = StM (ReaderT AgentContext Process) a
+  liftBaseWith f = Agent $ liftBaseWith $ \ rib -> f (rib . unAgent)
+  restoreM = Agent . restoreM
 
 instance MonadProcessBase Agent where
   type StMP Agent a = StMP (ReaderT AgentContext Process) a
   restoreMP = Agent . restoreMP
   liftBaseWithP f = Agent $ liftBaseWithP $ \ rib -> f (rib . unAgent)
 
-instance MonadLogger (Agent) where
+instance MonadLogger Agent where
     monadLoggerLog !a !b !level !d =
         doLog =<< configMinLogLevel . contextAgentConfig <$> askContext
       where doLog minlev

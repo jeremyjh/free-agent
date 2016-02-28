@@ -1,21 +1,17 @@
-{-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, NoImplicitPrelude, OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell, TypeFamilies                                           #-}
 
 
 module FreeAgent.Core.Action.Composition where
 
-import           FreeAgent.AgentPrelude
-import           FreeAgent.Core.Internal.Lenses
-import           FreeAgent.Core.Action
-import           FreeAgent.Process
+import FreeAgent.AgentPrelude
+import FreeAgent.Core.Action
+import FreeAgent.Core.Internal.Lenses
+import FreeAgent.Process
 
-import           Control.Monad.Reader(runReaderT)
+import Control.Monad.Reader                     (runReaderT)
 
-import Control.Distributed.Process.Platform.Async (async)
+import Control.Distributed.Process.Async        (async, task)
 import Control.Distributed.Process.Serializable (Serializable)
 
 -- | Run an Agent action with an extracted AgentContext.
@@ -33,7 +29,7 @@ agentAsync :: (MonadAgent agent, Serializable a)
            => Agent a -> agent (Async a)
 agentAsync ma =
  do ctxt <- askContext
-    liftP $ async (withAgent ctxt ma)
+    liftP $ async $ task (withAgent ctxt ma)
 
 -- | A composite 'Action', can be constructed with combinators
 -- such as 'planExec' and 'thenExec'. The comments for each

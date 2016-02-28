@@ -25,7 +25,7 @@ import           FreeAgent.Process
 import           Data.Binary
 import qualified Data.Set                             as Set
 
-import qualified Control.Distributed.Process.Platform as Platform
+import qualified Control.Distributed.Process.Extras   as Extras
 import           Control.Error                        ((!?))
 
 data CallFail = RoutingFailed | ServerCrash String
@@ -91,21 +91,21 @@ data QueryPeerServers = QueryPeerServers String (Set Context) (Set Zone)
 instance Binary QueryPeerServers
 instance NFData QueryPeerServers where rnf = genericRnf
 
-instance Platform.Resolvable (Target, String) where
-    resolve (Local, name') = resolve name'
+instance Extras.Resolvable (Target, String) where
+    resolve (Local, name') = Extras.resolve name'
     resolve (RemoteCache nodestr, name') = do
         mpid <- whereis $ nodestr ++ name'
         case mpid of
             Just _ -> return mpid
             Nothing ->
              do let nodeId = makeNodeId nodestr
-                mpid' <- resolve (nodeId, name')
+                mpid' <- Extras.resolve (nodeId, name')
                 case mpid' of
                     Just pid ->
                      do register (nodestr ++ name') pid
                         return (Just pid)
                     Nothing -> return Nothing
-    resolve (Remote peer, name') = resolve (peer, name')
+    resolve (Remote peer, name') = Extras.resolve (peer, name')
     resolve (Route contexts' zones', name') = do
         peers <- queryLocalPeerServers name'
                                   (Set.fromList contexts')
@@ -113,7 +113,7 @@ instance Platform.Resolvable (Target, String) where
         foundPeer peers
       where foundPeer peers
                 | peers == Set.empty = return Nothing
-                | otherwise = let peer:_ = Set.toList peers in resolve (peer, name')
+                | otherwise = let peer:_ = Set.toList peers in Extras.resolve (peer, name')
 
 queryLocalPeerServers :: MonadProcess process
                 => String -> Set Context -> Set Zone

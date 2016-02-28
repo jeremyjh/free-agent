@@ -5,66 +5,13 @@ build-type: Custom
 license: BSD3
 license-file: ../LICENSE
 maintainer: Jeremy Huffman
-synopsis: 
-    Distributed task management for application and systems automation.
+synopsis: Distributed task management for application and systems automation.
 description:
     Distributed task management for application and systems automation.
 category: System
 author: Jeremy Huffman
- 
+
 library
-    build-depends:
-        base < 5,
-        template-haskell,
-        process >=1.1.0.2 && <1.3,
-        text >=0.11.3.1 && <1.3,
-        basic-prelude, 
-        bytestring >=0.10.0.2 && <0.11,
-        mtl >=2.1.2 && <2.3,
-        file-location >=0.4.5.2 && <0.5,
-        lifted-base >=0.2.3.0 && <0.3,
-        lens ==4.6.*,
-        cereal >=0.4.0.1 && <0.5,
-        safecopy >=0.8.3 && <0.9,
-        containers >=0.5.0.0 && <0.6,
-        data-default >=0.5.3 && <0.6,
-        distributed-process >=0.5.0 && <0.6,
-        distributed-process-monad-control >=0.5.0 && <0.6,
-        distributed-process-lifted,
-        distributed-process-platform >=0.1.0 && <0.2,
-        distributed-process-p2p >=0.1.3.0 && <0.2,
-        distributed-static >=0.3.0.0 && <0.4,
-        network-transport-tcp >=0.4.0 && <0.5,
-        network-transport >=0.4.0.0 && <0.5,
-        transformers-base >=0.4.2 && <0.5,
-        monad-control >=0.3.3.0 && <0.4,
-        binary >=0.7.2.1 && <0.8,
-        time >=1.4.0.1 && <1.5,
-        old-locale >=1.0.0.5 && <1.1,
-        fast-logger >=2.1.5 && <2.3,
-        monad-logger >=0.3.7 && <0.4,
-        deepseq >=1.3.0.1 && <1.4,
-        deepseq-generics >=0.1.1.1 && <0.2,
-        uuid >=1.3.3 && <1.4,
-        shakespeare >=2.0.1.1 && <2.1,
-        transformers >=0.3.0.0 && <0.5,
-        errors >=1.4.7 && <1.5,
-        convertible >=1.1.0.0 && <1.2,
-        acid-state >=0.12.2 && <0.13,
-        filepath >=1.3.0.1 && <1.4,
-        aeson >=0.7.0.6 && <0.9,
-        yaml >=0.8.8.4 && <0.9,
-        cron >=0.2.1 && <0.3,
-        attoparsec >=0.11.3.4 && <0.13,
-        shelly >=1.5.4.1 && <1.6,
-        regex-compat >=0.95.1 && <0.96,
-        unordered-containers >=0.2.3.0 && <0.3,
-        scientific >=0.3.3.0 && <0.4,
-        base64-bytestring >=1.0.0.1 && <1.1,
-        data-clist >=0.0.7.2 && <0.1,
-        enclosed-exceptions >= 1.0.1 && < 1.1,
-        system-filepath >= 0.4 && < 0.5,
-        semigroups >= 0.16 && < 0.17
     exposed-modules:
         FreeAgent.Core
         FreeAgent.Core.Agent
@@ -90,39 +37,93 @@ library
         FreeAgent.Core.Action.Composition
         FreeAgent.Core.Action.ShellCommand
         Control.Monad.Logger.Quote
-    exposed: True
-    buildable: True
+    build-depends:
+        base -any,
+        template-haskell >=2.10.0.0 && <2.11,
+        process >=1.1.0.2 && <1.3,
+        text >=0.11.3.1 && <1.3,
+        basic-prelude >=0.5.0 && <0.6,
+        bytestring >=0.10.0.2 && <0.11,
+        mtl >=2.1.2 && <2.3,
+        file-location >=0.4.5.2 && <0.5,
+        lifted-base >=0.2.3.0 && <0.3,
+        lens >=4.6 && <4.14,
+        cereal >=0.4.0.1 && <0.6,
+        safecopy >=0.8.3 && <0.10,
+        containers >=0.5.0.0 && <0.6,
+        data-default >=0.5.3 && <0.6,
+        distributed-process >=0.5.0 && <0.6,
+        distributed-process-monad-control >=0.5.0 && <0.6,
+        distributed-process-lifted >=0.2.0 && <0.3,
+        distributed-process-client-server >=0.1.3.2 && <0.2,
+        distributed-process-extras >=0.2.1.2 && <0.3,
+        distributed-process-async >=0.2.3 && <0.3,
+        distributed-process-supervisor >=0.1.3.2 && <0.2,
+        distributed-process-p2p >=0.1.3.0 && <0.2,
+        distributed-static >=0.3.0.0 && <0.4,
+        network-transport-tcp >=0.4.0 && <0.5,
+        network-transport >=0.4.0.0 && <0.5,
+        transformers-base >=0.4.2 && <0.5,
+        monad-control >=0.3.3.0 && <1.1,
+        binary >=0.7.2.1 && <0.8,
+        time >=1.4.0.1 && <1.6,
+        old-locale >=1.0.0.5 && <1.1,
+        fast-logger >=2.1.5 && <2.5,
+        monad-logger >=0.3.7 && <0.4,
+        deepseq >=1.3.0.1 && <1.5,
+        deepseq-generics >=0.1.1.1 && <0.2,
+        uuid >=1.3.3 && <1.4,
+        shakespeare >=2.0.1.1 && <2.1,
+        transformers >=0.3.0.0 && <0.5,
+        errors >=1.4.7 && <1.5,
+        convertible >=1.1.0.0 && <1.2,
+        acid-state >=0.12.2 && <0.15,
+        filepath >=1.3.0.1 && <1.5,
+        aeson >=0.7.0.6 && <0.10,
+        yaml >=0.8.8.4 && <0.9,
+        cron >=0.2.1 && <0.4,
+        attoparsec >=0.11.3.4 && <0.14,
+        shelly >=1.5.4.1 && <1.7,
+        regex-compat >=0.95.1 && <0.96,
+        unordered-containers >=0.2.3.0 && <0.3,
+        scientific >=0.3.3.0 && <0.4,
+        base64-bytestring >=1.0.0.1 && <1.1,
+        data-clist >=0.0.7.2 && <0.1,
+        enclosed-exceptions >=1.0.1 && <1.1,
+        system-filepath ==0.4.*,
+        semigroups >=0.16 && <0.19
     default-language: Haskell2010
     hs-source-dirs: src
     ghc-prof-options: -O2 -auto-all
     ghc-options: -Wall
- 
+
 test-suite spec
+    type: exitcode-stdio-1.0
+    main-is: Spec.hs
     build-depends:
-        base,
+        base -any,
         free-agent-core -any,
-        hspec >=2.0.2 && <2.1,
+        hspec >=2.0.2 && <2.3,
         process >=1.1.0.2 && <1.3,
         bytestring >=0.10.0.2 && <0.11,
-        lens >=4.3 && <4.7,
-        cereal >=0.4.0.1 && <0.5,
-        safecopy >=0.8.3 && <0.9,
+        lens >=4.3 && <4.14,
+        cereal >=0.4.0.1 && <0.6,
+        safecopy >=0.8.3 && <0.10,
         containers >=0.5.0.0 && <0.6,
         mtl >=2.1.2 && <2.3,
         distributed-process >=0.5.0 && <0.6,
-        distributed-process-platform >=0.1.0 && <0.2,
+        distributed-process-client-server >=0.1.3.2 && <0.2,
+        distributed-process-extras >=0.2.1.2 && <0.3,
         network-transport >=0.4.0.0 && <0.5,
         network-transport-tcp >=0.4.0 && <0.5,
         lifted-base >=0.2.3.0 && <0.3,
         text >=0.11.3.1 && <1.3,
         binary >=0.7.2.1 && <0.8,
-        aeson >=0.7.0.6 && <0.9,
+        aeson >=0.7.0.6 && <0.10,
         yaml >=0.8.8.4 && <0.9,
-        time >=1.4.0.1 && <1.5,
-        enclosed-exceptions
-    type: exitcode-stdio-1.0
-    main-is: Spec.hs
-    buildable: True
+        time >=1.4.0.1 && <1.6,
+        unordered-containers >=0.2.5.1 && <0.3,
+        enclosed-exceptions >=1.0.1.1 && <1.1
     default-language: Haskell2010
     hs-source-dirs: test
     other-modules:

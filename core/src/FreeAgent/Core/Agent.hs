@@ -1,5 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude, OverloadedStrings, PatternGuards, QuasiQuotes #-}
-{-# LANGUAGE ScopedTypeVariables                                              #-}
+{-# LANGUAGE FlexibleContexts, NoImplicitPrelude, OverloadedStrings, PatternGuards #-}
+{-# LANGUAGE QuasiQuotes, ScopedTypeVariables                                      #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-} -- Default PluginSet
 
@@ -21,22 +21,23 @@ module FreeAgent.Core.Agent
     , agentAsync
     ) where
 
-import qualified Prelude as P
 import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Action                  (actionType, registerAction,
                                                          registerPluginMaps)
-import           FreeAgent.Core.Action.Composition      (ActionPlan, withAgent, agentAsync)
+import           FreeAgent.Core.Action.Composition      (ActionPlan, agentAsync,
+                                                         withAgent)
 import           FreeAgent.Core.Action.ShellCommand     (ShellCommand)
 import           FreeAgent.Core.Internal.Lenses
-import           FreeAgent.Core.Protocol.Peer            (warmRemoteCache)
+import           FreeAgent.Core.Protocol.Peer           (warmRemoteCache)
 import           FreeAgent.Process                      (DiedReason (..), NodeId,
                                                          RemoteTable, SendPort,
                                                          localNodeId, match, receiveWait,
                                                          reregister, say, sendChan,
                                                          spawnLocal)
+import qualified Prelude                                as P
 
-import           Control.Monad.Writer                   (execWriter, tell)
 import           Control.Monad.Reader                   (runReaderT)
+import           Control.Monad.Writer                   (execWriter, tell)
 import           Data.Default                           (Default)
 import           Data.Dynamic                           (fromDynamic, toDyn)
 import qualified Data.Map                               as Map

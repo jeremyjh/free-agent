@@ -2,7 +2,7 @@
 {-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude, OverloadedStrings    #-}
 {-# LANGUAGE StandaloneDeriving, TemplateHaskell                            #-}
 
-{-# LANGUAGE FlexibleInstances, OverlappingInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -26,16 +26,16 @@ import           Control.Monad.Logger        (MonadLogger (..))
 import qualified Data.ByteString.Char8       as BS
 import qualified Data.ByteString.Lazy.Char8  as LBS
 import qualified Data.Serialize              as Cereal
-import qualified Data.Text.Encoding          as Text (decodeUtf8, encodeUtf8)
+
 import qualified Data.Text                   as Text
 
-import qualified Data.CircularList as CL
-import Data.CircularList (CList)
+import           Data.CircularList           (CList)
+import qualified Data.CircularList           as CL
 
 import           Data.Acid                   (AcidState)
-import Data.Convertible (ConvertError(..))
+import           Data.Convertible            (ConvertError (..))
 import           Data.UUID                   (UUID)
-import qualified Filesystem.Path.CurrentOS as F
+import qualified Filesystem.Path.CurrentOS   as F
 
 import           Control.Distributed.Process (Closure)
 
@@ -56,12 +56,6 @@ instance Convertible ByteString String where
 
 instance Convertible String ByteString where
     safeConvert = return . BS.pack
-
-instance Convertible Text ByteString where
-    safeConvert = return . Text.encodeUtf8
-
-instance Convertible ByteString Text where
-    safeConvert = return . Text.decodeUtf8
 
 instance Convertible LByteString String where
     safeConvert = return . LBS.unpack
@@ -87,11 +81,6 @@ instance Convertible FilePath Text where
                                               "Text"
                                               (Text.unpack reason))
 
---orphans from Binary
-instance Binary.Binary Text where
-    put = Binary.put . Text.encodeUtf8
-    get = Text.decodeUtf8 <$> Binary.get
-
 instance Binary UTCTime where
  put (UTCTime (ModifiedJulianDay d) t) = do
         Binary.put d
@@ -100,10 +89,6 @@ instance Binary UTCTime where
         d <- Binary.get
         t <- Binary.get
         return $ UTCTime (ModifiedJulianDay d) (fromRational t)
-
-instance Show a => Convertible a Text where
-    safeConvert = return . tshow
-
 
 -- orphans from cereal
 instance Cereal.Serialize UTCTime where

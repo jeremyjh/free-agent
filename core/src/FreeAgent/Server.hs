@@ -21,7 +21,7 @@ import FreeAgent.Core.Server.Schedule (scheduleServer)
 import FreeAgent.Core.Server.Peer (peerServer)
 import FreeAgent.Core.Protocol.Peer (registerServer)
 
-import Control.Distributed.Process.Platform.Supervisor
+import Control.Distributed.Process.Supervisor
 
 -- | Same as 'runAgent' but first starts core and plugin server processes
 -- and then shuts them down cleanly.
