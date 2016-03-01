@@ -1,12 +1,6 @@
-{-# LANGUAGE DeriveDataTypeable     #-}
-{-# LANGUAGE DeriveGeneric          #-}
-{-# LANGUAGE NoImplicitPrelude      #-}
-{-# LANGUAGE OverloadedStrings      #-}
-{-# LANGUAGE TemplateHaskell        #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE MultiParamTypeClasses  #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleContexts              #-}
+{-# LANGUAGE FunctionalDependencies, MultiParamTypeClasses, NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings, RecordWildCards, TemplateHaskell              #-}
 
 module FreeAgent.Core.Action.ShellCommand
     ( ShellCommand(..)
@@ -17,20 +11,19 @@ module FreeAgent.Core.Action.ShellCommand
 
 where
 
-import           FreeAgent.AgentPrelude
-import           FreeAgent.Core.Internal.Lenses
-import           FreeAgent.Core.Action
-import           FreeAgent.Orphans ()
+import Control.Monad.Trans.Except     (throwE)
+import FreeAgent.AgentPrelude
+import FreeAgent.Core.Action
+import FreeAgent.Core.Internal.Lenses
+import FreeAgent.Orphans              ()
 
-import           Data.Aeson.TH (deriveJSON,Options(..), defaultOptions)
-import           Data.Char as Char (toLower)
-import           Data.Default (Default(..))
-import Data.Binary (Binary)
-import           Shelly
-    ( run, shelly, chdir, setenv, silently
-    , errExit, lastExitCode, lastStderr)
-import           Text.Regex (mkRegex, matchRegex)
-import Control.Error (left, right )
+import Data.Aeson.TH                  (Options (..), defaultOptions, deriveJSON)
+import Data.Binary                    (Binary)
+import Data.Char                      as Char (toLower)
+import Data.Default                   (Default (..))
+import Shelly                         (chdir, errExit, lastExitCode, lastStderr, run,
+                                       setenv, shelly, silently)
+import Text.Regex                     (matchRegex, mkRegex)
 
 type RegexString = String
 
@@ -81,11 +74,11 @@ defaultShellCommand :: Key -> ShellCommand
 defaultShellCommand k = def {shellKey = k}
 
 data ShellResult
- = ShellResult { shellStdout     :: Text
-               , shellStderr     :: Text
-               , shellExitCode   :: Int
-               , shellTimestamp  :: UTCTime
-               , shellResultOf   :: ShellCommand
+ = ShellResult { shellStdout    :: Text
+               , shellStderr    :: Text
+               , shellExitCode  :: Int
+               , shellTimestamp :: UTCTime
+               , shellResultOf  :: ShellCommand
                } deriving (Show, Eq, Typeable, Generic)
 
 instance Stashable ShellCommand where
@@ -100,26 +93,26 @@ instance Runnable ShellCommand where
                . silently
                . chdir shellChdir $
          do forM_ shellEnv (uncurry setenv)
-            runEitherT $
+            runExceptT $
              do cmdStdout <- tryAnyConvT $ run shellCommand shellArgs
                 cmdStderr <- lift lastStderr
                 exitCode <- lift lastExitCode
                 case (shellSuccessCodes, shellFailCodes) of
                     ([], []) ->
                         when (exitCode /= 0) $
-                            left (UnknownResponse $ " Unknown exit code: " <> tshow exitCode)
+                            throwE (UnknownResponse $ " Unknown exit code: " <> tshow exitCode)
                     ([], fails) ->
                         when (exitCode `elem` fails) $
-                            left (GeneralFailure $ " Fails on exit code: " <> tshow exitCode)
+                            throwE (GeneralFailure $ " Fails on exit code: " <> tshow exitCode)
                     (passes, _) ->
                         when (exitCode `notElem` passes) $
-                            left (GeneralFailure $ " Fails on exit code: " <> tshow exitCode)
+                           throwE (GeneralFailure $ " Fails on exit code: " <> tshow exitCode)
                 if checkMatch (convert cmdStdout) (convert cmdStderr) shellRegexMatch
                 then
                  do time <- getCurrentTime
                     let result = ShellResult cmdStdout cmdStderr exitCode time cmd
-                    right (Result (wrap result) time cmdStdout (toAction cmd))
-                else left (GeneralFailure $ "Match failed: " <> tshow shellRegexMatch
+                    return (Result (wrap result) time cmdStdout (toAction cmd))
+                else throwE (GeneralFailure $ "Match failed: " <> tshow shellRegexMatch
                                          <> "\n In output: " <> cmdStdout
                                          <> "\n" <> cmdStderr )
       where

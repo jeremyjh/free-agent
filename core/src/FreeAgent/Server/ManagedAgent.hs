@@ -17,7 +17,7 @@ module FreeAgent.Server.ManagedAgent
     , castServ
     , callTarget
     , castTarget
-    , runLogEitherT
+    , runLogExceptT
     , agentCastHandler
     , agentRpcHandler
     , agentRpcAsyncHandler
@@ -181,14 +181,14 @@ runAgentStateTAsync state'@(AgentState _ ctxt ustate) respond' ma = do
     liftP $ linkOnFailure pid
     continue state'
 
-runLogEitherT :: (Show msg, Show e, MonadLogger m)
-              => msg -> EitherT e m a -> m (Either e a)
-runLogEitherT msg ma =
-    runEitherT ma >>= logEitherT
-  where logEitherT left'@(Left reason) = do
+runLogExceptT :: (Show msg, Show e, MonadLogger m)
+              => msg -> ExceptT e m a -> m (Either e a)
+runLogExceptT msg ma =
+    runExceptT ma >>= logExceptT
+  where logExceptT left'@(Left reason) = do
             [qwarn| Processing for #{msg} failed with reason: #{reason} |]
             return left'
-        logEitherT right' = return right'
+        logExceptT right' = return right'
 
 agentExitHandler :: (NFSerializable a, Show a)
                  => (ProcessId -> a -> (StateT s Agent) ())

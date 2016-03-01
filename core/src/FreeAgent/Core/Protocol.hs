@@ -40,14 +40,14 @@ instance Convertible SomeException CallFail where
 
 callTarget :: (MonadAgent agent, NFSerializable a, NFSerializable b)
            => String -> a -> agent (Either CallFail b)
-callTarget name' command = runEitherT $ do
+callTarget name' command = runExceptT $ do
     target <- viewContext targetServer
     pid <- resolve (target, name') !? RoutingFailed
-    tryAny (syncCallChan pid command) >>= convEitherT
+    tryAny (syncCallChan pid command) >>= convExceptT
 
 castTarget :: (MonadAgent agent, NFSerializable a)
            => String -> a -> agent (Either CallFail ())
-castTarget name' command = runEitherT $ do
+castTarget name' command = runExceptT $ do
     target <- viewContext targetServer
     pid <- resolve (target, name') !? RoutingFailed
     cast pid command

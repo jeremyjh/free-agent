@@ -177,14 +177,14 @@ tryExecWith :: (Runnable action, MonadAgent agent)
 tryExecWith action' result' =
     either (Left . convert) id <$> tryAny (execWith action' result')
 
--- | Like tryExec but hoists into an EitherT monad.
+-- | Like tryExec but hoists into an ExceptT monad.
 tryExecET :: (Runnable action, MonadAgent agent)
-          => action -> EitherT RunnableFail agent Result
+          => action -> ExceptT RunnableFail agent Result
 tryExecET = tryExec >=> hoistEither
 
--- | Like tryExecWith but hoists into an EitherT monad.
+-- | Like tryExecWith but hoists into an ExceptT monad.
 tryExecWithET :: (Runnable action, MonadAgent agent)
-          => action -> Result -> EitherT RunnableFail agent Result
+          => action -> Result -> ExceptT RunnableFail agent Result
 tryExecWithET action' = tryExecWith action' >=> hoistEither
 
 -- | Unwrap a concrete type into an Action

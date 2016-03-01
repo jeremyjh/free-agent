@@ -22,7 +22,6 @@ import           Data.Scientific             (Scientific)
 
 import           System.Cron
 
-import           Control.Monad.Logger        (MonadLogger (..))
 import qualified Data.ByteString.Char8       as BS
 import qualified Data.ByteString.Lazy.Char8  as LBS
 import qualified Data.Serialize              as Cereal
@@ -45,10 +44,6 @@ deriving instance Typeable1 AcidState
 #else
 deriving instance Typeable AcidState
 #endif
-
---orphans from monad-logger
-instance MonadLogger m => MonadLogger (EitherT e m) where
-    monadLoggerLog a b c d = lift $ monadLoggerLog a b c d
 
 -- orphans from convertible
 instance Convertible ByteString String where

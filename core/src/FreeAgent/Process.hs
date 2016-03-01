@@ -15,7 +15,7 @@ module FreeAgent.Process
     )
 where
 
-import Control.Monad.Trans(lift)
+
 import           Control.Concurrent.Lifted                                        (threadDelay)
 import           Control.Distributed.Process.Lifted.Class
 import           Control.Distributed.Process.Lifted                                      hiding
@@ -35,11 +35,8 @@ import qualified Control.Distributed.Process.ManagedProcess.UnsafeClient as Mana
 import           Control.Distributed.Process.Supervisor                  (ChildSpec)
 import qualified Control.Distributed.Process.Extras.UnsafePrimitives            as NF
 import           Control.Distributed.Backend.P2P      (makeNodeId)
-import           Control.Error                        (EitherT)
 
 
-instance MonadProcess m => MonadProcess (EitherT e m) where
-    liftP = lift . liftP
 
 initRemoteTable :: RemoteTable
 initRemoteTable = Extras.__remoteTable Node.initRemoteTable

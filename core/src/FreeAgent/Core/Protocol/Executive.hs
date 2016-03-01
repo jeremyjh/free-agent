@@ -151,7 +151,7 @@ instance ServerCall QueryActions where
 executeStored :: (MonadAgent agent)
                   => Key -> agent (Either ExecFail Result)
 executeStored key' =
-    runEitherT $ callResult >>= convEitherT >>= hoistEither
+    runExceptT $ callResult >>= convExceptT >>= hoistEither
   where callResult = lift $ callServ $ ExecuteStored key'
 
 executeAction :: (MonadAgent agent, Runnable a)

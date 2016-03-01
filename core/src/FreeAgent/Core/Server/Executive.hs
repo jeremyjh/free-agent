@@ -42,7 +42,7 @@ makeFields ''ExecPersist
 instance Default ExecPersist where
     def = ExecPersist mempty []
 
-type ExecAgent a = EitherT ExecFail (StateT ExecState Agent) a
+type ExecAgent a = ExceptT ExecFail (StateT ExecState Agent) a
 
 data ExecState
   = ExecState { _stateRunning   :: !RunningActions
@@ -129,7 +129,7 @@ execImpl = ExecImpl callExecuteAction' callStoreAction' callRemoveAction'
                     castExecuteStored' castExecuteBatch' castAddListener'
   where
     callExecuteAction' cmd@(ExecuteAction action') =
-        runLogEitherT cmd $ doExec action'
+        runLogExceptT cmd $ doExec action'
 
     callStoreAction' (StoreAction action')  =
         do now <- getCurrentTime
@@ -150,7 +150,7 @@ execImpl = ExecImpl callExecuteAction' callStoreAction' callRemoveAction'
 
     callExecuteStored' cmd@(ExecuteStored key') =
      do executedCount %= (+) 1
-        runLogEitherT cmd $
+        runLogExceptT cmd $
             join (uses cachedActions (Map.lookup key') !? ActionNotFound key')
 
     callQueryActions' _ = query AllActions
@@ -178,12 +178,12 @@ cacheAction action' = cachedActions %= Map.insert (key action') (doExec action')
 
 doExec :: Action -> ExecAgent Result
 doExec action' = do
-    result <- tryExec action' >>= convEitherT
+    result <- tryExec action' >>= convExceptT
     storeResult result >>= notifyListeners
   where
     storeResult result = do
         [qdebug| Storing result: #{result}|]
-        writeResult result >>= convEitherT
+        writeResult result >>= convExceptT
         return result
     notifyListeners result = do
         listeners' <- uses listeners (filter fst . map exMatch)

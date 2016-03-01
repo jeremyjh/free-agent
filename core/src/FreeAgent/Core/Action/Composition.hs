@@ -108,7 +108,7 @@ instance Runnable ActionPlan where
     exec (Exec action') = tryExec action'
 
     exec (Sequential plan1 plan2) =
-        runEitherT $ do
+        runExceptT $ do
             result1 <- tryExecET plan1
             result2 <- tryExecWithET plan2 result1
             return $ appendResults result1 result2
@@ -136,7 +136,7 @@ instance Runnable ActionPlan where
     execWith (Exec action') eresult = tryExecWith action' eresult
 
     execWith (Sequential plan1 plan2) eresult =
-        runEitherT $ do
+        runExceptT $ do
             result1 <- tryExecWithET plan1 eresult
             result2 <- tryExecWithET plan2 result1
             return $ appendResults result1 result2

@@ -21,8 +21,8 @@ module FreeAgent.AgentPrelude
     , FilePathS
     , debug, dbg, err
     , convert
-    , EitherT, runEitherT
-    , convEither, convEitherT
+    , ExceptT, runExceptT
+    , convEither, convExceptT
     , tryAny
     , catchAny
     , tryAnyConvT
@@ -49,7 +49,7 @@ import           BasicPrelude                    hiding (FilePath, forM, forM_, 
 import qualified Prelude                         as P
 
 import           Control.DeepSeq.Generics        (NFData (..), genericRnf)
-import           Control.Error                   (EitherT, hoistEither, runEitherT)
+import           Control.Error                   (ExceptT, hoistEither, runExceptT)
 import           Control.Monad.Logger            (logDebug, logError, logInfo, logWarn)
 import           Control.Monad.Logger.Quote      (qdebug, qdebugNS, qerror, qinfo, qwarn)
 import           Control.Monad.Trans.Control     (MonadBaseControl)
@@ -105,9 +105,9 @@ convEither :: Convertible e f => Either e a -> Either f a
 convEither (Right result) = Right result
 convEither (Left reason) = Left $ convert reason
 
-convEitherT :: (Convertible e f, Monad m)
-            => Either e a -> EitherT f m a
-convEitherT = hoistEither . convEither
+convExceptT :: (Convertible e f, Monad m)
+            => Either e a -> ExceptT f m a
+convExceptT = hoistEither . convEither
 
 -- | Template haskell function to create the Serialize and SafeCopy
 -- instances for a given type - use this one to specify a later version
@@ -172,8 +172,8 @@ deriveSerializers name =
         toeither (Just a) = Right a
 
 tryAnyConvT :: (MonadBaseControl IO io, Convertible SomeException e)
-            => io a -> EitherT e io a
-tryAnyConvT ma = lift (tryAny ma) >>= convEitherT
+            => io a -> ExceptT e io a
+tryAnyConvT ma = lift (tryAny ma) >>= convExceptT
 
 getCurrentTime :: MonadIO io => io Time.UTCTime
 getCurrentTime = liftIO Time.getCurrentTime

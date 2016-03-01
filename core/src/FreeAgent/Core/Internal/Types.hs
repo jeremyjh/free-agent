@@ -35,7 +35,7 @@ import           Control.Distributed.Process.Lifted.Class
 import           Control.Distributed.Process          (NodeId)
 import           Control.Distributed.Process.Node     (LocalNode)
 import           Control.Distributed.Process.Extras   (Resolvable (..))
-import           Control.Error                        (mapEitherT)
+import           Control.Error                        (mapExceptT)
 import           Control.Monad.Base                   (MonadBase)
 import           Control.Monad.Logger                 (LogLevel (..), LoggingT,
                                                        MonadLogger (..),
@@ -309,7 +309,7 @@ instance (ContextReader m)
       => ContextReader (StateT a m) where
     askContext = lift askContext
 
-instance ContextReader m => ContextReader (EitherT e m) where
+instance ContextReader m => ContextReader (ExceptT e m) where
     askContext = lift askContext
 
 -- | Typeclass for any monad stack based on 'Agent'
@@ -322,8 +322,8 @@ instance (MonadAgent agent)
       => MonadAgent (StateT a agent) where
     withAgentContext f = mapStateT (withAgentContext f)
 
-instance MonadAgent agent => MonadAgent (EitherT fail agent) where
-    withAgentContext f = mapEitherT (withAgentContext f)
+instance MonadAgent agent => MonadAgent (ExceptT fail agent) where
+    withAgentContext f = mapExceptT (withAgentContext f)
 
 newtype Agent a = Agent { unAgent :: ReaderT AgentContext Process a}
             deriving ( Functor, Applicative, Monad, MonadBase IO

@@ -193,7 +193,7 @@ scheduleImpl = ScheduleImpl callScheduleAddEvent' callScheduleEventControl'
     callScheduleQueryEvents' _ = query QueryAllEvents
 
     callScheduleRemoveEvent' cmd@(ScheduleRemoveEvent k) =
-        runLogEitherT cmd $ update (RemoveEvent k)
+        runLogExceptT cmd $ update (RemoveEvent k)
 
     castScheduleControl' ScheduleStart  =
      do ticking' <- use ticking
