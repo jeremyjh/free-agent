@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 {-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies #-}
@@ -44,6 +45,7 @@ instance Stashable TestResult where
 
 
 instance Runnable TestAction where
+    type RunnableResult TestAction = TestResult
     exec ta@(TestAction text' delay) = do
         threadDelay delay
         Right <$> resultNow (TestResult (key ta)) text' (toAction ta)
@@ -77,6 +79,7 @@ instance Stashable NagiosResult where
     key (NagiosResult key' _ )= key'
 
 instance Runnable TestCheckTCP where
+    type RunnableResult TestCheckTCP = NagiosResult
     exec action' =
         Right <$> resultNow (NagiosResult (key action') OK) "Test succeed."  action'
 

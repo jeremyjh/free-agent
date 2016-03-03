@@ -203,14 +203,15 @@ data ActionUnwrappers
   =  ActionUnwrappers { actionTypeName      :: Text
                       , actionUnwrapper     :: Unwrapper Action
                       , actionJsonUnwrapper :: JsonUnwrapper Action
-                      , resultTypeName      :: Text
+                      }
+
+data ResultUnwrappers
+  =  ResultUnwrappers { resultTypeName      :: Text
                       , resultUnwrapper     :: Result -> Result
                       }
 
-type UnwrappersMap = Map Text ActionUnwrappers
-
 type PluginWriter = Writer [PluginDef] ()
-type ActionsWriter = Writer [ActionUnwrappers] ()
+type ActionsWriter = Writer [(ActionUnwrappers, ResultUnwrappers)] ()
 type ActionMatcher = (Action -> Bool)
 type ResultMatcher = (Result -> Bool)
 
@@ -227,12 +228,14 @@ data PluginDef
   = PluginDef { plugindefName             :: !Text
               , plugindefContext          :: !Dynamic
               , plugindefActionUnwrappers :: ![ActionUnwrappers]
+              , plugindefResultUnwrappers :: ![ResultUnwrappers]
               , plugindefListeners        :: Agent [Listener]
               , plugindefServers          :: [AgentServer]
               }
 
 data PluginSet
-  = PluginSet { pluginsetUnwrappersMap :: !UnwrappersMap
+  = PluginSet { pluginsetActionUnwrappers :: !(Map Text ActionUnwrappers)
+              , pluginsetResultUnwrappers :: !(Map Text ResultUnwrappers)
               , pluginsetListeners     :: Agent [Listener]
               , pluginsetConfigs       :: !PluginConfigs
               , pluginsetPlugins       :: ![PluginDef]

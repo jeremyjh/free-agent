@@ -1,13 +1,6 @@
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE NoImplicitPrelude     #-}
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE StandaloneDeriving    #-}
-{-# LANGUAGE TemplateHaskell       #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleContexts                    #-}
+{-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude, OverloadedStrings            #-}
+{-# LANGUAGE ScopedTypeVariables, StandaloneDeriving, TemplateHaskell, TypeFamilies #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -15,6 +8,7 @@ module FreeAgent.Core.Action
     ( toAction
     , extractAction, extractResult
     , matchAction, matchResult
+    , decodeResult
     , resultNow
     , registerAction, actionType
     , registerPluginMaps
@@ -27,20 +21,20 @@ where
 import           FreeAgent.AgentPrelude
 import           FreeAgent.Core.Internal.Lenses hiding ((.=))
 
-import           Control.Monad.Writer        (tell)
-import           Data.Binary                 (Binary)
-import qualified Data.Binary                 as Binary
-import           Data.Dynamic                (cast)
+import           Control.Monad.Writer           (tell)
+import           Data.Binary                    (Binary)
+import qualified Data.Binary                    as Binary
+import           Data.Dynamic                   (cast)
 import           Data.IORef.Lifted
-import qualified Data.Map                    as Map
-import           System.IO.Unsafe            (unsafePerformIO)
+import qualified Data.Map                       as Map
+import           System.IO.Unsafe               (unsafePerformIO)
 
-import           Control.Error (hoistEither, hush)
+import           Control.Error                  (hoistEither, hush)
 import           Data.SafeCopy
-import           Data.Serialize (runGet)
+import           Data.Serialize                 (runGet)
 
-import Data.Aeson (Value(..), fromJSON, (.=), (.:))
-import qualified Data.Aeson  as Aeson
+import           Data.Aeson                     (Value (..), fromJSON, (.:), (.=))
+import qualified Data.Aeson                     as Aeson
 
 
 -- Serialization instances for Action are all this module as they require specialized
@@ -143,22 +137,26 @@ resultNow result text' action = do
 registerAction :: forall a. (Runnable a)
                => Proxy a -> ActionsWriter
 registerAction  action' = tell [
-    ActionUnwrappers (proxyFqName action')
+    (ActionUnwrappers(proxyFqName action')
                      (unwrapAction (unWrap :: Unwrapper a))
                      (unwrapJsonAction (unWrapJson :: JsonUnwrapper a))
-                     (proxyFqName (Proxy :: Proxy (RunnableResult a)))
+    ,ResultUnwrappers(proxyFqName (Proxy :: Proxy (RunnableResult a)))
                      (unwrapResult (unWrap :: Unwrapper (RunnableResult a)))
-
+    )
     ]
 
 unwrapResult :: Portable a => Unwrapper a -> Result -> Result
 unwrapResult uw result =
-    case extractResult result of
-         Just wrapped ->
-             case uw wrapped of
-                 Right unwrapped ->result {resultWrapped = wrap unwrapped}
-                 _ -> result
-         Nothing -> result
+    let wrapped = resultWrapped result
+    in case uw wrapped of
+        Right unwrapped ->
+            result {resultWrapped = wrap unwrapped}
+        Left s ->
+            error . convert $
+            "unwrapResult failed for: " ++
+            wrappedTypeName wrapped ++
+            " : " ++
+            (convert s)
 
 -- | Used only to fix the type passed to 'register' - this should not
 -- ever be evaluated and will throw an error if it is
@@ -221,25 +219,32 @@ unWrapJson jwrapped = case fromJSON jwrapped of
     Aeson.Success value' -> Right value'
 
 --used in serialization instances
-decodeAction :: UnwrappersMap -> Wrapped -> Maybe Action
+decodeAction :: Map Text ActionUnwrappers -> Wrapped -> Maybe Action
 decodeAction pluginMap wrapped =
-    case Map.lookup ("Action:" ++ wrappedTypeName wrapped) pluginMap of
+    case Map.lookup (wrappedTypeName wrapped) pluginMap of
         Just uwMap -> hush $ actionUnwrapper uwMap wrapped
         Nothing -> Nothing
 
-decodeJsonAction :: UnwrappersMap -> Text -> Value -> Action
+decodeResult :: ContextReader m => Result -> m (Maybe Result)
+decodeResult wrapped =
+ do pluginMap <- viewContext (plugins.resultUnwrappers)
+    return $ case Map.lookup (wrappedTypeName (resultWrapped wrapped)) pluginMap of
+                Just uwMap -> Just $ let uw = resultUnwrapper uwMap in uw wrapped
+                Nothing -> Nothing
+
+decodeJsonAction :: Map Text ActionUnwrappers -> Text -> Value -> Action
 decodeJsonAction pluginMap type' action' =
-    case Map.lookup ("Action:" ++ type') pluginMap of
+    case Map.lookup type' pluginMap of
         Just uwMap -> case actionJsonUnwrapper uwMap action' of
             Right act -> act
             Left s -> error $ "Error deserializing wrapper: " ++ s
         Nothing -> error $ "Type Name: " ++ convert type'
 
 -- | Set or re-set the top-level Action Map (done after plugins are registered)
-registerPluginMaps :: (MonadBase IO m) => UnwrappersMap -> m ()
+registerPluginMaps :: (MonadBase IO m) => Map Text ActionUnwrappers -> m ()
 registerPluginMaps = writeIORef globalPluginMaps
 
-globalPluginMaps :: IORef UnwrappersMap
+globalPluginMaps :: IORef (Map Text ActionUnwrappers)
 globalPluginMaps = unsafePerformIO $ newIORef mempty
 {-# NOINLINE globalPluginMaps #-}
 
@@ -249,7 +254,7 @@ globalPluginMaps = unsafePerformIO $ newIORef mempty
 --ExecState but there we can unwrap inside an AcidState Update
 --if we pass a newtyped PluginMap with a stubbed SafeCopy instance
 --this lets us unwrap all actions just once whenever the Server restarts
-readPluginMaps :: UnwrappersMap
+readPluginMaps :: Map Text ActionUnwrappers
 readPluginMaps = unsafePerformIO $ readIORef globalPluginMaps
 {-# NOINLINE readPluginMaps #-}
 

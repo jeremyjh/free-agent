@@ -61,7 +61,7 @@ instance Default PluginSet where
 runAgent :: AgentConfig -> PluginSet -> Agent () -> IO ()
 runAgent config' plugins' ma =
     catchAny
-        ( do registerPluginMaps (plugins' ^. unwrappersMap)
+        ( do registerPluginMaps (plugins' ^. actionUnwrappers)
              statesMV <- newMVar mempty
              bracket openTransport
                      (closeResources statesMV)
@@ -142,10 +142,12 @@ extractConfig configName = do
 pluginSet :: PluginWriter -> PluginSet
 pluginSet pluginWriter =
     let plugs = execWriter pluginWriter <> [pluginDef]
-        unwrappers = concatMap plugindefActionUnwrappers plugs
+        aunwrappers = concatMap plugindefActionUnwrappers plugs
+        runwrappers = concatMap plugindefResultUnwrappers plugs
         aconfigs = map buildConfigs plugs
-        uwMap = buildPluginMaps unwrappers in
-    PluginSet { pluginsetUnwrappersMap = uwMap
+    in
+    PluginSet { pluginsetActionUnwrappers = buildActionPluginMaps aunwrappers
+              , pluginsetResultUnwrappers = buildResultPluginMaps runwrappers
               , pluginsetListeners = buildListeners plugs
               , pluginsetConfigs = Map.fromList aconfigs
               , pluginsetPlugins = plugs
@@ -153,10 +155,12 @@ pluginSet pluginWriter =
   where
     buildConfigs plugin =
         (plugindefName plugin, plugindefContext plugin)
-    buildPluginMaps unwrappers =
-        let pairs = map (\uw -> ("Action:" ++ actionTypeName uw, uw))
-                        unwrappers
+    buildActionPluginMaps uws =
+        let pairs = map (\uw -> (actionTypeName uw, uw)) uws
         in Map.fromList pairs
+    buildResultPluginMaps uws =
+         let pairs = map (\uw -> (resultTypeName uw, uw)) uws
+         in Map.fromList pairs
     buildListeners = foldM appendListener []
     appendListener acc = plugindefListeners >=> return . (++ acc)
 
@@ -174,7 +178,8 @@ definePlugin :: (Typeable a)
              -> ActionsWriter
              -> PluginDef
 definePlugin pname pcontext listeners' servers' pwriter
-  = PluginDef pname (toDyn pcontext) (execWriter pwriter) listeners' servers'
+  = PluginDef pname (toDyn pcontext) (pick fst) (pick snd) listeners' servers'
+  where pick f = map f (execWriter pwriter)
 
 globalMonitor :: Process ()
 globalMonitor = do

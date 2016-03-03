@@ -82,7 +82,7 @@ spec =
                 threadDelay 10000
 
                 -- it "can route an action to a remote Node"
-                Right res <- withTarget (Route [def] [Zone "TX"]) $
+                Right _ <- withTarget (Route [def] [Zone "TX"]) $
                                 executeAction checkTCP
 
                 nr <- texpect :: Agent Result

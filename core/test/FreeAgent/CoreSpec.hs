@@ -12,8 +12,6 @@ import           FreeAgent.Core.Lenses
 import           FreeAgent.Server          (runAgentServers)
 import           Test.Hspec
 
-import qualified Data.Binary               as Binary
-
 import           FreeAgent.Fixtures
 import           FreeAgent.TestHelper
 
@@ -66,7 +64,7 @@ spec = do
                     parent <- getSelfPid
                     child <- forkApp2 $ do
                         wr <- texpect :: Agent Result
-                        let Just (NagiosResult _ OK) = extractResult wr
+                        let Just (NagiosResult _noex OK) = extractResult wr
                         send parent ("Got OK" :: Text)
                     send child nr
                     texpect :: Agent Text
@@ -80,7 +78,7 @@ spec = do
 
                     Right creturn <- exec $ toAction checkTCP
                     let yreturn = Yaml.encode creturn
-                    Just (r::Result) <- return $ Yaml.decode yreturn
+                    Just (_::Result) <- return $ Yaml.decode yreturn
 
                     return action'
                 `shouldReturn` toAction checkTCP
@@ -91,11 +89,12 @@ spec = do
                     parent <- getSelfPid
                     child <- forkApp2 $ do
                         wr <- texpect :: Agent Result
-                        send parent (Yaml.toJSON wr)
+                        decoded <- decodeResult wr
+                        send parent (Yaml.toJSON decoded)
                     send child nr
                     Yaml.Object obj <- texpect :: Agent Yaml.Value
                     let Just (Yaml.Object bytes) = HashMap.lookup "resultWrapped" obj
-                    return $ isJust $ HashMap.lookup "bytes" bytes
+                    return $ isJust $ HashMap.lookup "value" bytes
                 `shouldReturn` True
 
 testAgent ma = testRunAgent setup 1000 appConfig appPlugins ma
