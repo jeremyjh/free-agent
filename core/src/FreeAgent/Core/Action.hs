@@ -13,7 +13,6 @@ module FreeAgent.Core.Action
     , decodeEnvelope
     , resultNow
     , registerAction, actionType
-    , registerPluginMaps
     , tryExec, tryExecWith
     , tryExecET, tryExecWithET
     , wrap, unWrap
@@ -27,9 +26,8 @@ import           Control.Monad.Writer           (tell)
 import           Data.Binary                    (Binary)
 import qualified Data.Binary                    as Binary
 import           Data.Dynamic                   (cast)
-import           Data.IORef.Lifted
+
 import qualified Data.Map                       as Map
-import           System.IO.Unsafe               (unsafePerformIO)
 
 import           Control.Error                  (hoistEither, hush)
 import           Data.SafeCopy
@@ -104,14 +102,15 @@ instance Stashable Action where
 
 instance FromJSON Action where
     parseJSON (Object value') = do
+        key' <- value' .: "key"
         type'  <- value' .: "type"
-        action' <- value' .: "action"
-        return $ decodeJsonAction readPluginMaps type' action'
+        action'  <- value' .: "action"
+        return $ toAction $ ActionEnvelope (WrappedJson key' type' action') mempty
     parseJSON _ = mzero
 
 instance ToJSON Action where
     toJSON (Action action') =
-        Aeson.object ["type" .= fqName action', "action" .= toJSON action']
+        Aeson.object ["key" .= key action', "type" .= fqName action', "action" .= toJSON action']
 
 instance Runnable Action where
     exec (Action action') = exec action'
@@ -138,7 +137,6 @@ registerAction :: forall a. (Runnable a)
 registerAction  action' = tell [
     (ActionUnwrappers(proxyFqName action')
                      (unwrapAction (unWrap :: Unwrapper a))
-                     (unwrapJsonAction (unWrapJson :: JsonUnwrapper a))
     ,ResultUnwrappers(proxyFqName (Proxy :: Proxy (RunnableResult a)))
                      (unwrapResult (unWrap :: Unwrapper (RunnableResult a)))
     )
@@ -190,10 +188,6 @@ unwrapAction :: (Runnable a)
              => Unwrapper a -> Wrapped -> FetchAction
 unwrapAction uw wrapped = Action <$> uw wrapped
 
-unwrapJsonAction :: (Runnable a)
-             => JsonUnwrapper a -> Value -> FetchAction
-unwrapJsonAction uw wrapped = Action <$> uw wrapped
-
 -- Wrap a concrete type for stash or send where it
 -- will be decoded to an Action or Result
 wrap :: (Portable a) => a -> Wrapped
@@ -211,11 +205,6 @@ unWrap (WrappedExists _ payload) = maybe (Left failcast) Right (cast payload)
 
 safeDecode :: (SafeCopy a) => ByteString -> Either String a
 safeDecode = runGet safeGet
-
-unWrapJson :: FromJSON a => Value -> Either String a
-unWrapJson jwrapped = case fromJSON jwrapped of
-    Aeson.Error msg -> Left msg
-    Aeson.Success value' -> Right value'
 
 decodeEnvelope :: ContextReader m => Action -> m (Either String Action)
 decodeEnvelope action' =
@@ -235,31 +224,5 @@ decodeResult wrapped =
     return $ case Map.lookup (wrappedTypeName (resultWrapped wrapped)) pluginMap of
                 Just uwMap -> Just $ let uw = resultUnwrapper uwMap in uw wrapped
                 Nothing -> Nothing
-
-decodeJsonAction :: Map Text ActionUnwrappers -> Text -> Value -> Action
-decodeJsonAction pluginMap type' action' =
-    case Map.lookup type' pluginMap of
-        Just uwMap -> case actionJsonUnwrapper uwMap action' of
-            Right act -> act
-            Left s -> error $ "Error deserializing wrapper: " ++ s
-        Nothing -> error $ "Type Name: " ++ convert type'
-
--- | Set or re-set the top-level Action Map (done after plugins are registered)
-registerPluginMaps :: (MonadBase IO m) => Map Text ActionUnwrappers -> m ()
-registerPluginMaps = writeIORef globalPluginMaps
-
-globalPluginMaps :: IORef (Map Text ActionUnwrappers)
-globalPluginMaps = unsafePerformIO $ newIORef mempty
-{-# NOINLINE globalPluginMaps #-}
-
---TODO: We can dispense with unsafePerformIO!
---Using the WrappedHandler under an Action/Result means we don't unwrap
---when we 'expect' but rather when we 'exec' - last barrier was inside
---ExecState but there we can unwrap inside an AcidState Update
---if we pass a newtyped PluginMap with a stubbed SafeCopy instance
---this lets us unwrap all actions just once whenever the Server restarts
-readPluginMaps :: Map Text ActionUnwrappers
-readPluginMaps = unsafePerformIO $ readIORef globalPluginMaps
-{-# NOINLINE readPluginMaps #-}
 
 deriveSerializers ''ActionEnvelope

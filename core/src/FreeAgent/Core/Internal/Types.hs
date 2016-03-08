@@ -202,7 +202,6 @@ type PluginConfigs = Map Text Dynamic
 data ActionUnwrappers
   =  ActionUnwrappers { actionTypeName      :: Text
                       , actionUnwrapper     :: Unwrapper Action
-                      , actionJsonUnwrapper :: JsonUnwrapper Action
                       }
 
 data ResultUnwrappers

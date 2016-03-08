@@ -74,13 +74,13 @@ spec = do
             it "works about the same as Binary" $ do
                 testAgent $  do
                     let yaction = Yaml.encode $ toAction checkTCP
-                    let Just action' = Yaml.decode yaction
+                    let Just action' :: Maybe Action =  Yaml.decode yaction
 
-                    Right creturn <- exec $ toAction checkTCP
+                    Right creturn <- exec action'
                     let yreturn = Yaml.encode creturn
                     Just (_::Result) <- return $ Yaml.decode yreturn
 
-                    return action'
+                    return (resultResultOf creturn)
                 `shouldReturn` toAction checkTCP
 
             it "works for encoded Results" $ do

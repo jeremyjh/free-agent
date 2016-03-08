@@ -22,8 +22,7 @@ module FreeAgent.Core.Agent
     ) where
 
 import           FreeAgent.AgentPrelude
-import           FreeAgent.Core.Action                  (actionType, registerAction,
-                                                         registerPluginMaps)
+import           FreeAgent.Core.Action                  (actionType, registerAction)
 import           FreeAgent.Core.Action.Composition      (ActionPlan, agentAsync,
                                                          withAgent)
 import           FreeAgent.Core.Action.ShellCommand     (ShellCommand)
@@ -61,8 +60,7 @@ instance Default PluginSet where
 runAgent :: AgentConfig -> PluginSet -> Agent () -> IO ()
 runAgent config' plugins' ma =
     catchAny
-        ( do registerPluginMaps (plugins' ^. actionUnwrappers)
-             statesMV <- newMVar mempty
+        ( do statesMV <- newMVar mempty
              bracket openTransport
                      (closeResources statesMV)
                      (\ tcp ->

@@ -16,7 +16,6 @@
   
   Actions: 
    * replace Existential with Action function dictionary - plugins impl unwrapAction
-   * Store PluginMap in AgentContext; support unwrap in ContextReader only (no more unsafePerformIO)
 
   Actions: 
    * ActionPlans
