@@ -27,10 +27,11 @@ spec :: Spec
 spec = do
     describe "ActionPlan" $ do
         it "can serialize and deserialize existentially" $ do
-            testAgent $
+            testAgent $ do
                 let plan = toAction $ planExec checkTCP `thenExec` checkTCP
                     bytes = Binary.encode plan
-                in return (Binary.decode bytes)
+                Right unencoded <- decodeComposite $ Binary.decode bytes
+                return unencoded
             `shouldReturn` (toAction $ planExec checkTCP `thenExec` checkTCP)
 
     describe "ActionPlan combinators" $ do

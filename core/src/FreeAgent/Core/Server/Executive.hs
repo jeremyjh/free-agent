@@ -11,19 +11,20 @@ module FreeAgent.Core.Server.Executive
 
 import           FreeAgent.AgentPrelude
 import           FreeAgent.Core
+import           FreeAgent.Core.Action.Composition (decodeComposite)
 import           FreeAgent.Core.Lenses
+import           FreeAgent.Core.Protocol.Executive (serverName)
 import           FreeAgent.Database.AcidState
 import           FreeAgent.Server.ManagedAgent
-import           FreeAgent.Core.Protocol.Executive (serverName)
 
 
-import           Control.Monad.Reader               (ask)
-import Control.Monad.State (StateT)
-import qualified Data.Map.Strict                    as Map
+import           Control.Monad.Reader (ask)
+import           Control.Monad.State (StateT)
+import qualified Data.Map.Strict as Map
 
-import           Control.Distributed.Static         (unclosure)
-import           Control.Error                      ((!?))
-import           Data.Default                       (Default (..))
+import           Control.Distributed.Static (unclosure)
+import           Control.Error ((!?), throwE)
+import           Data.Default (Default (..))
 
 -- -----------------------------
 -- Types
@@ -118,7 +119,14 @@ execServer =
             persist <- query' acid' GetPersist
             rt <- viewConfig remoteTable
             let cls = rights $ map (unclosure rt) (persist ^. listeners)
-            let caches = map (doExec . fst) (persist ^. actions)
+            decoded <- forM (persist ^. actions) $ \(action',_)->
+              do eaction <- decodeComposite action'
+                 case eaction of
+                     Right decoded -> return decoded
+                     Left msg ->
+                       do [qerror|Deserialization error decoding #{key action'}\n #{msg}|]
+                          return action'
+            let caches = map doExec decoded
             return $ ExecState (Map.fromList []) (listeners' ++ cls) acid' caches 0
 
 type instance ProtoT rq ExecState a = StateT ExecState Agent a
@@ -129,20 +137,41 @@ execImpl = ExecImpl callExecuteAction' callStoreAction' callRemoveAction'
                     castExecuteStored' castExecuteBatch' castAddListener'
   where
     callExecuteAction' cmd@(ExecuteAction action') =
-        runLogExceptT cmd $ doExec action'
+       do eaction <- decodeComposite action'
+          runLogExceptT cmd $
+              case eaction of
+                  Left msg -> throwE $ EDeserializationFailure (convert msg)
+                  Right action'' -> doExec action''
 
     callStoreAction' (StoreAction action')  =
         do now <- getCurrentTime
            void $ update (PutAction (action',now))
-           cacheAction action'
+           eaction <- decodeComposite action'
+           case eaction of
+               Right decoded ->
+                   cacheAction decoded
+               Left msg ->
+                 do [qerror|Deserialization error decoding #{key action'}\n #{msg}|]
+                    cacheAction action'
     callStoreAction' (StoreNewerAction action' time) =
      do void $ update (PutAction (action', time))
-        cacheAction action'
+        eaction <- decodeComposite action'
+        case eaction of
+            Right decoded ->
+                cacheAction decoded
+            Left msg ->
+              do [qerror|Deserialization error decoding #{key action'}\n #{msg}|]
+                 cacheAction action'
     callStoreAction' (StoreActions actions')  =
         do now <- getCurrentTime
            forM_ actions' $ \action' ->
-            do void $ update (PutAction (action',now))
-               cacheAction action'
+             do void $ update (PutAction (action',now))
+                eaction <- decodeComposite action'
+                case eaction of
+                    Right decoded -> cacheAction decoded
+                    Left msg ->
+                      do [qerror|Deserialization error decoding #{key action'}\n #{msg}|]
+                         cacheAction action'
 
     callRemoveAction' (RemoveAction key')  =
      do void $ update (DeleteAction key')

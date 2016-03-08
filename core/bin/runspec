@@ -1,2 +1,2 @@
-#!/bin/bash
-runhaskell `cabal-cargs --testsuite=spec` -isrc $1 test/Spec.hs
+#!/bin/zsh
+stack runghc -- -isrc -itest test/Spec.hs

@@ -60,6 +60,30 @@ instance Stashable ActionPlan where
     key (Parallel plan _) = key plan
     key (OnFailure plan _) = key plan
 
+
+decodeComposite :: ContextReader m => Action -> m (Either String Action)
+decodeComposite action' =
+    do Right decoded <- decodeEnvelope action'
+       case extractAction decoded of
+           Just plan ->  fmap (fmap toAction) (decodePlan plan)
+           Nothing -> return $ Right decoded
+   where decodePlan :: ContextReader m => ActionPlan -> m (Either String ActionPlan)
+         decodePlan (Exec act) =
+           do Right decode1 <- decodeComposite act
+              return $ Right $ Exec decode1
+         decodePlan (Sequential plan1 plan2) =
+           do Right decode1 <- decodePlan plan1
+              Right decode2 <- decodePlan plan2
+              return $ Right $ Sequential decode1 decode2
+         decodePlan (Parallel plan1 plan2) =
+           do Right decode1 <- decodePlan plan1
+              Right decode2 <- decodePlan plan2
+              return $ Right $ Parallel decode1 decode2
+         decodePlan (OnFailure plan1 plan2) =
+           do Right decode1 <- decodePlan plan1
+              Right decode2 <- decodePlan plan2
+              return $ Right $ OnFailure decode1 decode2
+
 planExec :: Runnable a => a -> ActionPlan
 planExec = Exec . toAction
 

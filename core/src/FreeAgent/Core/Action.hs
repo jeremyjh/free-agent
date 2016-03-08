@@ -1,6 +1,7 @@
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleContexts                    #-}
-{-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude, OverloadedStrings            #-}
-{-# LANGUAGE ScopedTypeVariables, StandaloneDeriving, TemplateHaskell, TypeFamilies #-}
+{-# LANGUAGE DeriveDataTypeable, DeriveGeneric, FlexibleContexts                   #-}
+{-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude, OverloadedStrings           #-}
+{-# LANGUAGE QuasiQuotes, ScopedTypeVariables, StandaloneDeriving, TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies                                                          #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -9,6 +10,7 @@ module FreeAgent.Core.Action
     , extractAction, extractResult
     , matchAction, matchResult
     , decodeResult
+    , decodeEnvelope
     , resultNow
     , registerAction, actionType
     , registerPluginMaps
@@ -31,7 +33,7 @@ import           System.IO.Unsafe               (unsafePerformIO)
 
 import           Control.Error                  (hoistEither, hush)
 import           Data.SafeCopy
-import           Data.Serialize                 (runGet)
+import           Data.Serialize                 (Get, runGet)
 
 import           Data.Aeson                     (Value (..), fromJSON, (.:), (.=))
 import qualified Data.Aeson                     as Aeson
@@ -59,21 +61,23 @@ instance Stashable ActionEnvelope where
     key = key . envelopeWrapped
 
 instance Runnable ActionEnvelope where
-    exec (ActionEnvelope wrapped _) =
-        case decodeAction readPluginMaps wrapped of
-            Just action' -> exec action'
-            Nothing -> return $ Left DeserializationFailure
+    exec env =
+      do edecoded <- decodeEnvelope $ toAction env
+         [qwarn|Executing ActionEnvelope for #{edecoded} |]
+         case edecoded of
+            Right action' -> exec action'
+            Left msg -> return $ Left (DeserializationFailure (convert msg))
 
 instance Binary Action where
     put (Action action) = Binary.put (seal action)
-    get = unseal Binary.get
+    get = fmap Action (Binary.get :: Binary.Get ActionEnvelope)
 
 instance SafeCopy Action where
     version = 1
     kind = base
     errorTypeName _ = "FreeAgent.Type.Action"
     putCopy (Action action) = contain (safePut $ seal action)
-    getCopy = contain $ unseal safeGet
+    getCopy = contain $ fmap Action (safeGet :: Get ActionEnvelope)
 
 extractAction :: Typeable a=> Action -> Maybe a
 extractAction (Action a)= cast a
@@ -88,18 +92,12 @@ matchResult :: Portable a => (a -> Bool) -> Result -> Bool
 matchResult f = maybe False f . extractResult
 
 seal :: Runnable action => action -> ActionEnvelope
-seal action = ActionEnvelope
+seal action =
+   fromMaybe ActionEnvelope
                 { envelopeWrapped = wrap action
                 , envelopeMeta = mempty --TODO:implement meta
                 }
-
-unseal :: Monad m => m ActionEnvelope -> m Action
-unseal mget =
-     do env@(ActionEnvelope wrapped _) <- mget
-        let pm = unsafePerformIO $ readIORef globalPluginMaps
-        case decodeAction pm wrapped of
-            Just action' -> return action'
-            Nothing -> return (Action env)
+             (cast action)
 
 instance Stashable Action where
     key (Action a) = key a
@@ -123,6 +121,7 @@ instance Stashable Result where
     key = key . resultWrapped
 
 -- | Wrap a concrete action in existential unless it is already an Action
+-- in which case the original is returned.
 toAction :: (Runnable a) => a -> Action
 toAction act = fromMaybe (Action act) (cast act)
 
@@ -218,12 +217,17 @@ unWrapJson jwrapped = case fromJSON jwrapped of
     Aeson.Error msg -> Left msg
     Aeson.Success value' -> Right value'
 
---used in serialization instances
-decodeAction :: Map Text ActionUnwrappers -> Wrapped -> Maybe Action
-decodeAction pluginMap wrapped =
-    case Map.lookup (wrappedTypeName wrapped) pluginMap of
-        Just uwMap -> hush $ actionUnwrapper uwMap wrapped
-        Nothing -> Nothing
+decodeEnvelope :: ContextReader m => Action -> m (Either String Action)
+decodeEnvelope action' =
+ do pluginMap <- viewContext (plugins.actionUnwrappers)
+    return $ case extractAction action' of
+        Just envelope ->
+            let wrapped = envelopeWrapped envelope
+            in case Map.lookup (wrappedTypeName wrapped) pluginMap of
+                Just uwMap -> let uw = actionUnwrapper uwMap
+                              in uw wrapped
+                Nothing -> Left $ "No unwrapper found for: " ++ (convert $ wrappedTypeName wrapped)
+        Nothing -> Right action' --not an envelope - its already decoded
 
 decodeResult :: ContextReader m => Result -> m (Maybe Result)
 decodeResult wrapped =

@@ -207,6 +207,7 @@ data ActionUnwrappers
 
 data ResultUnwrappers
   =  ResultUnwrappers { resultTypeName      :: Text
+                                               --TODO: why is this not :: Unwrapper Result
                       , resultUnwrapper     :: Result -> Result
                       }
 
@@ -367,7 +368,7 @@ data RunnableFail =
                   -- | Action-specific general failure to exec
                      GeneralFailure Text
                   -- | Deserialization failure - plugin unregistered?
-                  | DeserializationFailure
+                  | DeserializationFailure Text
                   -- | An unhandled IOException message
                   | RSomeException Text
                   -- | Could not execute due to missing (local) dependency
