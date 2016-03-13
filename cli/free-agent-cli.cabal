@@ -54,7 +54,7 @@ test-suite spec
     build-depends:
         base,
         free-agent-core -any,
-        hspec >=1.11.0 && <1.12
+        hspec >=1.11.0
     type: exitcode-stdio-1.0
     main-is: Spec.hs
     buildable: True

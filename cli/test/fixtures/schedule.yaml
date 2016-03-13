@@ -6,3 +6,4 @@ event:
   key: hello 
   recur:
     recurCron: ! '@hourly'
+  disabled: False

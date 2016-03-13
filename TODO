@@ -1,8 +1,7 @@
 0.2.0:
 
   Common/Core:
-   * switch logging to hslogger or DP platform logger 
-   * update quasi-quotes to populate source from Loc
+   * update logger quasi-quotes to populate source from Loc
 
   Executive: 
    * Triggers - an Action to run when a matching Action or Result <event> takes place - a

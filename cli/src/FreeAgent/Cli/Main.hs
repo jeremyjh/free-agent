@@ -61,18 +61,19 @@ daemonMain config plugins ma =
             "exit" <- expect :: Agent Text
             return ()
         promptExit pid =
-         do putStrLn ("Agent server listening on: "
-                 ++ convert (config ^. nodeHost) ++ ": "
-                 ++ convert (config ^. nodePort))
-            putStrLn "Press enter key to stop."
-            void $ asText <$> getLine
-            send pid $ asText "exit"
+         do liftIO $
+              do putStrLn ("Agent server listening on: "
+                    ++ convert (config ^. nodeHost) ++ ": "
+                    ++ convert (config ^. nodePort))
+                 putStrLn "Press enter key to stop."
+                 void getLine
+            send pid  ("exit" :: Text)
 
 exitDaemon :: MonadProcess process => process ()
 exitDaemon =
  do Just pid <- whereis "daemon:exit"
     putStrLn "Bench done; sending exit."
-    send pid $ asText "exit"
+    send pid ("exit" :: Text)
 
 clientMain :: AgentConfig -> PluginSet -> Agent () -> IO ()
 clientMain config plugins ma =

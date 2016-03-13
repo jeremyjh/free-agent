@@ -37,6 +37,8 @@ instance NFData CallFail where rnf = genericRnf
 instance Convertible SomeException CallFail where
     safeConvert e = return $ ServerCrash (show e)
 
+instance Convertible CallFail Text where
+    safeConvert = safeConvert . show
 
 callTarget :: (MonadAgent agent, NFSerializable a, NFSerializable b)
            => String -> a -> agent (Either CallFail b)

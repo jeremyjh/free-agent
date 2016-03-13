@@ -1,4 +1,5 @@
 action:
+  key: hello
   action:
     chdir:
       filepath: ./
