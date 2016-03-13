@@ -49,7 +49,7 @@ import           Data.Aeson                           (FromJSON (..),
 import qualified Data.ByteString.Base64               as B64
 import           Data.Default                         (Default (..))
 import           Data.SafeCopy                        --(SafeCopy(..))
-import           Data.Serialize (runPut)
+import qualified Data.Serialize                       as Cereal
 import qualified Data.Set                             as Set
 import           Data.UUID                            (UUID)
 import           FreeAgent.Process                    (ChildSpec,
@@ -94,7 +94,7 @@ instance Show Wrapped where
     show (WrappedExists _ payload) = "WrappedExists: " ++ show payload
 
 safeEncode :: SafeCopy a => a -> ByteString
-safeEncode = runPut . safePut
+safeEncode = Cereal.runPut . safePut
 
 instance Eq Wrapped where
   (WrappedEncoded key' type' bytes') == (WrappedEncoded key'' type'' bytes'') =
@@ -118,11 +118,13 @@ instance SafeCopy Wrapped where
     errorTypeName _ = "FreeAgent.Core.Internal.Types.Wrapped"
 
     putCopy (WrappedEncoded key' type' bytes') = contain $
-     do safePut key'
+     do Cereal.putWord8 0
+        safePut key'
         safePut type'
         safePut bytes'
     putCopy (WrappedJson key' type' val') = contain $
-     do safePut key'
+     do Cereal.putWord8 1
+        safePut key'
         safePut type'
         safePut val'
     putCopy (WrappedExists type' payload) =
@@ -130,22 +132,22 @@ instance SafeCopy Wrapped where
                                 type'
                                 (safeEncode payload))
 
-    getCopy = contain $ WrappedEncoded <$> safeGet <*> safeGet <*> safeGet
+    getCopy = contain $
+      do tag <- Cereal.getWord8
+         case tag of
+             0 -> WrappedEncoded <$> safeGet <*> safeGet <*> safeGet
+             1 -> WrappedJson <$> safeGet <*> safeGet <*> safeGet
+             _ -> fail "Unidentified tag when deseralizing FreeAgent.Wrapped."
 
 instance Binary Wrapped where
-    get = WrappedEncoded <$> Binary.get <*> Binary.get <*> Binary.get
-    put (WrappedEncoded key' type' bytes') =
-     do Binary.put key'
-        Binary.put type'
-        Binary.put bytes'
-    put (WrappedJson key' type' val') =
-     do Binary.put key'
-        Binary.put type'
-        Binary.put val'
-    put (WrappedExists type' payload) =
-        Binary.put (WrappedEncoded (key payload)
-                                   type'
-                                   (safeEncode payload))
+    get =
+      do bs <- Binary.get
+         let ewrapped = Cereal.runGet safeGet bs
+         case ewrapped of
+             Right wrapped -> return wrapped
+             Left msg -> error $ "Error deserializing Wrapped: " ++ msg
+
+    put = Binary.put . safeEncode
 
 instance Stashable Wrapped where
   key (WrappedEncoded key' _ _)= key'

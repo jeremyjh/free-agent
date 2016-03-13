@@ -5,13 +5,14 @@
 module FreeAgent.Core.Action.ShellCommandSpec (main, spec) where
 
 import           FreeAgent.AgentPrelude
-import qualified Prelude as P
 import           FreeAgent.Core
 import           FreeAgent.Core.Lenses
 import           FreeAgent.Core.Action.ShellCommand
+import           FreeAgent.Core.Action.Composition
 
 import           FreeAgent.TestHelper
-import           FreeAgent.Fixtures
+
+import qualified Data.Binary as Binary
 
 import           Test.Hspec
 
@@ -33,6 +34,20 @@ spec =
                 Right (Just res) <- fmap extractResult <$> exec cmd
                 return (shellStdout res)
             `shouldReturn` "val1\n"
+
+        it "can serialize and deserialize existentially" $ do
+           testAgent $ do
+               let cmd = (defaultShellCommand "nostdout")
+                          {   shellCommand = "bash"
+                          ,   shellArgs = ["-c", "echo hello"]
+                          ,   shellRegexMatch = MatchStdioFail "^hello$"
+                          }
+               let action' = toAction cmd
+                   bytes = Binary.encode action'
+               Right decoded <- decodeComposite $ Binary.decode bytes
+               print decoded
+               return True
+           `shouldReturn` True
 
         it "can NOT match stdout" $ do
             testAgent $ do
