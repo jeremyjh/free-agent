@@ -24,10 +24,10 @@ executable famon
                      , free-agent-cli
                      , aeson
                      , data-default
+                     , distributed-process-extras >= 0.2
                      , unordered-containers
                      , process
                      , lifted-base
-                     , distributed-process-platform 
                      , bifunctors
   hs-source-dirs:      famon
   default-language:    Haskell2010

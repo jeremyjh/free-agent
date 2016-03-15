@@ -6,6 +6,7 @@
 {-# LANGUAGE NoImplicitPrelude      #-}
 {-# LANGUAGE OverloadedStrings      #-}
 {-# LANGUAGE TemplateHaskell        #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE RecordWildCards #-}
 
 
@@ -13,7 +14,6 @@ module FreeAgent.Plugins.Nagios
     ( Command(..)
     , CheckTCP(..)
     , CommandResult(..)
-    , NagiosResult(..)
     , NagiosConfig(..)
     , CheckProcs(..)
     , pluginDef
@@ -27,9 +27,6 @@ import           FreeAgent.AgentPrelude
 
 
 import           Data.Default      (Default (..))
-import System.Process (readProcessWithExitCode)
-import System.Exit (ExitCode(..))
-import Control.Concurrent (forkIO)
 import Data.Bifoldable (biList)
 
 -- | Plugin-specific configuration
@@ -54,6 +51,9 @@ data CommandResult = OK | Warning | Critical | Unknown
     deriving (Show, Eq, Typeable, Generic)
 deriveSerializers ''CommandResult
 
+instance Stashable CommandResult where
+   key = convert . show
+
 -- | Provides the PluginDef for the Nagios plugin. Provide this to
 -- 'addPlugin' in the 'registerPlugins' block in your app config/main.
 -- Provide a NagiosConfig record - use 'def' for default values
@@ -65,14 +65,6 @@ data CheckTCP = CheckTCP { _checktcpHost :: Text
 makeFields ''CheckTCP
 deriveSerializers ''CheckTCP
 
-data NagiosResult
-  = NagiosResult {_nagresResultSummary :: ResultSummary
-                 ,_nagresResult :: CommandResult
-                 }
-  deriving (Show, Eq, Typeable, Generic)
-makeFields ''NagiosResult
-deriveSerializers ''NagiosResult
-
 pluginDef :: NagiosConfig -> PluginDef
 pluginDef conf = definePlugin "Nagios" conf (return []) [] $
  do registerAction (actionType :: Proxy Command)
@@ -82,16 +74,9 @@ pluginDef conf = definePlugin "Nagios" conf (return []) [] $
 extractConfig' :: (ContextReader m) => m NagiosConfig
 extractConfig' = extractConfig $ pluginDef def ^. name
 
-instance Stashable NagiosResult where
-    key = key . summary
+instance Runnable Command where
+    type RunnableResult Command = CommandResult
 
-instance Resulting NagiosResult where
-    summary (NagiosResult s _) = s
-
-instance Extractable Command
-instance Extractable NagiosResult
-
-instance Runnable Command NagiosResult where
     exec cmd@Command{..} =
      do cmdPath <- commandPath
         let shell = (defaultShellCommand  cmdKey) {
@@ -99,10 +84,11 @@ instance Runnable Command NagiosResult where
                     , shellArgs         = foldl' (\xs x -> biList x ++ xs ) [] cmdArgs
                     , shellSuccessCodes = [0,1,2]
                     }
-        runEitherT $
+        runExceptT $
          do result' <- tryExecET shell
-            let nagresult = NagiosResult (summary result')
-            return $ case shellExitCode result' of
+            let Just raw = extractResult result'
+            let nagresult cmdres = result' {resultWrapped = wrap cmdres, resultResultOf = toAction cmd}
+            return $ case shellExitCode raw of
                 0 -> nagresult OK
                 1 -> nagresult Warning
                 2 -> nagresult Critical
@@ -115,13 +101,12 @@ instance Runnable Command NagiosResult where
 instance Stashable CheckTCP where
     key c = c ^. host ++ ":" ++ tshow (c ^. port)
 
-instance Extractable CheckTCP
-
-instance Runnable CheckTCP NagiosResult where
+instance Runnable CheckTCP where
+    type RunnableResult CheckTCP = CommandResult
     exec cmd =
-        runEitherT $
-        (resultSummary.resultOf .~ Action cmd) <$>
-            tryExecET (Command (key cmd) "check_tcp" makeArgs)
+        runExceptT $
+          do result' <- tryExecET (Command (key cmd) "check_tcp" makeArgs)
+             return $ result' {resultResultOf = toAction cmd} 
       where
         makeArgs = [("-H", cmd ^. host), ("-p", tshow $ cmd ^. port)]
 
@@ -138,13 +123,12 @@ deriveSerializers ''CheckProcs
 instance Stashable CheckProcs where
     key = procKey
 
-instance Extractable CheckProcs
-
-instance Runnable CheckProcs NagiosResult where
+instance Runnable CheckProcs where
+    type RunnableResult CheckProcs = CommandResult
     exec cmd@CheckProcs{..} =
-        runEitherT $
-        (resultSummary.resultOf .~ Action cmd) <$>
-            tryExecET (Command procKey "check_procs" makeArgs)
+        runExceptT $ do
+            result' <- tryExecET (Command procKey "check_procs" makeArgs)
+            return $ result' {resultResultOf = toAction cmd} 
       where makeArgs = [("-w", nameMinMax), ("-c", allMinMax), ("-C", procName) ]
             allMinMax = tshow procAllMin ++ ":" ++ tshow procAllMax
             nameMinMax = tshow procMin ++ ":" ++ tshow procMax

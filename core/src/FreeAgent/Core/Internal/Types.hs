@@ -72,7 +72,7 @@ class (Stashable a, Eq a, ToJSON a, FromJSON a) => Portable a where
 instance (Stashable a, Eq a, ToJSON a, FromJSON a) => Portable a
 
 -- | Wrapped lets us store an Action or Result and recover it using
-         -- it's registered Unwrapper
+-- it's registered Unwrapper
 data Wrapped
   = WrappedEncoded  !Key !Text !ByteString
   | WrappedJson !Key !Text !Value

@@ -1,25 +1,17 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 module Main where
 
-import FreeAgent.AgentPrelude
-import FreeAgent.Cli.CmdArgs                      (Args (..))
-import FreeAgent.Cli.Main                         (clientMain, daemonMain, exitDaemon,
+import           FreeAgent.AgentPrelude
+import FreeAgent.Cli.Main                         (daemonMain, exitDaemon,
                                                    faMain)
-import FreeAgent.Core
-import FreeAgent.Core.Internal.Types              (LogLevel (..))
-import FreeAgent.Core.Lenses
-import FreeAgent.Core.Protocol.Executive                 (StoreAction (..))
-import FreeAgent.Core.Protocol              (callServ)
-import FreeAgent.Core.Protocol.Schedule                  (Event (..), RetryOption (..),
-                                                   ScheduleAddEvent (..),
-                                                   ScheduleEventControl (..),
-                                                   ScheduleRecurrence (..))
+import           FreeAgent.Core
+import           FreeAgent.Core.Internal.Types (LogLevel (..))
+import           FreeAgent.Core.Lenses
 
-import FreeAgent.Plugins.Nagios                   as Nagios
+import           FreeAgent.Plugins.Nagios as Nagios
 
-import Control.Distributed.Process.Platform.Time  (TimeUnit (..), seconds)
-import Control.Distributed.Process.Platform.Timer (runAfter, sleepFor)
-import Prelude                                    (read)
+import           Control.Distributed.Process.Extras.Time (TimeUnit (..), seconds)
+import           Control.Distributed.Process.Extras.Timer (runAfter, sleepFor)
 
 --derp
 
@@ -56,11 +48,11 @@ bench =
 benchInit :: Text -> IO ()
 benchInit num =
     daemonMain appConfig {configInitScheduler = False} appPlugins $
-        let inum = read (unpack num) :: Int
+        let inum = read num :: Int
             bkey idx = "benc_check_procs_" ++ tshow idx
             keys = map bkey [1..inum]
             checks key' (actions, events) =
-                ( (Action $ benchCheckProcs {procKey = key'}) : actions
+                ( (toAction $ benchCheckProcs {procKey = key'}) : actions
                 , Event key' (RecurInterval 1) Never zeroDate False : events )
             (actions, events) = foldr checks ([],[]) keys
         in do putStrLn ("Creating " ++ num ++ " Actions and Events.")
