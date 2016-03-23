@@ -84,9 +84,6 @@ data ShellResult
 instance Stashable ShellCommand where
     key = shellKey
 
-instance Stashable ShellResult where
-    key = key . shellResultOf
-
 instance Runnable ShellCommand where
     exec cmd@ShellCommand{..} =
         shelly . errExit False

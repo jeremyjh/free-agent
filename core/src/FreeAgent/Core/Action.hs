@@ -43,20 +43,18 @@ import qualified Data.Aeson                     as Aeson
 deriveSerializers ''Result
 deriveSerializers ''FailResult
 
-instance Stashable FailResult where
-    key (FailResult _ key') = key'
-
 -- ActionEnvelope
 -- | A general type for transit of Actions through an agent network which
 -- may not have the required plugins available to deserialize the
 -- wrapped value.
 data ActionEnvelope = ActionEnvelope
-    { envelopeWrapped :: Wrapped
+    { envelopeKey     :: Key
+    , envelopeWrapped :: Wrapped
     , envelopeMeta    :: Aeson.Object
     } deriving (Show, Eq, Typeable, Generic)
 
 instance Stashable ActionEnvelope where
-    key = key . envelopeWrapped
+    key = envelopeKey
 
 instance Runnable ActionEnvelope where
     exec env =
@@ -92,7 +90,8 @@ matchResult f = maybe False f . extractResult
 seal :: Runnable action => action -> ActionEnvelope
 seal action =
    fromMaybe ActionEnvelope
-                { envelopeWrapped = wrap action
+                { envelopeKey = key action
+                , envelopeWrapped = wrap action
                 , envelopeMeta = mempty --TODO:implement meta
                 }
              (cast action)
@@ -105,7 +104,7 @@ instance FromJSON Action where
         key' <- value' .: "key"
         type'  <- value' .: "type"
         action'  <- value' .: "action"
-        return $ toAction $ ActionEnvelope (WrappedJson key' type' action') mempty
+        return $ toAction $ ActionEnvelope key' (WrappedJson type' action') mempty
     parseJSON _ = mzero
 
 instance ToJSON Action where
@@ -115,9 +114,6 @@ instance ToJSON Action where
 instance Runnable Action where
     exec (Action action') = exec action'
     execWith (Action action') = execWith action'
-
-instance Stashable Result where
-    key = key . resultWrapped
 
 -- | Wrap a concrete action in existential unless it is already an Action
 -- in which case the original is returned.
@@ -195,8 +191,8 @@ wrap st = WrappedExists (fqName st) st
 
 -- | Unwrap a 'Wrapper' into a (known) concrete type
 unWrap :: forall a. (Portable a) => Wrapped -> Either String a
-unWrap (WrappedEncoded _ _ bytes')= safeDecode bytes'
-unWrap (WrappedJson _ _ val')=
+unWrap (WrappedEncoded _ bytes')= safeDecode bytes'
+unWrap (WrappedJson _ val')=
   case fromJSON val' of
       Aeson.Success val -> Right val
       Aeson.Error reason -> Left reason

@@ -88,7 +88,7 @@ spec =
                 nr <- texpect :: Agent Result
                 let Just (NagiosResult _ status) = extractResult nr
 
-                let aname = key $ resultWrapped nr
+                let aname = key $ resultResultOf nr
 
                 -- we're done, tell the two "remotes" to exit
                 Right all3 <- queryPeerServers peerServerName (Set.fromList[def])

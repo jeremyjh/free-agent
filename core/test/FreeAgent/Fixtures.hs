@@ -40,10 +40,6 @@ data TestResult = TestResult Key
 instance Stashable TestAction where
     key (TestAction text' _) = text'
 
-instance Stashable TestResult where
-    key (TestResult key') = key'
-
-
 instance Runnable TestAction where
     type RunnableResult TestAction = TestResult
     exec ta@(TestAction text' delay) = do
@@ -74,9 +70,6 @@ data NagiosResult = NagiosResult Key CommandResult
 
 makeFields ''NagiosResult
 deriveSerializers ''NagiosResult
-
-instance Stashable NagiosResult where
-    key (NagiosResult key' _ )= key'
 
 instance Runnable TestCheckTCP where
     type RunnableResult TestCheckTCP = NagiosResult

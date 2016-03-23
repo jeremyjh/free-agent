@@ -62,49 +62,50 @@ import           FreeAgent.Process                    (ChildSpec,
 
 type Key = Text
 
+
+class (Show a, Typeable a, SafeCopy a, Eq a, ToJSON a, FromJSON a) => Portable a where
+
+instance (Show a, Typeable a, SafeCopy a, Eq a, ToJSON a, FromJSON a) => Portable a
+
 -- | Types that can be serialized, stored and retrieved
 --
-class (SafeCopy a, Show a, Typeable a) => Stashable a where
+class (Portable a) => Stashable a where
     key :: a -> Key
-
-class (Stashable a, Eq a, ToJSON a, FromJSON a) => Portable a where
-
-instance (Stashable a, Eq a, ToJSON a, FromJSON a) => Portable a
 
 -- | Wrapped lets us store an Action or Result and recover it using
 -- it's registered Unwrapper
 data Wrapped
-  = WrappedEncoded  !Key !Text !ByteString
-  | WrappedJson !Key !Text !Value
+  = WrappedEncoded  !Text !ByteString
+  | WrappedJson !Text !Value
   | forall a. Portable a =>
     WrappedExists !Text !a
         deriving (Typeable)
 
 wrappedTypeName :: Wrapped -> Text
-wrappedTypeName (WrappedEncoded _ type' _) = type'
-wrappedTypeName (WrappedJson  _ type' _) = type'
+wrappedTypeName (WrappedEncoded type' _) = type'
+wrappedTypeName (WrappedJson  type' _) = type'
 wrappedTypeName (WrappedExists type' _) = type'
 
 instance NFData Wrapped where
     rnf = (`seq` ())
 
 instance Show Wrapped where
-    show (WrappedEncoded key' type' _) = "WrappedEncoded: " ++ show (key', type')
-    show (WrappedJson key' type' val') = "WrappedJson: " ++ show (key', type',val')
+    show (WrappedEncoded type' _) = "WrappedEncoded: " ++ show type'
+    show (WrappedJson type' val') = "WrappedJson: " ++ show (type',val')
     show (WrappedExists _ payload) = "WrappedExists: " ++ show payload
 
 safeEncode :: SafeCopy a => a -> ByteString
 safeEncode = Cereal.runPut . safePut
 
 instance Eq Wrapped where
-  (WrappedEncoded key' type' bytes') == (WrappedEncoded key'' type'' bytes'') =
-      key' == key'' && type' == type'' && bytes' == bytes''
-  (WrappedEncoded key' type' bytes') == (WrappedExists type'' payload) =
-      key' == key payload && type' == type'' && bytes' == safeEncode payload
-  (WrappedJson key' type' val') == (WrappedJson key'' type'' val'') =
-      key' == key'' && type' == type'' && val' == val''
-  (WrappedJson key' type' val') == (WrappedExists type'' payload) =
-      key' == key payload && type' == type'' && val' == toJSON payload
+  (WrappedEncoded type' bytes') == (WrappedEncoded type'' bytes'') =
+      type' == type'' && bytes' == bytes''
+  (WrappedEncoded type' bytes') == (WrappedExists type'' payload) =
+      type' == type'' && bytes' == safeEncode payload
+  (WrappedJson type' val') == (WrappedJson type'' val'') =
+      type' == type'' && val' == val''
+  (WrappedJson type' val') == (WrappedExists type'' payload) =
+      type' == type'' && val' == toJSON payload
   (WrappedExists type' a) == (WrappedExists type'' b) =
       type' == type'' && maybe False (a ==) (cast b)
   w1@WrappedExists {} == w2@WrappedEncoded {} = w2 == w1
@@ -117,26 +118,23 @@ instance SafeCopy Wrapped where
     kind = base
     errorTypeName _ = "FreeAgent.Core.Internal.Types.Wrapped"
 
-    putCopy (WrappedEncoded key' type' bytes') = contain $
+    putCopy (WrappedEncoded type' bytes') = contain $
      do Cereal.putWord8 0
-        safePut key'
         safePut type'
         safePut bytes'
-    putCopy (WrappedJson key' type' val') = contain $
+    putCopy (WrappedJson type' val') = contain $
      do Cereal.putWord8 1
-        safePut key'
         safePut type'
         safePut val'
     putCopy (WrappedExists type' payload) =
-        putCopy (WrappedEncoded (key payload)
-                                type'
+        putCopy (WrappedEncoded type'
                                 (safeEncode payload))
 
     getCopy = contain $
       do tag <- Cereal.getWord8
          case tag of
-             0 -> WrappedEncoded <$> safeGet <*> safeGet <*> safeGet
-             1 -> WrappedJson <$> safeGet <*> safeGet <*> safeGet
+             0 -> WrappedEncoded <$> safeGet <*> safeGet
+             1 -> WrappedJson <$> safeGet <*> safeGet
              _ -> fail "Unidentified tag when deseralizing FreeAgent.Wrapped."
 
 instance Binary Wrapped where
@@ -149,32 +147,26 @@ instance Binary Wrapped where
 
     put = Binary.put . safeEncode
 
-instance Stashable Wrapped where
-  key (WrappedEncoded key' _ _)= key'
-  key (WrappedJson key' _ _)= key'
-  key (WrappedExists _ payload)= key payload
-
 instance FromJSON Wrapped where
     parseJSON (Object value') = do
-        key' <- value' .: "key"
         typeName' <- value' .: "typeName"
         mb64T :: Maybe Text <- value' .:? "bytes"
         case mb64T of
             Just b64T ->
-                return (WrappedEncoded key' typeName' (B64.decodeLenient (convert b64T)))
+                return (WrappedEncoded typeName' (B64.decodeLenient (convert b64T)))
             Nothing -> do
                 val <- value' .: "value"
-                return (WrappedJson key' typeName' val) 
+                return (WrappedJson typeName' val) 
     parseJSON _ = mzero
 
 instance ToJSON Wrapped where
-    toJSON (WrappedEncoded key' typeName' value') =
+    toJSON (WrappedEncoded typeName' value') =
         let b64T = (convert $ B64.encode value') :: Text
-        in object ["key" .= key', "typeName" .= typeName', "bytes" .= b64T]
-    toJSON (WrappedJson key' typeName' value') =
-        object ["key" .= key', "typeName" .= typeName', "value" .= value']
+        in object ["typeName" .= typeName', "bytes" .= b64T]
+    toJSON (WrappedJson typeName' value') =
+        object ["typeName" .= typeName', "value" .= value']
     toJSON (WrappedExists type' payload) =
-        object ["key" .= key payload, "typeName" .= type', "value" .=  toJSON payload]
+        object ["typeName" .= type', "value" .=  toJSON payload]
 
 data Action = forall a. (Runnable a) => Action a
         deriving Typeable
@@ -394,6 +386,7 @@ data FailResult = FailResult RunnableFail Key
 class ( NFSerializable action
       , Eq action
       , Portable action
+      , Stashable action
       , Portable (RunnableResult action)
       )
      => Runnable action where

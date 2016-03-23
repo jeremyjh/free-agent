@@ -51,9 +51,6 @@ data CommandResult = OK | Warning | Critical | Unknown
     deriving (Show, Eq, Typeable, Generic)
 deriveSerializers ''CommandResult
 
-instance Stashable CommandResult where
-   key = convert . show
-
 -- | Provides the PluginDef for the Nagios plugin. Provide this to
 -- 'addPlugin' in the 'registerPlugins' block in your app config/main.
 -- Provide a NagiosConfig record - use 'def' for default values

@@ -109,24 +109,21 @@ failResultNow :: MonadIO io => RunnableFail -> Text -> Action -> io Result
 failResultNow reason summ action' =
     resultNow (FailResult reason (key action')) summ action'
 
-data ResultList = ResultList Key [Result]
+data ResultList = ResultList [Result]
     deriving (Show, Eq, Typeable, Generic)
-
-instance Stashable ResultList where
-    key (ResultList key' _) = key'
 
 appendResults :: Result -> Result -> Result
 appendResults r1 r2 = r1 { resultWrapped = wrap $
     let list1 = extractResult r1
         list2 = extractResult r2 in
     case (list1, list2) of
-      (Just (ResultList k results1 ), Just (ResultList _ results2)) ->
-          ResultList k (results1 ++ results2)
-      (Just (ResultList k results), Nothing) ->
-          ResultList k (results ++ [r2])
-      (Nothing, Just (ResultList k results)) ->
-          ResultList k (r1 : results)
-      (Nothing, Nothing) -> ResultList (key r1) [r1, r2]
+      (Just (ResultList results1 ), Just (ResultList results2)) ->
+          ResultList (results1 ++ results2)
+      (Just (ResultList results), Nothing) ->
+          ResultList (results ++ [r2])
+      (Nothing, Just (ResultList results)) ->
+          ResultList (r1 : results)
+      (Nothing, Nothing) -> ResultList [r1, r2]
     }
 
 instance Runnable ActionPlan where

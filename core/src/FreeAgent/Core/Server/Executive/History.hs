@@ -93,7 +93,7 @@ historyImpl = HistoryImpl doInit' castWriteResult' callFindResults'
     callFindResults' (AllResultsSince time) = query $ FetchAllFrom time
     callFindResults' (ActionResultsSince key' time) =
      do results' <- query (FetchAllFrom time)
-        return $ filter (\r -> key (resultWrapped r)  == key')
+        return $ filter (\r -> key (resultResultOf r)  == key')
                         results'
 
 defaultHistoryServer :: AgentServer

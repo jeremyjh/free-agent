@@ -43,7 +43,7 @@ spec = do
                     `thenExec` slowTestAction
                     `thenExec` slowTestAction
                     `thenExec` slowTestAction
-                let Just (ResultList _ [one, _, _, two]) = extractResult results
+                let Just (ResultList [one, _, _, two]) = extractResult results
                 let diff = diffUTCTime (resultTimestamp two) (resultTimestamp one)
                 return (diff > microsecondsToNominalDiffTime 30000)
             `shouldReturn` True
@@ -55,7 +55,7 @@ spec = do
                     `whileExec` slowTestAction
                     `whileExec` slowTestAction
                     `whileExec` slowTestAction
-                let Just (ResultList _ [one, _, _, two]) = extractResult results
+                let Just (ResultList [one, _, _, two]) = extractResult results
                 let diff = diffUTCTime (resultTimestamp two) (resultTimestamp one)
                 return (diff < microsecondsToNominalDiffTime 5000)
             `shouldReturn` True
