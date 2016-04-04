@@ -12,25 +12,25 @@
    * startup load file definitions - update AgentDB actions IF newer
    * switch optparse-applicative
    * user-definable options
-  
-  Actions: 
-   * replace Existential with Action function dictionary - plugins impl unwrapAction
 
   Actions: 
-   * ActionPlans
-	- retry spec
+   * ActionPlan - an Action, Schedule, Retry Specification and Target
+   * Retries
 
   Refactor: 
-   * extract distributed-process-protocols
   
 1.0.0: 
 
   Security model:
   * authentication, authorization?
      * ACLs? (maybe with meta [])
+     * HMAC ?
   * signer keys for plugins?
   * TLS?
   * Network.Transport.ZMQ supports authentication
+
+  Performance:
+  * network-transport-cci
 
   Database
   * Execution/Result history impl using LevelDb
