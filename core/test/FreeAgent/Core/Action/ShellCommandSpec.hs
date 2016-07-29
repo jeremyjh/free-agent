@@ -6,7 +6,6 @@ module FreeAgent.Core.Action.ShellCommandSpec (main, spec) where
 
 import           FreeAgent.AgentPrelude
 import           FreeAgent.Core
-import           FreeAgent.Core.Lenses
 import           FreeAgent.Core.Action.ShellCommand
 import           FreeAgent.Core.Action.Composition
 
@@ -20,11 +19,10 @@ main :: IO ()
 main = hspec spec
 
 spec :: Spec
-spec =
+spec = parallel $
     describe "ShellCommand - as used by CheckTCP" $ do
-        it "can set environment variables, pass args and match stdout" $ do
-            testAgent $ do
-                let (env1, val1) = ("env1", "val1")
+        it "can set environment variables, pass args and match stdout" $ testAgent (
+             do let (env1, val1) = ("env1", "val1")
                 let cmd = (defaultShellCommand "setenv")
                           {   shellCommand = "bash"
                           ,   shellArgs = ["-c", "echo $env1"]
@@ -33,11 +31,10 @@ spec =
                           }
                 Right (Just res) <- fmap extractResult <$> exec cmd
                 return (shellStdout res)
-            `shouldReturn` "val1\n"
+            ) `shouldReturn` "val1\n"
 
-        it "can serialize and deserialize existentially" $ do
-           testAgent $ do
-               let cmd = (defaultShellCommand "nostdout")
+        it "can serialize and deserialize existentially" $ testAgent ( 
+            do let cmd = (defaultShellCommand "nostdout")
                           {   shellCommand = "bash"
                           ,   shellArgs = ["-c", "echo hello"]
                           ,   shellRegexMatch = MatchStdioFail "^hello$"
@@ -45,34 +42,26 @@ spec =
                let action' = toAction cmd
                    bytes = Binary.encode action'
                Right decoded <- decodeComposite $ Binary.decode bytes
-               print decoded
-               return True
-           `shouldReturn` True
+               return $ shellCommand <$> extractAction decoded
+           ) `shouldReturn` Just "bash"
 
-        it "can NOT match stdout" $ do
-            testAgent $ do
-                let cmd = (defaultShellCommand "nostdout")
+        it "can NOT match stdout" $ testAgent (
+             do let cmd = (defaultShellCommand "nostdout")
                           {   shellCommand = "bash"
                           ,   shellArgs = ["-c", "echo hello"]
                           ,   shellRegexMatch = MatchStdioFail "^hello$"
                           }
                 Left (GeneralFailure msg) <- exec cmd
                 return msg
-            `shouldReturn` "Match failed: MatchStdioFail \"^hello$\"\n In output: hello\n\n"
+            ) `shouldReturn` "Match failed: MatchStdioFail \"^hello$\"\n In output: hello\n\n"
 
-        it "can change dir temporarily" $ do
-            testAgent $ do
-                let cmd = (defaultShellCommand "chdir")
+        it "can change dir temporarily" $ testAgent (
+             do let cmd = (defaultShellCommand "chdir")
                           {   shellCommand = "pwd"
                           ,   shellChdir = "/usr/bin"
                           ,   shellRegexMatch = MatchStdioSuccess "/usr/bin"
                           }
                 Right (Just res) <- fmap extractResult <$> exec cmd
                 return (shellStdout res)
-            `shouldReturn` "/usr/bin\n"
+            ) `shouldReturn` "/usr/bin\n"
 
-testAgent ma = quickRunAgent 500
-                             ("4122"
-                             , appConfig & nodePort .~ "4122"
-                             , appPlugins
-                             ) ma

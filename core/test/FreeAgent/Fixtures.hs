@@ -46,9 +46,6 @@ instance Runnable TestAction where
         threadDelay delay
         Right <$> resultNow (TestResult (key ta)) text' (toAction ta)
 
-    execWith action' _ =
-        exec action'
-
 instance Runnable TestFailAction where
     exec (TestFailAction text') = return $ Left (GeneralFailure text')
 

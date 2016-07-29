@@ -12,8 +12,7 @@ import           FreeAgent.Core.Protocol.Executive.History (findResultsSince)
 import           FreeAgent.Core.Protocol.Executive (StoreAction(..))
 import           FreeAgent.Server.ManagedAgent (callServ)
 
-import           FreeAgent.TestHelper hiding (appConfig)
-import qualified FreeAgent.TestHelper as Helper
+import           FreeAgent.TestHelper
 import           FreeAgent.Fixtures
 
 import           Control.Concurrent.Lifted (threadDelay)
@@ -100,16 +99,3 @@ spec =  --parallel $
                 Right rs <- findResultsSince (convert (0::Int))
                 return (length rs)
             `shouldReturn` 1
-
-testAgent ma = quickRunAgent 500
-                             ("4122"
-                             , appConfig & nodePort .~ "4122"
-                             , appPlugins
-                             ) ma
-
-{-testAgentNL ma = testRunAgent setup appConfigNL appPlugins ma-}
-
-appConfig :: AgentConfig
-appConfig = Helper.appConfig
-      {-& minLogLevel .~ LevelDebug-}
-{-appConfigNL = Helper.appConfig & minLogLevel .~ LevelOther ""-}

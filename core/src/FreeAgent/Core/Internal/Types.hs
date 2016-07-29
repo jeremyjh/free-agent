@@ -251,7 +251,7 @@ data AgentConfig
                  }
 
 instance Default AgentConfig where
-    def = AgentConfig "./db" "127.0.0.1" "3546" 10 LevelWarn
+    def = AgentConfig "./db" "127.0.0.1" "" 10 LevelWarn
             (Set.fromList [def])
             (Set.fromList [def])
             []
@@ -394,10 +394,11 @@ class ( NFSerializable action
     type RunnableResult action
     type RunnableResult action = Result
 
-     -- | Perform the Action - implementing 'exec' is the minimum viable
-     -- instance.
+    -- | Perform the Action - implementing 'exec' is the minimum viable
+    -- instance.
     exec :: (MonadAgent agent)
          => action -> agent (Either RunnableFail Result)
+
     -- | Exec with some 'Result' - the default instance ignores
     -- the result and calls exec
     execWith :: (MonadAgent agent)

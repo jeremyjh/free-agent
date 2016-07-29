@@ -1,7 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
-{-# LANGUAGE DeriveDataTypeable, DeriveGeneric #-}
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE BangPatterns #-}
 
@@ -11,8 +9,10 @@
 module FreeAgent.TestHelper
     ( appConfig
     , appPlugins
-    , testRunAgent
     , quickRunAgent
+    , runAgentPool
+    , testAgent
+    , closeContext
     , setup
     , nosetup
     , texpect
@@ -42,23 +42,7 @@ appConfig = def & dbPath .~ "memory"
 
 appPlugins :: PluginSet
 appPlugins =
-    pluginSet $ do
-        addPlugin $ testPluginDef
-
--- helper for running agent and getting results out of
--- the Process through partially applied putMVar
-testRunAgent :: NFData a
-             => IO () -- ^ setup action
-             -> Int -- ^ milliseconds delay
-             -> AgentConfig -- ^ can use 'appConfig'
-             -> PluginSet -- ^ can use  'appPlugins'
-             -> Agent a -- monad action to execute
-             -> IO a
-testRunAgent doSetup timeout config' plugins' ma = do
-    doSetup
-    result <- returnFromAgent timeout ma (runAgentServers config' plugins')
-    threadDelay 15000 -- so we dont get open port errors
-    return result
+    pluginSet $ addPlugin testPluginDef
 
 -- | Given (t, c, p) provide a lookup t with which to cache an
 -- 'AgentContext' created from 'AgentConfig' c and 'PluginSet' p
@@ -109,22 +93,59 @@ createContext (name', config', plugins') = do
             void . fork $ runAgentServers config' plugins' $ do
                 context' <- askContext
                 putMVar cachedContexts (Map.insert name' context' contextsMap)
+                getSelfPid >>= register (convert name')
                 "the end" <- expect :: Agent String
                 return ()
             contexts' <- readMVar cachedContexts
             return $ fromMaybe (error "couldn't create Context!")
                                (Map.lookup name' contexts')
 
+closeContext :: Text -> IO ()
+closeContext name' =
+  modifyMVar_ cachedContexts $ \ contexts' ->
+  do context' <- case Map.lookup name' contexts' of
+                    Just context' -> return context'
+                    Nothing -> error "context not found"
+     returnFromAgent 1000 sendExit (void . forkAgent context')
+     return $ Map.delete name' contexts'
+  where sendExit =
+          do Just pid <- whereis (convert name')
+             send pid ("the end" :: String)
+
+contextPool :: MVar [AgentContext]
+contextPool = unsafePerformIO (newMVar mempty)
+{-# NOINLINE contextPool #-}
+
+runAgentPool :: NFData a => Int -> Agent a -> IO a
+runAgentPool timeout ma =
+  do context' <- modifyMVar contextPool $ \ clist ->
+                    case clist of
+                        [] -> do context' <- newContext
+                                 return ([], context')
+                        first' : rest -> return (rest, first')
+     rv <- returnFromAgent timeout ma (void . forkAgent context')
+     modifyMVar_ contextPool $ \ clist -> return $ context' : clist
+     return rv
+  where
+    newContext :: IO AgentContext
+    newContext =
+      do contextMv <- newEmptyMVar
+         void . fork $ runAgentServers appConfig appPlugins $ do
+             context' <- askContext
+             putMVar contextMv context'
+             "the end" <- expect :: Agent String
+             return ()
+         takeMVar contextMv
 
 setup :: IO ()
 setup =
     case appConfig ^. dbPath of
         "memory" -> return ()
         _ ->
-            void $ system ("rm -rf " ++ (convert $ appConfig ^. dbPath))
+            void $ system ("rm -rf " ++ convert (appConfig ^. dbPath))
 
 setupConfig :: AgentConfig -> IO ()
-setupConfig config' = void $ system ("rm -rf " ++ (convert $ config' ^. dbPath))
+setupConfig config' = void $ system ("rm -rf " ++ convert (config' ^. dbPath))
 
 nosetup :: IO ()
 nosetup = return ()
@@ -136,3 +157,6 @@ texpect = do
     case gotit of
         Nothing -> error "Timed out in test expect"
         Just v -> return v
+
+testAgent :: NFData a => Agent a -> IO a
+testAgent = runAgentPool 500

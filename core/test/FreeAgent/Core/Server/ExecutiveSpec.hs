@@ -16,7 +16,7 @@ import           FreeAgent.Core
 import           FreeAgent.Core.Action.ShellCommand
 import           FreeAgent.Core.Protocol.Executive as Exec
 
-import           FreeAgent.TestHelper hiding (appConfig, appPlugins)
+import           FreeAgent.TestHelper hiding (appConfig, appPlugins, testAgent)
 import qualified FreeAgent.TestHelper as Helper
 import           FreeAgent.Fixtures
 
@@ -29,7 +29,7 @@ matchRemoteHostName (nodeid, name') = actionListener (\(TestCheckTCP host' _) ->
 remotable ['matchRemoteHostName]
 
 main :: IO ()
-main = hspec spec
+main = hspec $ afterAll_ cleanup spec
 
 spec :: Spec
 spec = do
@@ -162,18 +162,13 @@ spec = do
                 return  True -- no exceptions
             `shouldReturn` True
 
+cleanup = closeContext "executive" >> closeContext "executiveNL"
 
+testAgent :: NFData a => Agent a -> IO a
+testAgent = quickRunAgent 500 ("executive", appConfig, appPlugins)
 
-testAgent ma = quickRunAgent 500
-                             ("4120"
-                             , appConfig & nodePort .~ "4120"
-                             , appPlugins
-                             ) ma
-
-{-testAgentNoSetup ma = testRunAgent nosetup appConfig appPlugins ma-}
-
-
-testAgentNL ma = testRunAgent setup 1000 appConfigNL appPlugins ma
+testAgentNL :: NFData a => Agent a -> IO a
+testAgentNL = quickRunAgent 1000 ("executiveNL", appConfigNL, appPlugins)
 
 listenerName :: String
 listenerName = "listener:test"

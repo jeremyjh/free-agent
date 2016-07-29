@@ -8,8 +8,6 @@ module FreeAgent.CoreSpec (main, spec) where
 
 import           FreeAgent.AgentPrelude
 import           FreeAgent.Core
-import           FreeAgent.Core.Lenses
-import           FreeAgent.Server          (runAgentServers)
 import           Test.Hspec
 
 import           FreeAgent.Fixtures
@@ -26,7 +24,7 @@ main :: IO ()
 main = hspec spec
 
 spec :: Spec
-spec = do
+spec = parallel $ do
     describe "C.D.Process primitives in Agent monad" $ do
             it "can run a process" $ do
                 testAgent $  do
@@ -97,19 +95,9 @@ spec = do
                     return $ isJust $ HashMap.lookup "value" bytes
                 `shouldReturn` True
 
-testAgent ma = testRunAgent setup 1000 appConfig appPlugins ma
-
-forkApp2 ma = forkAgentNode appConfig2 appPlugins ma
-
-forkAgentNode config plugs ma =
+forkApp2 ma =
  do childPid <-  newEmptyMVar
     void $ fork $ liftIO $
-      runAgentServers config plugs $
+     runAgentPool 500 $
         getSelfPid >>= putMVar childPid >> ma
     takeMVar childPid
-
-appConfig2 :: AgentConfig
-appConfig2 = appConfig
-      & nodePort .~ "9092"
-      & peerNodeSeeds .~ ["127.0.0.1:3546"]
-      {-& minLogLevel .~ LevelInfo-}

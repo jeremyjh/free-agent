@@ -11,7 +11,7 @@ import           FreeAgent.Core.Lenses
 import           FreeAgent.Server (runAgentServers)
 import qualified FreeAgent.Core.Protocol.Executive as Exec
 
-import           FreeAgent.TestHelper hiding (appConfig)
+import           FreeAgent.TestHelper hiding (appConfig, testAgent)
 import qualified FreeAgent.TestHelper as Helper
 import           FreeAgent.Fixtures
 
@@ -27,7 +27,7 @@ matchRemoteHostName (nodeid, name') = actionListener (\(TestCheckTCP host' _) ->
 remotable ['matchRemoteHostName]
 
 main :: IO ()
-main = hspec spec
+main = hspec $ afterAll_ cleanup spec
 
 listenerName :: String
 listenerName = "listener:test"
@@ -35,78 +35,71 @@ listenerName = "listener:test"
 spec :: Spec
 spec =
     describe "FreeAgent.Peer" $ do
-        it "is started by Core supervisor" $ do
-            testAgent $ do
-                Just _ <- whereis $ peerServerName
-                return True
-            `shouldReturn` True
-
-        it "can find services offered on peers" $ do
+        it "can find services offered on peers" $ testAgent (
         -- one giant mega-spec b/c there is so much overhead in spinning up
         -- the peer swarm
-            testAgent $ do
                 -- create a couple "remotes"
-                void $ fork $ liftIO $
-                    runAgentServers appConfig2 appPlugins $ do
-                        getSelfPid >>= register "waiter"
-                        "waithere" <- expect :: Agent String
-                        return ()
+              do let waiter = do getSelfPid >>= register "waiter"
+                                 "waithere" <- expect :: Agent String
+                                 return ()
 
-                void $ fork $ liftIO $
-                    runAgentServers appConfigTX appPlugins $ do
-                        getSelfPid >>= register "waiter"
-                        "waithere" <- expect :: Agent String
-                        return ()
+                 void $ fork $ liftIO $
+                     runAgentServers appConfig2 appPlugins waiter
+
+                 void $ fork $ liftIO $
+                     runAgentServers appConfigTX appPlugins waiter
 
 
-                -- wait for swarm to stabilize
-                let waitFor3 = do
-                        Right count <- queryPeerCount
-                        when (count < 3) (threadDelay 10000 >> waitFor3)
-                waitFor3
+                 -- wait for swarm to stabilize
+                 let waitFor3 = do
+                         Right count <- queryPeerCount
+                         when (count < 3) (threadDelay 5000 >> waitFor3)
+                 waitFor3
 
-                -- it "can count peers"
-                Right count <- queryPeerCount
+                 -- it "can count peers"
+                 Right count <- queryPeerCount
 
-                -- it "can query for a Set of matching Peers"
-                Right peers <- queryPeerServers Exec.serverName (Set.fromList [def] )
-                                                          (Set.fromList [Zone "TX"] )
+                 -- it "can query for a Set of matching Peers"
+                 Right peers <- queryPeerServers Exec.serverName
+                                                 (Set.fromList [def])
+                                                 (Set.fromList [Zone "TX"])
 
-                -- it "can register remote listeners"
-                let tx:_ = Set.toList peers
-                getSelfPid >>= register listenerName
-                nodeid <- thisNodeId
-                let matcher = $(mkClosure 'matchRemoteHostName) (nodeid, listenerName)
-                Right () <- withTarget (Remote tx) $
-                                castServ (AddListener matcher)
-                threadDelay 10000
+                 -- it "can register remote listeners"
+                 let tx:_ = Set.toList peers
+                 getSelfPid >>= register listenerName
+                 nodeid <- thisNodeId
+                 let matcher = $(mkClosure 'matchRemoteHostName) (nodeid, listenerName)
+                 Right () <- withTarget (Remote tx) $
+                                 castServ (AddListener matcher)
+                 threadDelay 1000
 
-                -- it "can route an action to a remote Node"
-                Right _ <- withTarget (Route [def] [Zone "TX"]) $
-                                executeAction checkTCP
+                 -- it "can route an action to a remote Node"
+                 Right _ <- withTarget (Route [def] [Zone "TX"]) $
+                                 executeAction checkTCP
 
-                nr <- texpect :: Agent Result
-                let Just (NagiosResult _ status) = extractResult nr
+                 nr <- texpect :: Agent Result
+                 let Just (NagiosResult _ status) = extractResult nr
 
-                let aname = key $ resultResultOf nr
+                 let aname = key $ resultResultOf nr
 
-                -- we're done, tell the two "remotes" to exit
-                Right all3 <- queryPeerServers peerServerName (Set.fromList[def])
-                                                              (Set.fromList[def])
-                forM_ all3 $ \peer' -> do
-                    mpid <- resolve (peer', "waiter"::String)
-                    case mpid of
-                        Nothing -> return ()
-                        Just pid ->
-                            send pid ("waithere" :: String)
-                threadDelay 10000
+                 -- we're done, tell the two "remotes" to exit
+                 Right all3 <- queryPeerServers peerServerName (Set.fromList[def])
+                                                               (Set.fromList[def])
+                 forM_ all3 $ \peer' -> do
+                     mpid <- resolve (peer', "waiter"::String)
+                     case mpid of
+                         Nothing -> return ()
+                         Just pid ->
+                             send pid ("waithere" :: String)
+                 threadDelay 1000
 
-                return (count, Set.size peers,aname, status)
-            `shouldReturn` (3, 1, key checkTCP, OK)
+                 return (count, Set.size peers,aname, status)
+            ) `shouldReturn` (3, 1, key checkTCP, OK)
 
+cleanup = closeContext "peer"
 
-
-testAgent ma = testRunAgent setup 2000 appConfig appPlugins ma
+testAgent :: NFData a => Agent a -> IO a
+testAgent = quickRunAgent 2000 ("peer", appConfig & nodePort .~ "9090", appPlugins)
 
 appConfig :: AgentConfig
 appConfig = Helper.appConfig & appendRemoteTable __remoteTable
@@ -114,13 +107,11 @@ appConfig = Helper.appConfig & appendRemoteTable __remoteTable
 
 appConfig2 :: AgentConfig
 appConfig2 = appConfig
-      & nodePort .~ "9092"
-      & peerNodeSeeds .~ ["127.0.0.1:3546"]
+      & peerNodeSeeds .~ ["127.0.0.1:9090"]
       {-& minLogLevel .~ LevelInfo-}
 
 appConfigTX :: AgentConfig
 appConfigTX = appConfig
-      & nodePort .~ "9093"
-      & peerNodeSeeds .~ ["127.0.0.1:3546"]
+      & peerNodeSeeds .~ ["127.0.0.1:9090"]
       & zones .~ Set.fromList [def, Zone "TX"]
       {-& minLogLevel .~ LevelDebug-}

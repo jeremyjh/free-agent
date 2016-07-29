@@ -22,9 +22,10 @@ import FreeAgent.Core.Protocol.Schedule (ScheduleControl(..))
 faMain :: AgentConfig -> PluginSet -> IO ()
 faMain config plugins =
  do (config', args) <- configArgs config
-    let execClient = clientMain config' plugins
+    let config'' = defport config'
+    let execClient = clientMain config'' plugins
     case args of
-        Daemon{} -> daemonMain config' plugins (return True)
+        Daemon{} -> daemonMain config'' plugins (return True)
         Import _ _ path' ->
             execClient $
              do eimported <- importActions (convert path')
@@ -49,6 +50,10 @@ faMain config plugins =
                          Right () -> putStrLn "Sent stop command to daemon."
                          Left reason -> putStrLn ("Could not send stop command: " ++ tshow reason)
             | otherwise -> return ()
+  where
+    defport config' = if config' ^. nodePort == ""
+                      then config' & nodePort .~ "3546"
+                      else config'
 
 daemonMain :: AgentConfig -> PluginSet -> Agent Bool -> IO ()
 daemonMain config plugins ma =
@@ -79,5 +84,5 @@ clientMain :: AgentConfig -> PluginSet -> Agent () -> IO ()
 clientMain config plugins ma =
     let node = (config ^. nodeHost) ++ ":" ++ (config ^. nodePort)
         config' = config & nodeHost .~ "localhost"
-                         & nodePort .~ "3547" --TODO: needs to automatically find a free port
+                         & nodePort .~ ""
     in runAgent config' plugins $ withRemoteNode node ma
