@@ -123,14 +123,14 @@ deriveSafeStore ''UUID
 -- orphans from filesystem-path
 instance Binary FilePath where
     put = Binary.put . F.encodeString
-    get = return . F.decodeString =<< Binary.get
+    get = F.decodeString <$> Binary.get
 
 instance SafeCopy FilePath where
     version = 1
     kind = base
     errorTypeName _ = "Filesystem.Path.FilePath"
     putCopy = contain . safePut . F.encodeString
-    getCopy = contain $ return . F.decodeString =<< safeGet
+    getCopy = contain $ F.decodeString <$> safeGet
 
 instance FromJSON FilePath where
     parseJSON (Object value') = do

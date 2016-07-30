@@ -153,6 +153,7 @@ execImpl = ExecImpl callExecuteAction' callStoreAction' callRemoveAction'
                Left msg ->
                  do [qerror|Deserialization error decoding #{key action'}\n #{msg}|]
                     cacheAction action'
+
     callStoreAction' (StoreNewerAction action' time) =
      do void $ update (PutAction (action', time))
         eaction <- decodeComposite action'
@@ -162,16 +163,9 @@ execImpl = ExecImpl callExecuteAction' callStoreAction' callRemoveAction'
             Left msg ->
               do [qerror|Deserialization error decoding #{key action'}\n #{msg}|]
                  cacheAction action'
+
     callStoreAction' (StoreActions actions')  =
-        do now <- getCurrentTime
-           forM_ actions' $ \action' ->
-             do void $ update (PutAction (action',now))
-                eaction <- decodeComposite action'
-                case eaction of
-                    Right decoded -> cacheAction decoded
-                    Left msg ->
-                      do [qerror|Deserialization error decoding #{key action'}\n #{msg}|]
-                         cacheAction action'
+        forM_ actions' $ \action' -> callStoreAction' (StoreAction action')
 
     callRemoveAction' (RemoveAction key')  =
      do void $ update (DeleteAction key')

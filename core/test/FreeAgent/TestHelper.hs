@@ -13,8 +13,6 @@ module FreeAgent.TestHelper
     , runAgentPool
     , testAgent
     , closeContext
-    , setup
-    , nosetup
     , texpect
     ) where
 
@@ -31,7 +29,6 @@ import Control.Concurrent.Lifted (threadDelay, fork)
 import Control.Concurrent.MVar.Lifted
 import Control.Exception (throw)
 import Control.Exception.Enclosed  (tryAnyDeep)
-import System.Process (system)
 import System.IO.Unsafe (unsafePerformIO)
 
 -- |App Config Section
@@ -82,7 +79,6 @@ cachedContexts = unsafePerformIO (newMVar mempty)
 
 createContext :: CachedContext -> IO AgentContext
 createContext (name', config', plugins') = do
-    setupConfig config'
     contextsMap <- takeMVar cachedContexts
     case Map.lookup name' contextsMap of
         Just context' -> do
@@ -136,19 +132,6 @@ runAgentPool timeout ma =
              "the end" <- expect :: Agent String
              return ()
          takeMVar contextMv
-
-setup :: IO ()
-setup =
-    case appConfig ^. dbPath of
-        "memory" -> return ()
-        _ ->
-            void $ system ("rm -rf " ++ convert (appConfig ^. dbPath))
-
-setupConfig :: AgentConfig -> IO ()
-setupConfig config' = void $ system ("rm -rf " ++ convert (config' ^. dbPath))
-
-nosetup :: IO ()
-nosetup = return ()
 
 -- for testing - useful to throw an exception if we "never" get the value we're expecting
 texpect :: (MonadProcess m, Monad m) => NFSerializable a => m a

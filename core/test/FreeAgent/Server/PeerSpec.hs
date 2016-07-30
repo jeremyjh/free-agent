@@ -34,7 +34,7 @@ listenerName = "listener:test"
 
 spec :: Spec
 spec =
-    describe "FreeAgent.Peer" $ do
+    describe "FreeAgent.Peer" $
         it "can find services offered on peers" $ testAgent (
         -- one giant mega-spec b/c there is so much overhead in spinning up
         -- the peer swarm

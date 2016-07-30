@@ -96,6 +96,7 @@ instance Stashable Event where
 instance Ord Event where
     compare ev1 ev2 = compare (key ev1) (key ev2)
 
+--TODO: implement retry logic
 data RetryOption = Never
                    -- Retry N times at M interval
                  | Fixed Int Int

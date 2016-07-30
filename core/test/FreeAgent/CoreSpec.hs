@@ -25,27 +25,19 @@ main = hspec spec
 
 spec :: Spec
 spec = parallel $ do
-    describe "C.D.Process primitives in Agent monad" $ do
-            it "can run a process" $ do
-                testAgent $  do
-                    pid <- getSelfPid
-                    return $ take 3 $ show pid
-                `shouldReturn` "pid"
-
-            it "can do basic Process messaging" $ do
-                testAgent $  do
-                    parent <- getSelfPid
+    describe "C.D.Process primitives in Agent monad" $
+            it "can do basic Process messaging" $ testAgent (
+                 do parent <- getSelfPid
                     child <- spawnLocal $ do
                         saysee <- texpect :: Agent ByteString
                         send parent ("I said: " ++ saysee)
                     send child ("foo" :: ByteString)
                     texpect :: Agent ByteString
-                `shouldReturn` "I said: foo"
+                ) `shouldReturn` "I said: foo"
 
     describe "Binary (de)serialization of existential Action type" $ do
-            it "can send/receive an Action and Result" $ do
-                testAgent $  do
-                    parent <- getSelfPid
+            it "can send/receive an Action and Result" $ testAgent (
+                 do parent <- getSelfPid
                     child <- forkApp2 $ do
                             action <- texpect :: Agent Action
                             (Right nr) <- exec action
@@ -54,11 +46,10 @@ spec = parallel $ do
                     nr <- texpect
                     let Just (NagiosResult _ ok) = extractResult nr
                     return ok
-                `shouldReturn` OK
+                ) `shouldReturn` OK
 
-            it "can send the result of an Action" $ do
-                testAgent $ do
-                    (Right nr) <- exec $ toAction checkTCP
+            it "can send the result of an Action" $ testAgent (
+                 do (Right nr) <- exec $ toAction checkTCP
                     parent <- getSelfPid
                     child <- forkApp2 $ do
                         wr <- texpect :: Agent Result
@@ -66,12 +57,11 @@ spec = parallel $ do
                         send parent ("Got OK" :: Text)
                     send child nr
                     texpect :: Agent Text
-                `shouldReturn` "Got OK"
+                ) `shouldReturn` "Got OK"
 
     describe "Json (de)serialization" $ do
-            it "works about the same as Binary" $ do
-                testAgent $  do
-                    let yaction = Yaml.encode $ toAction checkTCP
+            it "works about the same as Binary" $ testAgent (
+                 do let yaction = Yaml.encode $ toAction checkTCP
                     let Just action' :: Maybe Action =  Yaml.decode yaction
 
                     Right creturn <- exec action'
@@ -79,11 +69,10 @@ spec = parallel $ do
                     Just (_::Result) <- return $ Yaml.decode yreturn
 
                     return (resultResultOf creturn)
-                `shouldReturn` toAction checkTCP
+                ) `shouldReturn` toAction checkTCP
 
-            it "works for encoded Results" $ do
-                testAgent $ do
-                    (Right nr) <- exec $ toAction checkTCP
+            it "works for encoded Results" $ testAgent (
+                 do (Right nr) <- exec $ toAction checkTCP
                     parent <- getSelfPid
                     child <- forkApp2 $ do
                         wr <- texpect :: Agent Result
@@ -93,7 +82,7 @@ spec = parallel $ do
                     Yaml.Object obj <- texpect :: Agent Yaml.Value
                     let Just (Yaml.Object bytes) = HashMap.lookup "resultWrapped" obj
                     return $ isJust $ HashMap.lookup "value" bytes
-                `shouldReturn` True
+                ) `shouldReturn` True
 
 forkApp2 ma =
  do childPid <-  newEmptyMVar

@@ -25,22 +25,20 @@ main = hspec spec
 spec :: Spec
 spec =  --parallel $
     describe "Basic scheduler operations" $ do
-        it "is started by Core supervisor" $ do
-            testAgent $ do
-                Just _ <- whereis serverName
+        it "is started by Core supervisor" $ testAgent (
+             do Just _ <- whereis serverName
                 return True
-            `shouldReturn` True
+            ) `shouldReturn` True
 
-        it "can schedule and find an event" $ do
-            testAgent $ do
-                Right () <- schedule (key testAction) "@hourly" Never
+        it "can schedule and find an event" $ testAgent (
+             do Right () <- schedule (key testAction) "@hourly" Never
                 Right _ <- lookupEvent (key testAction)
+                Right () <- unschedule (key testAction)
                 return True
-            `shouldReturn` True
+            ) `shouldReturn` True
 
-        it "won't schedule an older Event" $ do
-            testAgent $ do
-                Right () <- schedule "test older" "@hourly" Never
+        it "won't schedule an older Event" $ testAgent (
+             do Right () <- schedule "test older" "@hourly" Never
                 Right old <- lookupEvent "test older"
                 Right () <- callServ $
                                 ScheduleAddNewerEvent "test older"
@@ -48,47 +46,44 @@ spec =  --parallel $
                                 (Fixed 1 10)
                                 (schedModified old)
                 Right stillold <- lookupEvent "test older"
+                Right _ <- unschedule "test older"
                 return (schedRetry stillold)
-            `shouldReturn` Never
+            ) `shouldReturn` Never
 
-        it "won't schedule a bogus cron format" $ do
-            testAgent $ do
-                Right () <- schedule (key testAction) "whatever man" Never
+        it "won't schedule a bogus cron format" $ testAgent (
+             do Right () <- schedule (key testAction) "whatever man" Never
                 Left (EventNotFound _) <- lookupEvent (key testAction)
                 return ()
-            `shouldThrow` errorCall "Unable to parse cron formatted literal: whatever man"
+            ) `shouldThrow` errorCall "Unable to parse cron formatted literal: whatever man"
 
-        it "won't find an absent event" $ do
-            testAgent $ do
-                Left (EventNotFound key') <- lookupEvent "not here"
+        it "won't find an absent event" $ testAgent (
+             do Left (EventNotFound key') <- lookupEvent "not here"
                 return key'
-            `shouldReturn` "not here"
+            ) `shouldReturn` "not here"
 
-        it "can remove an event" $ do
-            testAgent $ do
-                Right () <- schedule ("will delete") "@hourly" Never
+        it "can remove an event" $ testAgent (
+             do Right () <- schedule "will delete" "@hourly" Never
 
                 Right _ <- lookupEvent "will delete"
                 Right () <- unschedule "will delete"
                 Left (EventNotFound key') <- lookupEvent "will delete"
                 return key'
-            `shouldReturn` "will delete"
+            ) `shouldReturn` "will delete"
 
-        it "executes a cron scheduled action" $ do
-            testAgent $ do
-                Right () <- callServ $ StoreAction (Action testAction)
+        it "executes a cron scheduled action" $ testAgent (
+             do Right () <- callServ $ StoreAction (Action testAction)
                 Right () <- schedule (key testAction) "* * * * *" Never
                 -- reset the event so it can run now
                 Right () <- callServ $ ScheduleEnableEvents [key testAction]
 
                 threadDelay 10000
-                Right results' <- findResultsSince (convert (0::Int))
+                Right results' <- findResultsSince zeroDate
+                Right () <- unschedule (key testAction)
                 return (length results')
-            `shouldReturn` 1
+            ) `shouldReturn` 1
 
-        it "does not execute a disabled event" $ do
-            testAgent $ do
-                Right () <- callServ $ StoreAction (Action testAction)
+        it "does not execute a disabled event" $ testAgent (
+             do Right () <- callServ $ StoreAction (Action testAction)
                 Right () <- schedule (key testAction) "* * * * *" Never
                 -- this really doesn't prove much, since the event won't
                 -- run till the next minute in any case
@@ -96,6 +91,7 @@ spec =  --parallel $
 
                 send serverName Tick
                 threadDelay 10000
-                Right rs <- findResultsSince (convert (0::Int))
+                Right rs <- findResultsSince zeroDate
+                Right () <- unschedule (key testAction)
                 return (length rs)
-            `shouldReturn` 1
+            ) `shouldReturn` 1

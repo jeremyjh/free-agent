@@ -146,10 +146,8 @@ unwrapResult uw result =
             result {resultWrapped = wrap unwrapped}
         Left s ->
             error . convert $
-            "unwrapResult failed for: " ++
-            wrappedTypeName wrapped ++
-            " : " ++
-            (convert s)
+              "unwrapResult failed for: " ++ wrappedTypeName wrapped ++
+              " : " ++ convert s
 
 -- | Used only to fix the type passed to 'register' - this should not
 -- ever be evaluated and will throw an error if it is
@@ -211,7 +209,7 @@ decodeEnvelope action' =
             in case Map.lookup (wrappedTypeName wrapped) pluginMap of
                 Just uwMap -> let uw = actionUnwrapper uwMap
                               in uw wrapped
-                Nothing -> Left $ "No unwrapper found for: " ++ (convert $ wrappedTypeName wrapped)
+                Nothing -> Left $ "No unwrapper found for: " ++ convert (wrappedTypeName wrapped)
         Nothing -> Right action' --not an envelope - its already decoded
 
 decodeResult :: ContextReader m => Result -> m (Maybe Result)

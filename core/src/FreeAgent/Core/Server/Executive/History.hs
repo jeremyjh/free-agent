@@ -62,7 +62,7 @@ makeFields ''HistoryState
 fetchAllFrom  :: UTCTime -> Query HistoryPersist [Result]
 fetchAllFrom time =
     takeWhile (\r -> resultTimestamp r >= time)
-                  <$> CL.rightElements  <$> view results
+                  . CL.rightElements  <$> view results
 
 insertResult :: Result -> Update HistoryPersist ()
 insertResult r =

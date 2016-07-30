@@ -118,11 +118,10 @@ convExceptT = hoistEither . convEither
 -- > deriveSafeStore ''MyDataV1
 -- > deriveSafeStoreVersion 2 ''MyData
 deriveSafeStoreVersion :: Version a -> Name -> Q [Dec]
-deriveSafeStoreVersion ver name = do
-    sc <- case ver of
+deriveSafeStoreVersion ver name =
+    case ver of
         1 -> deriveSafeCopy 1 'base name
         _ -> deriveSafeCopy ver 'extension name
-    return $ sc
 
 -- | Template haskell function to create the Serialize and SafeCopy
 -- instances for a given type

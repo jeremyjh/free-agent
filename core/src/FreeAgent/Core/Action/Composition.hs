@@ -34,19 +34,19 @@ agentAsync ma =
 -- | A composite 'Action', can be constructed with combinators
 -- such as 'planExec' and 'thenExec'. The comments for each
 -- Constructor type describe the exec strategy for the Runnable instance.
-data ActionPlan
-  -- ^ exec this Action - a leaf node.
-  = Exec Action
-  -- ^ Executes each plan sequentially, passing ResultList of first plan to execWith second plan
-  -- if the first plan succeeds and returning a concatenated ResultList if
-  -- both plans Succeed.
+data ActionPlan =
+    -- | exec this Action - a leaf node.
+    Exec Action
+    -- | Executes each plan sequentially, passing ResultList of first plan to execWith second plan
+    -- if the first plan succeeds and returning a concatenated ResultList if
+    -- both plans Succeed.
   | Sequential ActionPlan ActionPlan
-  -- ^ Execute both plans in parallel using D.P.P Async. Returns
-  -- concatenated ResultList if both plans succeed.
+    -- | Execute both plans in parallel using D.P.P Async. Returns
+    -- concatenated ResultList if both plans succeed.
   | Parallel ActionPlan ActionPlan
-  -- ^ Execute the second plan only if the first fails, wrapping the
-  -- RunnableFail in a FailResult and passing this to execWith. Returns
-  -- result of first plan if it succeeds, otherwise the second.
+    -- | Execute the second plan only if the first fails, wrapping the
+    -- RunnableFail in a FailResult and passing this to execWith. Returns
+    -- result of first plan if it succeeds, otherwise the second.
   | OnFailure ActionPlan ActionPlan
   deriving (Show, Eq, Typeable, Generic)
 
